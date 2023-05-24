@@ -1,0 +1,14 @@
+bbox
+cartopy > 0.20.0
+geovectorslib
+global_land_mask
+matplotlib
+numpy == 1.23.4
+pandas
+pytest
+python-dotenv
+Pillow
+scipy == 1.9.2
+setuptools
+xarray
+netcdf4
