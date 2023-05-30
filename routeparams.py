@@ -4,6 +4,7 @@ import json
 
 import numpy as np
 import matplotlib.pyplot as plt
+from geovectorslib import geod
 
 import utils.graphics as graphics
 import utils.formatting as form
@@ -163,16 +164,14 @@ class RouteParams():
         lats_per_step = np.full(count,-99.)
         lons_per_step = np.full(count,-99.)
         start_time_per_step = np.full(count, datetime.datetime.now())
-        speed = np.full(count, -99)
-        power = np.full(count, -99)
-        fuel = np.full(count, -99)
-        rpm = np.full(count, -99)
-        azimuths_per_step = np.full(count, -99)
-        dists_per_step = np.full(count, -99)
+        speed = np.full(count, -99.)
+        power = np.full(count, -99.)
+        fuel = np.full(count, -99.)
+        rpm = np.full(count, -99.)
+        azimuths_per_step = np.full(count, -99.)
+        fuel_type = np.full(count, "")
 
-        #fuel_type = np.full(count, -99)
-
-        for ipoint in range(0,count-1):
+        for ipoint in range(0,count):
             coord_pair = point_list[ipoint]['geometry']['coordinates']
             lats_per_step[ipoint] = coord_pair[0]
             lons_per_step[ipoint] = coord_pair[1]
@@ -182,7 +181,7 @@ class RouteParams():
             speed[ipoint] = property['speed']['value']
             power[ipoint] = property['engine_power']['value']
             fuel[ipoint] = property['fuel_consumption']['value']
-            #fuel_type[ipoint] = property['fuel_type']
+            fuel_type[ipoint] = property['fuel_type']
             rpm[ipoint] = property['propeller_revolution']['value']
 
         start = (lats_per_step[0],lons_per_step[0])
@@ -190,6 +189,9 @@ class RouteParams():
         gcr = -99
         route_type = 'read_from_file'
         time = start_time_per_step[count-1] - start_time_per_step[0]
+
+        dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
+
         ship_params_per_step = ShipParams(fuel, power, rpm, speed)
 
         return cls(
@@ -206,6 +208,16 @@ class RouteParams():
             starttime_per_step = start_time_per_step,
             ship_params_per_step = ship_params_per_step
         )
+
+    def get_dist_from_coords(self, lats, lons):
+        nsteps = len(lats)
+        dist = np.full(nsteps, -99.)
+
+        for i in range(0,nsteps-1):
+            dist_step = geod.inverse([lats[i]], [lons[i]],[lats[i+1]],[lons[i+1]])
+            dist[i] = dist_step['s12']
+        return dist
+
     def plot_route(self, ax, colour, label):
         lats = self.lats_per_step
         lons = self.lons_per_step
