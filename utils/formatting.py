@@ -26,7 +26,8 @@ class NumpyArrayEncoder(JSONEncoder):
         if isinstance(obj, numpy.ndarray):
             return obj.tolist()
         if isinstance(obj, (datetime.date, datetime.datetime)):
-            return str(obj)
+            obj_str = obj.strftime("%Y-%m-%d %H:%M:%S")
+            return obj_str
         if isinstance(obj, numpy.int64):
             return str(obj)
         return JSONEncoder.default(self, obj)

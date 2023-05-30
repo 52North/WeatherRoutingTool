@@ -361,7 +361,7 @@ class Tanker(Boat):
     # courses per space-time point and will then be replaced by Tanker.get_fuel_netCDF()
     def get_fuel_netCDF_loop(self):
         debug = False
-        filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
+        filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/CoursesRouteSingle.nc'
         ds = xr.load_dataset(self.courses_path)
         n_vars = ds['it'].shape[0]
         ds_merged = xr.Dataset()

@@ -1,3 +1,4 @@
+import datetime
 import datetime as dt
 import logging
 
@@ -65,7 +66,7 @@ class IsoBased(RoutingAlg):
     prune_segments: int  # number of azimuth bins that are used for pruning
 
     def __init__(self, start, finish, departure_time, figurepath=""):
-        super().__init__(start, finish, figurepath)
+        super().__init__(start, finish, departure_time,figurepath)
 
         self.lats_per_step = np.array([[start[0]]])
         self.lons_per_step = np.array([[start[1]]])
@@ -513,6 +514,7 @@ class IsoBased(RoutingAlg):
     def terminate(self):
         super().terminate()
 
+        # order routing steps chronologically
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
         self.azimuth_per_step = np.flip(self.azimuth_per_step, 0)
