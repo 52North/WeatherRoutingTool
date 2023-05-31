@@ -65,7 +65,7 @@ class IsoBased(RoutingAlg):
     prune_segments: int  # number of azimuth bins that are used for pruning
 
     def __init__(self, start, finish, departure_time, figurepath=""):
-        super().__init__(start, finish, figurepath)
+        super().__init__(start, finish, departure_time, figurepath)
 
         self.lats_per_step = np.array([[start[0]]])
         self.lons_per_step = np.array([[start[1]]])
@@ -229,7 +229,7 @@ class IsoBased(RoutingAlg):
             self.pruning_per_step(True)
             #form.print_current_time('move_boat: Step=' + str(i), start_time)
             #if i>9:
-            #self.update_fig('p')
+            self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate()
