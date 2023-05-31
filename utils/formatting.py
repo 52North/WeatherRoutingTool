@@ -29,4 +29,6 @@ class NumpyArrayEncoder(JSONEncoder):
             return str(obj)
         if isinstance(obj, numpy.int64):
             return str(obj)
+        if isinstance(obj, numpy.int32):
+            return str(obj)
         return JSONEncoder.default(self, obj)
