@@ -9,7 +9,7 @@ from weather import WeatherCondCMEMS
 
 if __name__ == "__main__":
     filename1 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP1_WH0.json"
-    filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP2_WH4.json"
+    filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP3_WH8.json"
     figurefile = "/home/kdemmich/MariData/Code/Figures"
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)

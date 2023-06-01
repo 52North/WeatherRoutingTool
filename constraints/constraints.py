@@ -12,6 +12,7 @@ from global_land_mask import globe
 import utils.graphics as graphics
 import utils.formatting as form
 from routeparams import RouteParams
+from utils.maps import Map
 from weather import WeatherCond
 
 logger = logging.getLogger('WRT.Constraints')
@@ -328,46 +329,52 @@ class WaveHeight(NegativeConstraintFromWeather):
         logger.info(form.get_log_step('maximum wave height=' + str(self.max_wave_height) + 'm', 1))
 
 
-class WaterDepth(NegativeConstraintFromWeather):
+class WaterDepth(NegativeContraint):
+    map: Map
+    depth_data: xr
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, weather):
-        NegativeConstraintFromWeather.__init__(self, 'WaterDepth', weather)
+    def __init__(self, depth_path, drougth, map):
+        NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
-        #self.resource_type = 0
+
+        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+
         self.current_depth = np.array([-99])
-        self.min_depth = 50
+        self.min_depth = drougth
+        self.map = map
 
     def set_drought(self, depth):
         self.min_depth = depth
 
     def constraint_on_point(self, lat, lon, time):
-        self.check_weather(lat, lon, time)
+        self.check_depth(lat, lon, time)
         returnvalue = self.current_depth > -self.min_depth
         # form.print_step('current_depth:' + str(self.current_depth), 1)
         return returnvalue
 
-    def check_weather(self, lat, lon, time):
+    def check_depth(self, lat, lon, time):
         lat_da = xr.DataArray(lat, dims="dummy")
         lon_da = xr.DataArray(lon, dims="dummy")
-        rounded_ds = self.wt.ds['depth'].interp(latitude=lat_da, longitude=lon_da, method='linear')
+        rounded_ds = self.depth_data['depth'].interp(latitude=lat_da, longitude=lon_da, method='linear')
         self.current_depth = rounded_ds.to_numpy()
 
     def print_info(self):
         logger.info(form.get_log_step('minimum water depth=' + str(self.min_depth) + 'm',1))
 
     def get_current_depth(self, lat, lon):
-        self.check_weather(lat, lon, None)
+        self.check_depth(lat, lon, None)
         return self.current_depth
 
-    def plot_depth_map_from_file(self, path, lat_start, lon_start, lat_end, lon_end):
+    def plot_depth_map_from_file(self, path):
         level_diff = 10
 
         ds_depth = xr.open_dataset(path)
         depth = ds_depth['z'].where(
-            (ds_depth.lat > lat_start) & (ds_depth.lat < lat_end) & (ds_depth.lon > lon_start) & (
-                        ds_depth.lon < lon_end) & (ds_depth.z < 0), drop=True)
+            (ds_depth.lat > self.map.lat1) & (ds_depth.lat < self.map.lat2) & (ds_depth.lon > self.map.lon1) & (
+                        ds_depth.lon < self.map.lon2) & (ds_depth.z < 0), drop=True)
 
         # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100) & (ds_depth.deptho<0) )
 
@@ -398,12 +405,17 @@ class WaterDepth(NegativeConstraintFromWeather):
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
 
-        depth = self.wt.ds['depth'].where((self.wt.ds.depth < 0), drop=True)
+        ds_depth = self.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
+        ds_depth_coarsened = ds_depth.compute()
+
+        self.depth_data = ds_depth_coarsened.where(
+            (ds_depth_coarsened.latitude > self.map.lat1) & (ds_depth_coarsened.latitude < self.map.lat2) & (ds_depth_coarsened.longitude > self.map.lon1) & (
+                    ds_depth_coarsened.longitude < self.map.lon2) & (ds_depth_coarsened.depth < 0), drop=True)
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        #cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-        #                        transform=ccrs.PlateCarree())
-        #fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+        cp = self.depth_data['depth'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                transform=ccrs.PlateCarree())
+        fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(
             left=0.1,
@@ -411,7 +423,8 @@ class WaterDepth(NegativeConstraintFromWeather):
             bottom=0,
             top=1,
             wspace=0,
-            hspace=0)
+            hspace=0
+        )
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
         ax.gridlines(draw_labels=True)
