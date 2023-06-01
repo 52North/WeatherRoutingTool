@@ -5,7 +5,7 @@ load_dotenv()
 
 ##
 # Defaults
-DEFAULT_MAP = [32, -17.5, 52, 2.5] # med sea
+DEFAULT_MAP = [42, -17.5, 52, 2.5] # med sea
 #DEFAULT_MAP = [51, 1.2,60,12]
 #DEFAULT_ROUTE = [51.121667, 1.355833, 57.56141, 11.65856]
 DEFAULT_ROUTE = [51.121667, 1.355833, 45.4907, -1.491394]

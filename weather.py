@@ -10,21 +10,10 @@ from scipy.interpolate import RegularGridInterpolator
 
 import utils.graphics as graphics
 import utils.formatting as form
+from utils.maps import Map
 from utils.unit_conversion import round_time
 
 logger = logging.getLogger('WRT.weather')
-
-class Map():
-    x1: float
-    x2: float
-    y1: float
-    y2: float
-
-    def __init__(self, x1, y1, x2, y2):
-        self.x1=x1
-        self.x2=x2
-        self.y1=y1
-        self.y2=y2
 
 class WeatherCond():
     model: str
@@ -77,10 +66,10 @@ class WeatherCond():
 
     def add_depth_to_EnvData(self, depth_path, bWriteEnvData=False):
         try:
-            lat_start = self.map_size.x1
-            lat_end = self.map_size.x2
-            lon_start = self.map_size.y1
-            lon_end = self.map_size.y2
+            lat_start = self.map_size.lat1
+            lat_end = self.map_size.lat2
+            lon_start = self.map_size.lon1
+            lon_end = self.map_size.lon2
         except:
             raise Exception('Need to initialise weather data bounding box before adding depth data!')
 
@@ -156,8 +145,8 @@ class WeatherCond():
         idx = (time_passed.total_seconds() / self.time_res.total_seconds())
         return {'rounded_time' : rounded_time, 'idx' : idx}
 
-    def set_map_size(self, lat1, lon1, lat2, lon2):
-        self.map_size=Map(lat1, lon1, lat2, lon2)
+    def set_map_size(self, map):
+        self.map_size=map
 
     def get_map_size(self):
         return self.map_size
@@ -356,10 +345,10 @@ class WeatherCondNCEP(WeatherCond):
 
     def read_wind_vectors(self, time):
         """Return u-v components for given rect for visualization."""
-        lat1 = self.map_size.x1
-        lat2 = self.map_size.x2
-        lon1 = self.map_size.y1
-        lon2 = self.map_size.y2
+        lat1 = self.map_size.lat1
+        lat2 = self.map_size.lat2
+        lon1 = self.map_size.lon1
+        lon2 = self.map_size.lon2
 
         u = self.ds['u10'].where(
             (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
@@ -411,8 +400,8 @@ class WeatherCondCMEMS(WeatherCond):
         lon_shape = wind['twa'].shape[1]
         #print('lat_shape', lat_shape)
         #print('long_shape', lon_shape)
-        lats_grid = np.linspace(self.map_size.x1, self.map_size.x2, lat_shape)
-        lons_grid = np.linspace(self.map_size.y1, self.map_size.y2, lon_shape)
+        lats_grid = np.linspace(self.map_size.lat1, self.map_size.lat2, lat_shape)
+        lons_grid = np.linspace(self.map_size.lon1, self.map_size.lon2, lon_shape)
         #print('lons shape', lons_grid.shape)
 
         f_twa = RegularGridInterpolator(
@@ -428,10 +417,10 @@ class WeatherCondCMEMS(WeatherCond):
     def read_wind_vectors(self, time):
         """Return u-v components for given rect for visualization."""
 
-        lat1 = self.map_size.x1
-        lat2 = self.map_size.x2
-        lon1 = self.map_size.y1
-        lon2 = self.map_size.y2
+        lat1 = self.map_size.lat1
+        lat2 = self.map_size.lat2
+        lon1 = self.map_size.lon1
+        lon2 = self.map_size.lon2
         time_str = time.strftime('%Y-%m-%d %H:%M:%S')
 
         ds_time=self.ds.sel(time = time_str)
