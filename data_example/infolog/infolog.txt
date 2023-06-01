@@ -1,0 +1,17 @@
+WRT.weather : INFO     Initialising weather
+WRT.weather : INFO           Reading dataset from/home/igor/projects/maridata/MariGeoRoute/WeatherRoutingTool/data_example/8e7db202-df43-11ed-b7a6-9263520eff59.nc
+WRT.weather : INFO           time resolution: 3:00:00 hours
+WRT.weather : INFO           forecast from 2023-04-17 09:00:00 to 2023-04-19 03:00:00
+WRT.weather : INFO           nof time steps 14
+WRT.Constraints: INFO     Print settings of Constraint Pars:
+WRT.Constraints: INFO           resolution=0.05
+WRT.Constraints: INFO           bCheckEndPoints=True
+WRT.Constraints: INFO           no land crossing
+WRT.Constraints: INFO           stay on wheather map
+WRT.routingalg: INFO     Initialising routing:
+WRT.routingalg: INFO           route from (51.121667, 1.355833) to (45.4907, -1.491394)
+WRT.routingalg: INFO           start time /home/igor/projects/maridata/MariGeoRoute/WeatherRoutingTool/data_example/figure
+WRT.routingalg: INFO           Fuel minimisation, delta power: 1000
+WRT.Pruning : WARNING   More than 50% of pruning segments constrained for step 1!
+WRT.Pruning : WARNING   More than 50% of pruning segments constrained for step 3!
+WRT.Pruning : ERROR    Did not arrive at destination! Need further routing steps or lower resolution.

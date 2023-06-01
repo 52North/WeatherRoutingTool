@@ -1,0 +1,3 @@
+WRT.Pruning : WARNING   More than 50% of pruning segments constrained for step 1!
+WRT.Pruning : WARNING   More than 50% of pruning segments constrained for step 3!
+WRT.Pruning : ERROR    Did not arrive at destination! Need further routing steps or lower resolution.
