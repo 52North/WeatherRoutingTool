@@ -1,4 +1,3 @@
-import datetime
 import datetime as dt
 import logging
 
@@ -66,7 +65,7 @@ class IsoBased(RoutingAlg):
     prune_segments: int  # number of azimuth bins that are used for pruning
 
     def __init__(self, start, finish, departure_time, figurepath=""):
-        super().__init__(start, finish, departure_time,figurepath)
+        super().__init__(start, finish, departure_time, figurepath)
 
         self.lats_per_step = np.array([[start[0]]])
         self.lons_per_step = np.array([[start[1]]])
@@ -514,7 +513,6 @@ class IsoBased(RoutingAlg):
     def terminate(self):
         super().terminate()
 
-        # order routing steps chronologically
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
         self.azimuth_per_step = np.flip(self.azimuth_per_step, 0)
@@ -638,67 +636,79 @@ class IsoBased(RoutingAlg):
     def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
         pass
 
-    def init_fig(self, wt):
-        level_diff = 10
+    def init_fig(self, water_depth, map, showDepth = True):
+        self.showDepth = showDepth
         plt.rcParams['font.size'] = 20
+        self.fig, self.ax = plt.subplots(figsize=(12, 10))
+        self.ax.axis('off')
+        self.ax.xaxis.set_tick_params(labelsize='large')
 
-        depth = wt.ds['depth'].where(wt.ds.depth < 0, drop=True)
+        if(self.showDepth):
+            ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
+            ds_depth_coarsened = ds_depth.compute()
 
-        self.fig, ax = plt.subplots(figsize=(12, 10))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
-        #cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-        #                         transform=ccrs.PlateCarree())
-        #self.fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+            self.depth = ds_depth_coarsened.where(
+                (ds_depth_coarsened.latitude > map.lat1) & (ds_depth_coarsened.latitude < map.lat2) & (
+                            ds_depth_coarsened.longitude > map.lon1) & (
+                        ds_depth_coarsened.longitude < map.lon2) & (ds_depth_coarsened.depth < 0), drop=True)
 
-        self.fig.subplots_adjust(
-            left=0.1,
-            right=1.2,
-            bottom=0,
-            top=1,
-            wspace=0,
-            hspace=0)
-        ax.add_feature(cf.LAND)
-        ax.add_feature(cf.COASTLINE)
-        ax.gridlines(draw_labels=True)
-
-        ax.plot( self.start[1],self.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",markersize=10)
-        ax.plot( self.finish[1],self.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",markersize=10)
-
-        self.route_ensemble = []
-        for iRoute in  range(0,self.prune_segments * self.variant_segments):
-            route, = ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], color = "firebrick")
-            self.route_ensemble.append(route)
-
-        gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
-        lats_gcr = [x[0] for x in gcr]
-        lons_gcr = [x[1] for x in gcr]
-        ax.plot(lons_gcr, lats_gcr, color = "orange")
-        plt.title('')
+        self.generate_basemap()
 
         final_path = self.figure_path + '/fig0.png'
         print('Saving start figure to ', final_path)
         plt.savefig(final_path)
 
-    def update_fig(self, status):
-        fig = self.fig
 
-        for iRoute in range(0,self.prune_segments * self.variant_segments):
-            if iRoute>= self.lats_per_step.shape[1]:
-                self.route_ensemble[iRoute].set_xdata([0])
-                self.route_ensemble[iRoute].set_ydata([0])
-            else:
-                self.route_ensemble[iRoute].set_xdata(self.lons_per_step[:,iRoute])
-                self.route_ensemble[iRoute].set_ydata(self.lats_per_step[:, iRoute])
+    def generate_basemap(self):
 
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+        self.ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
+        if(self.showDepth):
+            level_diff = 10
+            cp = self.depth['depth'].plot.contourf(ax=self.ax, levels=np.arange(-100, 0, level_diff),
+                                 transform=ccrs.PlateCarree())
+            self.fig.colorbar(cp, ax=self.ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+
+            self.fig.subplots_adjust(
+                left=0.1,
+                right=1.2,
+                bottom=0,
+                top=1,
+                wspace=0,
+                hspace=0
+            )
+
+        self.ax.add_feature(cf.LAND)
+        self.ax.add_feature(cf.COASTLINE)
+        self.ax.gridlines(draw_labels=True)
+
+        self.ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
+                     markersize=10)
+        self.ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
+                     markersize=10)
 
         gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
         lats_gcr = [x[0] for x in gcr]
         lons_gcr = [x[1] for x in gcr]
-        self.fig.get_axes()[1].plot(lons_gcr, lats_gcr, color = "orange")
+        self.ax.plot(lons_gcr, lats_gcr, color="orange")
+        plt.title('')
+
+    def update_fig(self, status):
+        fig = self.fig
+        route_ensemble = []
+        self.ax.remove()
+        self.generate_basemap()
+
+        count_routeseg = self.lats_per_step.shape[1]
+
+        for iRoute in range(0, count_routeseg):
+            route, = self.ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], color="firebrick")
+            route_ensemble.append(route)
+
+        for iRoute in range(0, count_routeseg):
+            route_ensemble[iRoute].set_xdata(self.lons_per_step[:, iRoute])
+            route_ensemble[iRoute].set_ydata(self.lats_per_step[:, iRoute])
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
         final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
         print('Saving updated figure to ', final_path)
