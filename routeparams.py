@@ -230,7 +230,7 @@ class RouteParams():
         return ax
 
     def plot_power_vs_dist(self, color, label):
-        power = self.ship_params_per_step.fuel
+        power = self.get_fuel_per_dist()
         dist = self.dists_per_step
         lat = self.lats_per_step
         lon = self.lons_per_step
@@ -240,5 +240,19 @@ class RouteParams():
 
         plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill=False, color = color, edgecolor = color, label = label)
         plt.xlabel('Weglänge (km)')
-        plt.ylabel('Energie (kWh/km)')
+        #plt.ylabel('Energie (kWh/km)')
+        plt.ylabel('Treibstoffverbrauch (t/km)')
         plt.xticks()
+
+    def get_fuel_per_dist(self):
+        fuel_per_hour = self.ship_params_per_step.fuel
+        delta_time = np.full(self.count-1, datetime.timedelta(seconds=0))
+        fuel = np.full(self.count-1, -99.)
+
+        for i in range(0,self.count-1):
+            delta_time[i] = self.starttime_per_step[i+1]-self.starttime_per_step[i]
+            delta_time[i] = delta_time[i].total_seconds()/(60*60)
+            fuel[i] = fuel_per_hour[i] * delta_time[i]
+
+        return fuel
+

@@ -65,6 +65,7 @@ class Constraint():
     def plot_route_in_constraint(self, route: RouteParams, colour, fig, ax):
         fig, ax = self.plot_constraint(fig, ax)
         route.plot_route(ax, graphics.get_colour(0), "")
+        return ax
 
     def plot_constraint(self):
         pass
