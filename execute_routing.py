@@ -60,8 +60,6 @@ if __name__ == "__main__":
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    # boat.init_hydro_model_single_pars()
-    # boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
     boat.set_boat_speed(config.BOAT_SPEED)
     # boat.calibrate_simple_fuel()
@@ -69,18 +67,12 @@ if __name__ == "__main__":
     # boat.test_power_consumption_per_course()
     # boat.test_power_consumption_per_speed()
 
-    # boat = SailingBoat(filepath=boatfile)
-
     # *******************************************
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
     wt.set_map_size(map)
-    #wt.add_depth_to_EnvData(depthfile)
-    # wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
-    # wt.check_ds_format()
     wt.init_wind_functions()
     wt.init_wind_vectors()
-    # vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
     # *******************************************
     # initialise constraints
@@ -90,20 +82,14 @@ if __name__ == "__main__":
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
-    #over_waypoint = PositiveConstraintPoint(55.796111, 3.100278)   #Route 1, good weather
-    #over_waypoint = PositiveConstraintPoint(54.608889, 6.179722)   #Route 1, ok weather
-    #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)   #Route 1, bad weather
-    #over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, intermediate weather
-    #over_waypoint1 = PositiveConstraintPoint(45.715, -5.502222)    #Route 2, good weather WP2
-    #over_waypoint1 = PositiveConstraintPoint(46.923056, -4.176667) #Route 2, ok weather WP2
-    #over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  #Route 2, bad weather WP3
 
     #Simulationsstudie 2, Thames <-> Gothenburg
     #over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
     #over_waypoint2 = PositiveConstraintPoint(51.753670, 2.600120)
     #over_waypoint3 = PositiveConstraintPoint(53.121505, 2.722398)
+
     #over_waypoint4 = PositiveConstraintPoint(55.796111, 3.100278)  # good weather
-    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
+    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)  # ok weather
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
 
     #Simulationsstudie 2, Thames <-> Bordeaux
@@ -112,9 +98,9 @@ if __name__ == "__main__":
     over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
     over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
-    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)  # good weather
+    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
     #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
-    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
+    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)   # bad weather
 
 
     constraint_list = ConstraintsList(pars)
