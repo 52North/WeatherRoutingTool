@@ -405,8 +405,9 @@ class Tanker(Boat):
     # main function for communication with mariPower package (see documentation above)
     def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
         self.write_netCDF_courses(courses, lats, lons, time)
-        ds = self.get_fuel_netCDF_loop()
+        #ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
+        ds = self.get_fuel_netCDF()
         ship_params = self.extract_params_from_netCDF(ds)
         ds.close()
 

@@ -230,7 +230,7 @@ class IsoBased(RoutingAlg):
             self.pruning_per_step(True)
             #form.print_current_time('move_boat: Step=' + str(i), start_time)
             #if i>9:
-            #self.update_fig('p')
+            self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate()
@@ -648,9 +648,9 @@ class IsoBased(RoutingAlg):
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                                 transform=ccrs.PlateCarree())
-        self.fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+        #cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+        #                         transform=ccrs.PlateCarree())
+        #self.fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         self.fig.subplots_adjust(
             left=0.1,
