@@ -535,9 +535,6 @@ class IsoBased(RoutingAlg):
             starttime_per_step = self.starttime_per_step[:],
             ship_params_per_step = self.shipparams_per_step
         )
-        #route.print_route()
-        #self.check_destination()
-        #self.check_positive_power()
 
         return route
 
@@ -644,6 +641,7 @@ class IsoBased(RoutingAlg):
         self.ax.xaxis.set_tick_params(labelsize='large')
 
         if(self.showDepth):
+            # decrease resolution and extend of depth data to prevent memory issues when plotting
             ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
             ds_depth_coarsened = ds_depth.compute()
 
@@ -748,8 +746,8 @@ class IsoBased(RoutingAlg):
         print(self.finish_temp)
 
     def check_destination(self):
-        destination_lats = self.lats_per_step[self.lats_per_step.shape[0]-1]
-        destination_lons = self.lons_per_step[self.lons_per_step.shape[0]-1]
+        destination_lats = self.lats_per_step[0]
+        destination_lons = self.lons_per_step[0]
 
         arrived_at_destination = (destination_lats==self.finish[0]) & (destination_lons == self.finish[1])
         if not arrived_at_destination:

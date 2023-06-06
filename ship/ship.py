@@ -286,7 +286,7 @@ class Tanker(Boat):
         lons = [lons[index] for index in sorted(lon_ind)]
         time_reshape = time.reshape(ds['lat'].shape[0], ds['it'].shape[0])[:,0]
 
-        print('Request power calculation for ' + str(courses.shape) + ' courses, consequently ' + str(courses.shape[0]/len(lons)) + ' requests to mariPower')
+        print('Request power calculation for ' + str(courses.shape) + ' courses and ' + str(len(lons)) + ' coordinates')
 
         ds["lon"] = (['lat'], lons)
         ds["time"] = (['lat'], time_reshape)
@@ -347,7 +347,11 @@ class Tanker(Boat):
     #
     def get_fuel_netCDF(self):
         ship = mariPower.ship.CBT()
+
+        #start_time = time.time()
         mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
+        #form.print_current_time('time for mariPower request:', start_time)
+
 
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
