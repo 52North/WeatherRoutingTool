@@ -13,6 +13,7 @@ from ship.ship import *
 from weather import *
 from constraints.constraints import *
 from algorithms.routingalg_factory import *
+from utils.maps import Map
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
@@ -54,6 +55,7 @@ if __name__ == "__main__":
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
     start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
+    map = Map(lat1,lon1,lat2,lon2)
 
     # *******************************************
     # initialise boat
@@ -72,7 +74,7 @@ if __name__ == "__main__":
     # *******************************************
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
-    wt.set_map_size(lat1, lon1, lat2, lon2)
+    wt.set_map_size(map)
     #wt.add_depth_to_EnvData(depthfile)
     # wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     # wt.check_ds_format()
@@ -84,8 +86,7 @@ if __name__ == "__main__":
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(wt)
-    water_depth.set_drought(config.BOAT_DROUGHT)
+    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -119,6 +120,7 @@ if __name__ == "__main__":
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
+    constraint_list.add_neg_constraint(water_depth)
 
     #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)

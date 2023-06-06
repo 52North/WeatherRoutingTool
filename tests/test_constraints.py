@@ -7,6 +7,7 @@ import pytest
 import basic_test_func
 import config
 from constraints.constraints import *
+from utils.maps import Map
 from weather import *
 
 def generate_dummy_constraint_list():
@@ -129,16 +130,8 @@ def test_safe_waterdepth():
     ])
     time = 0
     depthfile = config.DEPTH_DATA
-    windfile = os.environ['BASE_PATH'] +  "/tests/data/77175d34-9006-11ed-b628-0242ac120003_Brighton_Rotterdam.nc"
-    model = '2020111600'
-    start_time = datetime.datetime.now()
-    hours = 0
-
-    weather = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
-    weather.set_map_size(50, 0, 55, 5)
-    weather.add_depth_to_EnvData(depthfile)
-    waterdepth = WaterDepth(weather)
-    waterdepth.set_drought(20)
+    map = Map(50, 0, 55, 5)
+    waterdepth = WaterDepth(depthfile, 20, map)
     #waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]
@@ -148,7 +141,6 @@ def test_safe_waterdepth():
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
-    weather.close_env_file()
 
 '''
 def test_adjust_depth_format():
@@ -223,14 +215,8 @@ def test_depth_interpolation_depth():
 
         if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(depth_orig[i]))
 
-    model = '2020111600'
-    start_time = datetime.datetime.now()
-    hours = 0
-
-    weather = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
-    weather.set_map_size(49,-4, 56, 7)
-    weather.add_depth_to_EnvData(depthfile)
-    waterdepth = WaterDepth(weather)
+    map = Map(49,-4, 56, 7)
+    waterdepth = WaterDepth(depthfile, 20, map)
 
     depth_int = waterdepth.get_current_depth(lat, lon)
     diff = (depth_int - depth_orig) < 1
@@ -239,47 +225,6 @@ def test_depth_interpolation_depth():
        if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(depth_int[i]) + ', diff=' + str(diff))
 
     assert diff.all
-
-
-def test_depth_interpolation_weather():
-    debug = True
-    depthfile = config.DEPTH_DATA
-    windfile = os.environ['BASE_PATH'] +  "/tests/data/77175d34-9006-11ed-b628-0242ac120003_Brighton_Rotterdam.nc"
-
-    lat = [55.0,49.60, 50.14, 50.98, 51.60,
-           52.29, 53.18, 53.92, 54.26, 55.0]
-
-    lon = [-1.04,-3.98, -2.30, 1.43, 2.65,
-           2.75, 3.70, 4.98, 6.28, 0.41]
-
-    time = dt.datetime.strptime("2022070100", '%Y%m%d%H')
-
-    ds_orig=xr.open_dataset(windfile)
-    if(debug): print('ds_orig', ds_orig)
-    temp_orig = np.full(len(lat), -99)
-
-    for i in range (0, len(lat)):
-        #depth_orig[i] = ds_orig['deptho'].sel(latitude = lat[i], longitude = lon[i], method = "nearest").to_numpy()
-        ds_rounded=ds_orig.interp(latitude = lat[i], longitude = lon[i], time = time,  method='linear')
-        temp_orig[i] = ds_rounded['Temperature_surface'].to_numpy()
-
-        if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(temp_orig[i]))
-
-    model = '2020111600'
-    start_time = datetime.datetime.now()
-    hours = 0
-
-    weather = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
-    weather.set_map_size(49,-4, 56, 7)
-    weather.add_depth_to_EnvData(depthfile)
-    waterdepth = WaterDepth(weather)
-
-    temp_int = np.full(len(lat), -99)
-    for i in range (0, len(lat)):
-       temp_int[i] = weather.ds['Temperature_surface'].interp(latitude=lat[i], longitude=lon[i], time = time, method='linear').to_numpy()
-       diff = temp_int[i] - temp_orig[i]
-       if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(temp_int[i]) + ', diff=' + str(diff))
-       assert diff<=1.
 
 '''
     test shape of is_constrained

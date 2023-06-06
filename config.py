@@ -5,12 +5,17 @@ load_dotenv()
 
 ##
 # Defaults
-DEFAULT_MAP = [32, -17.5, 52, 2.5] # med sea
+DEFAULT_MAP = [42, -17.5, 52, 2.5] # med sea
 #DEFAULT_MAP = [51, 1.2,60,12]
 #DEFAULT_ROUTE = [51.121667, 1.355833, 57.56141, 11.65856]
 DEFAULT_ROUTE = [51.121667, 1.355833, 45.4907, -1.491394]
+<<<<<<< HEAD
 TIME_FORECAST = 48              # forecast hours weather
 ROUTING_STEPS = 3             # number of routing steps
+=======
+TIME_FORECAST = 80              # forecast hours weather
+ROUTING_STEPS = 2             # number of routing steps
+>>>>>>> main
 DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
 #DELTA_FUEL = 30000000*1000*1 # [Ws]
 DELTA_FUEL = 1*1000             # amount of fuel per routing step (kg)
