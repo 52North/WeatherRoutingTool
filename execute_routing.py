@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
+    wt = WeatherCondFromFile(model, start_time, hours, 3,windfile, )
     wt.set_map_size(map)
 
     # *******************************************
