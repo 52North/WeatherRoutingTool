@@ -184,31 +184,6 @@ class WeatherCond():
 
     def check_ds_format(self):
         print('Printing dataset', self.ds)
-    '''
-    def grib_to_wind_function(filepath):
-        """Vectorized wind functions from grib file.GRIB is a file form for the storage and transport of gridded meteorological data,
-        such as Numerical Weather Prediction model output."""
-        grbs = pg.open(filepath)
-
-        u, _, _ = grbs[1].data()
-        v, _, _ = grbs[2].data()
-
-        tws = np.sqrt(u * u + v * v)
-        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0
-
-        return {'twa': twa, 'tws': tws}     
-    '''
-
-
-
-    '''
-    def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
-        """Return u-v components for given rect for visualization."""
-        grbs = pg.open(filepath)
-        u, lats_u, lons_u = grbs[1].data(lat1, lat2, lon1, lon2)
-        v, lats_v, lons_v = grbs[2].data(lat1, lat2, lon1, lon2)
-        return u, v, lats_u, lons_u
-    '''
 
     def get_twatws_from_uv(self, u, v):
         tws = np.sqrt(u ** 2 + v ** 2)
@@ -236,59 +211,6 @@ class WeatherCond():
             #print('reading wind vector time', time)
 
         self.wind_vectors = wind_vectors
-
-    def init_wind_functions(self):
-        """
-        Read wind functions.
-            Parameters:
-                    model (dict): available forecast wind functions
-            Returns:
-                    wind_functions (dict):
-                        model: model timestamp
-                        model+hour: function for given forecast hour
-         """
-        wind_function = {}
-        wind_function['model'] = self.model
-
-        for i in range(self.time_steps):
-            wind_function[i] = self.read_wind_functions(i)
-
-        self.wind_functions = wind_function
-
-    def get_wind_function(self, coordinate, time):
-        """
-        Vectorized TWA and TWS function from forecast.
-            Parameters:
-                    winds (dict): available forecast wind functions
-                    coordinate (array): array of tuples (lats, lons)
-                    time (datetime): time to forecast
-            Returns:
-                    forecast (dict):
-                        twa (array): array of TWA
-                        tws (array): array of TWS
-        """
-        debug = True
-        time_passed = self.get_time_step_index(time)
-        rounded_time= time_passed['rounded_time']
-        idx = time_passed['idx']
-
-        try:
-            wind_timestamp = self.wind_functions[idx]['timestamp']
-        except ValueError:
-            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(self.time_steps) + ' available')
-
-        if not (rounded_time==self.wind_functions[idx]['timestamp']):
-            ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
-            raise Exception(ex)
-
-        wind = self.wind_functions[idx]
-        try:
-            twa = wind['twa'](coordinate)
-            tws = wind['tws'](coordinate)
-        except:
-            raise Exception('Running out of weather map! Asking for time' + str(rounded_time) + ' wind:' + str(wind))
-
-        return {'twa': twa, 'tws': tws}
 
     def get_wind_vector(self, time):
         time_passed = self.get_time_step_index(time)

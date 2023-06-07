@@ -71,8 +71,6 @@ if __name__ == "__main__":
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
     wt.set_map_size(map)
-    wt.init_wind_functions()
-    wt.init_wind_vectors()
 
     # *******************************************
     # initialise constraints
