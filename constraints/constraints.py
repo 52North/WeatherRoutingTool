@@ -15,6 +15,18 @@ from routeparams import RouteParams
 from utils.maps import Map
 from weather import WeatherCond
 
+
+## used as a part of the continuouscheck class ##
+import os
+import sqlalchemy as db
+import pandas as pd
+import geopandas as gpd
+from dotenv import load_dotenv
+# Load the environment variables from the .env file
+load_dotenv()
+
+
+
 logger = logging.getLogger('WRT.Constraints')
 
 ##
@@ -458,3 +470,85 @@ class StayOnMap(NegativeContraint):
         self.lon1 = lon1
         self.lat2 = lat2
         self.lon2 = lon2
+
+
+class ContinuousCheck(NegativeContraint):
+    def __init__(self):
+        
+        self.host = os.getenviron('HOST')
+        self.database = os.getenviron('DATABASE')
+        self.user = os.getenviron('USER')
+        self.password = os.getenviron('PASSWORD')
+        self.port = os.getenviron('PORT')
+        self.nodes = "nodes"
+        self.ways = "ways"
+        self.land_polygons = "land_polygons"
+        
+    def connect_database(self):
+
+        # Connect to the PostgreSQL database using SQLAlchemy
+        engine = db.create_engine('postgresql://{user}:{pw}@{host}/{db}'
+                                .format(user=self.user,
+                                        pw=self.password,
+                                        host=self.host,
+                                        db=self.database,
+                                        port=self.port)
+        #connection = engine.connect()
+        return engine
+        
+        
+        
+    def query_nodes(self):
+        # Define SQL query to retrieve list of tables
+        #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        query = f"SELECT * FROM {self.nodes}"
+    
+        # Use geopandas to read the SQL query into a dataframe from postgis
+        gdf = gpd.read_postgis(query, connect_database())
+        
+        # read timestamp type data as string
+        gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        return gdf
+        
+    def query_ways(self):
+        # Define SQL query to retrieve list of tables
+        #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        query = f"SELECT *, linestring AS geom FROM {self.ways}" 
+    
+        # Use geopandas to read the SQL query into a dataframe from postgis
+        gdf = gpd.read_postgis(query, connect_database())
+        
+        # read timestamp type data as string
+        gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        return gdf
+        
+        def gdf_seamark_combined(self,gdf, seamark_list):
+        '''Create new GeoDataFrame with different seamark tags
+        
+        Parameters
+        ----------
+        
+        gdf : GeoDataFrame
+            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
+            
+        seamark_list : list
+            list of all the tags that must be overlayed together
+        '''
+
+        gdf_list = []
+        for i in range(0, len(seamark_list)):
+            gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+            gdf_list.append(gdf) 
+
+
+        gdf_concat = pd.concat(gdf_list)
+
+        return gdf_concat
+        
+        
+        
+
+        
+    
