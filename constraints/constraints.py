@@ -22,6 +22,8 @@ import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
 from dotenv import load_dotenv
+from shapely.geometry import Point
+from shapely import STRtree
 # Load the environment variables from the .env file
 load_dotenv()
 
@@ -475,16 +477,19 @@ class StayOnMap(NegativeContraint):
 class ContinuousCheck(NegativeContraint):
     def __init__(self):
         
-        self.host = os.getenviron('HOST')
-        self.database = os.getenviron('DATABASE')
-        self.user = os.getenviron('USER')
-        self.password = os.getenviron('PASSWORD')
-        self.port = os.getenviron('PORT')
+        self.host = os.getenv('HOST')
+        self.database = os.getenv('DATABASE')
+        self.user = os.getenv('USER')
+        self.password = os.getenv('PASSWORD')
+        self.port = os.getenv('PORT')
         self.nodes = "nodes"
         self.ways = "ways"
         self.land_polygons = "land_polygons"
+        self.predicates = ['intersects', 'contains', 'touches', 'crosses', 'overlaps']
+        self.tags = ['separation_zone', 'separation_line', 'separation_lane', 'restricted_area' ,'separation_roundabout']
         
     def connect_database(self):
+        '''Connect to the database'''
 
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine('postgresql://{user}:{pw}@{host}/{db}'
@@ -499,12 +504,21 @@ class ContinuousCheck(NegativeContraint):
         
         
     def query_nodes(self):
+        '''Create new GeoDataFrame using public.nodes table in the query
+
+                return
+                ----------
+
+                gdf : GeoDataFrame
+                    gdf including all the features from public.ways table
+        '''
+
         # Define SQL query to retrieve list of tables
         #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
         query = f"SELECT * FROM {self.nodes}"
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, connect_database())
+        gdf = gpd.read_postgis(query, self.connect_database())
         
         # read timestamp type data as string
         gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -512,19 +526,29 @@ class ContinuousCheck(NegativeContraint):
         return gdf
         
     def query_ways(self):
+        '''Create new GeoDataFrame using public.ways table in the query
+
+                return
+                ----------
+
+                gdf : GeoDataFrame
+                    gdf including all the features from public.ways table
+        '''
+
+
         # Define SQL query to retrieve list of tables
         #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
         query = f"SELECT *, linestring AS geom FROM {self.ways}" 
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, connect_database())
+        gdf = gpd.read_postgis(query, self.connect_database())
         
         # read timestamp type data as string
         gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
         return gdf
         
-        def gdf_seamark_combined(self,gdf, seamark_list):
+    def gdf_seamark_combined(self,seamark_object, seamark_list):
         '''Create new GeoDataFrame with different seamark tags
         
         Parameters
@@ -532,23 +556,109 @@ class ContinuousCheck(NegativeContraint):
         
         gdf : GeoDataFrame
             GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
-            
+
+        seamark_object : str
+            nodes or ways table name
+
         seamark_list : list
             list of all the tags that must be overlayed together
         '''
+        if seamark_object == self.nodes:
+            gdf = self.query_nodes()
+            gdf_list = []
+            for i in range(0, len(seamark_list)):
+                gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                gdf_list.append(gdf)
+            gdf_concat = pd.concat(gdf_list)
 
-        gdf_list = []
-        for i in range(0, len(seamark_list)):
-            gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-            gdf_list.append(gdf) 
+        elif seamark_object == self.ways:
+            gdf = self.query_ways()
+            gdf_list = []
+            for i in range(0, len(seamark_list)):
+                gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                gdf_list.append(gdf)
 
-
-        gdf_concat = pd.concat(gdf_list)
+            gdf_concat = pd.concat(gdf_list)
 
         return gdf_concat
         
         
-        
+    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
+        debug = False
 
-        
-    
+        delta_lats = (lat_end - lat_start) * self.pars.resolution
+        delta_lons = (lon_end - lon_start) * self.pars.resolution
+        x0 = lat_start
+        y0 = lon_start
+
+        # if (debug):
+        # form.print_step('Constraints: Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
+        #        lat_end) + ',' + str(lon_end), 0)
+
+        nSteps = int(1. / self.pars.resolution)
+        for iStep in range(0, nSteps):
+            x = x0 + delta_lats
+            y = y0 + delta_lons
+
+            is_constrained = self.safe_endpoint(x, y, current_time, is_constrained)
+            x0 = x
+            y0 = y
+
+        if (debug):
+            lat_start_constrained = lat_start[is_constrained == 1]
+            lon_start_constrained = lon_start[is_constrained == 1]
+            lat_end_constrained = lat_end[is_constrained == 1]
+            lon_end_constrained = lon_end[is_constrained == 1]
+
+            if lat_start_constrained.shape[0] > 0: form.print_step('transitions constrained:', 1)
+            for i in range(0, lat_start_constrained.shape[0]):
+                form.print_step('[' + str(lat_start_constrained[i]) + ',' + str(lon_start_constrained[i]) + '] to [' +
+                              str(lat_end_constrained[i]) + ',' + str(lon_end_constrained[i]) + ']', 2)
+
+        # if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
+        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
+        #    raise ValueError(exc)
+
+        if not np.allclose(x, lat_end): raise Exception(
+            'Constraints.land_crossing(): did not reach latitude of destination!')
+        if not np.allclose(y, lon_end): raise Exception(
+            'Constraints.land_crossing(): did not reach longitude of destination!')
+
+        return is_constrained
+
+    def add_pos_constraint(self, constraint):
+        self.positive_constraints.append(constraint)
+        self.pos_size += 1
+
+    def add_neg_constraint(self, constraint):
+        self.negative_constraints.append(constraint)
+        self.neg_size += 1
+
+    def check_weather(self):
+        pass
+
+
+    def check_crossing(self,route):
+        '''Checks different spatial relations (intersection, contains, touches, crosses)
+
+                Parameters
+                ----------
+                gdf : GeoDataFrame
+                    GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
+
+                return
+                ----------
+                query_tree : list of shapely STRTree
+        '''
+
+        query_tree = []
+        for predicate in self.predicates:
+            tree = STRtree(self.gdf_seamark_combined()['geometry'])
+
+            #route['geometry'] should e the geometry of the route that will be tested
+            tree.query(route['geometry'], predicate=predicate).tolist()
+            if tree != '[[], []]':
+                query_tree.append(tree)
+            else:
+                logger.info('No crossing')
+        return query_tree
