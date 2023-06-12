@@ -548,7 +548,7 @@ class ContinuousCheck(NegativeContraint):
         
         return gdf
         
-    def gdf_seamark_combined(self,seamark_object, seamark_list):
+    def gdf_seamark_combined(self,seamark_object=list, seamark_list=list):
         '''Create new GeoDataFrame with different seamark tags
         
         Parameters
@@ -563,7 +563,7 @@ class ContinuousCheck(NegativeContraint):
         seamark_list : list
             list of all the tags that must be overlayed together
         '''
-        if seamark_object == self.nodes:
+        if (self.nodes in seamark_object) and (seamark_list in self.tags):
             gdf = self.query_nodes()
             gdf_list = []
             for i in range(0, len(seamark_list)):
@@ -571,7 +571,7 @@ class ContinuousCheck(NegativeContraint):
                 gdf_list.append(gdf)
             gdf_concat = pd.concat(gdf_list)
 
-        elif seamark_object == self.ways:
+        elif (self.ways in seamark_object) and (seamark_list in self.tags):
             gdf = self.query_ways()
             gdf_list = []
             for i in range(0, len(seamark_list)):
@@ -579,6 +579,31 @@ class ContinuousCheck(NegativeContraint):
                 gdf_list.append(gdf)
 
             gdf_concat = pd.concat(gdf_list)
+
+        elif (self.nodes in seamark_object) and (self.ways in seamark_object) and (seamark_list in self.tags):
+
+            def concat_nodes_ways():
+                # consider the scenario for a tag present in nodes and ways at the same time
+                gdf_nodes = self.query_nodes()
+                gdf_ways = self.query_ways()
+
+                #checks if there are repeated values in both gdfs
+                if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
+                    gdf_all = pd.concat([gdf_nodes, gdf_ways])
+                else:
+                    gdf_all =  pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset='id', keep='first')
+
+                return gdf_all
+
+            gdf = concat_nodes_ways()
+            gdf_list = []
+            for i in range(0, len(seamark_list)):
+                gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                gdf_list.append(gdf)
+
+            gdf_concat = pd.concat(gdf_list)
+        else:
+            logger.info('Check the seamark object and seamark tag list')
 
         return gdf_concat
         
