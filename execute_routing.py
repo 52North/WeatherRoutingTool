@@ -69,10 +69,10 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondFromFile(model, start_time, hours, 3,windfile, )
-    #wt = WeatherCondODC(model, start_time,hours,3)
+    #wt = WeatherCondFromFile(model, start_time, hours, 3)
+    wt = WeatherCondODC(model, start_time,hours,3)
     wt.set_map_size(map)
-    wt.read_dataset("")
+    wt.read_dataset()
 
     # *******************************************
     # initialise constraints

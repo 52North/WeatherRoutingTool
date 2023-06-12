@@ -132,9 +132,8 @@ class WeatherCondFromFile(WeatherCond):
     wind_functions: None
     wind_vectors: None
 
-    def __init__(self, model, time, hours, time_res, filepath):
+    def __init__(self, model, time, hours, time_res):
         super().__init__(model, time, hours, time_res)
-        self.read_dataset(filepath)
 
     def calculate_wind_function(self, time):
         time_str=time.strftime('%Y-%m-%d %H:%M:%S')
