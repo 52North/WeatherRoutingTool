@@ -10,6 +10,7 @@ from scipy.interpolate import RegularGridInterpolator
 
 import utils.graphics as graphics
 import utils.formatting as form
+from maridatadownloader import DownloaderFactory
 from utils.maps import Map
 from utils.unit_conversion import round_time
 
@@ -23,7 +24,6 @@ class WeatherCond():
     time_end: dt.timedelta
     map_size: Map
     ds: xr.Dataset
-
 
     def __init__(self, model, time, hours, time_res):
         form.print_line()
@@ -78,13 +78,53 @@ class WeatherCond():
     def get_map_size(self):
         return self.map_size
 
-    def read_dataset(self, filepath):
-        logger.info(form.get_log_step('Reading dataset from' + str(filepath),1))
-        self.ds = xr.open_dataset(filepath)
-        #self.ds = self.manipulate_dataset()
-
-        print(self.ds)
+    def read_dataset(self, filepath = None):
+        pass
 class WeatherCondODC(WeatherCond):
+
+    def __init__(self,model, time, hours, time_res):
+        super().__init__(model, time, hours, time_res)
+
+    def read_dataset(self, filepath = None):
+        #time_min = "2023-05-05T12:00:00"
+        #time_max = "2023-05-05T18:00:00"
+
+        time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
+        time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
+
+        #lon_min = -180
+        #lon_max = 180
+        #lat_min = -90
+        #lat_max = 90
+
+        lon_min = self.map_size.lon1
+        lon_max = self.map_size.lon2
+        lat_min = self.map_size.lat1
+        lat_max = self.map_size.lat2
+
+        height_min = 10
+        height_max = 20
+
+        # download GFS data
+        #par_GFS = ["Temperature_surface"]
+        #sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
+        #            'height_above_ground2': slice(height_min, height_max)}
+
+        #downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
+        #ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
+
+        # download CMEMS data
+        par_CMEMS = ["VMDR"]
+        sel_dict_CMEMS = {'time': slice(time_min, time_max)}
+
+        downloader_cmems = DownloaderFactory.get_downloader(product_type='cmems', product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i')
+        ds_CMEMS = downloader_cmems.download(parameters=par_CMEMS, sel_dict=sel_dict_CMEMS, product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i')
+
+        print('self.ds: ',ds_CMEMS)
+
+        raise Exception('Stop here')
+
+
     def print_sth(self):
         print('sth')
 
@@ -323,3 +363,9 @@ class WeatherCondFromFile(WeatherCond):
             raise Exception(ex)
 
         return self.wind_vectors[idx]
+    def read_dataset(self, filepath):
+        logger.info(form.get_log_step('Reading dataset from' + str(filepath),1))
+        self.ds = xr.open_dataset(filepath)
+        #self.ds = self.manipulate_dataset()
+
+        print(self.ds)
