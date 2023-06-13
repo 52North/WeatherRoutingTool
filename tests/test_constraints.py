@@ -10,6 +10,8 @@ from constraints.constraints import *
 from utils.maps import Map
 from weather import *
 
+from WeatherRoutingTool.constraints import constraints
+
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
     pars.resolution = 1./10
@@ -274,3 +276,6 @@ def test_check_constraints_land_crossing():
     is_constrained = ra.check_constraints(move, constraint_list)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
+
+def test_connect_database():
+    assert isinstance(constraints.ContinuousCheck.connect_database(), type(db.create_engine('postgresql://myuser:***@172.25.0.3/mydatabase')))

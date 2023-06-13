@@ -497,7 +497,7 @@ class ContinuousCheck(NegativeContraint):
                                         pw=self.password,
                                         host=self.host,
                                         db=self.database,
-                                        port=self.port)
+                                        port=self.port))
         #connection = engine.connect()
         return engine
         
