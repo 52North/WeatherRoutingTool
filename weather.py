@@ -2,6 +2,7 @@
 import datetime as dt
 import logging
 import sys
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,16 +87,8 @@ class WeatherCondODC(WeatherCond):
         super().__init__(model, time, hours, time_res)
 
     def read_dataset(self, filepath = None):
-        #time_min = "2023-05-05T12:00:00"
-        #time_max = "2023-05-05T18:00:00"
-
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
-
-        #lon_min = -180
-        #lon_max = 180
-        #lat_min = -90
-        #lat_max = 90
 
         lon_min = self.map_size.lon1
         lon_max = self.map_size.lon2
@@ -105,24 +98,63 @@ class WeatherCondODC(WeatherCond):
         height_min = 10
         height_max = 20
 
+        start_time = time.time()
         # download GFS data
-        #par_GFS = ["Temperature_surface"]
-        #sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
-        #            'height_above_ground2': slice(height_min, height_max)}
+        par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground", "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", ]
+        sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
+                    'height_above_ground2': slice(height_min, height_max)}
 
-        #downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
-        #ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
+        downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
+        ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
 
-        # download CMEMS data
-        par_CMEMS = ["VMDR"]
-        sel_dict_CMEMS = {'time': slice(time_min, time_max)}
+        # download CMEMS wave data
+        par_CMEMS_wave = ["VMDR", "VHM0", "VTPK"]
+        sel_dict_CMEMS_wave = {'time': slice(time_min, time_max), 'latitude': slice(lat_min,lat_max), 'longitude': slice(lon_min,lon_max)}
+        downloader_cmems_wave = DownloaderFactory.get_downloader(
+            downloader_type='opendap',
+            platform='cmems',
+            product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
+            product_type='nrt',
+            username='kdemmich',
+            password='FE57qnfL9784wd2Pusq')
+        ds_CMEMS_wave = downloader_cmems_wave.download(parameters=par_CMEMS_wave, sel_dict=sel_dict_CMEMS_wave)
 
-        downloader_cmems = DownloaderFactory.get_downloader(product_type='cmems', product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i')
-        ds_CMEMS = downloader_cmems.download(parameters=par_CMEMS, sel_dict=sel_dict_CMEMS, product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i')
+        # download CMEMS physics data
+        par_CMEMS_phys = ["thetao", "vo", "uo", "so"]
+        sel_dict_CMEMS_phys = {'time': slice(time_min, time_max,3 ), 'latitude': slice(lat_min,lat_max), 'longitude': slice(lon_min,lon_max)}
+        downloader_cmems_phys = DownloaderFactory.get_downloader(
+            downloader_type='opendap', platform='cmems',
+            product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
+            product_type='nrt', username='kdemmich',
+            password='FE57qnfL9784wd2Pusq')
+        ds_CMEMS_phys = downloader_cmems_phys.download(parameters=par_CMEMS_phys,
+                                             sel_dict=sel_dict_CMEMS_phys)
 
-        print('self.ds: ',ds_CMEMS)
+        form.print_current_time('time after weather request:', start_time)
 
-        raise Exception('Stop here')
+        time_wave = ds_CMEMS_wave['time'].to_numpy()
+        time_wind = ds_CMEMS_phys['time'].to_numpy()
+
+        print('time_wave:', time_wave)
+        print('time_wind:', time_wind)
+        time_phys = time_wind + np.full(time_wind.shape[0],dt.timedelta(minutes=30).to_timedelta64())
+        assert np.array_equal(time_wind,time_wave)
+
+        form.print_current_time('time after cross checks:', start_time)
+
+
+        ds_CMEMS_phys.to_netcdf('temp.nc')
+        print('phys: ', ds_CMEMS_phys)
+
+        full_data = xr.merge([ds_CMEMS_phys,ds_CMEMS_wave])
+
+        print('full: ', full_data)
+
+
+        form.print_current_time('time after weather request:', start_time)
+
+
+        raise Exception('Stop here!')
 
 
     def print_sth(self):
