@@ -1,7 +1,10 @@
 import datetime as dt
-
+import os
+os.chdir('/home/parichay/Mari/MariGeoRoute/Isochrone')
+print(os.getcwd())
 import config
 from algorithms.isofuel import IsoFuel
+from algorithms.RunGenetic import RunGenetic
 
 class RoutingAlgFactory():
 
@@ -24,5 +27,8 @@ class RoutingAlgFactory():
             ra.set_steps(routing_steps)
             ra.set_pruning_settings(config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF, config.ISOCHRONE_PRUNE_SEGMENTS)
             ra.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
+
+        if alg_type == 'GENETIC':
+            ra = RunGenetic(start, finish, start_time, "")
 
         return ra

@@ -3,6 +3,7 @@ import xarray as xr
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+from geographiclib.geodesic import Geodesic
 
 
 def loadData(path):
@@ -18,7 +19,7 @@ def loadData(path):
 
     # read the dataset
     data = xr.open_dataset(file)
-    data = data.VHM0.isel(time=0)
+    #data = data.VHM0.isel(time=0)
     return data
 
 # create a bounding box from the coordinates
@@ -61,3 +62,42 @@ def findStartAndEnd(lat1, lon1, lat2, lon2, wave_height):
     end = (end_lat, end_lon)
 
     return start, end
+
+def distance(route):
+    geod = Geodesic.WGS84
+    dists = []
+
+    lat1 = route[0,1]
+    lon1 = route[0,0]
+    d = 0
+
+    for coord in route:
+        lat2 = coord[1]
+        lon2 = coord[0]
+        d += geod.Inverse(lat1, lon1, lat2, lon2)['s12']
+        dists.append(d)
+        lat1 = lat2
+        lon1 = lon2
+    dists = np.array(dists)/1000
+    print(dists)
+    return dists
+
+def time_diffs(speed, route):
+    geod = Geodesic.WGS84
+    speed = speed * 1.852
+
+    lat1 = route[0,1]
+    lon1 = route[0,0]
+    diffs = []
+
+    for coord in route:
+        lat2 = coord[1]
+        lon2 = coord[0]
+        d = geod.Inverse(lat1, lon1, lat2, lon2)['s12']
+        diffs.append(d)
+        lat1 = lat2
+        lon1 = lon2
+
+    diffs = np.array(diffs) / (speed * 1000)
+    print(diffs)
+    return diffs

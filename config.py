@@ -40,5 +40,10 @@ ISOCHRONE_PRUNE_SEGMENTS = 20            # total number of azimuth bins that are
 
 ##
 # boat settings
-DEFAULT_BOAT = os.environ['BOAT_FILE']   # path to data for sailing boat (not maintained)
+#DEFAULT_BOAT = os.environ['BOAT_FILE']   # path to data for sailing boat (not maintained)
+
+# GENETIC ALGORITHM PARAMETERS
+POP_SIZE = 10                             # number of initial population
+N_GEN = 200                               # number of generations the algorithm will run
+N_OFFSPRINGS = 2                          # number of offsprings each crossover will generate
 

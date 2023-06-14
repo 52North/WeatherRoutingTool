@@ -3,11 +3,12 @@ from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
+#from pymoo.model.callback import Callback
 import numpy as np
 from pymoo.factory import get_termination
 from pymoo.optimize import minimize
 from pymoo.operators.crossover.sbx import SBX
-from GeneticUtils import *
+from algorithms.GeneticUtils import *
 
 class Population(Sampling):
     def __init__(self, src, dest, X,var_type=np.float64):
@@ -74,7 +75,7 @@ class RoutingProblem(Problem):
         out['F'] = np.column_stack([costs])
 
 
-def optimize( strt, end, cost_mat,pop_size = 10, n_gen = 100, n_offspring = 4):
+def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
     #cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
     problem = RoutingProblem()
     algorithm = NSGA2(pop_size=pop_size,

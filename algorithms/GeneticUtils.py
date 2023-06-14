@@ -39,6 +39,12 @@ def is_neg_constraints(lat, lon, wh, time):
     #print(is_constrained)
     return 1 if not is_constrained else 9999999
 
+def index_to_coords(route):
+    lats = wave_height.coords['latitude'][route[:,0]]
+    lons = wave_height.coords['longitude'][route[:,1]]
+    route = [[x,y] for x,y in zip(lats, lons)]
+    return lats, lons,np.array(route)
+
 # make initial population for genetic algorithm
 def population(size, src, dest, cost):
     shuffled_cost = cost.copy()
@@ -73,8 +79,9 @@ def route_cost(routes):
     costs = []
     #print(routes[0][0])
     for route in routes:
-        costs.append(np.sum([cost[i,j] * is_neg_constraints(wave_height.coords['latitude'][i],
-                                                          wave_height.coords['longitude'][j], cost[i,j], 0) for i,j in route[0]]))
+        #print(route[0])
+        costs.append(np.sum([cost[i,j] for i,j in route[0]]))
+        #costs.append(np.sum([cost[i,j] * is_neg_constraints(wave_height.coords['latitude'][i],wave_height.coords['longitude'][j], cost[i,j], 0) for i,j in route[0]]))
     print(costs)
     return costs
         
