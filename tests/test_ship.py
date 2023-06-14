@@ -172,64 +172,6 @@ def test_get_fuel_netCDF_return_values():
 '''
     test whether single netCDFs which contain information for one course per pixel are correctly merged
 '''
-def test_get_fuel_netCDF_loop():
-    lat = np.array([1.1, 2.2, 3.3, 4.4])
-    it = np.array([1, 2])
-    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
-                     datetime.datetime(2022, 12, 19)])
-
-    lon = np.array([0.1, 0.2, 0.3, 0.4])
-    speed = np.array([[5, 5], [5, 5],
-                      [5, 5], [5, 5]])
-    courses = np.array([[10, 11],
-                        [12, 14],
-                        [14, 16],
-                        [15, 16]])
-
-    power = np.array([[1, 4], [3.4, 5.3],
-                      [2.1, 6], [1., 5.1]])
-
-    data_vars = dict(
-        lon=(["lat"], lon),
-        time=(["lat"], time),
-        speed=(["lat", "it"], speed),
-        courses=(["lat", "it"], courses),
-    )
-
-    coords = dict(
-        lat=(["lat"], lat),
-        it=(["it"], it),
-    )
-    attrs = dict(description="Necessary descriptions added here.")
-
-    ds = xr.Dataset(data_vars, coords, attrs)
-
-    pol = get_default_Tanker()
-
-    ds.to_netcdf(pol.courses_path)
-    ds.close()
-    ds_read = pol.get_fuel_netCDF_loop()
-
-    lon_test = ds_read['lon'].to_numpy()
-    lat_test = ds_read['lat'].to_numpy()
-    speed_test = ds_read['speed'].to_numpy()
-    courses_test = ds_read['courses'].to_numpy()
-    it_test = ds_read['it'].to_numpy()
-    time_test = ds_read['time'].to_numpy()
-    power_test = ds_read['Power_delivered'].to_numpy()
-
-    assert np.array_equal(lat_test, lat)
-    assert np.array_equal(it_test, it)
-    assert np.array_equal(courses_test, courses)
-    assert np.array_equal(lon_test, lon)
-    assert np.array_equal(speed_test, speed)
-
-    compare_times(time_test, time)
-    assert power_test.shape == courses_test.shape
-    assert (power_test < math.pow(10,30)).all
-
-    ds_read.close()
-
 
 def test_power_consumption_returned():
     #dummy weather file
@@ -305,7 +247,5 @@ def test_power_consumption_returned():
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
-    ds = pol.get_fuel_netCDF_loop()
+    ds = pol.get_fuel_netCDF()
     print('ds:', ds['Power_delivered'])
-
-
