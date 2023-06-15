@@ -137,7 +137,12 @@ class WeatherCondODC(WeatherCond):
 
         print('time_wave:', time_wave)
         print('time_wind:', time_wind)
-        time_phys = time_wind + np.full(time_wind.shape[0],dt.timedelta(minutes=30).to_timedelta64())
+        time_wave_seconds = time_wind.timestamp()
+        print('time_wave_seconds: ', time_wave_seconds)
+        time_phys = time_wave_seconds + 30*60
+        print('new time secondes', time_phys)
+        time_phys = dt.fromtimestamp(time_phys)
+        print('new time datetime', time_phys)
         assert np.array_equal(time_wind,time_wave)
 
         form.print_current_time('time after cross checks:', start_time)
