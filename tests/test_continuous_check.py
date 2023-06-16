@@ -11,7 +11,7 @@ from shapely import STRtree
 # Load the environment variables from the .env file
 load_dotenv()
 
-os.chdir('D:/new/52n_marigeoroute/MariGeoRoute/WeatherRoutingTool')#os.path.dirname(__file__))
+os.chdir('/home/igor/projects/maridata/MariGeoRoute/WeatherRoutingTool')#os.path.dirname(__file__))
 
 #current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(os.getcwd(),''))
@@ -22,9 +22,9 @@ from constraints.constraints import *
 engine = db.create_engine('postgresql://{user}:{pw}@{host}/{db}'
                           .format(user='myuser',
                                   pw='mypassword',
-                                  host='localhost',
+                                  host='172.29.0.3',
                                   db='mydatabase',
-                                  port='5432'))
+                                  port='5434'))
 
 
 class TestContinuousCheck:
@@ -53,7 +53,7 @@ class TestContinuousCheck:
         '''
             test for checking if table nodes is gdf and geometry is Point type
         '''
-        gdf = ContinuousCheck().query_nodes(engine)
+        gdf = ContinuousCheck().query_nodes(engine, query="SELECT * FROM nodes LIMIT 100")
         # gdf = gpd.read_postgis('select * from nodes', engine)
         # gdf['tstamp'] = gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         gdf = gdf[gdf['geom'] != None]
@@ -77,7 +77,7 @@ class TestContinuousCheck:
         # # read timestamp type data as string
         # gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
-        gdf = ContinuousCheck().query_ways(engine)
+        gdf = ContinuousCheck().query_ways(engine, query="SELECT *, linestring AS geom FROM ways LIMIT 100")
         gdf = gdf[gdf['geom'] != None]
 
         line = {'col1': ['name1', 'name2'],
