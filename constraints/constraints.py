@@ -545,8 +545,79 @@ class ContinuousCheck(NegativeContraint):
         gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
         return gdf
+     
+     
+     ######## commented out for checking each options #################################   
+    # def gdf_seamark_combined(self,engine,query=list,seamark_object=list, seamark_list=list):
+    #     '''Create new GeoDataFrame with different seamark tags
         
-    def gdf_seamark_combined(self,seamark_object=list, seamark_list=list):
+    #     Parameters
+    #     ----------
+        
+    #     gdf : GeoDataFrame
+    #         GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
+
+    #     seamark_object : str
+    #         nodes or ways table name
+
+    #     seamark_list : list
+    #         list of all the tags that must be overlayed together
+    #     '''
+        
+    #     ##################### optional for the moment ######################
+    #     if ("nodes" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+    #         gdf = self.query_nodes(engine,query)
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+    #             gdf_list.append(gdf)
+    #         gdf_concat = pd.concat(gdf_list)
+
+    #     elif ("ways" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+    #         gdf = self.query_ways(engine,query)
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+    #             gdf_list.append(gdf)
+
+    #         gdf_concat = pd.concat(gdf_list)
+
+    #     elif ("nodes" in seamark_object) and ("ways" in seamark_object) and (seamark_list in self.tags):
+
+    #         def concat_nodes_ways():
+    #             # consider the scenario for a tag present in nodes and ways at the same time
+    #             for query in query:
+    #                 if "nodes" in query:
+    #                     gdf_nodes = self.query_nodes(engine,query)
+    #                 elif "ways" in query:
+    #                     gdf_ways = self.query_ways(engine,query)
+    #                 else:
+    #                     print("false query passed")
+
+    #             #checks if there are repeated values in both gdfs
+    #             if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
+    #                 gdf_all = pd.concat([gdf_nodes, gdf_ways])
+    #             else:
+    #                 gdf_all =  pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset='id', keep='first')
+
+    #             return gdf_all
+
+    #         gdf = concat_nodes_ways()
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+    #             gdf_list.append(gdf)
+
+    #         gdf_concat = pd.concat(gdf_list)
+    #     else:
+    #         logger.info('Check the seamark object and seamark tag list')
+
+    #     return gdf_concat
+    
+    
+    
+    
+    def gdf_seamark_combined_nodes(self,engine,query=list,seamark_object=list, seamark_list=list):
         '''Create new GeoDataFrame with different seamark tags
         
         Parameters
@@ -561,39 +632,81 @@ class ContinuousCheck(NegativeContraint):
         seamark_list : list
             list of all the tags that must be overlayed together
         '''
-        if (self.nodes in seamark_object) and (seamark_list in self.tags):
-            gdf = self.query_nodes()
+        
+        ##################### optional for the moment ######################
+        if ("nodes" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+            gdf = self.query_nodes(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
                 gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
                 gdf_list.append(gdf)
             gdf_concat = pd.concat(gdf_list)
+            
+        return gdf_concat
+            
+            
+    def gdf_seamark_combined_ways(self,engine,query=list,seamark_object=list, seamark_list=list):
+        '''Create new GeoDataFrame with different seamark tags
+        
+        Parameters
+        ----------
+        gdf : GeoDataFrame
+            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
 
-        elif (self.ways in seamark_object) and (seamark_list in self.tags):
-            gdf = self.query_ways()
+        seamark_object : str
+            nodes or ways table name
+
+        seamark_list : list
+            list of all the tags that must be overlayed together
+        '''
+        
+        if ("ways" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+            gdf = self.query_ways(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
                 gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
                 gdf_list.append(gdf)
-
             gdf_concat = pd.concat(gdf_list)
+            
+        return gdf_concat
+    
+    
+    def concat_nodes_ways(self,query,engine):
+        # consider the scenario for a tag present in nodes and ways at the same time
+        for query in query:
+            if "nodes" in query:
+                gdf_nodes = self.query_nodes(engine,query)
+            elif "ways" in query:
+                gdf_ways = self.query_ways(engine,query)
+            else:
+                print("false query passed")
 
-        elif (self.nodes in seamark_object) and (self.ways in seamark_object) and (seamark_list in self.tags):
+        #checks if there are repeated values in both gdfs
+        if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
+            gdf_all = pd.concat([gdf_nodes, gdf_ways])
+        else:
+            gdf_all =  pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset='id', keep='first')
 
-            def concat_nodes_ways():
-                # consider the scenario for a tag present in nodes and ways at the same time
-                gdf_nodes = self.query_nodes()
-                gdf_ways = self.query_ways()
+        return gdf_all
+            
+    def gdf_seamark_combined_nodes_ways(self,engine,query=list,seamark_object=list, seamark_list=list):
+        '''Create new GeoDataFrame with different seamark tags
+        
+        Parameters
+        ----------
+        
+        gdf : GeoDataFrame
+            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
 
-                #checks if there are repeated values in both gdfs
-                if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
-                    gdf_all = pd.concat([gdf_nodes, gdf_ways])
-                else:
-                    gdf_all =  pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset='id', keep='first')
+        seamark_object : str
+            nodes or ways table name
 
-                return gdf_all
-
-            gdf = concat_nodes_ways()
+        seamark_list : list
+            list of all the tags that must be overlayed together
+        '''
+        
+        if ("nodes" in seamark_object) and ("ways" in seamark_object) and (seamark_list in self.tags):
+            gdf = ContinuousCheck().concat_nodes_ways(query,engine)
             gdf_list = []
             for i in range(0, len(seamark_list)):
                 gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
@@ -603,8 +716,7 @@ class ContinuousCheck(NegativeContraint):
         else:
             logger.info('Check the seamark object and seamark tag list')
 
-        return gdf_concat
-        
+            return gdf_concat
         
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
         debug = False
