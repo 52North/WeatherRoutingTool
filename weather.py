@@ -9,11 +9,12 @@ import numpy as np
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 
+import config
 import utils.graphics as graphics
 import utils.formatting as form
 from maridatadownloader import DownloaderFactory
 from utils.maps import Map
-from utils.unit_conversion import round_time
+from utils.unit_conversion import *
 
 logger = logging.getLogger('WRT.weather')
 
@@ -86,7 +87,72 @@ class WeatherCondODC(WeatherCond):
     def __init__(self,model, time, hours, time_res):
         super().__init__(model, time, hours, time_res)
 
+    def check_data_consistency(self, ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS):
+        ############################################
+        # check time consistency
+
+        # check time resolution and shifts
+        res_GFS_time, res_CMEMS_wind_time, GFS_vs_CMEMS_wind_time = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_phys, 'time')
+        res_GFS_time, res_CMEMS_wave_time, GFS_vs_CMEMS_wave_time = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_wave, 'time')
+
+        logger.info(form.get_log_step('Checking time resolutions:',1))
+        logger.info(form.get_log_step('Resolutions are: GFS (' + str(res_GFS_time) + ' min), CMEMS wind (' + str(res_CMEMS_wind_time) + ' min), CMEMS wave (' + str(res_CMEMS_wave_time) + ' min)',2))
+        logger.info(form.get_log_step('CMEMS data shifted wrt. GFS by wave: ' + str(GFS_vs_CMEMS_wave_time) + 'min, wind: ' + str(GFS_vs_CMEMS_wind_time) + 'min',2))
+
+        # hard asserts in case situation changes with respect to expected behaviour
+        time_wave = ds_CMEMS_wave['time'].to_numpy()
+        time_wind = ds_CMEMS_phys['time'].to_numpy()
+        time_GFS = ds_GFS['time'].to_numpy()
+
+        time_wave_sec = np.full(time_wave.shape[0], 0)
+        time_wind_sec = np.full(time_wind.shape[0], 0)
+        time_GFS_sec = np.full(time_GFS.shape[0], 0)
+
+        assert time_wave.shape[0] == time_wind.shape[0]+1
+        assert time_wave.shape[0] == time_GFS.shape[0]
+
+        for itime in range(0,time_wave.shape[0]):
+            time_wave_sec[itime] = convert_nptd64_to_ints(time_wave[itime])
+        time_wave_sec = time_wave_sec + 30*60
+        for itime in range(0,time_wind.shape[0]):
+            time_wind_sec[itime] = convert_nptd64_to_ints(time_wind[itime])
+        for itime in range(0,time_GFS.shape[0]):
+            time_GFS_sec[itime] = convert_nptd64_to_ints(time_GFS[itime])
+        time_GFS_sec = time_GFS_sec + 30*60
+        time_wave_sec = np.delete(time_wave_sec,time_wave_sec.shape[0]-1)
+        time_GFS_sec = np.delete(time_GFS_sec,time_GFS_sec.shape[0]-1)
+
+        assert np.array_equal(time_wind_sec, time_wave_sec)
+        assert np.array_equal(time_wind_sec, time_GFS_sec)
+
+        ############################################
+        # check space consistency
+
+        res_GFS_lat, res_CMEMS_wind_lat, GFS_vs_CMEMS_wind_lat = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_phys, 'latitude')
+        res_GFS_lat, res_CMEMS_wave_lat, GFS_vs_CMEMS_wave_lat = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_wave, 'latitude')
+
+        logger.info(form.get_log_step('Checking latitude resolutions:', 1))
+        logger.info(form.get_log_step('Resolutions are: GFS (' + str(res_GFS_lat) + ' min), CMEMS wind (' + str(
+            res_CMEMS_wind_lat) + ' min), CMEMS wave (' + str(res_CMEMS_wave_lat) + ' min)', 2))
+        logger.info(form.get_log_step(
+            'CMEMS data shifted wrt. GFS by wave: ' + str(GFS_vs_CMEMS_wave_lat) + 'min, wind: ' + str(
+                GFS_vs_CMEMS_wind_lat) + 'min', 2))
+
+        res_GFS_lon, res_CMEMS_wind_lon, GFS_vs_CMEMS_wind_lon = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_phys, 'longitude')
+        res_GFS_lon, res_CMEMS_wave_lon, GFS_vs_CMEMS_wave_lon = check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_wave, 'longitude')
+
+        logger.info(form.get_log_step('Checking longitude resolutions:', 1))
+        logger.info(form.get_log_step('Resolutions are: GFS (' + str(res_GFS_lon) + ' min), CMEMS wind (' + str(
+            res_CMEMS_wind_lon) + ' min), CMEMS wave (' + str(res_CMEMS_wave_lon) + ' min)', 2))
+        logger.info(form.get_log_step(
+            'CMEMS data shifted wrt. GFS by wave: ' + str(GFS_vs_CMEMS_wave_lon) + 'min, wind: ' + str(
+                GFS_vs_CMEMS_wind_lon) + 'min', 2))
+
     def read_dataset(self, filepath = None):
+        CMEMS_product_wave = 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i'
+        CMEMS_product_wind = 'cmems_mod_glo_phy_anfc_0.083deg_PT1H-m'
+        logger.info(form.get_log_step('Loading datasets from GFS and CMEMS (' + CMEMS_product_wind + ' and ' + CMEMS_product_wave, 1))
+
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -94,6 +160,11 @@ class WeatherCondODC(WeatherCond):
         lon_max = self.map_size.lon2
         lat_min = self.map_size.lat1
         lat_max = self.map_size.lat2
+        lat_min_GFS = lat_min
+        lat_max_GFS = lat_max
+
+        if lat_min_GFS<0: lat_min_GFS=lat_min_GFS+180
+        if lat_max_GFS < 0: lat_max_GFS = lat_max_GFS + 180
 
         height_min = 10
         height_max = 20
@@ -102,7 +173,7 @@ class WeatherCondODC(WeatherCond):
         # download GFS data
         par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground", "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", ]
         sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
-                    'height_above_ground2': slice(height_min, height_max)}
+                    'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min,lon_max),  'latitude': slice(lat_min_GFS,lat_max_GFS)}
 
         downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
         ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
@@ -115,8 +186,8 @@ class WeatherCondODC(WeatherCond):
             platform='cmems',
             product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
             product_type='nrt',
-            username='kdemmich',
-            password='FE57qnfL9784wd2Pusq')
+            username=config.CMEMS_USER,
+            password=config.CMEMS_PASSWORD)
         ds_CMEMS_wave = downloader_cmems_wave.download(parameters=par_CMEMS_wave, sel_dict=sel_dict_CMEMS_wave)
 
         # download CMEMS physics data
@@ -125,39 +196,37 @@ class WeatherCondODC(WeatherCond):
         downloader_cmems_phys = DownloaderFactory.get_downloader(
             downloader_type='opendap', platform='cmems',
             product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
-            product_type='nrt', username='kdemmich',
-            password='FE57qnfL9784wd2Pusq')
+            product_type='nrt', username=config.CMEMS_USER,
+            password=config.CMEMS_PASSWORD)
         ds_CMEMS_phys = downloader_cmems_phys.download(parameters=par_CMEMS_phys,
                                              sel_dict=sel_dict_CMEMS_phys)
 
-        form.print_current_time('time after weather request:', start_time)
+        # convert latitude of GFS data
+        GFS_lat = ds_GFS['latitude'].to_numpy()
+        GFS_lat[GFS_lat < 0] = GFS_lat[GFS_lat < 0] + 180
 
-        time_wave = ds_CMEMS_wave['time'].to_numpy()
-        time_wind = ds_CMEMS_phys['time'].to_numpy()
-
-        print('time_wave:', time_wave)
-        print('time_wind:', time_wind)
-        time_wave_seconds = time_wind.timestamp()
-        print('time_wave_seconds: ', time_wave_seconds)
-        time_phys = time_wave_seconds + 30*60
-        print('new time secondes', time_phys)
-        time_phys = dt.fromtimestamp(time_phys)
-        print('new time datetime', time_phys)
-        assert np.array_equal(time_wind,time_wave)
-
+        #form.print_current_time('time after weather request:', start_time)
+        self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
         form.print_current_time('time after cross checks:', start_time)
 
+        wind_interpolated = ds_CMEMS_phys.interp_like(ds_CMEMS_wave)
+        full_CMEMS_data = xr.merge([ds_CMEMS_phys,wind_interpolated])
+        form.print_current_time('time after CMEMS merge', start_time)
 
-        ds_CMEMS_phys.to_netcdf('temp.nc')
-        print('phys: ', ds_CMEMS_phys)
+        res_GFS_lat, res_CMEMS_lat, GFS_vs_CMEMS_lat = check_dataset_spacetime_consistency(ds_GFS,full_CMEMS_data,'latitude')
+        res_GFS_lon, res_CMEMS_lon, GFS_vs_CMEMS_lon = check_dataset_spacetime_consistency(ds_GFS,full_CMEMS_data,'longitude')
+        res_GFS_time, res_CMEMS_time, GFS_vs_CMEMS_time = check_dataset_spacetime_consistency(ds_GFS,full_CMEMS_data,'time')
 
-        full_data = xr.merge([ds_CMEMS_phys,ds_CMEMS_wave])
+        print('latitude: ' + str(res_GFS_lat) + ' ' + str(res_CMEMS_lat) + ' ' + str(GFS_vs_CMEMS_lat))
+        print('longitude: ' + str(res_GFS_lon) + ' ' + str(res_CMEMS_lon) + ' ' + str(GFS_vs_CMEMS_lon))
+        print('time: ' + str(res_GFS_time) + ' ' + str(res_CMEMS_time) + ' ' + str(GFS_vs_CMEMS_time))
 
-        print('full: ', full_data)
+        GFS_interpolated = ds_GFS.interp_like(full_CMEMS_data)
+        form.print_current_time('time after interpolation', start_time)
+        self.ds = xr.merge([full_CMEMS_data, GFS_interpolated])
+        form.print_current_time('end time', start_time)
 
-
-        form.print_current_time('time after weather request:', start_time)
-
+        print('self.ds', self.ds)
 
         raise Exception('Stop here!')
 
