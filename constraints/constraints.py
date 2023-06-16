@@ -482,8 +482,6 @@ class ContinuousCheck(NegativeContraint):
         self.user = os.getenv('USER')
         self.password = os.getenv('PASSWORD')
         self.port = os.getenv('PORT')
-        self.nodes = "nodes"
-        self.ways = "ways"
         self.land_polygons = "land_polygons"
         self.predicates = ['intersects', 'contains', 'touches', 'crosses', 'overlaps']
         self.tags = ['separation_zone', 'separation_line', 'separation_lane', 'restricted_area' ,'separation_roundabout']
@@ -503,7 +501,7 @@ class ContinuousCheck(NegativeContraint):
         
         
         
-    def query_nodes(self):
+    def query_nodes(self,engine,query="SELECT * FROM nodes"):
         '''Create new GeoDataFrame using public.nodes table in the query
 
                 return
@@ -515,17 +513,17 @@ class ContinuousCheck(NegativeContraint):
 
         # Define SQL query to retrieve list of tables
         #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-        query = f"SELECT * FROM {self.nodes}"
+        query = query
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, self.connect_database())
+        gdf = gpd.read_postgis(query, engine)
         
         # read timestamp type data as string
         gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
         return gdf
         
-    def query_ways(self):
+    def query_ways(self,engine,query="SELECT *, linestring AS geom FROM ways"):
         '''Create new GeoDataFrame using public.ways table in the query
 
                 return
@@ -538,10 +536,10 @@ class ContinuousCheck(NegativeContraint):
 
         # Define SQL query to retrieve list of tables
         #sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-        query = f"SELECT *, linestring AS geom FROM {self.ways}" 
+        query = query 
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, self.connect_database())
+        gdf = gpd.read_postgis(query, engine)
         
         # read timestamp type data as string
         gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')

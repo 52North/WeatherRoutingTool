@@ -11,7 +11,7 @@ from shapely import STRtree
 # Load the environment variables from the .env file
 load_dotenv()
 
-os.chdir('/home/igor/projects/maridata/MariGeoRoute/WeatherRoutingTool')#os.path.dirname(__file__))
+os.chdir('D:/new/52n_marigeoroute/MariGeoRoute/WeatherRoutingTool')#os.path.dirname(__file__))
 
 #current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(os.getcwd(),''))
@@ -22,9 +22,9 @@ from constraints.constraints import *
 engine = db.create_engine('postgresql://{user}:{pw}@{host}/{db}'
                           .format(user='myuser',
                                   pw='mypassword',
-                                  host='172.26.0.2',
+                                  host='localhost',
                                   db='mydatabase',
-                                  port='5434'))
+                                  port='5432'))
 
 
 class TestContinuousCheck:
@@ -53,9 +53,9 @@ class TestContinuousCheck:
         '''
             test for checking if table nodes is gdf and geometry is Point type
         '''
-
-        gdf = gpd.read_postgis('select * from nodes', engine)
-        gdf['tstamp'] = gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        gdf = ContinuousCheck().query_nodes(engine)
+        # gdf = gpd.read_postgis('select * from nodes', engine)
+        # gdf['tstamp'] = gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         gdf = gdf[gdf['geom'] != None]
 
         point = {'col1': ['name1', 'name2'], 'geometry': [Point(1, 2), Point(2, 1)]}
@@ -72,11 +72,12 @@ class TestContinuousCheck:
         '''
 
 
-        # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis("SELECT *, linestring AS geom FROM ways", engine)
-        # read timestamp type data as string
-        gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        # # Use geopandas to read the SQL query into a dataframe from postgis
+        # gdf = gpd.read_postgis("SELECT *, linestring AS geom FROM ways", engine)
+        # # read timestamp type data as string
+        # gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
+        gdf = ContinuousCheck().query_ways(engine)
         gdf = gdf[gdf['geom'] != None]
 
         line = {'col1': ['name1', 'name2'],
@@ -86,3 +87,6 @@ class TestContinuousCheck:
         for geom in gdf['geom']:
             assert isinstance(geom, LineString), 'LineString Instantiation Error'
         print('Linestring type checked')
+
+
+#print(ContinuousCheck().query_ways().query)
