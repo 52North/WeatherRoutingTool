@@ -243,7 +243,7 @@ class Tanker(Boat):
     #   lons = {lon1, lon1, lon1}
 
     def write_netCDF_courses(self, courses, lats, lons, time):
-        debug = True
+        debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
 
         if (debug):
@@ -260,7 +260,7 @@ class Tanker(Boat):
             form.print_step(speed_str, 1)
 
         n_coords = lons.shape[0]                     # number or coordinate pairs
-        n_courses = courses.shape[0]/n_coords   # number of courses per coordinate pair
+        n_courses = int(courses.shape[0]/n_coords)   # number of courses per coordinate pair
 
         # generate iterator for courses and coordinate pairs
         it_course = np.arange(n_courses)+1      # get iterator with a length of the number of unique longitude values
