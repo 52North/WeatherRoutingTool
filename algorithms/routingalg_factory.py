@@ -1,7 +1,7 @@
 import datetime as dt
 import os
-os.chdir('/home/parichay/Mari/MariGeoRoute/Isochrone')
-print(os.getcwd())
+#os.chdir('/home/parichay/Mari/MariGeoRoute/Isochrone')
+#print(os.getcwd())
 import config
 from algorithms.isofuel import IsoFuel
 from algorithms.RunGenetic import RunGenetic

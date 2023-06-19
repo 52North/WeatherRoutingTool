@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # *******************************************
     # basic settings
     model = config.START_TIME
-    boatfile = config.DEFAULT_BOAT
+    #boatfile = config.DEFAULT_BOAT
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE

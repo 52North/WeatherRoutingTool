@@ -223,6 +223,11 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised):
     centres = np.array([])
     contents = np.array([])
     cent_temp = 0
+    debug = False
+
+    if debug:
+        print('bin_width:', bin_widths)
+        print('contend_unnormalised:', contend_unnormalised)
     for i in range(0, bin_widths.shape[0]):
         cont_temp = 0
         cent_temp = cent_temp + bin_widths[i]/2

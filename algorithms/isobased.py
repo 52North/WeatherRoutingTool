@@ -253,8 +253,12 @@ class IsoBased(RoutingAlg):
         # get boat speed
         bs = boat.boat_speed_function(wind)
 
-        ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-                                                  self.get_current_lons(), self.time, wind)
+        unique_coord_ind = np.unique(self.get_current_lons(), return_index=True)[1]
+        lons_unique = [self.get_current_lons()[index] for index in sorted(unique_coord_ind)]
+        lats_unique = [self.get_current_lats()[index] for index in sorted(unique_coord_ind)]
+
+        ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), lats_unique,
+                                                  lons_unique, self.time)
         #ship_params.print()
 
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)

@@ -215,7 +215,7 @@ def test_get_delta_variables_last_step():
     ship_params = tk.get_fuel_per_time_netCDF(ra.get_current_azimuth(),
                                               ra.get_current_lats(),
                                               ra.get_current_lons(),
-                                              ra.time, wind)
+                                              ra.time)
     ship_params.print()
 
     delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.boat_speed_function(wind))

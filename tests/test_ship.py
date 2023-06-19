@@ -33,9 +33,11 @@ def compare_times(time64, time):
     test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
      match properties of original array)
 '''
-def test_get_netCDF_courses():
+def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
     lon = np.array([4., 4., 4, 3, 3, 3])
+    lat_short = np.array([1,2])
+    lon_short = np.array([4,3])
     courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     speed =  np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
@@ -43,7 +45,7 @@ def test_get_netCDF_courses():
     time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
                      datetime.datetime(2022, 12, 19)+datetime.timedelta(days=360), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=360), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=360)])
 
-    pol.write_netCDF_courses(courses, lat, lon,  time)
+    pol.write_netCDF_courses(courses, lat_short, lon_short,  time)
     ds = xr.open_dataset(pol.courses_path)
 
     lat_read = ds['lat'].to_numpy()
@@ -61,6 +63,34 @@ def test_get_netCDF_courses():
 
     assert np.array_equal(lat,lat_read)
     assert np.array_equal(lon,lon_read)
+    compare_times(time_read,time)
+
+    assert courses.shape[0] == courses_read.shape[0]*courses_read.shape[1]
+    for ilat in range(0, courses_read.shape[0]):
+        for iit in range(0, courses_read.shape[1]):
+            iprev=ilat*courses_read.shape[1]+iit
+            assert courses[iprev]==courses_read[ilat][iit]
+
+    ds.close()
+
+def test_get_netCDF_courses_GA():
+    lat_short = np.array([1,2, 1])
+    lon_short = np.array([4,4, 1.5])
+    courses = np.array([0.1, 0.2, 0.3])
+
+    pol = get_default_Tanker()
+    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=180), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=360)])
+
+    pol.write_netCDF_courses(courses, lat_short, lon_short,  time)
+    ds = xr.open_dataset(pol.courses_path)
+
+    lat_read = ds['lat'].to_numpy()
+    lon_read = ds['lon'].to_numpy()
+    courses_read = ds['courses'].to_numpy()
+    time_read = ds['time'].to_numpy()
+
+    assert np.array_equal(lat_short,lat_read)
+    assert np.array_equal(lon_short,lon_read)
     compare_times(time_read,time)
 
     assert courses.shape[0] == courses_read.shape[0]*courses_read.shape[1]

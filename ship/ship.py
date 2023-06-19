@@ -243,13 +243,8 @@ class Tanker(Boat):
     #   lons = {lon1, lon1, lon1}
 
     def write_netCDF_courses(self, courses, lats, lons, time):
-        debug = False
+        debug = True
         speed = np.repeat(self.speed, courses.shape, axis=0)
-
-        assert courses.shape == lats.shape
-        assert courses.shape == lons.shape
-        assert courses.shape == speed.shape
-        assert courses.shape == time.shape
 
         if (debug):
             print('Requesting power calculation')
@@ -264,8 +259,8 @@ class Tanker(Boat):
             form.print_step(course_str, 1)
             form.print_step(speed_str, 1)
 
-        n_coords = np.unique(lons).shape[0]                     # number or coordinate pairs
-        n_courses = np.unique(lons, return_counts=True)[1][0]   # number of courses per coordinate pair
+        n_coords = lons.shape[0]                     # number or coordinate pairs
+        n_courses = courses.shape[0]/n_coords   # number of courses per coordinate pair
 
         # generate iterator for courses and coordinate pairs
         it_course = np.arange(n_courses)+1      # get iterator with a length of the number of unique longitude values
@@ -273,14 +268,13 @@ class Tanker(Boat):
         it_pos = np.arange(n_coords)+1
         it_pos = np.repeat(it_pos, n_courses) #np.hstack((it_pos,) * n_courses)
 
-        # delete doubling values for latitude and longitude
-        unique_coord_ind = np.unique(lons, return_index=True)[1]
-        lons_unique = [lons[index] for index in sorted(unique_coord_ind)]
-        lats_unique = [lats[index] for index in sorted(unique_coord_ind)]
-
         if(debug):
             form.print_step('it_course=' + str(it_course))
             form.print_step('it_pos=' + str(it_pos))
+
+        assert courses.shape == it_pos.shape
+        assert courses.shape == it_course.shape
+        assert courses.shape == speed.shape
 
         # generate pandas DataFrame
         df = pd.DataFrame({
@@ -299,8 +293,8 @@ class Tanker(Boat):
 
         print('Request power calculation for ' + str(n_courses) + ' courses and ' + str(n_coords) + ' coordinates')
 
-        ds["lon"] = (['it_pos'], lons_unique)
-        ds["lat"] = (['it_pos'], lats_unique)
+        ds["lon"] = (['it_pos'], lons)
+        ds["lat"] = (['it_pos'], lats)
         ds["time"] = (['it_pos'], time_reshape)
         assert ds['lon'].shape == ds['lat'].shape
         assert ds['time'].shape == ds['lat'].shape
@@ -369,7 +363,7 @@ class Tanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
+    def get_fuel_per_time_netCDF(self, courses, lats, lons, time):
         self.write_netCDF_courses(courses, lats, lons, time)
         #ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
