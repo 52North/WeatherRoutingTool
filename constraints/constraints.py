@@ -617,7 +617,7 @@ class ContinuousCheck(NegativeContraint):
     
     
     
-    def gdf_seamark_combined_nodes(self,engine,query=list,seamark_object=list, seamark_list=list):
+    def gdf_seamark_combined_nodes(self,engine,query,seamark_object=list, seamark_list=list):
         '''Create new GeoDataFrame with different seamark tags
         
         Parameters
@@ -634,7 +634,7 @@ class ContinuousCheck(NegativeContraint):
         '''
         
         ##################### optional for the moment ######################
-        if ("nodes" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+        if ("nodes" in seamark_object) and all(element in self.tags for element in seamark_list) or len(query)==1:
             gdf = self.query_nodes(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
