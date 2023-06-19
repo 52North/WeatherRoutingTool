@@ -25,7 +25,7 @@ from constraints.constraints import *
 
 engine = db.create_engine(
     "postgresql://{user}:{pw}@{host}/{db}".format(
-        user="myuser", pw="mypassword", host="localhost", db="mydatabase", port="5434"
+        user="myuser", pw="mypassword", host="172.30.0.3", db="mydatabase", port="5434"
     )
 )
 
@@ -105,7 +105,7 @@ class TestContinuousCheck:
             engine,
             query="SELECT * FROM nodes",
             seamark_object=["nodes"],
-            seamark_list=["separation_line", "separation_zone"],
+            seamark_list=["separation_zone", "separation_line"],
         )
         
         point1 = {"tags": [{'seamark:type':'separation_line'}], "geometry": [Point(1, 2)]}
@@ -126,7 +126,7 @@ class TestContinuousCheck:
         
         #assert concat_df['tags'].values in nodes_concat['tags'].values
         
-        for geom in nodes_concat["geometry"]:
+        for geom in nodes_concat["geom"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
         
         

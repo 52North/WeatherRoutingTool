@@ -641,7 +641,7 @@ class ContinuousCheck(NegativeContraint):
                 gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
                 gdf_list.append(gdf)
             gdf_concat = pd.concat(gdf_list)
-            
+
         return gdf_concat
             
             
