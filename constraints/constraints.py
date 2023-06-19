@@ -634,18 +634,18 @@ class ContinuousCheck(NegativeContraint):
         '''
         
         ##################### optional for the moment ######################
-        if ("nodes" in seamark_object) and all(element in self.tags for element in seamark_list) or len(query)==1:
+        if ("nodes" in seamark_object) and all(element in self.tags for element in seamark_list):
             gdf = self.query_nodes(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-                gdf_list.append(gdf)
+                gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
 
         return gdf_concat
             
             
-    def gdf_seamark_combined_ways(self,engine,query=list,seamark_object=list, seamark_list=list):
+    def gdf_seamark_combined_ways(self,engine,query,seamark_object=list, seamark_list=list):
         '''Create new GeoDataFrame with different seamark tags
         
         Parameters
@@ -660,12 +660,12 @@ class ContinuousCheck(NegativeContraint):
             list of all the tags that must be overlayed together
         '''
         
-        if ("ways" in seamark_object) and (seamark_list in self.tags) and len(query)==1:
+        if ("ways" in seamark_object) and all(element in self.tags for element in seamark_list):
             gdf = self.query_ways(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                gdf = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-                gdf_list.append(gdf)
+                gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
             
         return gdf_concat

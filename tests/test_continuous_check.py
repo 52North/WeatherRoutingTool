@@ -128,40 +128,95 @@ class TestContinuousCheck:
         
         for geom in nodes_concat["geom"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
-        
-        
-        
-        
-        
-        
-        
-    # def test_gdf_seamark_combined_ways(self):
-    #     """
-    #     test for checking if table nodes is gdf and geometry is Linestring type
-    #     """
 
-    #     ways_concat = ContinuousCheck().gdf_seamark_combined(
-    #         engine,
-    #         query=["SELECT *, linestring AS geom FROM ways LIMIT 100"],
-    #         seamark_object=["ways"],
-    #         seamark_list=["separation_line", "separation_zone"],
-    #     )
-       
-    #     point = {"tags": [{'seamark:type':'separation_line'}, {'seamark:type':'separation_zone'}], "geometry": [Point(1, 2), Point(2, 1)]}
-    #     point_df = gpd.GeoDataFrame(point)
-        
-        
-        
-    # def test_gdf_seamark_combined_nodes_ways(self):
-    #     """
-    #     test for checking if table nodes is gdf and geometry is Linestring type
-    #     """
 
-    #     nodes_ways_concat = ContinuousCheck().gdf_seamark_combined(
-    #         engine,
-    #         query=["SELECT * FROM nodes LIMIT 100","SELECT *, linestring AS geom FROM ways LIMIT 100"],
-    #         seamark_object=["ways","nodes"],
-    #         seamark_list=["separation_line", "separation_zone"],
-    #     )
-    #     point = {"tags": [{'seamark:type':'separation_line'}, {'seamark:type':'separation_zone'}], "geometry": [Point(1, 2), Point(2, 1)]}
-    #     point_df = gpd.GeoDataFrame(point)
+    def test_gdf_seamark_combined_ways(self):
+        """
+        test for checking if table nodes is gdf and geometry is Linestring type
+        """
+        lines_concat = ContinuousCheck().gdf_seamark_combined_ways(
+            engine,
+            query="SELECT *, linestring AS geom FROM ways",
+            seamark_object=["ways"],
+            seamark_list=["separation_zone", "separation_line"],
+        )
+        line1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [LineString([(7, 8), (5, 9)])]}
+        line1_df = gpd.GeoDataFrame(line1)
+        line2 = {"tags": [{'seamark:type': 'separation_zone'}], "geometry": [LineString([(1, 2), (3, 4)])]}
+        line2_df = gpd.GeoDataFrame(line2)
+        concat_df = pd.concat([line1_df, line2_df])
+
+        assert isinstance(lines_concat, gpd.GeoDataFrame)
+        assert type(concat_df) == type(lines_concat)
+        lines_tags = [item['seamark:type'] for item in list(lines_concat['tags'])]
+        test_tags = [item['seamark:type'] for item in list(concat_df['tags'])]
+        assert len(set(lines_tags).intersection(set(test_tags))) > 0, 'no intersection'
+        # assert concat_df['tags'].values in nodes_concat['tags'].values
+        for geom in lines_concat["geom"]:
+            assert isinstance(geom, LineString), "Linestring Instantiation Error"
+
+
+    def test_concat_nodes_ways(self):
+        """
+            test for checking if table nodes is gdf and geometry is Linestring type
+            https://shapely.readthedocs.io/en/stable/geometry.html
+        """
+        concat_all = ContinuousCheck().concat_nodes_ways(
+            query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways"],
+            engine = engine
+        )
+
+        point1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [Point(1, 2)]}
+        point1_df = gpd.GeoDataFrame(point1)
+
+        line1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [LineString([(7, 8), (5, 9)])]}
+        line1_df = gpd.GeoDataFrame(line1)
+
+        concat_df_all = pd.concat([point1_df, line1_df])
+        #concat_df_all = concat_df_all[concat_df_all["geom"] != None]
+
+
+        assert isinstance(concat_all, gpd.GeoDataFrame)
+
+        assert type(concat_all) == type(concat_df_all)
+
+        type_list = [type(geometry) for geometry in concat_all['geom']]
+        assert set(type_list).intersection([Point, LineString]), 'Geometry type error'
+
+    def test_gdf_seamark_combined_nodes_ways():
+        """
+        test for checking if table nodes is gdf and geometry is Linestring type
+        """
+
+        #gdf with nodes and linestrings
+        nodes_lines_concat = ContinuousCheck().gdf_seamark_combined_nodes_ways(
+            engine,
+            query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways"],
+            seamark_object=["nodes", "ways"],
+            seamark_list=["separation_zone", "separation_line"],
+        )
+
+        #creating dummy data point
+        point1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [Point(1, 2)]}
+
+        point1_df = gpd.GeoDataFrame(point1)
+        point2 = {"tags": [{'seamark:type': 'separation_zone'}], "geometry": [Point(6, 2)]}
+        point2_df = gpd.GeoDataFrame(point2)
+
+        concat_df = pd.concat([point1_df, point2_df])
+
+        # creating dummy data linestring
+        line1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [LineString([(7, 8), (5, 9)])]}
+        line1_df = gpd.GeoDataFrame(line1)
+        line2 = {"tags": [{'seamark:type': 'separation_zone'}], "geometry": [LineString([(1, 2), (3, 4)])]}
+        line2_df = gpd.GeoDataFrame(line2)
+        concat_df = pd.concat([line1_df, line2_df])
+
+        assert isinstance(lines_concat, gpd.GeoDataFrame)
+        assert type(concat_df) == type(lines_concat)
+        lines_tags = [item['seamark:type'] for item in list(lines_concat['tags'])]
+        test_tags = [item['seamark:type'] for item in list(concat_df['tags'])]
+        assert len(set(lines_tags).intersection(set(test_tags))) > 0, 'no intersection'
+        # assert concat_df['tags'].values in nodes_concat['tags'].values
+        for geom in lines_concat["geom"]:
+            assert isinstance(geom, LineString), "Linestring Instantiation Error"
