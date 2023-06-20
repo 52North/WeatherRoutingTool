@@ -710,28 +710,31 @@ class ContinuousCheck(NegativeContraint):
     def check_weather(self):
         pass
 
-
-    def check_crossing(self,route):
+    def check_crossing(self, engine,query,seamark_object, seamark_list, route_df):
         '''Checks different spatial relations (intersection, contains, touches, crosses)
 
-                Parameters
-                ----------
-                gdf : GeoDataFrame
-                    GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
+                    Parameters
+                    ----------
+                    gdf : GeoDataFrame
+                        GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
 
-                return
-                ----------
-                query_tree : list of shapely STRTree
-        '''
+                    return
+                    ----------
+                    query_tree : list of shapely STRTree
+            '''
 
         query_tree = []
-        for predicate in self.predicates:
-            tree = STRtree(self.gdf_seamark_combined()['geometry'])
 
-            #route['geometry'] should e the geometry of the route that will be tested
-            tree.query(route['geometry'], predicate=predicate).tolist()
-            if tree != '[[], []]':
-                query_tree.append(tree)
+        for predicate in self.predicates:
+            concat_df = self.gdf_seamark_combined_nodes_ways(engine, query, seamark_object, seamark_list)
+            tree = STRtree(concat_df['geom'])
+            geom_object= (tree.query(route_df['geom'], predicate=predicate).tolist())
+
+            if geom_object == [[],[]] or geom_object == []:
+                print(f'no {predicate} for the geometry objects with {geom_object}')
             else:
-                logger.info('No crossing')
+                print(f'{predicate} for the geometry object with {geom_object}')
+                query_tree.append((tree,predicate,geom_object,True))
+
+        #returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         return query_tree

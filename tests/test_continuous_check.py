@@ -235,4 +235,22 @@ class TestContinuousCheck:
         type_list = [type(geometry) for geometry in nodes_lines_concat['geom']]
         assert set(type_list).intersection([Point, LineString]), 'Geometry type error'
 
-    #def test_check_crossing(self, route):
+    def test_check_crossing(self):
+
+        route = {"tags": [{'seamark:type': 'separation_line'}], "geom": [LineString([(7, 8), (5, 9)])]}
+        route_df = gpd.GeoDataFrame(route)
+
+        # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
+        check_list = ContinuousCheck().check_crossing(
+            engine,
+            query=["SELECT * FROM nodes", "SELECT *, linestring AS geom FROM ways"],
+            seamark_object=["nodes", "ways"],
+            seamark_list=["separation_zone", "separation_line"],
+            route_df = route_df
+        )
+
+        for tuple_obj in check_list:
+            assert isinstance(tuple_obj[0], STRtree)
+            assert tuple_obj[1] in ContinuousCheck().predicates, 'Predicate instantiation error'
+            assert tuple_obj[2] != [[],[]], 'Geometry object error'
+            assert tuple_obj[3] == True, 'Not crossing - take the route'
