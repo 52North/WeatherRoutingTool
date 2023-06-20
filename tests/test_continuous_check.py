@@ -14,7 +14,8 @@ from pathlib import Path
 load_dotenv()
 
 os.chdir(
-    Path(__file__).resolve().parent.parent
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    #Path(__file__).resolve().parent.parent
 )  # os.path.dirname(__file__))
 
 # current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -25,7 +26,7 @@ from constraints.constraints import *
 
 engine = db.create_engine(
     "postgresql://{user}:{pw}@{host}/{db}".format(
-        user="myuser", pw="mypassword", host="172.30.0.3", db="mydatabase", port="5434"
+        user="myuser", pw="mypassword", host="172.31.0.2", db="mydatabase", port="5434"
     )
 )
 
@@ -61,10 +62,13 @@ class TestContinuousCheck:
         )
         # gdf = gpd.read_postgis('select * from nodes', engine)
         # gdf['tstamp'] = gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        gdf = gdf[gdf["geom"] != None]
+        #gdf = gdf[gdf["geom"] != None]
 
         point = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
         point_df = gpd.GeoDataFrame(point)
+
+        assert isinstance(gdf, gpd.GeoDataFrame)
+        assert not gdf.empty, "GeoDataFrame is empty."
         assert type(gdf) == type(point_df), "GeoDataFrame Type Error"
         for geom in point_df["geometry"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
@@ -90,6 +94,9 @@ class TestContinuousCheck:
             "geometry": [LineString([(1, 2), (3, 4)]), LineString([(2, 1), (5, 6)])],
         }
         line_df = gpd.GeoDataFrame(line)
+
+        assert isinstance(gdf, gpd.GeoDataFrame)
+        assert not gdf.empty, "GeoDataFrame is empty."
         assert type(gdf) == type(line_df), "GeoDataFrame Type Error"
         for geom in gdf["geom"]:
             assert isinstance(geom, LineString), "LineString Instantiation Error"
@@ -117,6 +124,7 @@ class TestContinuousCheck:
         concat_df= pd.concat([point1_df, point2_df])
         
         assert isinstance(nodes_concat,gpd.GeoDataFrame)
+        assert not nodes_concat.empty, "GeoDataFrame is empty."
         assert type(concat_df) == type(nodes_concat) 
         
         nodes_tags= [item['seamark:type'] for item in list(nodes_concat['tags'])]
@@ -147,6 +155,7 @@ class TestContinuousCheck:
         concat_df = pd.concat([line1_df, line2_df])
 
         assert isinstance(lines_concat, gpd.GeoDataFrame)
+        assert not lines_concat.empty, "GeoDataFrame is empty."
         assert type(concat_df) == type(lines_concat)
         lines_tags = [item['seamark:type'] for item in list(lines_concat['tags'])]
         test_tags = [item['seamark:type'] for item in list(concat_df['tags'])]
@@ -177,13 +186,14 @@ class TestContinuousCheck:
 
 
         assert isinstance(concat_all, gpd.GeoDataFrame)
+        assert not concat_all.empty, "GeoDataFrame is empty."
 
         assert type(concat_all) == type(concat_df_all)
 
         type_list = [type(geometry) for geometry in concat_all['geom']]
         assert set(type_list).intersection([Point, LineString]), 'Geometry type error'
 
-    def test_gdf_seamark_combined_nodes_ways():
+    def test_gdf_seamark_combined_nodes_ways(self):
         """
         test for checking if table nodes is gdf and geometry is Linestring type
         """
@@ -197,26 +207,32 @@ class TestContinuousCheck:
         )
 
         #creating dummy data point
-        point1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [Point(1, 2)]}
+        nodes1 = {"tags": [{'seamark:type': 'separation_line'},
+                           {'seamark:type': 'separation_zone'},
+                           {''}],
+                    "geometry": [Point(1, 2), Point(4, 7), None]}
+        nodes_df = gpd.GeoDataFrame(nodes1)
 
-        point1_df = gpd.GeoDataFrame(point1)
-        point2 = {"tags": [{'seamark:type': 'separation_zone'}], "geometry": [Point(6, 2)]}
-        point2_df = gpd.GeoDataFrame(point2)
+        ways1 = {"tags": [{'seamark:type': 'separation_line'},
+                            {'seamark:type': 'separation_zone'},
+                            {'seamark:type': 'restricted_area'},
+                            {''}],
+                   "geometry": [LineString([(7, 8), (5, 9)]), LineString([(16, 14), (8, 13)]), LineString([(2, 11), (7, 15)]), None]}
 
-        concat_df = pd.concat([point1_df, point2_df])
+        ways_df = gpd.GeoDataFrame(ways1)
 
-        # creating dummy data linestring
-        line1 = {"tags": [{'seamark:type': 'separation_line'}], "geometry": [LineString([(7, 8), (5, 9)])]}
-        line1_df = gpd.GeoDataFrame(line1)
-        line2 = {"tags": [{'seamark:type': 'separation_zone'}], "geometry": [LineString([(1, 2), (3, 4)])]}
-        line2_df = gpd.GeoDataFrame(line2)
-        concat_df = pd.concat([line1_df, line2_df])
+        concat_df = pd.concat([nodes_df, ways_df])
 
-        assert isinstance(lines_concat, gpd.GeoDataFrame)
-        assert type(concat_df) == type(lines_concat)
-        lines_tags = [item['seamark:type'] for item in list(lines_concat['tags'])]
-        test_tags = [item['seamark:type'] for item in list(concat_df['tags'])]
-        assert len(set(lines_tags).intersection(set(test_tags))) > 0, 'no intersection'
-        # assert concat_df['tags'].values in nodes_concat['tags'].values
-        for geom in lines_concat["geom"]:
-            assert isinstance(geom, LineString), "Linestring Instantiation Error"
+
+        assert isinstance(nodes_lines_concat, gpd.GeoDataFrame)
+        assert not nodes_lines_concat.empty, "GeoDataFrame is empty."
+        assert type(concat_df) == type(nodes_lines_concat), 'DataFrame type error'
+
+        nodes_lines_tags = [item['seamark:type'] for item in list(nodes_lines_concat['tags'])]
+        test_tags = [item['seamark:type'] for item in concat_df['tags'] if item is not None and 'seamark:type' in item]
+        assert len(set(nodes_lines_tags).intersection(set(test_tags))) > 0, 'no intersection'
+
+        type_list = [type(geometry) for geometry in nodes_lines_concat['geom']]
+        assert set(type_list).intersection([Point, LineString]), 'Geometry type error'
+
+    #def test_check_crossing(self, route):
