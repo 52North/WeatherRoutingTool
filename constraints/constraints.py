@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from global_land_mask import globe
+import ast
 
 import utils.graphics as graphics
 import utils.formatting as form
@@ -516,13 +517,13 @@ class ContinuousCheck(NegativeContraint):
         query = query
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, engine)
+        gdf = gpd.read_postgis(query, engine,geom_col='geom')
 
         #Eliminate none values
         gdf = gdf[gdf["geom"] != None]
         
         # read timestamp type data as string
-        gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        #gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
         return gdf
         
@@ -542,13 +543,13 @@ class ContinuousCheck(NegativeContraint):
         query = query 
     
         # Use geopandas to read the SQL query into a dataframe from postgis
-        gdf = gpd.read_postgis(query, engine)
+        gdf = gpd.read_postgis(query, engine,geom_col='geom')
 
         # Eliminate none values
         gdf = gdf[gdf["geom"] != None]
         
         # read timestamp type data as string
-        gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        #gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
         return gdf
 
@@ -573,8 +574,13 @@ class ContinuousCheck(NegativeContraint):
             gdf = self.query_nodes(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-                gdf_list.append(gdf1)
+                if type(gdf['tags'][i]) == str:
+                    gdf['tags'] = gdf['tags'].apply(ast.literal_eval)
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
+                else:
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
 
         return gdf_concat
@@ -599,8 +605,13 @@ class ContinuousCheck(NegativeContraint):
             gdf = self.query_ways(engine,query)
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-                gdf_list.append(gdf1)
+                if type(gdf['tags'][i]) == str:
+                    gdf['tags'] = gdf['tags'].apply(ast.literal_eval)
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
+                else:
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
             
         return gdf_concat
@@ -644,10 +655,17 @@ class ContinuousCheck(NegativeContraint):
         
         if ("nodes" in seamark_object) and ("ways" in seamark_object) and all(element in self.tags for element in seamark_list):
             gdf = ContinuousCheck().concat_nodes_ways(query,engine)
+
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
-                gdf_list.append(gdf1)
+
+                if type(gdf['tags'][i]) == str:
+                    gdf['tags'] = gdf['tags'].apply(ast.literal_eval)
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
+                else:
+                    gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
+                    gdf_list.append(gdf1)
 
             gdf_concat = pd.concat(gdf_list)
         else:

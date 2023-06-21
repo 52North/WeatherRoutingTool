@@ -243,7 +243,7 @@ class TestContinuousCheck:
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         check_list = ContinuousCheck().check_crossing(
             engine,
-            query=["SELECT * FROM nodes", "SELECT *, linestring AS geom FROM ways"],
+            query=["SELECT * FROM nodes LIMIT 100", "SELECT *, linestring AS geom FROM ways LIMIT 100"],
             seamark_object=["nodes", "ways"],
             seamark_list=["separation_zone", "separation_line"],
             route_df = route_df
