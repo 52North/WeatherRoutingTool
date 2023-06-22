@@ -687,7 +687,7 @@ class ContinuousCheck(NegativeContraint):
                     return
                     ----------
                     query_tree : list of shapely STRTree
-            '''
+        '''
 
         query_tree = []
 
