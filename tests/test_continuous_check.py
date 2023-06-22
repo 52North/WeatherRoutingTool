@@ -67,14 +67,15 @@ test_ways_gdf = gpd.GeoDataFrame(columns=['tags', 'geometry'],
                                           (12.3576587, 47.9183381), (12.3573105, 47.9184692),
                                           (12.3569916, 47.9186626)])],
                                  ])
-test_nodes_gdf = test_nodes_gdf.set_geometry('geometry')
-test_nodes_gdf.to_file('gdfDB.sqlite', driver='SQLite', spatialite=True, layer='nodes')
 
-test_ways_gdf = test_ways_gdf.set_geometry('geometry')
-test_ways_gdf.to_file('gdfDB.sqlite', driver='SQLite', spatialite=True, layer='ways')
 
 
 class TestContinuousCheck:
+        #test_nodes_gdf = test_nodes_gdf.set_geometry('geometry')
+    test_nodes_gdf.to_file(f'{"gdfDB.sqlite"}', driver='SQLite', layer='nodes', overwrite=True)
+
+    #test_ways_gdf = test_ways_gdf.set_geometry('geometry')
+    test_ways_gdf.to_file(f'{"gdfDB.sqlite"}', driver='SQLite', layer='ways', overwrite=True)
     """
     include test methods for the continuous check in the negative constraints
     """
@@ -97,7 +98,7 @@ class TestContinuousCheck:
         test for checking if table nodes is gdf and geometry is Point type
         """
         gdf = ContinuousCheck().query_nodes(
-            engine, query="SELECT *,geometry as geom FROM nodes"
+            engine=engine, query="SELECT *,geometry as geom FROM nodes"
         )
 
         point = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
@@ -276,3 +277,5 @@ class TestContinuousCheck:
             assert tuple_obj[1] in ContinuousCheck().predicates, 'Predicate instantiation error'
             assert tuple_obj[2] != [[], []], 'Geometry object error'
             assert tuple_obj[3] == True, 'Not crossing - take the route'
+            
+engine.dispose()
