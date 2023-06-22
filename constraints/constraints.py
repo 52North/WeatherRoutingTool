@@ -659,7 +659,7 @@ class ContinuousCheck(NegativeContraint):
             gdf_list = []
             for i in range(0, len(seamark_list)):
 
-                if type(gdf['tags'][i]) == str:
+                if type(gdf['tags'].iloc[i]) == str:
                     gdf['tags'] = gdf['tags'].apply(ast.literal_eval)
                     gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
@@ -667,66 +667,14 @@ class ContinuousCheck(NegativeContraint):
                     gdf1 = gdf[gdf['tags'].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
 
+
             gdf_concat = pd.concat(gdf_list)
         else:
             gdf_concat = gpd.GeoDataFrame()
             logger.info('Check the seamark object and seamark tag list')
 
         return gdf_concat
-        
-    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
-        debug = False
 
-        delta_lats = (lat_end - lat_start) * self.pars.resolution
-        delta_lons = (lon_end - lon_start) * self.pars.resolution
-        x0 = lat_start
-        y0 = lon_start
-
-        # if (debug):
-        # form.print_step('Constraints: Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
-        #        lat_end) + ',' + str(lon_end), 0)
-
-        nSteps = int(1. / self.pars.resolution)
-        for iStep in range(0, nSteps):
-            x = x0 + delta_lats
-            y = y0 + delta_lons
-
-            is_constrained = self.safe_endpoint(x, y, current_time, is_constrained)
-            x0 = x
-            y0 = y
-
-        if (debug):
-            lat_start_constrained = lat_start[is_constrained == 1]
-            lon_start_constrained = lon_start[is_constrained == 1]
-            lat_end_constrained = lat_end[is_constrained == 1]
-            lon_end_constrained = lon_end[is_constrained == 1]
-
-            if lat_start_constrained.shape[0] > 0: form.print_step('transitions constrained:', 1)
-            for i in range(0, lat_start_constrained.shape[0]):
-                form.print_step('[' + str(lat_start_constrained[i]) + ',' + str(lon_start_constrained[i]) + '] to [' +
-                              str(lat_end_constrained[i]) + ',' + str(lon_end_constrained[i]) + ']', 2)
-
-        # if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
-        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
-        #    raise ValueError(exc)
-
-        if not np.allclose(x, lat_end): raise Exception(
-            'Constraints.land_crossing(): did not reach latitude of destination!')
-        if not np.allclose(y, lon_end): raise Exception(
-            'Constraints.land_crossing(): did not reach longitude of destination!')
-
-        return is_constrained
-
-    def add_pos_constraint(self, constraint):
-        self.positive_constraints.append(constraint)
-        self.pos_size += 1
-
-    def add_neg_constraint(self, constraint):
-        self.negative_constraints.append(constraint)
-        self.neg_size += 1
-
-    def check_weather(self):
-        pass
 
     def check_crossing(self, engine,query,seamark_object, seamark_list, route_df):
         '''Checks different spatial relations (intersection, contains, touches, crosses)
