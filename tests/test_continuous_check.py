@@ -5,20 +5,15 @@ import geopandas as gpd
 from dotenv import load_dotenv
 import sys
 from shapely.geometry import LineString, Point
-import pytest
-from shapely.geometry import Point
 from shapely import STRtree
-from pathlib import Path
 
 # Load the environment variables from the .env file
 load_dotenv()
 
 os.chdir(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    # Path(__file__).resolve().parent.parent
-)  # os.path.dirname(__file__))
+)
 
-# current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(os.getcwd(), ""))
 
 from constraints.constraints import *
@@ -92,14 +87,10 @@ class TestContinuousCheck:
         # parameters might change when creating the engine
         self.connection = engine.connect()
 
-        # returns 1 if the connection is estabilished and 0 otherwise
-        # status = self.connection.connection.connection.status
-
         assert isinstance(
             ContinuousCheck().connect_database(),
             type(engine)
         ), "Engine Instantiation Error"
-        # assert status == 1, "Connection not estalished"
 
     def test_query_nodes(self):
         """
@@ -108,9 +99,6 @@ class TestContinuousCheck:
         gdf = ContinuousCheck().query_nodes(
             engine, query="SELECT *,geometry as geom FROM nodes"
         )
-        # gdf = gpd.read_postgis('select * from nodes', engine)
-        # gdf['tstamp'] = gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        # gdf = gdf[gdf["geom"] != None]
 
         point = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
         point_df = gpd.GeoDataFrame(point)
@@ -127,15 +115,9 @@ class TestContinuousCheck:
         test for checking if table nodes is gdf and geometry is Linestring type
         """
 
-        # # Use geopandas to read the SQL query into a dataframe from postgis
-        # gdf = gpd.read_postgis("SELECT *, linestring AS geom FROM ways", engine)
-        # # read timestamp type data as string
-        # gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-
         gdf = ContinuousCheck().query_ways(
             engine, query="SELECT *, geometry AS geom FROM ways"
         )
-        # gdf = gdf[gdf["geom"] != None]
 
         line = {
             "col1": ["name1", "name2"],
@@ -177,8 +159,6 @@ class TestContinuousCheck:
         test_tags = [item['seamark:type'] for item in list(concat_df['tags'])]
 
         assert len(set(nodes_tags).intersection(set(test_tags))) > 0, 'no intersection'
-
-        # assert concat_df['tags'].values in nodes_concat['tags'].values
 
         for geom in nodes_concat["geom"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
@@ -226,7 +206,6 @@ class TestContinuousCheck:
         line1_df = gpd.GeoDataFrame(line1)
 
         concat_df_all = pd.concat([point1_df, line1_df])
-        # concat_df_all = concat_df_all[concat_df_all["geom"] != None]
 
         assert isinstance(concat_all, gpd.GeoDataFrame)
         assert not concat_all.empty, "GeoDataFrame is empty."
