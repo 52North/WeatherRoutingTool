@@ -10,14 +10,19 @@ from shapely import STRtree
 # Load the environment variables from the .env file
 load_dotenv()
 
+# Define current working directory
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Add current working directory as a search location for Python modules and Packages
 sys.path.append(os.path.join(os.getcwd(), ""))
 
+# Need to be imported only after defining working directory with the previous steps
 from constraints.constraints import *
 
+# Create engine using SQLite
 engine = db.create_engine("sqlite:///gdfDB.sqlite")
 
+# Create dummy GeoDataFrames
 test_nodes_gdf = gpd.GeoDataFrame(
     columns=["tags", "geometry"],
     data=[
@@ -140,22 +145,25 @@ test_ways_gdf = gpd.GeoDataFrame(
 
 
 class TestContinuousCheck:
-    # test_nodes_gdf = test_nodes_gdf.set_geometry('geometry')
+    """
+    Contains various functions to test data connection,
+    gathering and use for obtaining spatial relations
+    for the continuous check in the negative constraints
+    """
+
+    # write geodataframe into spatialite database (nodes)
     test_nodes_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="nodes", overwrite=True
     )
 
-    # test_ways_gdf = test_ways_gdf.set_geometry('geometry')
+    # write geodataframe into spatialite database (ways)
     test_ways_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="ways", overwrite=True
     )
-    """
-    include test methods for the continuous check in the negative constraints
-    """
 
     def test_connect_database(self):
         """
-        test for checking the engine object and if the connection with the db is estabilished
+        Test for checking the engine object and if the connection with the db is estabilished
         """
 
         # parameters might change when creating the engine
@@ -167,7 +175,7 @@ class TestContinuousCheck:
 
     def test_query_nodes(self):
         """
-        test for checking if table nodes is gdf and geometry is Point type
+        Test for checking if table nodes is gdf and geometry is Point type
         """
         gdf = ContinuousCheck().query_nodes(
             engine=engine, query="SELECT *,geometry as geom FROM nodes"
@@ -185,7 +193,7 @@ class TestContinuousCheck:
 
     def test_query_ways(self):
         """
-        test for checking if table nodes is gdf and geometry is Linestring type
+        Test for checking if table ways is gdf and geometry is Linestring type
         """
 
         gdf = ContinuousCheck().query_ways(
@@ -207,7 +215,7 @@ class TestContinuousCheck:
 
     def test_gdf_seamark_combined_nodes(self):
         """
-        test for checking if table nodes is gdf and geometry is Linestring type
+        Test for checking if gdf nodes is gdf and geometry is Point type
         """
         nodes_concat = ContinuousCheck().gdf_seamark_combined_nodes(
             engine,
@@ -216,6 +224,7 @@ class TestContinuousCheck:
             seamark_list=["separation_zone", "separation_line"],
         )
 
+        # Create points dummy data
         point1 = {
             "tags": [{"seamark:type": "separation_line"}],
             "geometry": [Point(1, 2)],
@@ -244,7 +253,7 @@ class TestContinuousCheck:
 
     def test_gdf_seamark_combined_ways(self):
         """
-        test for checking if table nodes is gdf and geometry is Linestring type
+        Test for checking if gdf ways is gdf and geometry is LineString type
         """
         lines_concat = ContinuousCheck().gdf_seamark_combined_ways(
             engine,
@@ -252,6 +261,8 @@ class TestContinuousCheck:
             seamark_object=["ways"],
             seamark_list=["separation_zone", "separation_line"],
         )
+
+        # Create linestrings dummy data
         line1 = {
             "tags": [{"seamark:type": "separation_line"}],
             "geometry": [LineString([(7, 8), (5, 9)])],
@@ -270,14 +281,12 @@ class TestContinuousCheck:
         lines_tags = [item["seamark:type"] for item in list(lines_concat["tags"])]
         test_tags = [item["seamark:type"] for item in list(concat_df["tags"])]
         assert len(set(lines_tags).intersection(set(test_tags))) > 0, "no intersection"
-        # assert concat_df['tags'].values in nodes_concat['tags'].values
         for geom in lines_concat["geom"]:
             assert isinstance(geom, LineString), "Linestring Instantiation Error"
 
     def test_concat_nodes_ways(self):
         """
-        test for checking if table nodes is gdf and geometry is Linestring type
-        https://shapely.readthedocs.io/en/stable/geometry.html
+        Test for checking if table with  ways and nodes includes geometries (Point, LineString)
         """
         concat_all = ContinuousCheck().concat_nodes_ways(
             query=[
@@ -287,6 +296,7 @@ class TestContinuousCheck:
             engine=engine,
         )
 
+        # Create points and linestrings dummy data
         point1 = {
             "tags": [{"seamark:type": "separation_line"}],
             "geometry": [Point(1, 2)],
@@ -311,7 +321,7 @@ class TestContinuousCheck:
 
     def test_gdf_seamark_combined_nodes_ways(self):
         """
-        test for checking if table nodes is gdf and geometry is Linestring type
+        Test for checking if combined gdf (nodes and ways) includes geometries (Point, LineString) and is a gdf
         """
 
         # gdf with nodes and linestrings
@@ -368,13 +378,17 @@ class TestContinuousCheck:
             if item is not None and "seamark:type" in item
         ]
         assert (
-            len(set(nodes_lines_tags).intersection(set(test_tags))) > 0
+                len(set(nodes_lines_tags).intersection(set(test_tags))) > 0
         ), "no intersection"
 
         type_list = [type(geometry) for geometry in nodes_lines_concat["geom"]]
         assert set(type_list).intersection([Point, LineString]), "Geometry type error"
 
     def test_check_crossing(self):
+        """
+        Test for checking if different spatial relations (intersection, contain, touches ...) are being returned
+        """
+
         route = {
             "tags": [{"seamark:type": "separation_line"}],
             "geom": [LineString([(7, 8), (5, 9)])],
@@ -396,10 +410,10 @@ class TestContinuousCheck:
         for tuple_obj in check_list:
             assert isinstance(tuple_obj[0], STRtree)
             assert (
-                tuple_obj[1] in ContinuousCheck().predicates
+                    tuple_obj[1] in ContinuousCheck().predicates
             ), "Predicate instantiation error"
             assert tuple_obj[2] != [[], []], "Geometry object error"
             assert tuple_obj[3] == True, "Not crossing - take the route"
 
-
+# Closing engine
 engine.dispose()

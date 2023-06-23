@@ -16,7 +16,6 @@ from routeparams import RouteParams
 from utils.maps import Map
 from weather import WeatherCond
 
-
 ## used as a part of the continuouscheck class ##
 import os
 import sqlalchemy as db
@@ -29,8 +28,8 @@ from shapely import STRtree
 # Load the environment variables from the .env file
 load_dotenv()
 
-
 logger = logging.getLogger("WRT.Constraints")
+
 
 ##
 # Constraint: Main class for handling of constraints
@@ -57,6 +56,7 @@ class Constraint:
     lat: np.ndarray
     lon: np.ndarray
     time: np.ndarray
+
     # resource_type: int
 
     def __init__(self, name):
@@ -264,7 +264,7 @@ class ConstraintsList:
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
     # calling ConstraintList.safe_endpoint()
     def safe_crossing(
-        self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained
+            self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained
     ):
         debug = False
 
@@ -502,10 +502,10 @@ class StayOnMap(NegativeContraint):
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
         is_on_map = (
-            (lat > self.lat2)
-            + (lat < self.lat1)
-            + (lon > self.lon2)
-            + (lon < self.lon1)
+                (lat > self.lat2)
+                + (lat < self.lat1)
+                + (lon > self.lon2)
+                + (lon < self.lon1)
         )
         return is_on_map
 
@@ -520,6 +520,28 @@ class StayOnMap(NegativeContraint):
 
 
 class ContinuousCheck(NegativeContraint):
+    """
+    Contains various functions to test data connection,
+    gathering and use for obtaining spatial relations
+    for the continuous check in the negative constraints
+
+    Attributes
+    ----------
+    
+    host : str
+    database : str
+    user : str
+    password : str
+    port : str
+        returns values from .env  to be passed in the engine of the db
+
+    predicates : list
+        Possible spatial relations to be tested when considering the constraints
+
+    tags : list
+        Values of the seamark tags that need to be considered
+    """
+
     def __init__(self):
         self.host = os.getenv("HOST")
         self.database = os.getenv("DATABASE")
@@ -537,7 +559,18 @@ class ContinuousCheck(NegativeContraint):
         ]
 
     def connect_database(self):
-        """Connect to the database"""
+        """
+        Connect to the database
+
+        Parameters
+        ----------
+        No arguments
+
+
+        Returns
+        ----------
+        Engine of PostgreSQL
+        """
 
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine(
@@ -549,17 +582,24 @@ class ContinuousCheck(NegativeContraint):
                 port=self.port,
             )
         )
-        # connection = engine.connect()
         return engine
 
     def query_nodes(self, engine, query="SELECT * FROM nodes"):
-        """Create new GeoDataFrame using public.nodes table in the query
+        """
+        Create new GeoDataFrame using public.nodes table in the query
 
-        return
+        Parameters
         ----------
+        engine : sqlalchemy engine
+            engine object
 
+        query : str
+            sql query for table nodes
+
+        Returns
+        ----------
         gdf : GeoDataFrame
-            gdf including all the features from public.ways table
+            gdf including all the features from public.nodes table
         """
 
         # Define SQL query to retrieve list of tables
@@ -578,11 +618,19 @@ class ContinuousCheck(NegativeContraint):
         return gdf
 
     def query_ways(self, engine, query="SELECT *, linestring AS geom FROM ways"):
-        """Create new GeoDataFrame using public.ways table in the query
+        """
+        Create new GeoDataFrame using public.ways table in the query
 
-        return
+        Parameters
         ----------
+        engine : sqlalchemy engine
+            engine object
 
+        query : str
+            sql query for table ways
+
+        Returns
+        ----------
         gdf : GeoDataFrame
             gdf including all the features from public.ways table
         """
@@ -603,26 +651,35 @@ class ContinuousCheck(NegativeContraint):
         return gdf
 
     def gdf_seamark_combined_nodes(
-        self, engine, query, seamark_object=list, seamark_list=list
+            self, engine, query, seamark_object=list, seamark_list=list
     ):
-        """Create new GeoDataFrame with different seamark tags
+        """
+        Create new GeoDataFrame with specified seamark tags
 
         Parameters
         ----------
+        engine : sqlalchemy engine
+            engine object
 
-        gdf : GeoDataFrame
-            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
+        query : str
+            sql query for table nodes
 
-        seamark_object : str
-            nodes or ways table name
+        seamark_object : list
+            value nodes (which table to be considered)
 
         seamark_list : list
-            list of all the tags that must be overlayed together
+            list of all the tags that must be considered for filtering specific seamark objects
+
+
+        Returns
+        ----------
+        gdf_concat : GeoDataFrame
+            gdf including all the features with specified seamark tags using nodes OSM element
         """
 
         ##################### optional for the moment ######################
         if ("nodes" in seamark_object) and all(
-            element in self.tags for element in seamark_list
+                element in self.tags for element in seamark_list
         ):
             gdf = self.query_nodes(engine, query)
             gdf_list = []
@@ -643,24 +700,34 @@ class ContinuousCheck(NegativeContraint):
         return gdf_concat
 
     def gdf_seamark_combined_ways(
-        self, engine, query, seamark_object=list, seamark_list=list
+            self, engine, query, seamark_object=list, seamark_list=list
     ):
-        """Create new GeoDataFrame with different seamark tags
-
-        Parameters
-        ----------
-        gdf : GeoDataFrame
-            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
-
-        seamark_object : str
-            nodes or ways table name
-
-        seamark_list : list
-            list of all the tags that must be overlayed together
         """
+         Create new GeoDataFrame with specified seamark tags
+
+         Parameters
+         ----------
+         engine : sqlalchemy engine
+             engine object
+
+         query : str
+             sql query for table ways
+
+         seamark_object : list
+             value ways (which table to be considered)
+
+         seamark_list : list
+             list of all the tags that must be considered for filtering specific seamark objects
+
+
+         Returns
+         ----------
+         gdf_concat : GeoDataFrame
+             gdf including all the features with specified seamark tags using ways OSM element
+         """
 
         if ("ways" in seamark_object) and all(
-            element in self.tags for element in seamark_list
+                element in self.tags for element in seamark_list
         ):
             gdf = self.query_ways(engine, query)
             gdf_list = []
@@ -681,6 +748,23 @@ class ContinuousCheck(NegativeContraint):
         return gdf_concat
 
     def concat_nodes_ways(self, query, engine):
+        """
+         Create new GeoDataFrame using public.ways and public.nodes table together in the query
+
+         Parameters
+         ----------
+         query : str
+             sql query for table ways
+
+        engine : sqlalchemy engine
+             engine object
+
+         Returns
+         ----------
+         gdf_all : GeoDataFrame
+             gdf including all the features from public.ways and public.nodes table
+         """
+
         # consider the scenario for a tag present in nodes and ways at the same time
         for query in query:
             if "nodes" in query:
@@ -701,29 +785,37 @@ class ContinuousCheck(NegativeContraint):
         return gdf_all
 
     def gdf_seamark_combined_nodes_ways(
-        self, engine, query=list, seamark_object=list, seamark_list=list
+            self, engine, query=list, seamark_object=list, seamark_list=list
     ):
-        """Create new GeoDataFrame with different seamark tags
-
-        Parameters
-        ----------
-
-        gdf : GeoDataFrame
-            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
-
-        seamark_object : str
-            nodes or ways table name
-
-        seamark_list : list
-            list of all the tags that must be overlayed together
         """
+         Create new GeoDataFrame with specified seamark tags
 
+         Parameters
+         ----------
+         engine : sqlalchemy engine
+             engine object
+
+         query : list
+             list of str for the sql query for table nodes and ways
+
+         seamark_object : list
+            value nodes, ways (which table to be considered)
+
+         seamark_list : list
+             list of all the tags that must be considered for filtering specific seamark objects
+
+
+         Returns
+         ----------
+         gdf_concat : GeoDataFrame
+             gdf including all the features with specified seamark tags using nodes and ways OSM element
+         """
         # gdf_concat = gpd.GeoDataFrame()
 
         if (
-            ("nodes" in seamark_object)
-            and ("ways" in seamark_object)
-            and all(element in self.tags for element in seamark_list)
+                ("nodes" in seamark_object)
+                and ("ways" in seamark_object)
+                and all(element in self.tags for element in seamark_list)
         ):
             gdf = ContinuousCheck().concat_nodes_ways(query, engine)
 
@@ -749,17 +841,30 @@ class ContinuousCheck(NegativeContraint):
         return gdf_concat
 
     def check_crossing(self, engine, query, seamark_object, seamark_list, route_df):
-        """Checks different spatial relations (intersection, contains, touches, crosses)
-
-        Parameters
-        ----------
-        gdf : GeoDataFrame
-            GeoDataFrame of all the public.ways (query_ways()) and public.nodes (query_nodes())
-
-        return
-        ----------
-        query_tree : list of shapely STRTree
         """
+         Check if certain route crosses specified seamark objects
+
+         Parameters
+         ----------
+         engine : sqlalchemy engine
+             engine object
+
+         query : list
+             list of str for the sql query for table nodes and ways
+
+         seamark_object : list
+            value nodes, ways (which table to be considered)
+
+         seamark_list : list
+             list of all the tags that must be considered for filtering specific seamark objects
+
+
+         Returns
+         ----------
+         query_tree : list
+             Create tuple object with information of tree object, spatial relation, result of tree geometry indices,
+         bool of spatial relation result (True or False)
+         """
 
         query_tree = []
 
