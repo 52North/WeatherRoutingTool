@@ -1,8 +1,13 @@
 """Utility functions."""
 import datetime
+import logging
 import math
 
 import numpy as np
+
+import utils.formatting as form
+
+logger = logging.getLogger('WRT.weather')
 
 def mps_to_knots(vals):
     """convert the Meters/second to knots.
@@ -53,7 +58,7 @@ def convert_nptd64_to_ints(time):
     ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     return ts
 
-def check_dataset_spacetime_consistency(ds1, ds2, coord):
+def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
     coord1 = ds1[coord].to_numpy()
     coord2 = ds2[coord].to_numpy()
 
@@ -66,6 +71,11 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord):
         res1 = convert_nptd64_to_h(res1)
         res2 = convert_nptd64_to_h(res2)
         shift2 = convert_nptd64_to_h(shift2)
+
+    logger.info(form.get_log_step('Checking consistency of datasets ' + ds1_name + ' and ' + ds2_name + ' for variable/dimension ' + coord))
+    logger.info(form.get_log_step('Resolutions are: ' + ds1_name + ':' + str(res1) + ', ' +  ds2_name + ':' + str(res2) , 2))
+    logger.info(form.get_log_step(
+        ds2_name + ' is shifted wrt. ' + ds1_name + ' by ' + str(shift2), 2))
 
     return res1, res2, shift2
 

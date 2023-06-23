@@ -73,6 +73,7 @@ if __name__ == "__main__":
     wt = WeatherCondODC(model, start_time,hours,3)
     wt.set_map_size(map)
     wt.read_dataset()
+    #wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
     # initialise constraints
