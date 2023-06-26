@@ -2,6 +2,7 @@ import datetime
 import math
 import os
 
+import config
 import numpy as np
 import pandas as pd
 import pytest
@@ -29,9 +30,10 @@ def compare_times(time64, time):
     time = (time - datetime.datetime(1970,1,1,0,0))
     for iTime in range(0,time.shape[0]): time[iTime] = time[iTime].total_seconds()
     assert np.array_equal(time64, time)
+
 '''
     test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
-     match properties of original array)
+     match properties of original array) for the isobased algorithm
 '''
 def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
@@ -73,6 +75,10 @@ def test_get_netCDF_courses_isobased():
 
     ds.close()
 
+'''
+    test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
+     match properties of original array) for the genetic algorithm
+'''
 def test_get_netCDF_courses_GA():
     lat_short = np.array([1,2, 1])
     lon_short = np.array([4,4, 1.5])
@@ -146,63 +152,10 @@ def test_get_fuel_from_netCDF():
     assert np.array_equal(fuel_test, fuel_ref)
 
     ds.close()
-'''
-    test whether all variablies and dimensions that are passed in courses netCDF to mariPower are returned back correctly
-
-def test_get_fuel_netCDF_return_values():
-    lat = np.array([1.1, 2.2, 3.3, 4.4])
-    it = np.array([1, 2])
-    time = np.array([datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 20),datetime.datetime(2022, 12, 21),datetime.datetime(2022, 12, 22)])
-
-    lon = np.array([0.1,0.2,0.3,0.4])
-    speed = np.array([[5,6],[5,6],
-                      [5,6],[5,6]])
-    courses = np.array([[10,11],[12,14],
-                       [14,16],[15,16]])
-
-    power = np.array([[1, 4], [3.4, 5.3],
-                      [2.1, 6], [1., 5.1]])
-
-    data_vars = dict(
-        lon = (["lat"], lon),
-        time = (["time"], time),
-        speed=(["lat", "it"], speed),
-        courses=(["lat", "it"], courses),
-    )
-
-    coords = dict(
-        lat=(["lat"], lat),
-        it=(["it"], it),
-    )
-    attrs = dict(description="Necessary descriptions added here.")
-
-    ds = xr.Dataset(data_vars, coords, attrs)
-
-    pol = get_default_Tanker()
-
-    ds.to_netcdf(pol.courses_path)
-    ds.close()
-    ds_read = pol.get_fuel_netCDF()
-
-    lon_test = ds_read['lon'].to_numpy()
-    lat_test = ds_read['lat'].to_numpy()
-    speed_test = ds_read['speed'].to_numpy()
-    courses_test = ds_read['courses'].to_numpy()
-    it_test = ds_read['it'].to_numpy()
-
-    ds_read.close()
-
-    assert np.array_equal(lon_test, lon)
-    assert np.array_equal(lat_test, lat)
-    assert np.array_equal(speed_test, speed)
-    assert np.array_equal(courses_test, courses)
-    assert np.array_equal(it_test, it)
-'''
 
 '''
-    test whether single netCDFs which contain information for one course per pixel are correctly merged
+   test whether values returned by maripower for fuel/power and revolutions per minute have a sensible order of magnitude
 '''
-
 def test_power_consumption_returned():
     #dummy weather file
     lat = np.array([54., 55, 56])
@@ -267,15 +220,27 @@ def test_power_consumption_returned():
     ds['v-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], vwind)
 
     print(ds)
-    ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
+    ds.to_netcdf(config.BASE_PATH + '/TestEnvData.nc')
 
     #dummy course netCDF
     pol = get_default_Tanker()
     pol.set_boat_speed(np.array([20]))
-    pol.set_env_data_path('/home/kdemmich/MariData/Code/sample.nc')
-    pol.set_courses_path('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc')
+    pol.set_env_data_path(config.BASE_PATH + '/TestEnvData.nc')
+    pol.set_courses_path(config.BASE_PATH + '/TestCoursesRoute.nc')
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
     ds = pol.get_fuel_netCDF()
-    print('ds:', ds['Power_delivered'])
+
+    power = ds['Power_delivered']
+    rpm = ds['RotationRate']
+    fuel = ds['Fuel_consumption_rate']
+
+    assert np.all(power < 3000000)
+    assert np.all(rpm < 100)
+    assert np.all(fuel < 0.8)
+    assert np.all(power > 1000000)
+    assert np.all(rpm > 70)
+    assert np.all(fuel > 0.5)
+
+
