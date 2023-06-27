@@ -9,12 +9,12 @@ import numpy as np
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 
-import config
-import utils.graphics as graphics
-import utils.formatting as form
+import WeatherRoutingTool.config as config
+import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.utils.formatting as form
 from maridatadownloader import DownloaderFactory
-from utils.maps import Map
-from utils.unit_conversion import *
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.utils.unit_conversion import *
 
 logger = logging.getLogger('WRT.weather')
 

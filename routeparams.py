@@ -6,10 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from geovectorslib import geod
 
-import utils.graphics as graphics
-import utils.formatting as form
-from utils.formatting import NumpyArrayEncoder
-from ship.shipparams import ShipParams
+import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
+from WeatherRoutingTool.ship.shipparams import ShipParams
 
 ##
 # Container class for route parameters

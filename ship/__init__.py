@@ -1,2 +1,1 @@
-import ship
-import shipparams
+from WeatherRoutingTool.ship import *

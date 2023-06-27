@@ -1,7 +1,7 @@
-import algorithms
-import constraints
-import ship
-import tests
-import utils
-import weather
-import routeparams
+import WeatherRoutingTool.algorithms
+import WeatherRoutingTool.constraints
+import WeatherRoutingTool.ship
+import WeatherRoutingTool.tests
+import WeatherRoutingTool.utils
+import WeatherRoutingTool.weather
+import WeatherRoutingTool.routeparams

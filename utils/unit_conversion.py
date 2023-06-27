@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-import utils.formatting as form
+import WeatherRoutingTool.utils.formatting as form
 
 logger = logging.getLogger('WRT.weather')
 
