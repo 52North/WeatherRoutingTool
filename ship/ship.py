@@ -109,10 +109,11 @@ class Tanker(Boat):
     #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
     ## initialise mariPower.ship for communication of courses via netCDF and passing of environmental data as netCDF (current standard)
-    def init_hydro_model_Route(self, filepath_env, filepath_courses):
+    def init_hydro_model_Route(self, filepath_env, filepath_courses, filepath_depth):
         self.hydro_model = mariPower.ship.CBT()
         self.environment_path = filepath_env
         self.courses_path = filepath_courses
+        self.depth_path = filepath_depth
 
     def set_boat_speed(self, speed):
         self.speed = speed
@@ -352,7 +353,7 @@ class Tanker(Boat):
         ship = mariPower.ship.CBT()
 
         #start_time = time.time()
-        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
         #form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
