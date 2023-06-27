@@ -222,6 +222,7 @@ class IsoBased(RoutingAlg):
                 self.is_pos_constraint_step = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
+                self.update_fig('p')
                 continue
 
             #if i>9:

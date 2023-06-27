@@ -341,15 +341,14 @@ class WaterDepth(NegativeContraint):
         self.message += 'water not deep enough!'
 
         self.depth_data = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
-        #self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth
         self.map = map
 
     def write_reduced_depth_data(self, filename):
-        print(self.depth_data)
-        depth = self.depth_data.sel(latitude=slice(self.map.lat1, self.map.lat2),longitude=slice(self.map.lon1, self.map.lon2))
+        depth_renamed = self.depth_data.rename(z="depth", lat="latitude", lon="longitude")
+        depth = depth_renamed.sel(latitude=slice(self.map.lat1, self.map.lat2),longitude=slice(self.map.lon1, self.map.lon2))
         depth.to_netcdf(filename)
         depth.close()
 
