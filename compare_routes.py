@@ -5,7 +5,7 @@ import config
 from constraints.constraints import *
 from routeparams import RouteParams
 from utils.maps import Map
-from weather import WeatherCondCMEMS
+from weather import WeatherCondFromFile
 
 
 if __name__ == "__main__":
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     #filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230509_results/Thames_Bordeaux_WP3_WH8.json"
 
     # simulation study plot
-    filename1 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP1_WH0.json"
+    filename1 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
     filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP2_WH4.json"
     filename3 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP3_WH8.json"
 
@@ -35,9 +35,9 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     depthfile = config.DEPTH_DATA
     map = Map(lat1, -10., lat2, lon2)
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
+    wt = WeatherCondFromFile(model, start_time, hours, 3)
     wt.set_map_size(map)
-    #wt.add_depth_to_EnvData(depthfile)
+    wt.read_dataset(windfile)
 
     ##
     # init Constraints
