@@ -126,8 +126,8 @@ if __name__ == "__main__":
     # routing
     min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
     min_fuel_route.print_route()
-    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
-    min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
+    #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
+    min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
     # *******************************************
     # plot route in constraints

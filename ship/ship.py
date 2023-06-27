@@ -353,7 +353,7 @@ class Tanker(Boat):
         ship = mariPower.ship.CBT()
 
         #start_time = time.time()
-        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
         #form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
