@@ -1,5 +1,9 @@
 # ISOCHRONE CODE
 
+## To Do
+- [ ] add figures for definition of basic variables
+- [ ] improve the definition of heading/azimuthal angle
+- [ ] sketch the basic steps of the routing procedure
 
 ## Installation instructions
 <ol>
@@ -16,14 +20,15 @@ package mariPower. All other dependencies are installed automatically.
   <li>
     For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
     <ul>
-      <li> u-component_of_wind_sigma (u-component of wind @ sigma level) </li>
-      <li> v-component_of_wind_sigma (v-component of wind @ sigma level) </li>
+      <li> u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground) </li>
+      <li> v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground) </li>
       <li> vo (northward velocity) </li>
       <li> uo (eastward velocity) </li>
       <li> VHMO (wave significant height @ sea surface)</li>
       <li> VMDR (wave direction @ sea surface)</li>
       <li> thetao (potential temperature) </li>
       <li> Pressure_surface (pressure at the water surface) </li>
+      <li> Temperature_surface (temperature at the water surface) </li>
       <li> so (salinity) </li>
     </ul>
   </li>
@@ -49,6 +54,50 @@ python execute_routing.py
 ## Logging
 The routing tool writes log output using the python package logging. Information about basic settings are written to a file which is specified by the environment variable 'INFO_LOG_FILE'. Warnings and performance information are
 written to the file which is specified by the environment variable 'PERFORMANCE_LOG_FILE'. Further debug information are written to stdout.
+
+## Isochrone Algorithm
+### Parameter definitions for configuration
+pruning = the process of chosing the route that maximises the distance for one routing segment
+heading/course/azimuth/variants = the angular distance towards North on the grand circle route 
+route segment = distance of one starting point of the routing step to one end point
+
+ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process
+ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)
+ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step
+ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments
+
+
+### Variable definitions
+lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
+lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
+
+### Communication between mariPower and the WRT
+Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
+
+```sh
+Dimensions:                    (it_pos: 2, it_course: 3)
+Coordinates:
+   * it_pos                    (it_pos) int64 1 2
+   * it_course                 (it_course) int64 1 2 3 
+Data variables:
+    courses                    (it_pos, it_course) float64 ...
+    speed                      (it_pos, it_course) int64 ...
+    lat                        (it_pos) float64 ...
+    lon                        (it_pos) float64 ...
+    time                       (it_pos) datetime64[ns] ...
+    Power_delivered            (it_pos, it_course) float64 ...
+    RotationRate               (it_pos, it_course) float64 ...
+    Fuel_consumption_rate      (it_pos, it_course) float64 ...
+    Calm_resistance            (it_pos, it_course) float64 ...
+    Wind_resistance            (it_pos, it_course) float64 ...
+    Wave_resistance            (it_pos, it_course) float64 ...
+    Shallow_water_resistance   (it_pos, it_course) float64 ...
+    Hull_roughness_resistance  (it_pos, it_course) float64 ...
+```
+
+The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordinate pairs and the courses that need to be checked per coordinate pair, respectively. The function in the WRT that writes the route parameters to the netCDF file is called ``` ship.write_netCDF_courses ```. Following up on this, the function ``` get_fuel_netCDF``` in the WRT calls the function ``` PredictPowerOrSpeedRoute ``` in mariPower which itself initiates the calcualation of the ship parameters. The netCDF file is overwritten by the WRT for every routing step s.t. the size of the file is not increasing during the routing process. 
+
+Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. XXX). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. XXX).
 
 ## References
 - https://github.com/omdv/wind-router
