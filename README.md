@@ -55,7 +55,21 @@ python execute_routing.py
 The routing tool writes log output using the python package logging. Information about basic settings are written to a file which is specified by the environment variable 'INFO_LOG_FILE'. Warnings and performance information are
 written to the file which is specified by the environment variable 'PERFORMANCE_LOG_FILE'. Further debug information are written to stdout.
 
-## Isochrone Algorithm
+## Isofuel Algorithm
+
+### General concept
+For the isofuel algorithm the routing process is divided in separate routing steps. For every step, the ship has a specified amount of fuel availabe for traveling and it is supposed to travel as far as possible with constant speed. The algorithm is the following:
+
+1. From the start coordinates, imagine traveling with different courses at constant ship speed. The courses are centered around the grand circle route from the start coordinates towards the destination.
+2. Calculate the fuel rate *f/t* that is necessary for keeping courses and speed using the mariPower package. 
+3. Based on the fuel rate, calulate the distance that can be traveled for every course that is considered.
+4. divide the full angular region into regular segments
+5. For every pruning segment, the routing segment that maximises the distance is selected for the next routing step. 
+
+
+This is tested for different courses the ship can take. To select the route that minimises fuel, all route segments that are considered are divided into different angular sectors, the pruning segments. For every pruning segment, the route segment that maximises the distance 
+The isofuel algorithm is based on the same concept as the modified isochrone algorithm that is described in XXX. However, instead of assuming constant 
+
 ### Parameter definitions for configuration
 pruning = the process of chosing the route that maximises the distance for one routing segment
 heading/course/azimuth/variants = the angular distance towards North on the grand circle route 
@@ -66,12 +80,11 @@ ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is conside
 ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step
 ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments
 
-
 ### Variable definitions
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-### Communication between mariPower and the WRT
+# Communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
@@ -97,7 +110,7 @@ Data variables:
 
 The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordinate pairs and the courses that need to be checked per coordinate pair, respectively. The function in the WRT that writes the route parameters to the netCDF file is called ``` ship.write_netCDF_courses ```. Following up on this, the function ``` get_fuel_netCDF``` in the WRT calls the function ``` PredictPowerOrSpeedRoute ``` in mariPower which itself initiates the calcualation of the ship parameters. The netCDF file is overwritten by the WRT for every routing step s.t. the size of the file is not increasing during the routing process. 
 
-Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. XXX). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. XXX).
+The same structure of the netCDF file is used for the isofuel algorithm and the genetic algorithm. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. XXX). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. XXX).
 
 ## References
 - https://github.com/omdv/wind-router
