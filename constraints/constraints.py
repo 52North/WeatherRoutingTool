@@ -145,8 +145,10 @@ class ConstraintPars:
 class ConstraintsList:
     pars: ConstraintPars
     positive_constraints: list
-    negative_constraints: list
-    neg_size: int
+    negative_constraints_discrete: list
+    negative_constraints_continuous: list
+    neg_dis_size: int
+    neg_cont_size: int
     pos_size: int
 
     positive_point_dict: dict
@@ -158,9 +160,11 @@ class ConstraintsList:
     def __init__(self, pars):
         self.pars = pars
         self.positive_constraints = []
-        self.negative_constraints = []
+        self.negative_constraints_discrete = []
+        self.negative_constraints_continuous = []
         self.constraints_crossed = []
-        self.neg_size = 0
+        self.neg_dis_size = 0
+        self.neg_cont_size = 0
         self.pos_size = 0
 
     def print_constraints_crossed(self):
@@ -173,7 +177,10 @@ class ConstraintsList:
         self.print_active_constraints()
 
     def print_active_constraints(self):
-        for Const in self.negative_constraints:
+        for Const in self.negative_constraints_continuous:
+            Const.print_info()
+
+        for Const in self.negative_constraints_discrete:
             Const.print_info()
 
         for Const in self.positive_constraints:
@@ -242,13 +249,13 @@ class ConstraintsList:
     def safe_endpoint(self, lat, lon, current_time, is_constrained):
         debug = False
 
-        for iConst in range(0, self.neg_size):
-            is_constrained_temp = self.negative_constraints[iConst].constraint_on_point(
+        for iConst in range(0, self.neg_dis_size):
+            is_constrained_temp = self.negative_constraints_discrete[iConst].constraint_on_point(
                 lat, lon, current_time
             )
             if is_constrained_temp.any():
                 self.constraints_crossed.append(
-                    self.negative_constraints[iConst].message
+                    self.negative_constraints_discrete[iConst].message
                 )
             if debug:
                 print("is_constrained_temp: ", is_constrained_temp)
@@ -259,11 +266,33 @@ class ConstraintsList:
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
+    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
+        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lat_end, lon_start, lon_end, current_time, is_constrained)
+        is_constrained_continuous = self.safe_crossing_continuous(lat_start, lat_end, lon_start, lon_end, current_time)
+        is_constrained = is_constrained + is_constrained_discrete + is_constrained_continuous
+        return is_constrained
+
+    def safe_crossing_continuous(self, lat_start, lat_end, lon_start, lon_end, current_time):
+        debug = True
+        is_constrained = []
+
+        if debug:
+            print('Entering continuous checks')
+            print('Length of latitudes: ' + str(len(lat_start)))
+        for constr in self.negative_constraints_continuous:
+            is_constrained_temp = constr.check_crossing(lat_start, lat_end, lon_start, lon_end, current_time)
+            print('is_constrained_temp: ', is_constrained_temp)
+            is_constrained = is_constrained + is_constrained_temp
+            print('is_constrained: ', is_constrained)
+
+        print('is_constrained_final: ', is_constrained)
+            return is_constrained
+
     ##
     # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination (lat_end, lon_end).
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
     # calling ConstraintList.safe_endpoint()
-    def safe_crossing(
+    def safe_crossing_discrete(
             self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained
     ):
         debug = False
@@ -327,9 +356,18 @@ class ConstraintsList:
         self.positive_constraints.append(constraint)
         self.pos_size += 1
 
-    def add_neg_constraint(self, constraint):
-        self.negative_constraints.append(constraint)
-        self.neg_size += 1
+    def add_neg_constraint(self, constraint, option = 'discrete'):
+        if option == 'discrete':
+            self.negative_constraints_discrete.append(constraint)
+            self.neg_dis_size += 1
+            return
+
+        if option == 'continuous':
+            self.negative_constraints_continuous.append(constraint)
+            self.neg_cont_size += 1
+            return
+
+        raise ValueError('You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and -continuous- are implemented ')
 
     def check_weather(self):
         pass
@@ -384,10 +422,11 @@ class WaterDepth(NegativeContraint):
         NegativeContraint.__init__(self, "WaterDepth")
         self.message += "water not deep enough!"
 
-        ds_depth = xr.open_dataset(
+        self.depth_data = xr.open_dataset(
             depth_path, chunks={"time": "500MB"}, decode_times=False
         )
-        self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+        #print('depth data:', ds_depth)
+        #self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth
@@ -543,6 +582,7 @@ class ContinuousCheck(NegativeContraint):
     """
 
     def __init__(self):
+        NegativeContraint.__init__(self, "ContinuousChecks")
         self.host = os.getenv("HOST")
         self.database = os.getenv("DATABASE")
         self.user = os.getenv("USER")
@@ -558,6 +598,9 @@ class ContinuousCheck(NegativeContraint):
             "restricted_area",
             #"separation_roundabout",
         ]
+
+    def print_info(self):
+        logger.info(form.get_log_step("no seamarks crossing", 1))
 
     def connect_database(self):
         """
