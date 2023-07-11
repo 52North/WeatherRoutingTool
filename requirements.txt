@@ -1,5 +1,6 @@
 bbox
 cartopy > 0.20.0
+dask
 geovectorslib
 global_land_mask
 matplotlib
@@ -10,5 +11,7 @@ python-dotenv
 Pillow
 scipy == 1.9.2
 setuptools
+wheel
 xarray
+lxml
 netcdf4
