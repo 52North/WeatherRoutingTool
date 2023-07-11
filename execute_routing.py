@@ -109,11 +109,7 @@ if __name__ == "__main__":
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
     constraint_list.add_neg_constraint(water_depth)
-<<<<<<< Updated upstream
-    constraint_list.add_neg_constraint(continuous_checks, 'continuous')
-=======
-    constraint_list.add_neg_constraint(seamarks_crossing)
->>>>>>> Stashed changes
+    constraint_list.add_neg_constraint(seamarks_crossing, 'continuous')
 
     constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
