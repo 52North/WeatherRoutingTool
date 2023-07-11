@@ -286,7 +286,7 @@ class ConstraintsList:
             print('is_constrained: ', is_constrained)
 
         print('is_constrained_final: ', is_constrained)
-            return is_constrained
+        return is_constrained
 
     ##
     # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination (lat_end, lon_end).
@@ -418,15 +418,18 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, depth_path, drougth, map):
+    def __init__(self, depth_path, drougth, map, rename = True):
         NegativeContraint.__init__(self, "WaterDepth")
         self.message += "water not deep enough!"
 
-        self.depth_data = xr.open_dataset(
+        ds_depth = xr.open_dataset(
             depth_path, chunks={"time": "500MB"}, decode_times=False
         )
-        #print('depth data:', ds_depth)
-        #self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+
+        if rename:
+            self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+        else:
+            self.depth_data = ds_depth
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth
