@@ -589,7 +589,7 @@ class ContinuousCheck(NegativeContraint):
         self.password = os.getenv("PASSWORD")
         self.port = os.getenv("PORT")
         self.land_polygons = "land_polygons"
-        self.query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways"]
+        self.query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways","SELECT * FROM LAND_POLYGONS"]
         self.predicates = ["intersects", "contains", "touches", "crosses", "overlaps"]
         self.tags = [
             "separation_zone",
@@ -627,6 +627,367 @@ class ContinuousCheck(NegativeContraint):
             )
         )
         return engine
+
+    # def query_nodes(self, engine, query="SELECT * FROM nodes"):
+    #     """
+    #     Create new GeoDataFrame using public.nodes table in the query
+    # 
+    #     Parameters
+    #     ----------
+    #     engine : sqlalchemy engine
+    #         engine object
+    # 
+    #     query : str
+    #         sql query for table nodes
+    # 
+    #     Returns
+    #     ----------
+    #     gdf : GeoDataFrame
+    #         gdf including all the features from public.nodes table
+    #     """
+    # 
+    #     # Define SQL query to retrieve list of tables
+    #     # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+    #     query = query
+    # 
+    #     # Use geopandas to read the SQL query into a dataframe from postgis
+    #     gdf = gpd.read_postgis(query, engine, geom_col="geom")
+    # 
+    #     # Eliminate none values
+    #     gdf = gdf[gdf["geom"] != None]
+    # 
+    #     # read timestamp type data as string
+    #     # gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    # 
+    #     return gdf
+    # 
+    # def query_ways(self, engine, query="SELECT *, linestring AS geom FROM ways"):
+    #     """
+    #     Create new GeoDataFrame using public.ways table in the query
+    # 
+    #     Parameters
+    #     ----------
+    #     engine : sqlalchemy engine
+    #         engine object
+    # 
+    #     query : str
+    #         sql query for table ways
+    # 
+    #     Returns
+    #     ----------
+    #     gdf : GeoDataFrame
+    #         gdf including all the features from public.ways table
+    #     """
+    # 
+    #     # Define SQL query to retrieve list of tables
+    #     # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+    #     query = query
+    # 
+    #     # Use geopandas to read the SQL query into a dataframe from postgis
+    #     gdf = gpd.read_postgis(query, engine, geom_col="geom")
+    # 
+    #     # Eliminate none values
+    #     gdf = gdf[gdf["geom"] != None]
+    # 
+    #     # read timestamp type data as string
+    #     # gdf['tstamp']=gdf['tstamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    # 
+    #     return gdf
+    # 
+    # def gdf_seamark_combined_nodes(
+    #         self, engine, query, seamark_object=list, seamark_list=list
+    # ):
+    #     """
+    #     Create new GeoDataFrame with specified seamark tags
+    # 
+    #     Parameters
+    #     ----------
+    #     engine : sqlalchemy engine
+    #         engine object
+    # 
+    #     query : str
+    #         sql query for table nodes
+    # 
+    #     seamark_object : list
+    #         value nodes (which table to be considered)
+    # 
+    #     seamark_list : list
+    #         list of all the tags that must be considered for filtering specific seamark objects
+    # 
+    # 
+    #     Returns
+    #     ----------
+    #     gdf_concat : GeoDataFrame
+    #         gdf including all the features with specified seamark tags using nodes OSM element
+    #     """
+    # 
+    #     ##################### optional for the moment ######################
+    #     if ("nodes" in seamark_object) and all(
+    #             element in self.tags for element in seamark_list
+    #     ):
+    #         gdf = self.query_nodes(engine, query)
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             if type(gdf["tags"][i]) == str:
+    #                 gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    #             else:
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    #         gdf_concat = pd.concat(gdf_list)
+    # 
+    #     return gdf_concat
+    # 
+    # def gdf_seamark_combined_ways(
+    #         self, engine, query, seamark_object=list, seamark_list=list
+    # ):
+    #     """
+    #      Create new GeoDataFrame with specified seamark tags
+    # 
+    #      Parameters
+    #      ----------
+    #      engine : sqlalchemy engine
+    #          engine object
+    # 
+    #      query : str
+    #          sql query for table ways
+    # 
+    #      seamark_object : list
+    #          value ways (which table to be considered)
+    # 
+    #      seamark_list : list
+    #          list of all the tags that must be considered for filtering specific seamark objects
+    # 
+    # 
+    #      Returns
+    #      ----------
+    #      gdf_concat : GeoDataFrame
+    #          gdf including all the features with specified seamark tags using ways OSM element
+    #      """
+    # 
+    #     if ("ways" in seamark_object) and all(
+    #             element in self.tags for element in seamark_list
+    #     ):
+    #         gdf = self.query_ways(engine, query)
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             if type(gdf["tags"][i]) == str:
+    #                 gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    #             else:
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    #         gdf_concat = pd.concat(gdf_list)
+    # 
+    #     return gdf_concat
+    # 
+    # def concat_nodes_ways(self, query, engine):
+    #     """
+    #      Create new GeoDataFrame using public.ways and public.nodes table together in the query
+    # 
+    #      Parameters
+    #      ----------
+    #      query : str
+    #          sql query for table ways
+    # 
+    #     engine : sqlalchemy engine
+    #          engine object
+    # 
+    #      Returns
+    #      ----------
+    #      gdf_all : GeoDataFrame
+    #          gdf including all the features from public.ways and public.nodes table
+    #      """
+    # 
+    #     # consider the scenario for a tag present in nodes and ways at the same time
+    #     for query in query:
+    #         if "nodes" in query:
+    #             gdf_nodes = self.query_nodes(engine, query)
+    #         elif "ways" in query:
+    #             gdf_ways = self.query_ways(engine, query)
+    #         else:
+    #             print("false query passed")
+    # 
+    #     # checks if there are repeated values in both gdfs
+    #     if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
+    #         gdf_all = pd.concat([gdf_nodes, gdf_ways])
+    #     else:
+    #         gdf_all = pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(
+    #             subset="id", keep="first"
+    #         )
+    # 
+    #     return gdf_all
+    # 
+    # def gdf_seamark_combined_nodes_ways(
+    #         self, engine, query=list, seamark_object=list, seamark_list=list
+    # ):
+    #     """
+    #      Create new GeoDataFrame with specified seamark tags
+    # 
+    #      Parameters
+    #      ----------
+    #      engine : sqlalchemy engine
+    #          engine object
+    # 
+    #      query : list
+    #          list of str for the sql query for table nodes and ways
+    # 
+    #      seamark_object : list
+    #         value nodes, ways (which table to be considered)
+    # 
+    #      seamark_list : list
+    #          list of all the tags that must be considered for filtering specific seamark objects
+    # 
+    # 
+    #      Returns
+    #      ----------
+    #      gdf_concat : GeoDataFrame
+    #          gdf including all the features with specified seamark tags using nodes and ways OSM element
+    #      """
+    #     # gdf_concat = gpd.GeoDataFrame()
+    # 
+    #     if (
+    #             ("nodes" in seamark_object)
+    #             and ("ways" in seamark_object)
+    #             and all(element in self.tags for element in seamark_list)
+    #     ):
+    #         gdf = ContinuousCheck().concat_nodes_ways(query, engine)
+    # 
+    #         gdf_list = []
+    #         for i in range(0, len(seamark_list)):
+    #             if type(gdf["tags"].iloc[i]) == str:
+    #                 gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    #             else:
+    #                 gdf1 = gdf[
+    #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
+    #                 ]
+    #                 gdf_list.append(gdf1)
+    # 
+    #         gdf_concat = pd.concat(gdf_list)
+    #     else:
+    #         gdf_concat = gpd.GeoDataFrame()
+    #         logger.info("Check the seamark object and seamark tag list")
+    # 
+    #     return gdf_concat
+    # 
+    # def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None):  #best way to go (keep just these arguments)
+    #     """
+    #      Check if certain route crosses specified seamark objects
+    # 
+    #      Parameters
+    #      ----------
+    #      lat_start : np.array
+    #         array of all origin latitudes of routing segments
+    # 
+    #     lon_start : np.array
+    #         array of all origin longitudes of routing segments
+    # 
+    #      lat_end : np.array
+    #         array of all destination latitudes of routing segments
+    # 
+    #     lon_end : np.array
+    #         array of all destination longitudes of routing segments
+    # 
+    #      time : datetime.datetime (optional argument)
+    # 
+    #      Returns
+    #      ----------
+    #      query_tree : list
+    #          bool of spatial relation result (True or False)
+    #      """
+    # 
+    #     query_tree = []
+    # 
+    #     concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=self.connect_database(),query=self.query,seamark_object=["nodes","ways"],seamark_list=self.tags)
+    #     lines = []
+    # 
+    #     # generating the LineString geometry from start and end point
+    #     for i in len(lat_start):
+    #         start_point = Point(lat_start[i],lon_start[i])
+    #         end_point = Point(lat_end[i],lon_end[i])
+    #         line = LineString([start_point,end_point])
+    #         lines.append(line)
+    # 
+    #     # creating geospatial dataframe objects from linestring geometries
+    #     route_df = gpd.GeoDataFrame(lines)
+    # 
+    #     # checking the spatial relations using shapely.STRTree spatial indexing method
+    #     for predicate in self.predicates:
+    #         concat_df = concat_gdf
+    #         tree = STRtree(concat_df["geom"])
+    #         geom_object = tree.query(route_df["geom"], predicate=predicate).tolist()
+    # 
+    #         # checks if there is spatial relation between routes and seamarks objects
+    #         if geom_object == [[], []] or geom_object == []:
+    #             # if route is not constrained
+    #             query_tree.append(False)
+    #         else:
+    #             # if route is constrained
+    #             query_tree.append(True)
+    # 
+    #     # returns a list bools (spatial relation)
+    #     return query_tree
+
+    """
+    query_tree = []
+
+
+        for predicate in self.predicates:
+            concat_df = self.gdf_seamark_combined_nodes_ways(
+                engine, query, seamark_object, seamark_list
+            )
+            tree = STRtree(concat_df["geom"])
+            geom_object = tree.query(route_df["geom"], predicate=predicate).tolist()
+
+            if geom_object == [[], []] or geom_object == []:
+                print(f"no {predicate} for the geometry objects with {geom_object}")
+            else:
+                print(f"{predicate} for the geometry object with {geom_object}")
+                query_tree.append((tree, predicate, geom_object, True))
+
+        # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
+        return query_tree"""
+
+
+class SeamarkCrossing(ContinuousCheck):
+    """
+    Contains various functions to test data connection,
+    gathering and use for obtaining spatial relations
+    for the continuous check in the negative constraints
+
+    Attributes
+    ----------
+
+    host : str
+    database : str
+    user : str
+    password : str
+    port : str
+        returns values from .env  to be passed in the engine of the db
+
+    predicates : list
+        Possible spatial relations to be tested when considering the constraints
+
+    tags : list
+        Values of the seamark tags that need to be considered
+    """
+    def __init__(self,query,predicates,tags):
+        super().__init__(query,predicates,tags)
+        self.engine = ContinuousCheck.connect_database()
 
     def query_nodes(self, engine, query="SELECT * FROM nodes"):
         """
@@ -884,7 +1245,8 @@ class ContinuousCheck(NegativeContraint):
 
         return gdf_concat
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None):  #best way to go (keep just these arguments)
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end,
+                       time=None):  # best way to go (keep just these arguments)
         """
          Check if certain route crosses specified seamark objects
 
@@ -912,14 +1274,15 @@ class ContinuousCheck(NegativeContraint):
 
         query_tree = []
 
-        concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=self.connect_database(),query=self.query,seamark_object=["nodes","ways"],seamark_list=self.tags)
+        concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=self.connect_database(), query=self.query,
+                                                          seamark_object=["nodes", "ways"], seamark_list=self.tags)
         lines = []
 
         # generating the LineString geometry from start and end point
         for i in len(lat_start):
-            start_point = Point(lat_start[i],lon_start[i])
-            end_point = Point(lat_end[i],lon_end[i])
-            line = LineString([start_point,end_point])
+            start_point = Point(lat_start[i], lon_start[i])
+            end_point = Point(lat_end[i], lon_end[i])
+            line = LineString([start_point, end_point])
             lines.append(line)
 
         # creating geospatial dataframe objects from linestring geometries
@@ -929,7 +1292,7 @@ class ContinuousCheck(NegativeContraint):
         for predicate in self.predicates:
             concat_df = concat_gdf
             tree = STRtree(concat_df["geom"])
-            geom_object = tree.query(route_df["geom"], predicate=predicate).tolist()
+            geom_object = tree.query(route_df["geometry"], predicate=predicate).tolist()
 
             # checks if there is spatial relation between routes and seamarks objects
             if geom_object == [[], []] or geom_object == []:
@@ -942,22 +1305,97 @@ class ContinuousCheck(NegativeContraint):
         # returns a list bools (spatial relation)
         return query_tree
 
-    """
-    query_tree = []
 
+class LandPolygonsCrossing(ContinuousCheck):
+    def __init__(self,query,tags,predicates):
+        super().__init__(query,tags,predicates)
+        self.engine= ContinuousCheck().connect_database()
 
+    def query_land_polygons(self, engine, query="SELECT * FROM land_polygons"):
+        """
+        Create new GeoDataFrame using public.ways table in the query
+
+        Parameters
+        ----------
+        engine : sqlalchemy engine
+            engine object
+
+        query : str
+            sql query for table ways
+
+        Returns
+        ----------
+        gdf : GeoDataFrame
+            gdf including all the features from public.ways table
+        """
+
+        # Define SQL query to retrieve list of tables
+        # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        query = query
+
+        # Use geopandas to read the SQL query into a dataframe from postgis
+        gdf = gpd.read_postgis(query, engine, geom_col="geometry")
+
+        # Eliminate none values
+        gdf = gdf[gdf["geom"] != None]
+
+        return gdf
+
+    def check_land_crossing(self, lat_start, lon_start, lat_end, lon_end,
+                       time=None):  # best way to go (keep just these arguments)
+        """
+         Check if certain route crosses specified seamark objects
+
+         Parameters
+         ----------
+         lat_start : np.array
+            array of all origin latitudes of routing segments
+
+        lon_start : np.array
+            array of all origin longitudes of routing segments
+
+         lat_end : np.array
+            array of all destination latitudes of routing segments
+
+        lon_end : np.array
+            array of all destination longitudes of routing segments
+
+         time : datetime.datetime (optional argument)
+
+         Returns
+         ----------
+         query_tree : list
+             bool of spatial relation result (True or False)
+         """
+
+        query_tree = []
+
+        concat_gdf = self.query_land_polygons(engine=self.connect_database(), query=self.query[2])
+        lines = []
+
+        # generating the LineString geometry from start and end point
+        for i in len(lat_start):
+            start_point = Point(lat_start[i], lon_start[i])
+            end_point = Point(lat_end[i], lon_end[i])
+            line = LineString([start_point, end_point])
+            lines.append(line)
+
+        # creating geospatial dataframe objects from linestring geometries
+        route_df = gpd.GeoDataFrame(lines)
+
+        # checking the spatial relations using shapely.STRTree spatial indexing method
         for predicate in self.predicates:
-            concat_df = self.gdf_seamark_combined_nodes_ways(
-                engine, query, seamark_object, seamark_list
-            )
-            tree = STRtree(concat_df["geom"])
-            geom_object = tree.query(route_df["geom"], predicate=predicate).tolist()
+            concat_df = concat_gdf
+            tree = STRtree(concat_df["geometry"])
+            geom_object = tree.query(route_df["geometry"], predicate=predicate).tolist()
 
+            # checks if there is spatial relation between routes and seamarks objects
             if geom_object == [[], []] or geom_object == []:
-                print(f"no {predicate} for the geometry objects with {geom_object}")
+                # if route is not constrained
+                query_tree.append(False)
             else:
-                print(f"{predicate} for the geometry object with {geom_object}")
-                query_tree.append((tree, predicate, geom_object, True))
+                # if route is constrained
+                query_tree.append(True)
 
-        # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        return query_tree"""
+        # returns a list bools (spatial relation)
+        return query_tree
