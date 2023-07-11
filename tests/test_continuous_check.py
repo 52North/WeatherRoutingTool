@@ -1,4 +1,6 @@
 import os
+
+import numpy
 import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
@@ -394,10 +396,14 @@ class TestContinuousCheck:
             "geom": [LineString([(7, 8), (5, 9)])],
         }
         route_df = gpd.GeoDataFrame(route)
-
+        lat_start=numpy.array((5,6,7,8))
+        lon_start=numpy.array((5,6,7,9))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         check_list = ContinuousCheck().check_crossing(
-            engine,
+
+
+            """
+                        engine,
             query=[
                 "SELECT * , geometry as geom FROM nodes",
                 "SELECT *, geometry AS geom FROM ways",
@@ -405,6 +411,8 @@ class TestContinuousCheck:
             seamark_object=["nodes", "ways"],
             seamark_list=["separation_zone", "separation_line"],
             route_df=route_df,
+            """
+
         )
 
         for tuple_obj in check_list:

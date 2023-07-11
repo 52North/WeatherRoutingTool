@@ -22,7 +22,7 @@ import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
 from dotenv import load_dotenv
-from shapely.geometry import Point
+from shapely.geometry import Point,LineString
 from shapely import STRtree
 
 # Load the environment variables from the .env file
@@ -549,13 +549,14 @@ class ContinuousCheck(NegativeContraint):
         self.password = os.getenv("PASSWORD")
         self.port = os.getenv("PORT")
         self.land_polygons = "land_polygons"
+        self.query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways"]
         self.predicates = ["intersects", "contains", "touches", "crosses", "overlaps"]
         self.tags = [
             "separation_zone",
             "separation_line",
-            "separation_lane",
+            #"separation_lane",
             "restricted_area",
-            "separation_roundabout",
+            #"separation_roundabout",
         ]
 
     def connect_database(self):
@@ -840,33 +841,67 @@ class ContinuousCheck(NegativeContraint):
 
         return gdf_concat
 
-    def check_crossing(self, engine, query, seamark_object, seamark_list, route_df):
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None):  #best way to go (keep just these arguments)
         """
          Check if certain route crosses specified seamark objects
 
          Parameters
          ----------
-         engine : sqlalchemy engine
-             engine object
+         lat_start : np.array
+            array of all origin latitudes of routing segments
 
-         query : list
-             list of str for the sql query for table nodes and ways
+        lon_start : np.array
+            array of all origin longitudes of routing segments
 
-         seamark_object : list
-            value nodes, ways (which table to be considered)
+         lat_end : np.array
+            array of all destination latitudes of routing segments
 
-         seamark_list : list
-             list of all the tags that must be considered for filtering specific seamark objects
+        lon_end : np.array
+            array of all destination longitudes of routing segments
 
+         time : datetime.datetime (optional argument)
 
          Returns
          ----------
          query_tree : list
-             Create tuple object with information of tree object, spatial relation, result of tree geometry indices,
-         bool of spatial relation result (True or False)
+             bool of spatial relation result (True or False)
          """
 
         query_tree = []
+
+        concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=self.connect_database(),query=self.query,seamark_object=["nodes","ways"],seamark_list=self.tags)
+        lines = []
+
+        # generating the LineString geometry from start and end point
+        for i in len(lat_start):
+            start_point = Point(lat_start[i],lon_start[i])
+            end_point = Point(lat_end[i],lon_end[i])
+            line = LineString([start_point,end_point])
+            lines.append(line)
+
+        # creating geospatial dataframe objects from linestring geometries
+        route_df = gpd.GeoDataFrame(lines)
+
+        # checking the spatial relations using shapely.STRTree spatial indexing method
+        for predicate in self.predicates:
+            concat_df = concat_gdf
+            tree = STRtree(concat_df["geom"])
+            geom_object = tree.query(route_df["geom"], predicate=predicate).tolist()
+
+            # checks if there is spatial relation between routes and seamarks objects
+            if geom_object == [[], []] or geom_object == []:
+                # if route is not constrained
+                query_tree.append(False)
+            else:
+                # if route is constrained
+                query_tree.append(True)
+
+        # returns a list bools (spatial relation)
+        return query_tree
+
+    """
+    query_tree = []
+
 
         for predicate in self.predicates:
             concat_df = self.gdf_seamark_combined_nodes_ways(
@@ -882,4 +917,4 @@ class ContinuousCheck(NegativeContraint):
                 query_tree.append((tree, predicate, geom_object, True))
 
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        return query_tree
+        return query_tree"""
