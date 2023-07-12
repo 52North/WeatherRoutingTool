@@ -2,17 +2,36 @@
 
 
 ## Installation instructions
+
+The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages. 
+### Installation via the requirements.txt
+- generate a virtual environment e.g. via 
+    ```python -m venv "venv"```
+- activate the virtual environment: ```source venv/bin/activate```
+- install the routing tool: ```pip install -r /path-to-WRT/requirements.txt```
+- install the python package for downloading the environmental data: ```pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader```
+- install mariPower:
+    - request access to the respective git repository and clone it
+    - open setup.py in maripower directory
+    - delete requirement pickle
+    - fix smt to version 1.3.0 (```smt==1.3.9```)
+    - install maripower: ```pip install -e maripower```
+
+### Installation via the setup.py
+- generate a virtual environment e.g. via 
+    ```python3.9 -m venv "venv"```
+- activate the virtual environment: ```source venv/bin/activate```
+- export the path variable for the WRT: ```export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/```
+- install the WRT: ```/path/to/WRT/setup.py install```
+- install mariPower:
+    - open setup.py in maripower directory
+    - delete the requirement pickle
+    - fix smt to version 1.3.0 (```smt==1.3.9```)
+    - install maripower: ```pip install -e maripower```
+
+### Run the software
+Before running the WRT, the necessary input data needs to be setup. Please follow these steps:
 <ol>
-  <li> 
-The routing tool can be installed by doing  
-
-```sh
-pip install . 
-```
-
-in the directory that contains the file setup.py. The installation requires the separate installation of the
-package mariPower. All other dependencies are installed automatically.
-  </li>
   <li>
     For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
     <ul>
@@ -24,6 +43,7 @@ package mariPower. All other dependencies are installed automatically.
       <li> VMDR (wave direction @ sea surface)</li>
       <li> thetao (potential temperature) </li>
       <li> Pressure_surface (pressure at the water surface) </li>
+      <li> Temperature_surface (temperature at water surface) </li>
       <li> so (salinity) </li>
     </ul>
   </li>
@@ -31,14 +51,15 @@ package mariPower. All other dependencies are installed automatically.
     For standalone execution, download data on the water depth from [here](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc).
   </li>
   <li> 
-    Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file)
+    Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file). If you want to import the WRT into another python project, export the environment variables via doing  <br>
+    ```source /home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/load_wrt.sh```
   </li>
   <li> 
     Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to 
     a map size that encompasses the final route. The boat speed and drought can be configured via the variables 'BOAT_SPEED' and 'BOAT_DROUGHT'.
   </li>
   <li>
-    Initiate the routing procedure by executing the file 'execute_routing.py': 
+    Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*: 
 
 ```sh
 python execute_routing.py 
