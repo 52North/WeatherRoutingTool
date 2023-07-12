@@ -3,14 +3,15 @@
 
 ## Installation instructions
 
-The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option of installation is chosen, the WRT can also be directly imported into other python packages. 
+The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages. 
 ### Installation via the requirements.txt
 - generate a virtual environment e.g. via 
-    ```python3.9 -m venv "venv"```
+    ```python -m venv "venv"```
 - activate the virtual environment: ```source venv/bin/activate```
 - install the routing tool: ```pip install -r /path-to-WRT/requirements.txt```
 - install the python package for downloading the environmental data: ```pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader```
 - install mariPower:
+    - request access to the respective git repository and clone it
     - open setup.py in maripower directory
     - delete requirement pickle
     - fix smt to version 1.3.0 (```smt==1.3.9```)
@@ -23,8 +24,9 @@ The routing tool can be installed in two ways: via the file requirements.txt and
 - export the path variable for the WRT: ```export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/```
 - install the WRT: ```/path/to/WRT/setup.py install```
 - install mariPower:
+    - request access to the respective git repository and clone it
     - open setup.py in maripower directory
-    - delete requirement pickle
+    - delete the requirement pickle
     - fix smt to version 1.3.0 (```smt==1.3.9```)
     - install maripower: ```pip install -e maripower```
 
@@ -58,10 +60,10 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
     a map size that encompasses the final route. The boat speed and drought can be configured via the variables 'BOAT_SPEED' and 'BOAT_DROUGHT'.
   </li>
   <li>
-    Initiate the routing procedure by executing the file 'execute_routing.py': 
+    Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*: 
 
 ```sh
-python execute_routing.py 
+python WeatherRoutingTool/execute_routing.py 
 ```
   </li>
 </ol>
