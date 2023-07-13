@@ -8,7 +8,7 @@ load_dotenv()
 DEFAULT_MAP = [42, -17.5, 52, 2.5] # med sea
 #DEFAULT_MAP = [51, 1.2,60,12]
 #DEFAULT_ROUTE = [51.121667, 1.355833, 57.56141, 11.65856]
-DEFAULT_ROUTE = [51.121667, 1.355833, 45.4907, -1.491394]
+DEFAULT_ROUTE = [49.9088,0.7718, 50.9757, 0.0494]
 TIME_FORECAST = 40              # forecast hours weather
 ROUTING_STEPS = 20             # number of routing steps
 DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
@@ -27,6 +27,15 @@ INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs inform
 FIGURE_PATH = os.environ['FIGURE_PATH']     # path to figure repository
 COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
 ROUTE_PATH = os.environ['ROUTE_PATH']
+
+##
+# Database paramteters
+HOST = os.environ['HOST']
+DATABASE =  os.environ['DATABASE']
+MYUSERNAME =  os.environ['MYUSERNAME']
+PASSWORD =  os.environ['PASSWORD']
+PORT =  os.environ['PORT']
+
 
 ##
 # Isochrone routing parameters

@@ -79,11 +79,11 @@ if __name__ == "__main__":
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
-    seamarks_crossing = ContinuousCheck()
+    #seamarks_crossing = SeamarkCrossing()
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
-    continuous_checks = ContinuousCheck()
+    continuous_checks = SeamarkCrossing()
 
     #Simulationsstudie 2, Thames <-> Gothenburg
     #over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
@@ -95,12 +95,12 @@ if __name__ == "__main__":
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
 
     #Simulationsstudie 2, Thames <-> Bordeaux
-    over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
+    #over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
-    over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
-    over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
+    #over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
+    #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
-    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
+    #over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
     #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)   # bad weather
 
@@ -111,10 +111,10 @@ if __name__ == "__main__":
     constraint_list.add_neg_constraint(water_depth)
     constraint_list.add_neg_constraint(continuous_checks, 'continuous')
 
-    constraint_list.add_pos_constraint(over_waypoint1)
+    #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
-    constraint_list.add_pos_constraint(over_waypoint3)
-    constraint_list.add_pos_constraint(over_waypoint4)
+    #constraint_list.add_pos_constraint(over_waypoint3)
+    #constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
     # *******************************************

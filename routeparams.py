@@ -122,7 +122,8 @@ class RouteParams():
             properties = {}
 
             geometry['type'] = 'Point'
-            geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
+            #geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
+            geometry['coordinates'] = [self.lons_per_step[i], self.lats_per_step[i]]
 
             properties['time'] = self.starttime_per_step[i]
             if i == self.count:
