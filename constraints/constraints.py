@@ -277,8 +277,9 @@ class ConstraintsList:
         return is_constrained
 
     def safe_crossing_continuous(self, lat_start, lat_end, lon_start, lon_end, current_time):
-        debug = True
-        is_constrained = []
+        debug = False
+        is_constrained = [False for i in range(0, len(lat_start))]
+        is_constrained = np.array(is_constrained)
 
         if debug:
             print('Entering continuous checks')
@@ -286,8 +287,9 @@ class ConstraintsList:
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start, lat_end, lon_start, lon_end, current_time)
             print('is_constrained_temp: ', is_constrained_temp)
-            is_constrained = is_constrained + is_constrained_temp
             print('is_constrained: ', is_constrained)
+            is_constrained += is_constrained_temp
+            print('is_constrained end of loop: ', is_constrained)
 
         print('is_constrained_final: ', is_constrained)
         return is_constrained
@@ -966,6 +968,25 @@ class ContinuousCheck(NegativeContraint):
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         return query_tree"""
 
+
+class TestContinuousChecks(ContinuousCheck):
+    def __init__(self, test_dict):
+        NegativeContraint.__init__(self, "ContinuousChecks")
+        self.test_result_dict = test_dict
+
+    def print_info(self):
+        logger.info(form.get_log_step("adding test module for ContinuousChecks", 1))
+    def connect_database(self):
+        pass
+
+    def check_crossing(self,lat_start, lon_start, lat_end, lon_end, time=None):
+        result_length=len(lat_start)
+        res = []
+
+        for ires in range(0, result_length):
+            res.append(self.test_result_dict[ires])
+
+        return res
 
 class SeamarkCrossing(ContinuousCheck):
     """
