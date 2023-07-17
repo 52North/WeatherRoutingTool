@@ -8,6 +8,7 @@ import pytest
 import xarray as xr
 from dotenv import load_dotenv
 
+import WeatherRoutingTool.config as config
 from WeatherRoutingTool.ship.ship import Tanker
 
 #def test_inc():
@@ -117,120 +118,6 @@ def test_get_fuel_from_netCDF():
     assert np.array_equal(fuel_test, fuel_ref)
 
     ds.close()
-'''
-    test whether all variablies and dimensions that are passed in courses netCDF to mariPower are returned back correctly
-
-def test_get_fuel_netCDF_return_values():
-    lat = np.array([1.1, 2.2, 3.3, 4.4])
-    it = np.array([1, 2])
-    time = np.array([datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 20),datetime.datetime(2022, 12, 21),datetime.datetime(2022, 12, 22)])
-
-    lon = np.array([0.1,0.2,0.3,0.4])
-    speed = np.array([[5,6],[5,6],
-                      [5,6],[5,6]])
-    courses = np.array([[10,11],[12,14],
-                       [14,16],[15,16]])
-
-    power = np.array([[1, 4], [3.4, 5.3],
-                      [2.1, 6], [1., 5.1]])
-
-    data_vars = dict(
-        lon = (["lat"], lon),
-        time = (["time"], time),
-        speed=(["lat", "it"], speed),
-        courses=(["lat", "it"], courses),
-    )
-
-    coords = dict(
-        lat=(["lat"], lat),
-        it=(["it"], it),
-    )
-    attrs = dict(description="Necessary descriptions added here.")
-
-    ds = xr.Dataset(data_vars, coords, attrs)
-
-    pol = get_default_Tanker()
-
-    ds.to_netcdf(pol.courses_path)
-    ds.close()
-    ds_read = pol.get_fuel_netCDF()
-
-    lon_test = ds_read['lon'].to_numpy()
-    lat_test = ds_read['lat'].to_numpy()
-    speed_test = ds_read['speed'].to_numpy()
-    courses_test = ds_read['courses'].to_numpy()
-    it_test = ds_read['it'].to_numpy()
-
-    ds_read.close()
-
-    assert np.array_equal(lon_test, lon)
-    assert np.array_equal(lat_test, lat)
-    assert np.array_equal(speed_test, speed)
-    assert np.array_equal(courses_test, courses)
-    assert np.array_equal(it_test, it)
-'''
-
-'''
-    test whether single netCDFs which contain information for one course per pixel are correctly merged
-'''
-def test_get_fuel_netCDF_loop():
-    lat = np.array([1.1, 2.2, 3.3, 4.4])
-    it = np.array([1, 2])
-    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
-                     datetime.datetime(2022, 12, 19)])
-
-    lon = np.array([0.1, 0.2, 0.3, 0.4])
-    speed = np.array([[5, 5], [5, 5],
-                      [5, 5], [5, 5]])
-    courses = np.array([[10, 11],
-                        [12, 14],
-                        [14, 16],
-                        [15, 16]])
-
-    power = np.array([[1, 4], [3.4, 5.3],
-                      [2.1, 6], [1., 5.1]])
-
-    data_vars = dict(
-        lon=(["lat"], lon),
-        time=(["lat"], time),
-        speed=(["lat", "it"], speed),
-        courses=(["lat", "it"], courses),
-    )
-
-    coords = dict(
-        lat=(["lat"], lat),
-        it=(["it"], it),
-    )
-    attrs = dict(description="Necessary descriptions added here.")
-
-    ds = xr.Dataset(data_vars, coords, attrs)
-
-    pol = get_default_Tanker()
-
-    ds.to_netcdf(pol.courses_path)
-    ds.close()
-    ds_read = pol.get_fuel_netCDF_loop()
-
-    lon_test = ds_read['lon'].to_numpy()
-    lat_test = ds_read['lat'].to_numpy()
-    speed_test = ds_read['speed'].to_numpy()
-    courses_test = ds_read['courses'].to_numpy()
-    it_test = ds_read['it'].to_numpy()
-    time_test = ds_read['time'].to_numpy()
-    power_test = ds_read['Power_delivered'].to_numpy()
-
-    assert np.array_equal(lat_test, lat)
-    assert np.array_equal(it_test, it)
-    assert np.array_equal(courses_test, courses)
-    assert np.array_equal(lon_test, lon)
-    assert np.array_equal(speed_test, speed)
-
-    compare_times(time_test, time)
-    assert power_test.shape == courses_test.shape
-    assert (power_test < math.pow(10,30)).all
-
-    ds_read.close()
-
 
 def test_power_consumption_returned():
     #dummy weather file
@@ -296,17 +183,25 @@ def test_power_consumption_returned():
     ds['v-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], vwind)
 
     print(ds)
-    ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
+    ds.to_netcdf(config.BASE_PATH + '/TestEnvData.nc')
 
     #dummy course netCDF
     pol = get_default_Tanker()
     pol.set_boat_speed(np.array([20]))
-    pol.set_env_data_path('/home/kdemmich/MariData/Code/sample.nc')
-    pol.set_courses_path('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc')
+    pol.set_env_data_path(config.BASE_PATH + '/TestEnvData.nc')
+    pol.set_courses_path(config.BASE_PATH + '/TestCoursesRoute.nc')
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
-    ds = pol.get_fuel_netCDF_loop()
-    print('ds:', ds['Power_delivered'])
+    ds = pol.get_fuel_netCDF()
 
+    power = ds['Power_delivered']
+    rpm = ds['RotationRate']
+    fuel = ds['Fuel_consumption_rate']
 
+    assert np.all(power < 3000000)
+    assert np.all(rpm < 100)
+    assert np.all(fuel < 0.8)
+    assert np.all(power > 1000000)
+    assert np.all(rpm > 70)
+    assert np.all(fuel > 0.5)

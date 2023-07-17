@@ -27,6 +27,7 @@ INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs inform
 FIGURE_PATH = os.environ['FIGURE_PATH']     # path to figure repository
 COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
 ROUTE_PATH = os.environ['ROUTE_PATH']
+BASE_PATH = os.environ['BASE_PATH']
 
 ##
 # Isochrone routing parameters

@@ -119,6 +119,7 @@ def test_safe_crossing_wave_height():
     assert is_constrained[0] == 0
     assert is_constrained[1] == 1
 
+
 def test_safe_waterdepth():
     lat = np.array([
         [51.16, 52.5],
@@ -131,7 +132,7 @@ def test_safe_waterdepth():
     time = 0
     depthfile = config.DEPTH_DATA
     map = Map(50, 0, 55, 5)
-    waterdepth = WaterDepth(depthfile, 20, map, False)
+    waterdepth = WaterDepth(depthfile, 20, map)
     #waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]
@@ -210,7 +211,7 @@ def test_depth_interpolation_depth():
     for i in range (0, len(lat)):
         #depth_orig[i] = ds_orig['deptho'].sel(latitude = lat[i], longitude = lon[i], method = "nearest").to_numpy()
         lon_test = lon[i]
-        ds_rounded=ds_orig.interp(latitude = lat[i], longitude = lon_test, method='linear')
+        ds_rounded=ds_orig.interp(lat = lat[i], lon = lon_test, method='linear')
         depth_orig[i] = ds_rounded['z'].to_numpy()
 
         if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(depth_orig[i]))

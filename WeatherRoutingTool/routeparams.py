@@ -247,7 +247,7 @@ class RouteParams():
     def get_fuel_per_dist(self):
         fuel_per_hour = self.ship_params_per_step.fuel
         delta_time = np.full(self.count-1, datetime.timedelta(seconds=0))
-        fuel = np.full(self.count-1, -99.)
+        fuel = np.full(self.count, -99.)
 
         for i in range(0,self.count-1):
             delta_time[i] = self.starttime_per_step[i+1]-self.starttime_per_step[i]
