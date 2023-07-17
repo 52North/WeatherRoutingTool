@@ -336,11 +336,12 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, depth_path, drougth, map):
+    def __init__(self, depth_path, drougth, map, rename = True):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
 
-        self.depth_data = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth
