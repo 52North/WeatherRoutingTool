@@ -4,9 +4,9 @@ import os
 import xarray
 import pytest
 
-from algorithms.isobased import IsoBased
-from algorithms.isofuel import IsoFuel
-from constraints.constraints import *
+from WeatherRoutingTool.algorithms.isobased import IsoBased
+from WeatherRoutingTool.algorithms.isofuel import IsoFuel
+from WeatherRoutingTool.constraints.constraints import *
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()

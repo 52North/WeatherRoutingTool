@@ -8,7 +8,7 @@ import pytest
 import xarray as xr
 from dotenv import load_dotenv
 
-from ship.ship import Tanker
+from WeatherRoutingTool.ship.ship import Tanker
 
 #def test_inc():
 #    pol = Tanker(2)
@@ -19,9 +19,10 @@ load_dotenv()
 def get_default_Tanker():
     DEFAULT_GFS_FILE = os.environ['BASE_PATH'] + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
     COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'
+    DEPTH_FILE = os.environ['DEPTH_DATA']
 
     pol = Tanker(2)
-    pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE)
+    pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE, DEPTH_FILE)
     return pol
 
 def compare_times(time64, time):

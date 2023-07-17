@@ -3,10 +3,10 @@ import datetime
 import pytest
 import xarray
 
-import utils.graphics as graphics
-from constraints.constraints import *
-from ship.shipparams import ShipParams
-from weather import *
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.weather import *
 
 def test_plot_power_vs_dist():
     count = 3

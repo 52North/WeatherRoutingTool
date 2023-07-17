@@ -9,11 +9,11 @@ import numpy as np
 import xarray as xr
 from global_land_mask import globe
 
-import utils.graphics as graphics
-import utils.formatting as form
-from routeparams import RouteParams
-from utils.maps import Map
-from weather import WeatherCond
+import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Constraints')
 
@@ -341,7 +341,10 @@ class WaterDepth(NegativeContraint):
         self.message += 'water not deep enough!'
 
         ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
-        self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+        if rename:
+            self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+        else:
+            self.depth_data = ds_depth
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth

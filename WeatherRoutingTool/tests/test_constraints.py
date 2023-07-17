@@ -4,11 +4,11 @@ import os
 import xarray
 import pytest
 
-import basic_test_func
-import config
-from constraints.constraints import *
-from utils.maps import Map
-from weather import *
+import WeatherRoutingTool.tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.config
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather import *
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -131,7 +131,7 @@ def test_safe_waterdepth():
     time = 0
     depthfile = config.DEPTH_DATA
     map = Map(50, 0, 55, 5)
-    waterdepth = WaterDepth(depthfile, 20, map)
+    waterdepth = WaterDepth(depthfile, 20, map, False)
     #waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]
@@ -210,13 +210,13 @@ def test_depth_interpolation_depth():
     for i in range (0, len(lat)):
         #depth_orig[i] = ds_orig['deptho'].sel(latitude = lat[i], longitude = lon[i], method = "nearest").to_numpy()
         lon_test = lon[i]
-        ds_rounded=ds_orig.interp(lat = lat[i], lon = lon_test, method='linear')
+        ds_rounded=ds_orig.interp(latitude = lat[i], longitude = lon_test, method='linear')
         depth_orig[i] = ds_rounded['z'].to_numpy()
 
         if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(depth_orig[i]))
 
     map = Map(49,-4, 56, 7)
-    waterdepth = WaterDepth(depthfile, 20, map)
+    waterdepth = WaterDepth(depthfile, 20, map, )
 
     depth_int = waterdepth.get_current_depth(lat, lon)
     diff = (depth_int - depth_orig) < 1

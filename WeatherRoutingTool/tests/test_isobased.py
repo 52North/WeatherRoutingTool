@@ -6,11 +6,11 @@ import pytest
 import xarray as xr
 from geovectorslib import geod
 
-import basic_test_func
-import config
-from constraints.constraints import *
-from ship.ship import Tanker
-from ship.shipparams import ShipParams
+import WeatherRoutingTool.tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.config
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.shipparams import ShipParams
 
 '''
     test whether IsoBased.update_position() updates current_azimuth, lats/lons_per_step, dist_per_step correctly
@@ -202,11 +202,12 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    weatherpath = os.environ['BASE_PATH'] + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'
+    weatherpath = os.environ['BASE_PATH'] + '/WeatherRoutingTool/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'
     routepath = os.environ['BASE_PATH'] + 'CoursesRoute.nc'
+    depthpath = os.environ['DEPTH_DATA']
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
-    tk.init_hydro_model_Route(weatherpath, routepath)
+    tk.init_hydro_model_Route(weatherpath, routepath, depthpath)
 
     ##
     # initialise wind
@@ -215,7 +216,7 @@ def test_get_delta_variables_last_step():
     ship_params = tk.get_fuel_per_time_netCDF(ra.get_current_azimuth(),
                                               ra.get_current_lats(),
                                               ra.get_current_lons(),
-                                              ra.time, wind)
+                                              ra.time)
     ship_params.print()
 
     delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.boat_speed_function(wind))
