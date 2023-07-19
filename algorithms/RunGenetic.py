@@ -90,7 +90,7 @@ class RunGenetic():
         speed = config.BOAT_SPEED
         diffs = time_diffs(speed, route)
         #ship_params = getPower()
-
+        self.count = len(lats)
         route = RouteParams(
             count = self.count,
             start = self.start,
