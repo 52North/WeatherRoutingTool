@@ -146,7 +146,7 @@ def calculate_course_for_route(route, wave_height):
 
 def getPower(route, wave_height):
     #base = config.BASE_PATH
-    DEFAULT_GFS_FILE = config.GFS_FILE  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    DEFAULT_GFS_FILE = config.WEATHER_DATA  # CMEMS needs lat: 30 to 45, lon: 0 to 20
     COURSES_FILE = config.COURSES_FILE
     #print(route)
     courses, lats, lons = calculate_course_for_route(route[0], wave_height)
