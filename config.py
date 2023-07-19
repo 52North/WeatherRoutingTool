@@ -21,7 +21,6 @@ BOAT_DROUGHT = 10                 # (m)
 ##
 # File paths
 WEATHER_DATA = os.environ['WEATHER_DATA']   # path to weather data
-GFS_FILE = os.environ['DEFAULT_GFS_FILE']
 DEPTH_DATA = os.environ['DEPTH_DATA']       # path to depth data
 PERFORMANCE_LOG_FILE = os.environ['PERFORMANCE_LOG_FILE']   # path to log file which logs performance
 INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs information
@@ -45,7 +44,7 @@ ISOCHRONE_PRUNE_SEGMENTS = 20            # total number of azimuth bins that are
 #DEFAULT_BOAT = os.environ['BOAT_FILE']   # path to data for sailing boat (not maintained)
 
 # GENETIC ALGORITHM PARAMETERS
-POP_SIZE = 10                             # number of initial population
-N_GEN = 10                               # number of generations the algorithm will run
-N_OFFSPRINGS = 4                          # number of offsprings each crossover will generate
+POP_SIZE = 4                             # number of initial population
+N_GEN = 2                               # number of generations the algorithm will run
+N_OFFSPRINGS = 2                         # number of offsprings each crossover will generate
 
