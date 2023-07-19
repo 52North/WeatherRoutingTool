@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
+    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map, False)
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -116,19 +116,24 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise rout
+    #route_factory = RoutingAlgFactory()
+    #min_fuel_route = route_factory.get_routing_alg('ISOFUEL')
+    #min_fuel_route.init_fig(water_depth, map)
+
     route_factory = RoutingAlgFactory()
-    min_fuel_route = route_factory.get_routing_alg('ISOFUEL')
-    min_fuel_route.init_fig(water_depth, map)
+    min_fuel_route = route_factory.get_routing_alg('GENETIC')
+
+    min_fuel_GA = min_fuel_route.execute_routing()
 
     # *******************************************
     # routing
-    min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
-    min_fuel_route.print_route()
-    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
-    min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
+    #min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
+    ##min_fuel_route.print_route()
+    #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
+    #min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
 
     # *******************************************
     # plot route in constraints
-    fig, ax = plt.subplots(figsize=(12, 7))
-    water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
-    plt.savefig(figurepath + '/route_waterdepth.png')
+    #fig, ax = plt.subplots(figsize=(12, 7))
+    #water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
+    #plt.savefig(figurepath + '/route_waterdepth.png')
