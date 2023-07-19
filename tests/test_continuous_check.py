@@ -6,7 +6,7 @@ import pandas as pd
 import geopandas as gpd
 from dotenv import load_dotenv
 import sys
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
 from shapely import STRtree
 
 # Load the environment variables from the .env file
