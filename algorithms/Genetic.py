@@ -70,7 +70,8 @@ class RoutingProblem(Problem):
             n_obj=1, 
             n_constr=0)
     def _evaluate(self, X, out, *args, **kwargs):
-        costs = route_cost(X)
+        #costs = route_cost(X)
+        costs = power_cost(X)
         #print(costs.shape)
         out['F'] = np.column_stack([costs])
 

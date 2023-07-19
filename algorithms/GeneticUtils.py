@@ -5,10 +5,12 @@ import sys
 import os
 
 current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-print(current_path)
+#print(current_path)
 sys.path.append(os.path.join(current_path, '..', ''))
 
 from constraints.constraints import *
+from algorithms.DataUtils import *
+
 
 
 pars = ConstraintPars()
@@ -82,8 +84,19 @@ def route_cost(routes):
         #print(route[0])
         costs.append(np.sum([cost[i,j] for i,j in route[0]]))
         #costs.append(np.sum([cost[i,j] * is_neg_constraints(wave_height.coords['latitude'][i],wave_height.coords['longitude'][j], cost[i,j], 0) for i,j in route[0]]))
-    print(costs)
+    #print(costs)
     return costs
+
+def power_cost(routes):
+    costs = []
+
+    for route in routes:
+        fuels = getPower(route, wave_height)
+        #print(fuels.get_full_fuel())
+        #costs.append(np.sum([fuel for fuel in fuels.]))
+        costs.append(fuels.get_full_fuel())
+    print(costs)
+    return costs    
         
 
 def mutate(route):

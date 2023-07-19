@@ -7,6 +7,7 @@ from geographiclib.geodesic import Geodesic
 import math
 from ship.ship import Tanker
 from datetime import datetime
+import config
 
 
 def loadData(path):
@@ -18,7 +19,7 @@ def loadData(path):
     data: xarray, dataset
     '''
     # Path of the data file
-    file = os.path.join(path,'mfwamglocep_2020120200_R20201203.nc')
+    file = os.path.join(path)
 
     # read the dataset
     data = xr.open_dataset(file)
@@ -82,7 +83,7 @@ def distance(route):
         lat1 = lat2
         lon1 = lon2
     dists = np.array(dists)/1000
-    print(dists)
+    #print(dists)
     return dists
 
 def time_diffs(speed, route):
@@ -102,7 +103,7 @@ def time_diffs(speed, route):
         lon1 = lon2
 
     diffs = np.array(diffs) / (speed * 1000)
-    print(diffs)
+    #print(diffs)
     return diffs
 
 
@@ -111,6 +112,7 @@ def calculate_course_for_route(route, wave_height):
     lats = np.zeros(len(route)-1)
     lons = np.zeros(len(route)-1)
     
+    print(route)
     for i in range(len(route) - 1):
         # Get the coordinates of the current and next waypoints
         lat1, lon1 = route[i]
@@ -139,32 +141,22 @@ def calculate_course_for_route(route, wave_height):
         # Append the course to the list
         courses[i] = course
     
+    #print(courses, lats, lons)
     return courses, lats, lons
 
 def getPower(route, wave_height):
-    base = '/home/parichay/Mari/MariGeoRoute/WeatherRoutingTool'
-    DEFAULT_GFS_FILE = base + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
-    COURSES_FILE = base + '/CoursesRoute.nc'
-
-    courses, lats, lons = calculate_course_for_route(route, wave_height)
+    #base = config.BASE_PATH
+    DEFAULT_GFS_FILE = config.GFS_FILE  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    COURSES_FILE = config.COURSES_FILE
+    #print(route)
+    courses, lats, lons = calculate_course_for_route(route[0], wave_height)
+    #print(lons.shape)
 
     tank = Tanker(2)
     tank.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE)
-    dt = '2020.12.02 00:00:00'
+    dt = '2020.12.02 00:00:00' 
     dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
     time = np.array([dt_obj]*len(courses))
-    print(len(courses), len(lats), len(lons), len(time))
-    tank.get_fuel_per_time_netCDF(courses, lats, lons, time)
-
-    
-
-
-    # from datetime import datetime
-
-    # datetime_str = '09/19/22 13:55:26'
-
-    # datetime_object = datetime.strptime(datetime_str, '%m/%d/%y %H:%M:%S')
-
-    # print(type(datetime_object))
-    # print(datetime_object)  # printed in default format
+    power = tank.get_fuel_per_time_netCDF(courses, lats, lons, time)
+    return power
 
