@@ -57,6 +57,7 @@ class RunGenetic():
         route=best_x[0]
         self.route = route
         print(self.route)
+        getPower(self.route, wave_height)
 
         
     
