@@ -260,3 +260,7 @@ class RouteParams():
 
         return fuel
 
+    def set_ship_params(self, ship_params):
+        self.ship_params_per_step = ship_params
+
+
