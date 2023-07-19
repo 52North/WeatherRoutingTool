@@ -55,7 +55,8 @@ class RouteParams():
         print('gcr traveled per step (m): ' + str(self.dists_per_step))
         print('time at start of each step: ' + str(self.starttime_per_step))
 
-        self.ship_params_per_step.print()
+        if self.ship_params_per_step != None:
+            self.ship_params_per_step.print()
 
         print('full fuel consumed (kg): ' + str(self.ship_params_per_step.get_full_fuel()))
         print('full travel time (h): ' + str(self.time))
@@ -125,19 +126,22 @@ class RouteParams():
             geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
 
             properties['time'] = self.starttime_per_step[i]
-            if i == self.count:
-                properties['speed'] = {'value': -99, 'unit': 'm/s'}
-                properties['engine_power'] = {'value': -99, 'unit': 'kW'}
-                properties['fuel_consumption'] = {'value': -99, 'unit': 'mt/h'}
-                properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
-            else:
-                time_passed = (self.starttime_per_step[i+1]-self.starttime_per_step[i]).seconds/3600
-                properties['speed'] = {'value' : self.ship_params_per_step.speed[i+1], 'unit' : 'm/s'}
-                properties['engine_power'] = {'value' : self.ship_params_per_step.power[i+1]/1000, 'unit' : 'kW'}
-                properties['fuel_consumption'] = {'value' : self.ship_params_per_step.fuel[i+1]/(time_passed * 1000), 'unit' : 'mt/h'}
-                properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value' : self.ship_params_per_step.rpm[i+1], 'unit' : 'Hz'}
+
+            if self.ship_params_per_step != None:
+                if i == self.count:
+                    properties['speed'] = {'value': -99, 'unit': 'm/s'}
+                    properties['engine_power'] = {'value': -99, 'unit': 'kW'}
+                    properties['fuel_consumption'] = {'value': -99, 'unit': 'mt/h'}
+
+                    properties['fuel_type'] = self.ship_params_per_step.fuel_type
+                    properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
+                else:
+                    time_passed = (self.starttime_per_step[i+1]-self.starttime_per_step[i]).seconds/3600
+                    properties['speed'] = {'value' : self.ship_params_per_step.speed[i+1], 'unit' : 'm/s'}
+                    properties['engine_power'] = {'value' : self.ship_params_per_step.power[i+1]/1000, 'unit' : 'kW'}
+                    properties['fuel_consumption'] = {'value' : self.ship_params_per_step.fuel[i+1]/(time_passed * 1000), 'unit' : 'mt/h'}
+                    properties['fuel_type'] = self.ship_params_per_step.fuel_type
+                    properties['propeller_revolution'] = {'value' : self.ship_params_per_step.rpm[i+1], 'unit' : 'Hz'}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry

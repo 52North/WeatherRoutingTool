@@ -121,9 +121,11 @@ if __name__ == "__main__":
     #min_fuel_route.init_fig(water_depth, map)
 
     route_factory = RoutingAlgFactory()
-    min_fuel_route = route_factory.get_routing_alg('GENETIC')
+    GA_alg = route_factory.get_routing_alg('GENETIC')
+    GA_alg.print_init()
 
-    min_fuel_GA = min_fuel_route.execute_routing()
+    min_fuel_GA = GA_alg.execute_routing()
+    min_fuel_GA.return_route_to_API(str(min_fuel_GA.route_type) + "route.json")
 
     # *******************************************
     # routing
