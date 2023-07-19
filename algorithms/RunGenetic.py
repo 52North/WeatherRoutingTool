@@ -56,10 +56,13 @@ class RunGenetic():
         best_f = res.F[best_idx]
         route=best_x[0]
         self.route = route
-        #print(self.route)
+
+        result = self.terminate()
+
+        print(result)
         #getPower(self.route, wave_height)
 
-        
+        return result
     
     def print_init(self):
         print("Initializing Routing......")
@@ -102,7 +105,7 @@ class RunGenetic():
 
         self.check_destination()
         self.check_positive_power()
-        pass
+        return route
 
     def check_destination(self):
         pass

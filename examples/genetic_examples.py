@@ -7,4 +7,5 @@ from algorithms.routingalg_factory import *
 
 alg = RoutingAlgFactory()
 ga = alg.get_routing_alg('GENETIC')
-ga.execute_routing()
+route = ga.execute_routing()
+route.print_route()
