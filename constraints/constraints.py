@@ -285,7 +285,7 @@ class ConstraintsList:
             print('Entering continuous checks')
             print('Length of latitudes: ' + str(len(lat_start)))
         for constr in self.negative_constraints_continuous:
-            is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end, current_time)
+            is_constrained_temp = constr.check_crossing(lat_start,lat_end, lon_start, lon_end, current_time)
             print('is_constrained_temp: ', is_constrained_temp)
             print('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
