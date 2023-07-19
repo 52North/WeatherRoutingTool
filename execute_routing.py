@@ -123,6 +123,8 @@ if __name__ == "__main__":
     route_factory = RoutingAlgFactory()
     min_fuel_route = route_factory.get_routing_alg('GENETIC')
 
+    min_fuel_GA = min_fuel_route.execute_routing()
+
     # *******************************************
     # routing
     #min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
@@ -132,6 +134,6 @@ if __name__ == "__main__":
 
     # *******************************************
     # plot route in constraints
-    fig, ax = plt.subplots(figsize=(12, 7))
-    water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
-    plt.savefig(figurepath + '/route_waterdepth.png')
+    #fig, ax = plt.subplots(figsize=(12, 7))
+    #water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
+    #plt.savefig(figurepath + '/route_waterdepth.png')
