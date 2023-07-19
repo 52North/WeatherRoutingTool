@@ -38,8 +38,8 @@ class RunGenetic():
 
         self.print_init()
 
-    def excecute_routing(self):
-        path = '/home/parichay/MariGeoRoute/Genetic/Data/CMEMS/'
+    def execute_routing(self):
+        path = config.WEATHER_DATA
         data = loadData(path)
         lon_min, lon_max, lat_min, lat_max = getBBox(-80, 32, -5, 47, data)
         wave_height = data.VHM0.isel(time=0, longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
@@ -56,8 +56,8 @@ class RunGenetic():
         best_f = res.F[best_idx]
         route=best_x[0]
         self.route = route
-        print(self.route)
-        getPower(self.route, wave_height)
+        #print(self.route)
+        #getPower(self.route, wave_height)
 
         
     
