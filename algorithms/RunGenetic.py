@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib
 from routeparams import RouteParams
 import config
+from datetime import datetime
+
 
 
 class RunGenetic():
@@ -91,6 +93,10 @@ class RunGenetic():
         diffs = time_diffs(speed, route)
         #ship_params = getPower()
         self.count = len(lats)
+
+        dt = '2020.12.02 00:00:00' 
+        dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
+        times = np.array([dt_obj]*len(lats))
         route = RouteParams(
             count = self.count,
             start = self.start,
@@ -102,7 +108,7 @@ class RunGenetic():
             lons_per_step = lons.to_numpy(),
             azimuths_per_step = np.zeros(778),
             dists_per_step = dists, # dist of waypoints
-            starttime_per_step = np.zeros(778), # time for each point
+            starttime_per_step = times, # time for each point
             ship_params_per_step = None
         )
 
