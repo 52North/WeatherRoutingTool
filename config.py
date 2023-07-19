@@ -21,6 +21,7 @@ BOAT_DROUGHT = 10                 # (m)
 ##
 # File paths
 WEATHER_DATA = os.environ['WEATHER_DATA']   # path to weather data
+GFS = os.environ['DEFAULT_GFS_FILE']
 DEPTH_DATA = os.environ['DEPTH_DATA']       # path to depth data
 PERFORMANCE_LOG_FILE = os.environ['PERFORMANCE_LOG_FILE']   # path to log file which logs performance
 INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs information

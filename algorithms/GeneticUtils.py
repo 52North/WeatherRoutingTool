@@ -45,6 +45,7 @@ def index_to_coords(route):
     lats = wave_height.coords['latitude'][route[:,0]]
     lons = wave_height.coords['longitude'][route[:,1]]
     route = [[x,y] for x,y in zip(lats, lons)]
+    print(type(lats))
     return lats, lons,np.array(route)
 
 # make initial population for genetic algorithm

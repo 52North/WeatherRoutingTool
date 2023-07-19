@@ -58,9 +58,11 @@ class RunGenetic():
         self.route = route
 
         result = self.terminate()
-
+        print(route)
+        ship_params = getPower([route], wave_height)
+        result.set_ship_params(ship_params)
         print(result)
-        #getPower(self.route, wave_height)
+
 
         return result
     
@@ -87,6 +89,7 @@ class RunGenetic():
         dists = distance(route)
         speed = config.BOAT_SPEED
         diffs = time_diffs(speed, route)
+        #ship_params = getPower()
 
         route = RouteParams(
             count = self.count,
@@ -95,8 +98,8 @@ class RunGenetic():
             gcr = -1,
             route_type = 'min_time_route',
             time = diffs, # time diffs
-            lats_per_step = lats,
-            lons_per_step = lons,
+            lats_per_step = lats.to_numpy(),
+            lons_per_step = lons.to_numpy(),
             azimuths_per_step = np.zeros(778),
             dists_per_step = dists, # dist of waypoints
             starttime_per_step = np.zeros(778), # time for each point
