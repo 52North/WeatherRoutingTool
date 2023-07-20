@@ -8,11 +8,11 @@ from geovectorslib import geod
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.constraints.constraints import *
-from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.weather import WeatherCond
+import utils.formatting as form
+from constraints.constraints import *
+from ship.ship import Boat
+from routeparams import RouteParams
+from weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 

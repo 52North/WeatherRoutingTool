@@ -641,7 +641,7 @@ class ContinuousCheck(NegativeContraint):
         return engine
 
 
-class estContinuousChecks(ContinuousCheck):
+class TestContinuousChecks(ContinuousCheck):
     def __init__(self, test_dict):
         NegativeContraint.__init__(self, "ContinuousChecks")
         self.test_result_dict = test_dict

@@ -9,14 +9,14 @@ from geovectorslib import geod
 from global_land_mask import globe
 from scipy.stats import binned_statistic
 
-import WeatherRoutingTool.utils.graphics as graphics
-import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.constraints.constraints import *
-from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.weather import WeatherCond
+import utils.graphics as graphics
+import utils.formatting as form
+from constraints.constraints import *
+from ship.ship import Boat
+from ship.shipparams import ShipParams
+from algorithms.routingalg import RoutingAlg
+from routeparams import RouteParams
+from weather import WeatherCond
 
 logger = logging.getLogger('WRT.Pruning')
 

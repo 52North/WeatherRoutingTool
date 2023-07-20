@@ -5,11 +5,11 @@ import numpy as np
 import xarray
 import pytest
 
-import WeatherRoutingTool.tests.basic_test_func as basic_test_func
-import WeatherRoutingTool.config
-from WeatherRoutingTool.constraints.constraints import *
-from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.weather import *
+import basic_test_func
+import config
+from constraints.constraints import *
+from utils.maps import Map
+from weather import *
 
 from WeatherRoutingTool.constraints import constraints
 

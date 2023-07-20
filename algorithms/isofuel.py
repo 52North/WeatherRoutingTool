@@ -4,9 +4,9 @@ import logging
 from geovectorslib import geod
 import numpy as np
 
-import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.algorithms.isobased import IsoBased
-from WeatherRoutingTool.routeparams import RouteParams
+import utils.formatting as form
+from algorithms.isobased import IsoBased
+from routeparams import RouteParams
 
 logger = logging.getLogger('WRT.routingalg')
 
