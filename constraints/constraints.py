@@ -279,21 +279,22 @@ class ConstraintsList:
         return is_constrained
 
     def safe_crossing_continuous(self, lat_start, lat_end, lon_start, lon_end, current_time):
-        debug = True
+        debug = False
         is_constrained = [False for i in range(0, len(lat_start))]
         is_constrained = np.array(is_constrained)
 
         if debug:
             print('Entering continuous checks')
             print('Length of latitudes: ' + str(len(lat_start)))
+
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start,lat_end, lon_start, lon_end, current_time)
             print('is_constrained_temp: ', is_constrained_temp)
             print('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
             print('is_constrained end of loop: ', is_constrained)
-
-        print('is_constrained_final: ', is_constrained)
+        if debug:
+            print('is_constrained_final: ', is_constrained)
         return is_constrained
 
     ##
@@ -430,11 +431,11 @@ class WaterDepth(NegativeContraint):
         NegativeContraint.__init__(self, "WaterDepth")
         self.message += "water not deep enough!"
 
-        ds_depth = xr.open_dataset(
+        self.depth_data = xr.open_dataset(
             depth_path, chunks={"time": "500MB"}, decode_times=False
         )
         #print('depth data:', ds_depth)
-        self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+        #self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
         self.current_depth = np.array([-99])
         self.min_depth = drougth
         self.map = map
