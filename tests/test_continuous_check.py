@@ -450,7 +450,7 @@ class TestContinuousCheck:
         lat_end=numpy.array((48.92595,48.02595,48.12595,48.22595,48.42595) )
         lon_end=numpy.array((12.01631,12.04631,12.05631,12.08631))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        check_list = LandPolygonsCrossing().check_land_crossing(
+        check_list = LandPolygonsCrossing().check_crossing(
             lat_start=lat_start,lon_start=lon_start,lat_end=lat_end,lon_end=lon_end,
             engine = engine,
             query=
