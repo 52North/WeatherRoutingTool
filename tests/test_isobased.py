@@ -6,11 +6,11 @@ import pytest
 import xarray as xr
 from geovectorslib import geod
 
-import basic_test_func
-import config
-from constraints.constraints import *
-from ship.ship import Tanker
-from ship.shipparams import ShipParams
+import WeatherRoutingTool.tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.config
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.shipparams import ShipParams
 
 '''
     test whether IsoBased.update_position() updates current_azimuth, lats/lons_per_step, dist_per_step correctly

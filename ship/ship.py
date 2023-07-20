@@ -14,13 +14,13 @@ from scipy.interpolate import RegularGridInterpolator
 
 
 import mariPower
-import utils.formatting as form
-import utils.unit_conversion as units
+import WeatherRoutingTool.utils.formatting as form
+import WeatherRoutingTool.utils.unit_conversion as units
 from mariPower import ship
 from mariPower import __main__
-from utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
-from ship.shipparams import ShipParams
-from weather import WeatherCond
+from WeatherRoutingTool.utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
+from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.weather import WeatherCond
 
 ## Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.
