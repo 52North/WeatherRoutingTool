@@ -39,6 +39,9 @@ class Boat:
     def get_fuel_per_time(self):
         pass
 
+    def boat_speed_function(self, wind = None):
+        pass
+
 ##
 # Class implementing connection to mariPower package.
 #
@@ -106,10 +109,11 @@ class Tanker(Boat):
     #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
     ## initialise mariPower.ship for communication of courses via netCDF and passing of environmental data as netCDF (current standard)
-    def init_hydro_model_Route(self, filepath_env, filepath_courses):
+    def init_hydro_model_Route(self, filepath_env, filepath_courses, filepath_depth):
         self.hydro_model = mariPower.ship.CBT()
         self.environment_path = filepath_env
         self.courses_path = filepath_courses
+        self.depth_path = filepath_depth
 
     def set_boat_speed(self, speed):
         self.speed = speed
@@ -352,7 +356,6 @@ class Tanker(Boat):
         mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
         #form.print_current_time('time for mariPower request:', start_time)
 
-
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
 
@@ -407,7 +410,7 @@ class Tanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
+    def get_fuel_per_time_netCDF(self, courses, lats, lons, time):
         self.write_netCDF_courses(courses, lats, lons, time)
         #ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
@@ -419,9 +422,9 @@ class Tanker(Boat):
 
     ##
     # ToDo: deprecated?
-    def boat_speed_function(self, wind):
+    def boat_speed_function(self, wind = None):
         speed = np.array([self.speed])
-        speed = np.repeat(speed, wind['twa'].shape, axis=0)
+        #speed = np.repeat(speed, wind['twa'].shape, axis=0)
         return speed
 
     ##
@@ -516,7 +519,7 @@ class SailingBoat(Boat):
         )
         # return {'func': f, 'polars': polars}
 
-    def boat_speed_function(self, wind):
+    def boat_speed_function(self):
         """
         Vectorized boat speed function.
 

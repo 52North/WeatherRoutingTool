@@ -13,8 +13,13 @@ TIME_FORECAST = 40              # forecast hours weather
 ROUTING_STEPS = 20             # number of routing steps
 DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
 #DELTA_FUEL = 30000000*1000*1 # [Ws]
-DELTA_FUEL = 0.1*1000             # amount of fuel per routing step (kg)
-START_TIME = '2023041709'       # start time of travelling
+
+# DELTA_FUEL = 0.1*1000             # amount of fuel per routing step (kg)
+# START_TIME = '2023041709'       # start time of travelling
+
+DELTA_FUEL = 1*1000             # amount of fuel per routing step (kg)
+START_TIME = '2023062609'       # start time of travelling
+
 BOAT_SPEED = 20                 # (m/s)
 BOAT_DROUGHT = 10                 # (m)
 
@@ -51,3 +56,6 @@ ISOCHRONE_PRUNE_SEGMENTS = 20            # total number of azimuth bins that are
 # boat settings
 DEFAULT_BOAT = os.environ['BOAT_FILE']   # path to data for sailing boat (not maintained)
 
+##
+# CMEMS_USER = os.environ['CMEMS_USER']
+# CMEMS_PASSWORD = os.environ['CMEMS_PASSWORD']

@@ -222,6 +222,7 @@ class IsoBased(RoutingAlg):
                 self.is_pos_constraint_step = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
+                self.update_fig('p')
                 continue
 
             #if i>9:
@@ -244,17 +245,12 @@ class IsoBased(RoutingAlg):
         # get wind speed (tws) and angle (twa)
         debug = False
 
-        winds = self.get_wind_functions(wt) #wind is always a function of the variants
-        twa = winds['twa']
-        tws = winds['tws']
-        wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
-        #if(debug) : print('wind in move_boat_direct', wind)
-
         # get boat speed
-        bs = boat.boat_speed_function(wind)
+        bs = boat.boat_speed_function()
+        bs = np.repeat(bs, (self.get_current_azimuth().shape[0]), axis=0)
 
         ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-                                                  self.get_current_lons(), self.time, wind)
+                                                  self.get_current_lons(), self.time)
         #ship_params.print()
 
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)

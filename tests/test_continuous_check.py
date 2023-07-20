@@ -13,13 +13,13 @@ from shapely import STRtree
 load_dotenv()
 
 # Define current working directory
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Add current working directory as a search location for Python modules and Packages
-sys.path.append(os.path.join(os.getcwd(), ""))
-
+# os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# print(os.getcwd())
+# # Add current working directory as a search location for Python modules and Packages
+# sys.path.append(os.path.join(os.getcwd(), ""))
+# print(sys.path)
 # Need to be imported only after defining working directory with the previous steps
-from constraints.constraints import *
+from WeatherRoutingTool.constraints.constraints import *
 
 # Create engine using SQLite
 engine = db.create_engine("sqlite:///gdfDB.sqlite")

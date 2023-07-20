@@ -2,18 +2,27 @@ import io
 import logging
 import os
 import warnings
+import sys
 import logging.handlers
 from logging import FileHandler, Formatter
+
+# Added because of package import error
+# Define current working directory
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Add current working directory as a search location for Python modules and Packages
+sys.path.append(os.path.join(os.getcwd(), ""))
+
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import config
-import utils.graphics as graphics
-from ship.ship import *
-from weather import *
-from constraints.constraints import *
-from algorithms.routingalg_factory import *
-from utils.maps import Map
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.ship.ship import *
+from WeatherRoutingTool.weather import *
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.algorithms.routingalg_factory import *
+from WeatherRoutingTool.utils.maps import Map
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
@@ -60,7 +69,7 @@ if __name__ == "__main__":
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_Route(windfile, coursesfile)
+    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
     # boat.calibrate_simple_fuel()
     # boat.write_simple_fuel()
@@ -69,10 +78,11 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
+    wt = WeatherCondFromFile(model, start_time, hours, 3)
+    #wt = WeatherCondODC(model, start_time,hours,3)
     wt.set_map_size(map)
-    wt.init_wind_functions()
-    wt.init_wind_vectors()
+    wt.read_dataset(windfile)
+    #wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
     # initialise constraints
@@ -80,6 +90,7 @@ if __name__ == "__main__":
     land_crossing = LandCrossing()
     water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
     #seamarks_crossing = SeamarkCrossing()
+    #water_depth.write_reduced_depth_data('/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -99,6 +110,8 @@ if __name__ == "__main__":
     #over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
     #over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
+
+    over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
     #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
     #over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
@@ -116,6 +129,8 @@ if __name__ == "__main__":
     #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
     #constraint_list.add_pos_constraint(over_waypoint3)
+    constraint_list.add_pos_constraint(over_waypoint3)
+
     #constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
@@ -129,8 +144,8 @@ if __name__ == "__main__":
     # routing
     min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
     min_fuel_route.print_route()
-    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
-    min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
+    #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
+    min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
     # *******************************************
     # plot route in constraints

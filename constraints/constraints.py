@@ -10,11 +10,11 @@ import xarray as xr
 from global_land_mask import globe
 import ast
 
-import utils.graphics as graphics
-import utils.formatting as form
-from routeparams import RouteParams
-from utils.maps import Map
-from weather import WeatherCond
+import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather import WeatherCond
 
 ## used as a part of the continuouscheck class ##
 import os
@@ -24,7 +24,7 @@ import geopandas as gpd
 from dotenv import load_dotenv
 from shapely.geometry import Point,LineString, box
 from shapely import STRtree
-from config import DEFAULT_MAP
+from WeatherRoutingTool.config import DEFAULT_MAP
 
 # Load the environment variables from the .env file
 parent= os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -435,10 +435,15 @@ class WaterDepth(NegativeContraint):
         )
         #print('depth data:', ds_depth)
         self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
-
         self.current_depth = np.array([-99])
         self.min_depth = drougth
         self.map = map
+
+    def write_reduced_depth_data(self, filename):
+        depth_renamed = self.depth_data.rename(z="depth", lat="latitude", lon="longitude")
+        depth = depth_renamed.sel(latitude=slice(self.map.lat1, self.map.lat2),longitude=slice(self.map.lon1, self.map.lon2))
+        depth.to_netcdf(filename)
+        depth.close()
 
     def set_drought(self, depth):
         self.min_depth = depth
@@ -956,34 +961,6 @@ class SeamarkCrossing(ContinuousCheck):
              gdf including all the features with specified seamark tags using nodes and ways OSM element
          """
 
-        # when engine and query are not passed as the arguments
-        # if (engine is None) and (query is None):
-        #
-        #     seamark_object = self.seamark_object
-        #     seamark_list = self.tags
-        #
-        #     if ("nodes" in seamark_object) and ("ways" in seamark_object):
-        #         gdf = self.concat_nodes_ways()
-        #         print(f"concat gdf {gdf}")
-        #         gdf_list = []
-        #         for i in range(0, len(seamark_list)):
-        #             if type(gdf["tags"].iloc[i]) == str:
-        #                 gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
-        #                 gdf1 = gdf[
-        #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-        #                 ]
-        #                 gdf_list.append(gdf1)
-        #             else:
-        #                 gdf1 = gdf[
-        #                     gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-        #                 ]
-        #                 gdf_list.append(gdf1)
-        #
-        #         gdf_concat = pd.concat(gdf_list)
-        #         print(f'concat geodataframe is {gdf_concat}')
-        #
-        #         return gdf_concat
-
         # when engine and query are passed as the arguments
         if (engine is not None) and (query is not None):
 
@@ -1182,13 +1159,11 @@ class LandPolygonsCrossing(ContinuousCheck):
             gdf = gpd.read_postgis(sql = query, con = engine, geom_col="geom")
             # Eliminate none values
             gdf = gdf[gdf["geom"] != None]
-            print(f"from default : {gdf}")
 
         else:
             gdf = gpd.read_postgis(sql = query, con = engine, geom_col="geom")#.drop(columns=["GEOMETRY"])
             # Eliminate none values
             gdf = gdf[gdf["geom"] != None]
-            print(f"from test {gdf}")
 
         return gdf
 
@@ -1242,7 +1217,6 @@ class LandPolygonsCrossing(ContinuousCheck):
             start_point = Point(lon_start[i], lat_start[i])
             end_point = Point(lon_end[i], lat_end[i])
             line = LineString([start_point, end_point])
-            #lines.append(line)
 
         # creating geospatial dataframe objects from linestring geometries
             route_df = gpd.GeoDataFrame(geometry=[line])
