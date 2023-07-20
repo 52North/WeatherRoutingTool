@@ -123,7 +123,8 @@ def test_power_consumption_returned():
     #dummy weather file
     lat = np.array([54., 55, 56])
     lon = np.array([14., 15, 16])
-    time_single = np.datetime64('2023-01-23')
+    #time_single = np.datetime64('2023-01-23')
+    time_single = datetime.datetime.strptime('2023-01-23', '%Y-%m-%d')
     time = np.array([time_single])
 
     '''uwind = np.array([[

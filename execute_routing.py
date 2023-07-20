@@ -16,7 +16,7 @@ from logging import FileHandler, Formatter
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-import config
+import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship import *
 from WeatherRoutingTool.weather import *

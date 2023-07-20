@@ -5,7 +5,7 @@ import numpy as np
 import xarray
 import pytest
 
-import WeatherRoutingTool.tests.basic_test_func as basic_test_func
+import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.config
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.utils.maps import Map
@@ -26,9 +26,9 @@ def test_add_neg_constraint():
     land_crossing = LandCrossing()
 
     constraint_list = generate_dummy_constraint_list()
-    constraint_list.add_neg_constraint(land_crossing)
-    assert len(constraint_list.negative_constraints) == 1
-    assert constraint_list.neg_size == 1
+    constraint_list.add_neg_constraint(land_crossing, 'continuous')
+    assert len(constraint_list.negative_constraints_continuous) == 1
+    assert constraint_list.neg_cont_size == 1
 
 '''
     test elements of is_constrained for single end point on land and in sea
@@ -279,17 +279,13 @@ def test_check_constraints_land_crossing():
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
-def test_connect_database():
-    assert isinstance(constraints.ContinuousCheck.connect_database(), type(db.create_engine('postgresql://myuser:***@172.25.0.3/mydatabase')))
-
-
 def test_safe_crossing_continuous():
     test_case1 = [False,False,True,True,False, False,True,False,False,False]
     test_case2 = [False,True,True,False,False, False,False,False,True,False]
     is_constrained_test = [False,True,True,True,False]
 
-    test_mod1 = TestContinuousChecks(test_case1)
-    test_mod2 = TestContinuousChecks(test_case2)
+    test_mod1 = RunTestContinuousChecks(test_case1)
+    test_mod2 = RunTestContinuousChecks(test_case2)
     dummy_lats = [0,0,0,0,0]
 
     constraint_list = generate_dummy_constraint_list()

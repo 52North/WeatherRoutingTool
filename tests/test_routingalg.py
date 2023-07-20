@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import WeatherRoutingTool.tests.basic_test_func as basic_test_func
+import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.shipparams import ShipParams
 

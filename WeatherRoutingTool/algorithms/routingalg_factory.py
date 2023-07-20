@@ -1,7 +1,7 @@
 import datetime as dt
 
-import config
-from algorithms.isofuel import IsoFuel
+import WeatherRoutingTool.config as config
+from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 
 class RoutingAlgFactory():
 
