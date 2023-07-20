@@ -21,14 +21,12 @@ import os
 import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
-from dotenv import load_dotenv
 from shapely.geometry import Point,LineString, box
 from shapely import STRtree
 from WeatherRoutingTool.config import DEFAULT_MAP
 
 # Load the environment variables from the .env file
 parent= os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#load_dotenv(os.path.join(parent, ".env"))
 
 logger = logging.getLogger("WRT.Constraints")
 

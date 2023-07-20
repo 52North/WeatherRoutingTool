@@ -4,13 +4,9 @@ import numpy
 import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
-from dotenv import load_dotenv
 import sys
 from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
 from shapely import STRtree
-
-# Load the environment variables from the .env file
-load_dotenv()
 
 # Define current working directory
 # os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

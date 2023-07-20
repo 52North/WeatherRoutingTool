@@ -9,7 +9,6 @@ matplotlib
 netcdf4
 numpy == 1.23.4
 pandas
-python-dotenv
 Pillow
 scipy == 1.9.2
 setuptools

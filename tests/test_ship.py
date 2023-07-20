@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from dotenv import load_dotenv
 
 import WeatherRoutingTool.config as config
 from WeatherRoutingTool.ship.ship import Tanker
@@ -14,8 +13,6 @@ from WeatherRoutingTool.ship.ship import Tanker
 #def test_inc():
 #    pol = Tanker(2)
 #    assert pol.inc(3) == 5
-
-load_dotenv()
 
 def get_default_Tanker():
     DEFAULT_GFS_FILE = os.environ['BASE_PATH'] + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20

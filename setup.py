@@ -28,7 +28,6 @@ setup(
       'numpy == 1.23.4',
       'pandas',
       'pytest',
-      'python-dotenv',
       'Pillow',
       'scipy == 1.9.2',
       'setuptools',
