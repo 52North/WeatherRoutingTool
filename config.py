@@ -20,21 +20,21 @@ BOAT_DROUGHT = 10                 # (m)
 
 ##
 # File paths
-WEATHER_DATA = os.environ['WEATHER_DATA']   # path to weather data
-DEPTH_DATA = os.environ['DEPTH_DATA']       # path to depth data
-PERFORMANCE_LOG_FILE = os.environ['PERFORMANCE_LOG_FILE']   # path to log file which logs performance
-INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs information
-FIGURE_PATH = os.environ['FIGURE_PATH']     # path to figure repository
-COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
-ROUTE_PATH = os.environ['ROUTE_PATH']
+WEATHER_DATA = os.getenv('WEATHER_DATA')   # path to weather data
+DEPTH_DATA = os.getenv('DEPTH_DATA')       # path to depth data
+PERFORMANCE_LOG_FILE = os.getenv('PERFORMANCE_LOG_FILE')   # path to log file which logs performance
+INFO_LOG_FILE = os.getenv('INFO_LOG_FILE') # path to log file which logs information
+FIGURE_PATH = os.getenv('FIGURE_PATH')     # path to figure repository
+COURSES_FILE = os.getenv('BASE_PATH') + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
+ROUTE_PATH = os.getenv('ROUTE_PATH')
 
 ##
-# Database paramteters
-HOST = os.environ['HOST']
-DATABASE =  os.environ['DATABASE']
-MYUSERNAME =  os.environ['MYUSERNAME']
-PASSWORD =  os.environ['PASSWORD']
-PORT =  os.environ['PORT']
+# Database connection paramteters
+HOST = os.getenv('HOST')
+DATABASE =  os.getenv('DATABASE')
+MYUSERNAME =  os.getenv('MYUSERNAME')
+PASSWORD =  os.getenv('PASSWORD')
+PORT =  os.getenv('PORT')
 
 
 ##
