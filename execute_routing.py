@@ -100,6 +100,7 @@ if __name__ == "__main__":
     GA_alg.print_init()
 
     min_fuel_GA = GA_alg.execute_routing()
-    min_fuel_GA.return_route_to_API(str(min_fuel_GA.route_type) + "route.json")
+    min_fuel_GA.print_route()
+    min_fuel_GA.return_route_to_API("/home/kdemmich/MariData/Code/Data/RouteCollection/GA_route.json")
 
 

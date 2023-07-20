@@ -60,7 +60,6 @@ class RouteParams():
         print('gcr traveled per step (m): ' + str(self.dists_per_step))
         print('time at start of each step: ' + str(self.starttime_per_step))
 
-        self.ship_params_per_step.print()
 
         print('full fuel consumed (kg): ' + str(self.ship_params_per_step.get_full_fuel()))
         print('full travel time (h): ' + str(self.time))
@@ -241,3 +240,8 @@ class RouteParams():
             fuel[i] = fuel_per_hour[i] * delta_time[i]
 
         return fuel
+
+    def set_ship_params(self, ship_params):
+        self.ship_params_per_step = ship_params
+
+
