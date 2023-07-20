@@ -6,12 +6,12 @@ import sys
 import logging.handlers
 from logging import FileHandler, Formatter
 
-# Added because of package import error
-# Define current working directory
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Add current working directory as a search location for Python modules and Packages
-sys.path.append(os.path.join(os.getcwd(), ""))
+# # Added because of package import error
+# # Define current working directory
+# os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#
+# # Add current working directory as a search location for Python modules and Packages
+# sys.path.append(os.path.join(os.getcwd(), ""))
 
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas

@@ -27,15 +27,15 @@ INFO_LOG_FILE = os.getenv('INFO_LOG_FILE') # path to log file which logs informa
 FIGURE_PATH = os.getenv('FIGURE_PATH')     # path to figure repository
 COURSES_FILE = os.getenv('BASE_PATH') + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
 ROUTE_PATH = os.getenv('ROUTE_PATH')
-BASE_PATH = os.getenv['BASE_PATH']
+BASE_PATH = os.getenv('BASE_PATH')
 
 ##
 # Database connection paramteters
 HOST = os.getenv('HOST')
-DATABASE =  os.getenv('DATABASE')
-MYUSERNAME =  os.getenv('MYUSERNAME')
-PASSWORD =  os.getenv('PASSWORD')
-PORT =  os.getenv('PORT')
+DATABASE = os.getenv('DATABASE')
+MYUSERNAME = os.getenv('MYUSERNAME')
+PASSWORD = os.getenv('PASSWORD')
+PORT = os.getenv('PORT')
 
 
 ##
@@ -50,8 +50,8 @@ ISOCHRONE_PRUNE_SEGMENTS = 20            # total number of azimuth bins that are
 
 ##
 # boat settings
-DEFAULT_BOAT = os.environ['BOAT_FILE']   # path to data for sailing boat (not maintained)
+DEFAULT_BOAT = os.getenv('BOAT_FILE')   # path to data for sailing boat (not maintained)
 
 ##
-CMEMS_USER = os.environ['CMEMS_USER']
-CMEMS_PASSWORD = os.environ['CMEMS_PASSWORD']
+CMEMS_USER = os.getenv('CMEMS_USER')
+CMEMS_PASSWORD = os.getenv('CMEMS_PASSWORD')
