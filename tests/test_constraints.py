@@ -1,6 +1,7 @@
 import datetime
 import os
 
+import numpy as np
 import xarray
 import pytest
 
@@ -9,6 +10,8 @@ import config
 from constraints.constraints import *
 from utils.maps import Map
 from weather import *
+
+from WeatherRoutingTool.constraints import constraints
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -248,7 +251,7 @@ def test_safe_crossing_shape_return():
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_crossing(lat[1,:], lat[0,:], lon[1,:], lon[0,:] , time, is_constrained)
+    is_constrained = constraint_list.safe_crossing_discrete(lat[1,:], lat[0,:], lon[1,:], lon[0,:] , time, is_constrained)
 
     assert is_constrained.shape[0] == lat.shape[1]
 
@@ -274,3 +277,23 @@ def test_check_constraints_land_crossing():
     is_constrained = ra.check_constraints(move, constraint_list)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
+
+def test_connect_database():
+    assert isinstance(constraints.ContinuousCheck.connect_database(), type(db.create_engine('postgresql://myuser:***@172.25.0.3/mydatabase')))
+
+
+def test_safe_crossing_continuous():
+    test_case1 = [False,False,True,True,False, False,True,False,False,False]
+    test_case2 = [False,True,True,False,False, False,False,False,True,False]
+    is_constrained_test = [False,True,True,True,False]
+
+    test_mod1 = TestContinuousChecks(test_case1)
+    test_mod2 = TestContinuousChecks(test_case2)
+    dummy_lats = [0,0,0,0,0]
+
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(test_mod1, "continuous")
+    constraint_list.add_neg_constraint(test_mod2, "continuous")
+    is_constrained = constraint_list.safe_crossing_continuous(dummy_lats, dummy_lats,dummy_lats,dummy_lats,dummy_lats)
+
+    assert np.array_equal(is_constrained_test, is_constrained)

@@ -2,18 +2,27 @@ import io
 import logging
 import os
 import warnings
+import sys
 import logging.handlers
 from logging import FileHandler, Formatter
+
+# Added because of package import error
+# Define current working directory
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Add current working directory as a search location for Python modules and Packages
+sys.path.append(os.path.join(os.getcwd(), ""))
+
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import config
-import utils.graphics as graphics
-from ship.ship import *
-from weather import *
-from constraints.constraints import *
-from algorithms.routingalg_factory import *
-from utils.maps import Map
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.ship.ship import *
+from WeatherRoutingTool.weather import *
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.algorithms.routingalg_factory import *
+from WeatherRoutingTool.utils.maps import Map
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
@@ -80,10 +89,13 @@ if __name__ == "__main__":
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
+    #seamarks_crossing = SeamarkCrossing()
     #water_depth.write_reduced_depth_data('/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
+    continuous_checks_seamarks = SeamarkCrossing()
+    continuous_checks_land = LandPolygonsCrossing()
 
     #Simulationsstudie 2, Thames <-> Gothenburg
     #over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
@@ -97,6 +109,8 @@ if __name__ == "__main__":
     #Simulationsstudie 2, Thames <-> Bordeaux
     #over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
+    #over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
+
     over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
     #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
@@ -109,10 +123,14 @@ if __name__ == "__main__":
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
     constraint_list.add_neg_constraint(water_depth)
+    constraint_list.add_neg_constraint(continuous_checks_seamarks, 'continuous')
+    constraint_list.add_neg_constraint(continuous_checks_land, 'continuous')
 
     #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
+    #constraint_list.add_pos_constraint(over_waypoint3)
     constraint_list.add_pos_constraint(over_waypoint3)
+
     #constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
