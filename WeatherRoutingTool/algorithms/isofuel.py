@@ -10,18 +10,19 @@ from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger('WRT.routingalg')
 
+
 class IsoFuel(IsoBased):
-    delta_fuel : float
+    delta_fuel: float
 
     def __init__(self, start, finish, departure_time, delta_fuel, figurepath):
         self.delta_fuel = delta_fuel
-        super().__init__(start, finish,  departure_time, figurepath)
+        super().__init__(start, finish, departure_time, figurepath)
 
     def print_init(self):
         IsoBased.print_init(self)
-        logger.info(form.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
+        logger.info(form.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel), 1))
 
-    def check_isochrones(self, route : RouteParams):
+    def check_isochrones(self, route: RouteParams):
         print('To be implemented')
 
     def get_dist(self, bs, delta_time):
@@ -30,23 +31,23 @@ class IsoFuel(IsoBased):
 
     # calculate time [s] from boat speed and distance
     def get_time(self, bs, dist):
-        time = dist/bs
+        time = dist / bs
         return time
 
     ##
-    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
+    # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables(self, boat, wind, bs):
         fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
         delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 
-        #print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
+        # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
         delta_fuel = np.repeat(self.delta_fuel, wind['twa'].shape)
 
         return delta_time, delta_fuel, dist
 
     ##
-    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
+    # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables_netCDF(self, ship_params, bs):
         fuel = ship_params.get_fuel()
 
@@ -56,15 +57,17 @@ class IsoFuel(IsoBased):
         # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
         delta_fuel = np.repeat(self.delta_fuel, bs.shape)
 
-        #self.determine_timespread(delta_time)
+        # self.determine_timespread(delta_time)
 
         return delta_time, delta_fuel, dist
-    
+
     ##
-    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
-    def get_delta_variables_netCDF_last_step(self, ship_params,bs):
+    # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
+    def get_delta_variables_netCDF_last_step(self, ship_params, bs):
         fuel = ship_params.get_fuel()
-        dist = geod.inverse(self.get_current_lats(), self.get_current_lons(), np.full(self.get_current_lats().shape,self.finish_temp[0]) , np.full(self.get_current_lons().shape, self.finish_temp[1]))
+        dist = geod.inverse(self.get_current_lats(), self.get_current_lons(),
+                            np.full(self.get_current_lats().shape, self.finish_temp[0]),
+                            np.full(self.get_current_lons().shape, self.finish_temp[1]))
         delta_time = self.get_time(bs, dist['s12'])
         delta_fuel = fuel * delta_time
 
@@ -73,12 +76,13 @@ class IsoFuel(IsoBased):
     def determine_timespread(self, delta_time):
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
-        print('delta_time', delta_time/3600)
-        print('spread of time: ' + str(mean/3600) + '+-' + str(stddev/3600))
+        print('delta_time', delta_time / 3600)
+        print('spread of time: ' + str(mean / 3600) + '+-' + str(stddev / 3600))
 
     def update_time(self, delta_time):
-        if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)): raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
-        for i in range(0,self.full_time_traveled.shape[0]):
+        if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
+            raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
+        for i in range(0, self.full_time_traveled.shape[0]):
             self.full_time_traveled[i] += delta_time[i]
             self.time[i] += dt.timedelta(seconds=delta_time[i])
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
@@ -91,7 +95,8 @@ class IsoFuel(IsoBased):
 
         idxs = np.argmin(self.full_fuel_consumed)
 
-        if debug: print('idxs', idxs)
+        if debug:
+            print('idxs', idxs)
 
         # Return a trimmed isochrone
         try:
@@ -110,7 +115,3 @@ class IsoFuel(IsoBased):
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
-
-
-
-
