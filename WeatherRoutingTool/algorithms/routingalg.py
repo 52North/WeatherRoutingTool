@@ -16,6 +16,7 @@ from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 
+
 class RoutingAlg():
     """
         Isochrone data structure with typing.
@@ -38,8 +39,8 @@ class RoutingAlg():
     gcr_azi: float  # azimut of great circle route
 
     fig: matplotlib.figure
-    route_ensemble : list
-    figure_path : str
+    route_ensemble: list
+    figure_path: str
 
     def __init__(self, start, finish, departure_time, figure_path=""):
         self.count = 0
@@ -63,8 +64,8 @@ class RoutingAlg():
 
     def print_init(self):
         logger.info('Initialising routing:')
-        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
-        logger.info(form.get_log_step('start time ' + str(self.departure_time),1))
+        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish), 1))
+        logger.info(form.get_log_step('start time ' + str(self.departure_time), 1))
 
     def print_current_status(self):
         pass
@@ -77,7 +78,7 @@ class RoutingAlg():
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
         return gcr['azi1']
 
-    def execute_routing(self, boat: Boat, wt : WeatherCond, constraints_list : ConstraintsList, verbose=False):
+    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         pass
 
     def check_for_positive_constraints(self, constraint_list):
@@ -96,4 +97,3 @@ class RoutingAlg():
 
     def check_positive_power(self):
         pass
-
