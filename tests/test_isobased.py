@@ -202,7 +202,7 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    weatherpath = os.environ['BASE_PATH'] + '/tests/data/8e7db202-df43-11ed-b7a6-9263520eff59.nc'
+    weatherpath = os.environ['WEATHER_DATA']
     routepath = os.environ['BASE_PATH'] + 'CoursesRoute.nc'
     depthpath = os.environ['DEPTH_DATA']
     tk = Tanker(-99)
