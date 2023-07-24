@@ -214,7 +214,7 @@ class RouteParams():
 
     def plot_power_vs_dist(self, color, label):
         power = self.get_fuel_per_dist()
-        dist = self.dists_per_stepg
+        dist = self.dists_per_step
 
         dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power)
