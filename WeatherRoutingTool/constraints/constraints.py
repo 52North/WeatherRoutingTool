@@ -1,6 +1,5 @@
 import datetime as dt
 import logging
-import time
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -16,38 +15,45 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 
-## used as a part of the continuouscheck class ##
+# used as a part of the continuouscheck class ##
 import os
 import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point,LineString, box
+from shapely.geometry import Point, LineString, box
 from shapely import STRtree
 from WeatherRoutingTool.config import DEFAULT_MAP
 
 # Load the environment variables from the .env file
-parent= os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 logger = logging.getLogger("WRT.Constraints")
 
 
-##
+#
 # Constraint: Main class for handling of constraints
 # PositiveConstraint: handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)
-# NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth, too high waves, danger areas...)
-# NegativeConstraintFrom weather: negative constraint which needs information from the weather (this includes depth information which are stored in the netCDF weather file)
+# NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth,
+# too high waves, danger areas...)
+# NegativeConstraintFrom weather: negative constraint which needs information from the weather (this includes depth
+# information which are stored in the netCDF weather file)
 # ConstraintPars: class that initialises ConstraintList
 # ConstraintList: list of constraints
 #
-# constraints implemented so far: LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with too low water depth), StayOnMap (prohibit leaving the area
+# constraints implemented so far: LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with
+# too low water depth), StayOnMap (prohibit leaving the area
 #           for which the weather data has been obtained
 #
 # Inclusion in routing algorithm:
-#       1) initialise all individual constraints that shall be considered (for example check Isochrones/execute_routing.py)
-#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check Isochrones/execute_routing.py)
-#       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start, lon_end, time) which looks for constraints in
+#       1) initialise all individual constraints that shall be considered (for example check
+#       Isochrones/execute_routing.py)
+#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check
+#       Isochrones/execute_routing.py)
+#       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start,
+#       lon_end, time) which looks for constraints in
 #           between starting point and destination;
-#           alternatively it can also be checked for a single point whether a constraint is hit via ConstraintList.safe_endpoint(lat, lon, time)
+#           alternatively it can also be checked for a single point whether a constraint is hit via
+#           ConstraintList.safe_endpoint(lat, lon, time)
 
 
 class Constraint:
@@ -137,9 +143,7 @@ class ConstraintPars:
     def print(self):
         logger.info("Print settings of Constraint Pars:")
         logger.info(form.get_log_step("resolution=" + str(self.resolution), 1))
-        logger.info(
-            form.get_log_step("bCheckEndPoints=" + str(self.bCheckEndPoints), 1)
-        )
+        logger.info(form.get_log_step("bCheckEndPoints=" + str(self.bCheckEndPoints), 1))
 
 
 class ConstraintsList:
@@ -250,27 +254,23 @@ class ConstraintsList:
         debug = False
 
         for iConst in range(0, self.neg_dis_size):
-            is_constrained_temp = self.negative_constraints_discrete[iConst].constraint_on_point(
-                lat, lon, current_time
-            )
+            is_constrained_temp = self.negative_constraints_discrete[iConst].constraint_on_point(lat, lon, current_time)
             if is_constrained_temp.any():
-                self.constraints_crossed.append(
-                    self.negative_constraints_discrete[iConst].message
-                )
+                self.constraints_crossed.append(self.negative_constraints_discrete[iConst].message)
             if debug:
                 print("is_constrained_temp: ", is_constrained_temp)
-                print("is_constrained: ", is_constrained)
-                # form.print_current_time('constraint execution', start_time)
+                print("is_constrained: ", is_constrained)  # form.print_current_time('constraint execution', start_time)
 
             is_constrained += is_constrained_temp
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
-        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lat_end, lon_start, lon_end, current_time, is_constrained)
+        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lat_end, lon_start, lon_end, current_time,
+                                                              is_constrained)
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lat_end, lon_start, lon_end, current_time)
 
-        ## TO NBE UPDATED
+        # TO NBE UPDATED
         is_constrained = is_constrained + is_constrained_discrete + is_constrained_continuous
         # is_constrained.append(is_constrained_discrete)
         # is_constrained.append(is_constrained_continuous)
@@ -286,7 +286,7 @@ class ConstraintsList:
             print('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
-            is_constrained_temp = constr.check_crossing(lat_start,lat_end, lon_start, lon_end, current_time)
+            is_constrained_temp = constr.check_crossing(lat_start, lat_end, lon_start, lon_end, current_time)
             print('is_constrained_temp: ', is_constrained_temp)
             print('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
@@ -296,12 +296,12 @@ class ConstraintsList:
         return is_constrained
 
     ##
-    # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination (lat_end, lon_end).
-    # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
+    # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
+    # (lat_end, lon_end).
+    # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and
+    # loops through all these steps
     # calling ConstraintList.safe_endpoint()
-    def safe_crossing_discrete(
-            self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained
-    ):
+    def safe_crossing_discrete(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
         debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
@@ -332,30 +332,17 @@ class ConstraintsList:
                 form.print_step("transitions constrained:", 1)
             for i in range(0, lat_start_constrained.shape[0]):
                 form.print_step(
-                    "["
-                    + str(lat_start_constrained[i])
-                    + ","
-                    + str(lon_start_constrained[i])
-                    + "] to ["
-                    + str(lat_end_constrained[i])
-                    + ","
-                    + str(lon_end_constrained[i])
-                    + "]",
-                    2,
-                )
+                    "[" + str(lat_start_constrained[i]) + "," + str(lon_start_constrained[i]) + "] to [" + str(
+                        lat_end_constrained[i]) + "," + str(lon_end_constrained[i]) + "]", 2, )
 
         # if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
         #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
         #    raise ValueError(exc)
 
         if not np.allclose(x, lat_end):
-            raise Exception(
-                "Constraints.land_crossing(): did not reach latitude of destination!"
-            )
+            raise Exception("Constraints.land_crossing(): did not reach latitude of destination!")
         if not np.allclose(y, lon_end):
-            raise Exception(
-                "Constraints.land_crossing(): did not reach longitude of destination!"
-            )
+            raise Exception("Constraints.land_crossing(): did not reach longitude of destination!")
 
         return is_constrained
 
@@ -363,7 +350,7 @@ class ConstraintsList:
         self.positive_constraints.append(constraint)
         self.pos_size += 1
 
-    def add_neg_constraint(self, constraint, option = 'discrete'):
+    def add_neg_constraint(self, constraint, option='discrete'):
         if option == 'discrete':
             self.negative_constraints_discrete.append(constraint)
             self.neg_dis_size += 1
@@ -374,7 +361,9 @@ class ConstraintsList:
             self.neg_cont_size += 1
             return
 
-        raise ValueError('You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and -continuous- are implemented ')
+        raise ValueError(
+            'You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and '
+                                                                             '-continuous- are implemented ')
 
     def check_weather(self):
         pass
@@ -383,8 +372,7 @@ class ConstraintsList:
 class LandCrossing(NegativeContraint):
     def __init__(self):
         NegativeContraint.__init__(self, "LandCrossing")
-        self.message += "crossing land!"
-        # self.resource_type = 0
+        self.message += "crossing land!"  # self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
@@ -412,11 +400,7 @@ class WaveHeight(NegativeConstraintFromWeather):
         return self.current_wave_height > self.max_wave_height
 
     def print_info(self):
-        logger.info(
-            form.get_log_step(
-                "maximum wave height=" + str(self.max_wave_height) + "m", 1
-            )
-        )
+        logger.info(form.get_log_step("maximum wave height=" + str(self.max_wave_height) + "m", 1))
 
 
 class WaterDepth(NegativeContraint):
@@ -425,7 +409,7 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, depth_path, drougth, map, rename = True):
+    def __init__(self, depth_path, drougth, map, rename=True):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
 
@@ -441,7 +425,8 @@ class WaterDepth(NegativeContraint):
 
     def write_reduced_depth_data(self, filename):
         depth_renamed = self.depth_data.rename(z="depth", lat="latitude", lon="longitude")
-        depth = depth_renamed.sel(latitude=slice(self.map.lat1, self.map.lat2),longitude=slice(self.map.lon1, self.map.lon2))
+        depth = depth_renamed.sel(latitude=slice(self.map.lat1, self.map.lat2),
+                                  longitude=slice(self.map.lon1, self.map.lon2))
         depth.to_netcdf(filename)
         depth.close()
 
@@ -457,15 +442,11 @@ class WaterDepth(NegativeContraint):
     def check_depth(self, lat, lon, time):
         lat_da = xr.DataArray(lat, dims="dummy")
         lon_da = xr.DataArray(lon, dims="dummy")
-        rounded_ds = self.depth_data["depth"].interp(
-            latitude=lat_da, longitude=lon_da, method="linear"
-        )
+        rounded_ds = self.depth_data["depth"].interp(latitude=lat_da, longitude=lon_da, method="linear")
         self.current_depth = rounded_ds.to_numpy()
 
     def print_info(self):
-        logger.info(
-            form.get_log_step("minimum water depth=" + str(self.min_depth) + "m", 1)
-        )
+        logger.info(form.get_log_step("minimum water depth=" + str(self.min_depth) + "m", 1))
 
     def get_current_depth(self, lat, lon):
         self.check_depth(lat, lon, None)
@@ -476,29 +457,20 @@ class WaterDepth(NegativeContraint):
 
         ds_depth = xr.open_dataset(path)
         depth = ds_depth["z"].where(
-            (ds_depth.lat > self.map.lat1)
-            & (ds_depth.lat < self.map.lat2)
-            & (ds_depth.lon > self.map.lon1)
-            & (ds_depth.lon < self.map.lon2)
-            & (ds_depth.z < 0),
-            drop=True,
-        )
+            (ds_depth.lat > self.map.lat1) & (ds_depth.lat < self.map.lat2) & (ds_depth.lon > self.map.lon1) & (
+                        ds_depth.lon < self.map.lon2) & (ds_depth.z < 0), drop=True, )
 
-        # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100) & (ds_depth.deptho<0) )
+        # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (
+        # ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100)
+        # & (ds_depth.deptho<0) )
 
         fig, ax = plt.subplots(figsize=(12, 10))
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        depth.plot.contourf(
-            ax=ax,
-            # extend='max',
-            # levels=np.arange(-60, 0, 0.1),  high-resolution contours
-            levels=np.arange(-100, 0, level_diff),
-            transform=ccrs.PlateCarree(),
-        )
+        depth.plot.contourf(ax=ax,  # extend='max',
+                            # levels=np.arange(-60, 0, 0.1),  high-resolution contours
+                            levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree(), )
 
-        fig.subplots_adjust(
-            left=0.05, right=1, bottom=0.05, top=0.95, wspace=0, hspace=0
-        )
+        fig.subplots_adjust(left=0.05, right=1, bottom=0.05, top=0.95, wspace=0, hspace=0)
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
         ax.gridlines(draw_labels=True)
@@ -511,24 +483,17 @@ class WaterDepth(NegativeContraint):
         ax.axis("off")
         ax.xaxis.set_tick_params(labelsize="large")
 
-        ds_depth = self.depth_data.coarsen(
-            latitude=10, longitude=10, boundary="exact"
-        ).mean()
+        ds_depth = self.depth_data.coarsen(latitude=10, longitude=10, boundary="exact").mean()
         ds_depth_coarsened = ds_depth.compute()
 
         self.depth_data = ds_depth_coarsened.where(
-            (ds_depth_coarsened.latitude > self.map.lat1)
-            & (ds_depth_coarsened.latitude < self.map.lat2)
-            & (ds_depth_coarsened.longitude > self.map.lon1)
-            & (ds_depth_coarsened.longitude < self.map.lon2)
-            & (ds_depth_coarsened.depth < 0),
-            drop=True,
-        )
+            (ds_depth_coarsened.latitude > self.map.lat1) & (ds_depth_coarsened.latitude < self.map.lat2) & (
+                        ds_depth_coarsened.longitude > self.map.lon1) & (
+                        ds_depth_coarsened.longitude < self.map.lon2) & (ds_depth_coarsened.depth < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = self.depth_data["depth"].plot.contourf(
-            ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree()
-        )
+        cp = self.depth_data["depth"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                                    transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label="Wassertiefe (m)", pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
@@ -548,17 +513,11 @@ class StayOnMap(NegativeContraint):
 
     def __init__(self):
         NegativeContraint.__init__(self, "StayOnMap")
-        self.message += "leaving wheather map!"
-        # self.resource_type = 0
+        self.message += "leaving wheather map!"  # self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
-        is_on_map = (
-                (lat > self.lat2)
-                + (lat < self.lat1)
-                + (lon > self.lon2)
-                + (lon < self.lon1)
-        )
+        is_on_map = ((lat > self.lat2) + (lat < self.lat1) + (lon > self.lon2) + (lon < self.lon1))
         return is_on_map
 
     def print_info(self):
@@ -579,7 +538,7 @@ class ContinuousCheck(NegativeContraint):
 
     Attributes
     ----------
-    
+
     host : str
     database : str
     user : str
@@ -601,16 +560,12 @@ class ContinuousCheck(NegativeContraint):
         self.user = os.getenv("MYUSERNAME")
         self.password = os.getenv("PASSWORD")
         self.port = os.getenv("PORT")
-        self.seamark_object = ["nodes","ways","land_polygons"]
-        self.query=["SELECT * FROM nodes","SELECT *, linestring AS geom FROM ways","SELECT *,geometry as geom FROM land_polygons"]
+        self.seamark_object = ["nodes", "ways", "land_polygons"]
+        self.query = ["SELECT * FROM nodes", "SELECT *, linestring AS geom FROM ways",
+                      "SELECT *,geometry as geom FROM land_polygons"]
         self.predicates = ["intersects", "contains", "touches", "crosses", "overlaps"]
-        self.tags = [
-            "separation_zone",
-            "separation_line",
-            "restricted_area",
-        ]
+        self.tags = ["separation_zone", "separation_line", "restricted_area", ]
         self.land_polygon_gdf = None
-
 
     def print_info(self):
         logger.info(form.get_log_step("no seamarks crossing", 1))
@@ -630,14 +585,8 @@ class ContinuousCheck(NegativeContraint):
         """
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine(
-            "postgresql://{user}:{pw}@{host}/{db}".format(
-                user=self.user,
-                pw=self.password,
-                host=self.host,
-                db=self.database,
-                port=self.port,
-            )
-        )
+            "postgresql://{user}:{pw}@{host}/{db}".format(user=self.user, pw=self.password, host=self.host,
+                                                          db=self.database, port=self.port, ))
         return engine
 
 
@@ -648,17 +597,19 @@ class RunTestContinuousChecks(ContinuousCheck):
 
     def print_info(self):
         logger.info(form.get_log_step("adding test module for ContinuousChecks", 1))
+
     def connect_database(self):
         pass
 
-    def check_crossing(self,lat_start, lon_start, lat_end, lon_end, time=None):
-        result_length=len(lat_start)
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None):
+        result_length = len(lat_start)
         res = []
 
         for ires in range(0, result_length):
             res.append(self.test_result_dict[ires])
 
         return res
+
 
 class SeamarkCrossing(ContinuousCheck):
     """
@@ -683,14 +634,11 @@ class SeamarkCrossing(ContinuousCheck):
         Values of the seamark tags that need to be considered
     """
 
-    def __init__(self):#query,predicates,tags):
-        super().__init__()
-        # self.engine = ContinuousCheck.connect_database()
-        # self.query=ContinuousCheck().query
+    def __init__(self):  # query,predicates,tags):
+        super().__init__()  # self.engine = ContinuousCheck.connect_database()  # self.query=ContinuousCheck().query
         # self.predicates=ContinuousCheck().predicates
 
-
-    def query_nodes(self,engine=None,query=None):
+    def query_nodes(self, engine=None, query=None):
         """
         Create new GeoDataFrame using public.nodes table in the query
 
@@ -725,7 +673,7 @@ class SeamarkCrossing(ContinuousCheck):
 
         return gdf
 
-    def query_ways(self,query=None,engine = None):
+    def query_ways(self, query=None, engine=None):
         """
         Create new GeoDataFrame using public.ways table in the query
 
@@ -754,7 +702,7 @@ class SeamarkCrossing(ContinuousCheck):
         # query = self.query[1]
 
         # Use geopandas to read the SQL query into a dataframe from postgis
-        #gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
+        # gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
 
         if (engine is None) and (query is None):
             gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[1], geom_col="geom")
@@ -769,8 +717,7 @@ class SeamarkCrossing(ContinuousCheck):
 
         return gdf
 
-    def gdf_seamark_combined_nodes(self,engine =None,query=None,seamark_list=None,seamark_object=None
-    ):
+    def gdf_seamark_combined_nodes(self, engine=None, query=None, seamark_list=None, seamark_object=None):
         """
         Create new GeoDataFrame with specified seamark tags
 
@@ -795,38 +742,33 @@ class SeamarkCrossing(ContinuousCheck):
             gdf including all the features with specified seamark tags using nodes OSM element
         """
         if seamark_list is None:
-            seamark_list = ["separation_line","separation_zone","restricted_areas"]
+            seamark_list = ["separation_line", "separation_zone", "restricted_areas"]
         if seamark_object is None:
             seamark_object = self.seamark_object
-            
-        ##################### optional for the moment ######################
-        if ("nodes" in seamark_object) and (
-        set(seamark_list).issubset(self.tags)):
+
+        # #################### optional for the moment ######################
+        if ("nodes" in seamark_object) and (set(seamark_list).issubset(self.tags)):
             if engine is None and query is not None:
                 gdf = self.query_nodes(query=query)
             elif engine is None and query is None:
                 gdf = self.query_nodes()
             else:
-                gdf=self.query_nodes(engine=engine,query=query)
+                gdf = self.query_nodes(engine=engine, query=query)
 
             gdf_list = []
             for i in range(0, len(seamark_list)):
                 if type(gdf["tags"][i]) == str:
                     gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
-                    gdf1 = gdf[
-                        gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                    ]
+                    gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
                 else:
-                    gdf1 = gdf[
-                        gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                    ]
+                    gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
 
         return gdf_concat
 
-    def gdf_seamark_combined_ways(self,engine =None,query=None,seamark_list=None,seamark_object=None):
+    def gdf_seamark_combined_ways(self, engine=None, query=None, seamark_list=None, seamark_object=None):
         """
          Create new GeoDataFrame with specified seamark tags
 
@@ -851,37 +793,32 @@ class SeamarkCrossing(ContinuousCheck):
              gdf including all the features with specified seamark tags using ways OSM element
          """
         if seamark_list is None:
-            seamark_list = ["separation_line","separation_zone","restricted_areas"]
+            seamark_list = ["separation_line", "separation_zone", "restricted_areas"]
         if seamark_object is None:
             seamark_object = self.seamark_object
 
-        if ("ways" in self.seamark_object) and (
-        set(seamark_list).issubset(self.tags)):
+        if ("ways" in self.seamark_object) and (set(seamark_list).issubset(self.tags)):
             if engine is None and query is not None:
                 gdf = self.query_ways(query=query)
             elif engine is None and query is None:
                 gdf = self.query_ways()
             else:
-                gdf = self.query_ways(query=query,engine=engine)
+                gdf = self.query_ways(query=query, engine=engine)
 
             gdf_list = []
             for i in range(0, len(seamark_list)):
                 if type(gdf["tags"][i]) == str:
                     gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
-                    gdf1 = gdf[
-                        gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                    ]
+                    gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
                 else:
-                    gdf1 = gdf[
-                        gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                    ]
+                    gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
             gdf_concat = pd.concat(gdf_list)
 
         return gdf_concat
 
-    def concat_nodes_ways(self,query=None,engine=None):
+    def concat_nodes_ways(self, query=None, engine=None):
         """
          Create new GeoDataFrame using public.ways and public.nodes table together in the query
 
@@ -902,7 +839,7 @@ class SeamarkCrossing(ContinuousCheck):
         #     query = self.query
         # consider the scenario for a tag present in nodes and ways at the same time
         if (query is None) and (engine is None):
-            if "nodes" in self.query[0] and  "ways" in self.query[1]:
+            if "nodes" in self.query[0] and "ways" in self.query[1]:
 
                 gdf_nodes = self.query_nodes()
                 gdf_ways = self.query_ways()
@@ -913,15 +850,13 @@ class SeamarkCrossing(ContinuousCheck):
                 if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
                     gdf_all = pd.concat([gdf_nodes, gdf_ways])
                 else:
-                    gdf_all = pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(
-                        subset="id", keep="first"
-                    )
+                    gdf_all = pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset="id", keep="first")
                 return gdf_all
         elif (query is not None) and (engine is not None):
             if "nodes" in query[0] and "ways" in query[1]:
 
-                gdf_nodes = self.query_nodes(engine=engine,query=query[0])
-                gdf_ways = self.query_ways(engine=engine,query=query[0])
+                gdf_nodes = self.query_nodes(engine=engine, query=query[0])
+                gdf_ways = self.query_ways(engine=engine, query=query[0])
                 # elif (query is not None) and (engine is None):
                 #     gdf_nodes = self.query_nodes(query=query[0])
                 #     gdf_ways = self.query_ways(query=query[1])
@@ -929,14 +864,12 @@ class SeamarkCrossing(ContinuousCheck):
                 if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
                     gdf_all = pd.concat([gdf_nodes, gdf_ways])
                 else:
-                    gdf_all = pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(
-                        subset="id", keep="first"
-                    )
+                    gdf_all = pd.concat([gdf_nodes, gdf_ways]).drop_duplicates(subset="id", keep="first")
                 return gdf_all
         else:
             return "false query passed"
 
-    def gdf_seamark_combined_nodes_ways(self,engine =None,query=None,seamark_list=None,seamark_object=None):
+    def gdf_seamark_combined_nodes_ways(self, engine=None, query=None, seamark_list=None, seamark_object=None):
         """
          Create new GeoDataFrame with specified seamark tags
 
@@ -965,20 +898,16 @@ class SeamarkCrossing(ContinuousCheck):
         if (engine is not None) and (query is not None):
 
             if ("nodes" in seamark_object) and ("ways" in seamark_object):
-                gdf = self.concat_nodes_ways(query=query,engine=engine)
+                gdf = self.concat_nodes_ways(query=query, engine=engine)
                 gdf_list = []
                 for i in range(0, len(seamark_list)):
                     if type(gdf["tags"].iloc[i]) == str:
                         gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
-                        gdf1 = gdf[
-                            gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                        ]
+                        gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)
 
                     else:
-                        gdf1 = gdf[
-                            gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                        ]
+                        gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)
 
                 gdf_concat = pd.concat(gdf_list)
@@ -997,14 +926,10 @@ class SeamarkCrossing(ContinuousCheck):
                 for i in range(0, len(seamark_list)):
                     if type(gdf["tags"].iloc[i]) == str:
                         gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
-                        gdf1 = gdf[
-                            gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                        ]
+                        gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)
                     else:
-                        gdf1 = gdf[
-                            gdf["tags"].apply(lambda x: seamark_list[i] in x.values())
-                        ]
+                        gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)
 
                 gdf_concat = pd.concat(gdf_list)
@@ -1013,10 +938,8 @@ class SeamarkCrossing(ContinuousCheck):
                 return gdf_concat
             print("error in engine and query initialisation")
 
-
-
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end,
-                       engine=None,query=None,seamark_list=None,seamark_object=None, time=None):  # best way to go (keep just these arguments)
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, engine=None, query=None, seamark_list=None,
+                       seamark_object=None, time=None):  # best way to go (keep just these arguments)
         """
          Check if certain route crosses specified seamark objects
 
@@ -1081,7 +1004,8 @@ class SeamarkCrossing(ContinuousCheck):
             # returns a list bools (spatial relation)
             return query_tree
         else:
-            concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=engine,query=query,seamark_list=seamark_list,seamark_object=seamark_object)
+            concat_gdf = self.gdf_seamark_combined_nodes_ways(engine=engine, query=query, seamark_list=seamark_list,
+                                                              seamark_object=seamark_object)
 
             # generating the LineString geometry from start and end point
             print(type(lat_start))
@@ -1091,8 +1015,7 @@ class SeamarkCrossing(ContinuousCheck):
                 start_point = Point(lon_start[i], lat_start[i])
                 end_point = Point(lon_end[i], lat_end[i])
                 line = LineString([start_point, end_point])
-                #lines.append(line)
-
+                # lines.append(line)
 
                 # print(f'START POINT: {start_point}')
                 # print(f'END POINT: {end_point}')
@@ -1101,7 +1024,7 @@ class SeamarkCrossing(ContinuousCheck):
                 route_df = gpd.GeoDataFrame(geometry=[line])
 
                 # checking the spatial relations using shapely.STRTree spatial indexing method
-                #for predicate in self.predicates:
+                # for predicate in self.predicates:
                 concat_df = concat_gdf
                 print(f'PRINT CONCAT DF {concat_df}')
                 tree = STRtree(concat_df["geom"])
@@ -1117,16 +1040,15 @@ class SeamarkCrossing(ContinuousCheck):
                     query_tree.append(True)
                     print(f'CROSSING for  {line} in the query tree: {query_tree} ')
 
-
             # returns a list bools (spatial relation)
             return query_tree
-    
-    
+
+
 class LandPolygonsCrossing(ContinuousCheck):
     def __init__(self):
         super().__init__()
 
-    def query_land_polygons(self,engine=None,query=None):
+    def query_land_polygons(self, engine=None, query=None):
         """
         Create new GeoDataFrame using public.ways table in the query
 
@@ -1156,12 +1078,12 @@ class LandPolygonsCrossing(ContinuousCheck):
         if query is None and engine is None:
             query = self.query[2]
             engine = self.connect_database()
-            gdf = gpd.read_postgis(sql = query, con = engine, geom_col="geom")
+            gdf = gpd.read_postgis(sql=query, con=engine, geom_col="geom")
             # Eliminate none values
             gdf = gdf[gdf["geom"] != None]
 
         else:
-            gdf = gpd.read_postgis(sql = query, con = engine, geom_col="geom")#.drop(columns=["GEOMETRY"])
+            gdf = gpd.read_postgis(sql=query, con=engine, geom_col="geom")  # .drop(columns=["GEOMETRY"])
             # Eliminate none values
             gdf = gdf[gdf["geom"] != None]
 
@@ -1173,8 +1095,8 @@ class LandPolygonsCrossing(ContinuousCheck):
             self.land_polygon_gdf = self.query_land_polygons()
         return self.land_polygon_gdf
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end,query=None,engine=None,
-                    time=None):  # best way to go (keep just these arguments)
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, query=None, engine=None,
+                       time=None):  # best way to go (keep just these arguments)
         """
         Check if certain route crosses specified seamark objects
 
@@ -1200,8 +1122,6 @@ class LandPolygonsCrossing(ContinuousCheck):
             bool of spatial relation result (True or False)
         """
 
-
-
         query_tree = []
         if query is not None and engine is not None:
             concat_gdf = self.query_land_polygons(engine=engine, query=query)
@@ -1209,19 +1129,16 @@ class LandPolygonsCrossing(ContinuousCheck):
             concat_gdf = self.get_land_polygons()
             concat_gdf.clip(box(DEFAULT_MAP[1], DEFAULT_MAP[0], DEFAULT_MAP[3], DEFAULT_MAP[2]))
 
-
-
-
         # generating the LineString geometry from start and end point
         for i in range(len(lat_start)):
             start_point = Point(lon_start[i], lat_start[i])
             end_point = Point(lon_end[i], lat_end[i])
             line = LineString([start_point, end_point])
 
-        # creating geospatial dataframe objects from linestring geometries
+            # creating geospatial dataframe objects from linestring geometries
             route_df = gpd.GeoDataFrame(geometry=[line])
 
-        # checking the spatial relations using shapely.STRTree spatial indexing method
+            # checking the spatial relations using shapely.STRTree spatial indexing method
 
             concat_df = concat_gdf
             if query is not None and engine is not None:
