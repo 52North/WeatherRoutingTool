@@ -29,7 +29,7 @@ setup(
       'pandas',
       'pytest',
       'Pillow',
-      'scipy == 1.9.2',
+      'scipy>=1.10.0',
       'setuptools',
       'xarray',
       'netcdf4'
