@@ -1,10 +1,11 @@
 import numpy as np
 
+
 class ShipParams():
-    fuel: np.ndarray    #  (kg)
-    power: np.ndarray   #  (W)
-    rpm: np.ndarray     #  (Hz)
-    speed: np.ndarray   #  (m/s)
+    fuel: np.ndarray  # (kg)
+    power: np.ndarray  # (W)
+    rpm: np.ndarray  # (Hz)
+    speed: np.ndarray  # (m/s)
     fuel_type: str
 
     def __init__(self, fuel, power, rpm, speed):
@@ -16,21 +17,14 @@ class ShipParams():
 
     @classmethod
     def set_default_array(cls):
-        return cls(
-            speed = np.array([[0]]),
-            fuel = np.array([[0]]),
-            power = np.array([[0]]),
-            rpm = np.array([[0]])
-        )
+        return cls(speed=np.array([[0]]), fuel=np.array([[0]]), power=np.array([[0]]), rpm=np.array([[0]]))
 
     @classmethod
     def set_default_array_1D(cls, ncoorinate_points):
-        return cls(
-            speed = np.full(shape = ncoorinate_points, fill_value=0),
-            fuel = np.full(shape = ncoorinate_points, fill_value=0),
-            power = np.full(shape = ncoorinate_points, fill_value=0),
-            rpm = np.full(shape = ncoorinate_points, fill_value=0),
-        )
+        return cls(speed=np.full(shape=ncoorinate_points, fill_value=0),
+                   fuel=np.full(shape=ncoorinate_points, fill_value=0),
+                   power=np.full(shape=ncoorinate_points, fill_value=0),
+                   rpm=np.full(shape=ncoorinate_points, fill_value=0), )
 
     def print(self):
         print('fuel: ', self.fuel)
@@ -89,14 +83,13 @@ class ShipParams():
         self.rpm = self.rpm[:, idxs]
 
     def flip(self):
-        self.speed=np.flip(self.speed,0)
-        self.fuel = np.flip(self.fuel,0)
-        self.power = np.flip(self.power,0)
-        self.rpm = np.flip(self.rpm,0)
+        self.speed = np.flip(self.speed, 0)
+        self.fuel = np.flip(self.fuel, 0)
+        self.power = np.flip(self.power, 0)
+        self.rpm = np.flip(self.rpm, 0)
 
     def expand_axis_for_intermediate(self):
         self.speed = np.expand_dims(self.speed, axis=1)
         self.fuel = np.expand_dims(self.fuel, axis=1)
         self.power = np.expand_dims(self.power, axis=1)
         self.rpm = np.expand_dims(self.rpm, axis=1)
-
