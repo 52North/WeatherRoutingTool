@@ -11,25 +11,27 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
+
 ##
 # Container class for route parameters
 
 class RouteParams():
-    count: int          # routing step (starting from 0)
-    start: tuple        # lat, lon at start point (0 - 360°)
-    finish: tuple       # lat, lon of destination (0 - 360°)
-    gcr: tuple          # distance from start to end on great circle
-    route_type: str     # route name
+    count: int  # routing step (starting from 0)
+    start: tuple  # lat, lon at start point (0 - 360°)
+    finish: tuple  # lat, lon of destination (0 - 360°)
+    gcr: tuple  # distance from start to end on great circle
+    route_type: str  # route name
     time: dt.timedelta  # time needed for the route (h)
 
-    ship_params_per_step: ShipParams # ship parameters per routing step
-    lats_per_step: tuple        # latitude at beginning of each step + latitude destination (0-360°)
-    lons_per_step: tuple        # longitude at beginning of each step + longitude destination (0-360°)
-    azimuths_per_step: tuple    # azimuth per step (0-360°)
-    dists_per_step: tuple       # distance traveled on great circle for every step (m)
-    starttime_per_step: tuple   # start time at beginning of each step + time when destination is reached (h)
+    ship_params_per_step: ShipParams  # ship parameters per routing step
+    lats_per_step: tuple  # latitude at beginning of each step + latitude destination (0-360°)
+    lons_per_step: tuple  # longitude at beginning of each step + longitude destination (0-360°)
+    azimuths_per_step: tuple  # azimuth per step (0-360°)
+    dists_per_step: tuple  # distance traveled on great circle for every step (m)
+    starttime_per_step: tuple  # start time at beginning of each step + time when destination is reached (h)
 
-    def __init__(self, count, start, finish, gcr,  route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step,  starttime_per_step,   ship_params_per_step):
+    def __init__(self, count, start, finish, gcr, route_type, time, lats_per_step, lons_per_step, azimuths_per_step,
+                 dists_per_step, starttime_per_step, ship_params_per_step):
         self.count = count
         self.start = start
         self.finish = finish
@@ -40,7 +42,7 @@ class RouteParams():
         self.lons_per_step = lons_per_step
         self.azimuths_per_step = azimuths_per_step
         self.dists_per_step = dists_per_step
-        self.starttime_per_step =starttime_per_step
+        self.starttime_per_step = starttime_per_step
         self.ship_params_per_step = ship_params_per_step
 
     def print_route(self):
@@ -64,7 +66,7 @@ class RouteParams():
         form.print_line()
 
     def __eq__(self, route2):
-        bool_equal=True
+        bool_equal = True
         if not (self.count == route2.count):
             raise ValueError('Route counts not matching')
         if not (np.array_equal(self.start, route2.start)):
@@ -89,19 +91,10 @@ class RouteParams():
         return bool_equal
 
     def convert_to_dict(self):
-        rp_dict = {
-            "count" : self.count,
-            "start" : self.start,
-            "finish": self.finish,
-            "route type": self.route_type,
-            "gcr": self.gcr,
-            "time" : self.time,
-            "lats_per_step" : self.lats_per_step,
-            "lons_per_step" : self.lons_per_step,
-            "azimuths_per_step" : self.azimuths_per_step,
-            "dists_per_step" : self.dists_per_step,
-            "starttime_per_step" : self.starttime_per_step
-        }
+        rp_dict = {"count": self.count, "start": self.start, "finish": self.finish, "route type": self.route_type,
+                   "gcr": self.gcr, "time": self.time, "lats_per_step": self.lats_per_step,
+                   "lons_per_step": self.lons_per_step, "azimuths_per_step": self.azimuths_per_step,
+                   "dists_per_step": self.dists_per_step, "starttime_per_step": self.starttime_per_step}
         return rp_dict
 
     def write_to_file(self, filename):
@@ -116,13 +109,13 @@ class RouteParams():
 
         print('Writing params to ', filename)
 
-        for i in range(0, self.count+1):
+        for i in range(0, self.count + 1):
             feature = {}
             geometry = {}
             properties = {}
 
             geometry['type'] = 'Point'
-            #geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
+            # geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
             geometry['coordinates'] = [self.lons_per_step[i], self.lats_per_step[i]]
 
             properties['time'] = self.starttime_per_step[i]
@@ -133,12 +126,13 @@ class RouteParams():
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
                 properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
             else:
-                time_passed = (self.starttime_per_step[i+1]-self.starttime_per_step[i]).seconds/3600
-                properties['speed'] = {'value' : self.ship_params_per_step.speed[i+1], 'unit' : 'm/s'}
-                properties['engine_power'] = {'value' : self.ship_params_per_step.power[i+1]/1000, 'unit' : 'kW'}
-                properties['fuel_consumption'] = {'value' : self.ship_params_per_step.fuel[i+1]/(time_passed * 1000), 'unit' : 'mt/h'}
+                time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
+                properties['speed'] = {'value': self.ship_params_per_step.speed[i + 1], 'unit': 'm/s'}
+                properties['engine_power'] = {'value': self.ship_params_per_step.power[i + 1] / 1000, 'unit': 'kW'}
+                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i + 1] / (time_passed * 1000),
+                                                  'unit': 'mt/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value' : self.ship_params_per_step.rpm[i+1], 'unit' : 'Hz'}
+                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i + 1], 'unit': 'Hz'}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
@@ -151,7 +145,6 @@ class RouteParams():
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
-
     @classmethod
     def from_file(cls, filename):
         with open(filename) as file:
@@ -162,8 +155,8 @@ class RouteParams():
 
         print('Reading ' + str(count) + ' coordinate pairs from file')
 
-        lats_per_step = np.full(count,-99.)
-        lons_per_step = np.full(count,-99.)
+        lats_per_step = np.full(count, -99.)
+        lons_per_step = np.full(count, -99.)
         start_time_per_step = np.full(count, datetime.datetime.now())
         speed = np.full(count, -99.)
         power = np.full(count, -99.)
@@ -172,7 +165,7 @@ class RouteParams():
         azimuths_per_step = np.full(count, -99.)
         fuel_type = np.full(count, "")
 
-        for ipoint in range(0,count):
+        for ipoint in range(0, count):
             coord_pair = point_list[ipoint]['geometry']['coordinates']
             lats_per_step[ipoint] = coord_pair[0]
             lons_per_step[ipoint] = coord_pair[1]
@@ -185,75 +178,62 @@ class RouteParams():
             fuel_type[ipoint] = property['fuel_type']
             rpm[ipoint] = property['propeller_revolution']['value']
 
-        start = (lats_per_step[0],lons_per_step[0])
-        finish = (lats_per_step[count-1],lons_per_step[count-1])
+        start = (lats_per_step[0], lons_per_step[0])
+        finish = (lats_per_step[count - 1], lons_per_step[count - 1])
         gcr = -99
         route_type = 'read_from_file'
-        time = start_time_per_step[count-1] - start_time_per_step[0]
+        time = start_time_per_step[count - 1] - start_time_per_step[0]
 
         dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
 
         ship_params_per_step = ShipParams(fuel, power, rpm, speed)
 
-        return cls(
-            count = count,
-            start = start,
-            finish = finish,
-            gcr = gcr,
-            route_type = route_type,
-            time = time,
-            lats_per_step = lats_per_step,
-            lons_per_step = lons_per_step,
-            azimuths_per_step = azimuths_per_step,
-            dists_per_step = dists_per_step,
-            starttime_per_step = start_time_per_step,
-            ship_params_per_step = ship_params_per_step
-        )
+        return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
+                   lats_per_step=lats_per_step, lons_per_step=lons_per_step, azimuths_per_step=azimuths_per_step,
+                   dists_per_step=dists_per_step, starttime_per_step=start_time_per_step,
+                   ship_params_per_step=ship_params_per_step)
 
     def get_dist_from_coords(self, lats, lons):
         nsteps = len(lats)
         dist = np.full(nsteps, -99.)
 
-        for i in range(0,nsteps-1):
-            dist_step = geod.inverse([lats[i]], [lons[i]],[lats[i+1]],[lons[i+1]])
+        for i in range(0, nsteps - 1):
+            dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
             dist[i] = dist_step['s12']
         return dist
 
     def plot_route(self, ax, colour, label):
         lats = self.lats_per_step
         lons = self.lons_per_step
-        ax.plot(lons, lats, color = colour, label = label, linewidth=2)
+        ax.plot(lons, lats, color=colour, label=label, linewidth=2)
 
-        ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
-                markersize=10)
+        ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour, markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
                 markersize=10)
         return ax
 
     def plot_power_vs_dist(self, color, label):
         power = self.get_fuel_per_dist()
-        dist = self.dists_per_step
-        lat = self.lats_per_step
-        lon = self.lons_per_step
+        dist = self.dists_per_stepg
 
-        dist = dist/1000    # [m] -> [km]
+        dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power)
 
-        plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill=False, color = color, edgecolor = color, label = label)
+        plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill=False, color=color, edgecolor=color,
+                label=label)
         plt.xlabel('Weglänge (km)')
-        #plt.ylabel('Energie (kWh/km)')
+        # plt.ylabel('Energie (kWh/km)')
         plt.ylabel('Treibstoffverbrauch (t/km)')
         plt.xticks()
 
     def get_fuel_per_dist(self):
         fuel_per_hour = self.ship_params_per_step.fuel
-        delta_time = np.full(self.count-1, datetime.timedelta(seconds=0))
+        delta_time = np.full(self.count - 1, datetime.timedelta(seconds=0))
         fuel = np.full(self.count, -99.)
 
-        for i in range(0,self.count-1):
-            delta_time[i] = self.starttime_per_step[i+1]-self.starttime_per_step[i]
-            delta_time[i] = delta_time[i].total_seconds()/(60*60)
+        for i in range(0, self.count - 1):
+            delta_time[i] = self.starttime_per_step[i + 1] - self.starttime_per_step[i]
+            delta_time[i] = delta_time[i].total_seconds() / (60 * 60)
             fuel[i] = fuel_per_hour[i] * delta_time[i]
 
         return fuel
-
