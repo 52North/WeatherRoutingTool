@@ -1,21 +1,9 @@
-import os
-
 import numpy
 import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
-import sys
 from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
-from shapely import STRtree
-
-# Define current working directory
-# os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# print(os.getcwd())
-# # Add current working directory as a search location for Python modules and Packages
-# sys.path.append(os.path.join(os.getcwd(), ""))
-# print(sys.path)
-# Need to be imported only after defining working directory with the previous steps
-from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.constraints.constraints import ContinuousCheck, SeamarkCrossing, LandPolygonsCrossing
 
 # Create engine using SQLite
 engine = db.create_engine("sqlite:///gdfDB.sqlite")
@@ -141,7 +129,9 @@ test_ways_gdf = gpd.GeoDataFrame(
     ],
 )
 
-test_land_polygons_gdf = gpd.GeoDataFrame(geometry=[box( 4.056342603541809,49.06378892560051,8.748316591073674,51.19862259935186)])
+test_land_polygons_gdf = gpd.GeoDataFrame(geometry=[box(4.056342603541809, 49.06378892560051,
+                                                        8.748316591073674, 51.19862259935186)])
+
 
 class TestContinuousCheck:
     """
@@ -159,7 +149,7 @@ class TestContinuousCheck:
     test_ways_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="ways", overwrite=True
     )
-    
+
     test_land_polygons_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="land_polygons", overwrite=True
     )
@@ -175,29 +165,27 @@ class TestContinuousCheck:
         assert isinstance(
             ContinuousCheck().connect_database(), type(engine)
         ), "Engine Instantiation Error"
-        
-    
-    def test_query_nodes(self): 
+
+    def test_query_nodes(self):
         check = SeamarkCrossing()
-        gdf = check.query_nodes(engine=engine,query="SELECT *,geometry as geom FROM nodes")
-        
-        #gdf = gpd.read_postgis(sql="SELECT * FROM nodes",con=engine,geom_col="geometry")
-        
-        
+        gdf = check.query_nodes(engine=engine, query="SELECT *,geometry as geom FROM nodes")
+
+        # gdf = gpd.read_postgis(sql="SELECT * FROM nodes",con=engine,geom_col="geometry")
+
         point = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
         point_df = gpd.GeoDataFrame(point)
 
         assert isinstance(gdf, gpd.GeoDataFrame)
         assert "SELECT * FROM nodes" == check.query[0]
-        #assert type(check.con) == type(check.connect_database())
-        assert len(gdf)>0
+        # assert type(check.con) == type(check.connect_database())
+        assert len(gdf) > 0
         assert not gdf.empty, "GeoDataFrame is empty."
         assert type(gdf) == type(point_df), "GeoDataFrame Type Error"
         for geom in point_df["geometry"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
         print("point type checked")
-        
-    def test_query_ways(self): 
+
+    def test_query_ways(self):
         check = SeamarkCrossing()
         gdf = check.query_ways(
             engine=engine, query="SELECT *, geometry AS geom FROM ways"
@@ -215,8 +203,7 @@ class TestContinuousCheck:
         for geom in gdf["geom"]:
             assert isinstance(geom, LineString), "LineString Instantiation Error"
         print("Linestring type checked")
-        
-    
+
     def test_gdf_seamark_combined_nodes(self):
         """
         Test for checking if gdf nodes is gdf and geometry is Point type
@@ -254,7 +241,7 @@ class TestContinuousCheck:
 
         for geom in nodes_concat["geom"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
-    
+
     def test_gdf_seamark_combined_ways(self):
         """
         Test for checking if gdf ways is gdf and geometry is LineString type
@@ -287,7 +274,7 @@ class TestContinuousCheck:
         assert len(set(lines_tags).intersection(set(test_tags))) > 0, "no intersection"
         for geom in lines_concat["geom"]:
             assert isinstance(geom, LineString), "Linestring Instantiation Error"
-            
+
     def test_concat_nodes_ways(self):
         """
         Test for checking if table with  ways and nodes includes geometries (Point, LineString)
@@ -322,8 +309,7 @@ class TestContinuousCheck:
 
         type_list = [type(geometry) for geometry in concat_all["geom"]]
         assert set(type_list).intersection([Point, LineString]), "Geometry type error"
-        
-    
+
     def test_gdf_seamark_combined_nodes_ways(self):
         """
         Test for checking if combined gdf (nodes and ways) includes geometries (Point, LineString) and is a gdf
@@ -388,8 +374,7 @@ class TestContinuousCheck:
 
         type_list = [type(geometry) for geometry in nodes_lines_concat["geom"]]
         assert set(type_list).intersection([Point, LineString]), "Geometry type error"
-        
-        
+
     def test_check_crossing(self):
         """
         Test for checking if different spatial relations (intersection, contain, touches ...) are being returned
@@ -400,20 +385,20 @@ class TestContinuousCheck:
         #     "geom": [LineString([(7, 8), (5, 9)])],
         # }
         # route_df = gpd.GeoDataFrame(route)
-        
+
         # 9.91950, 57.06081)],
         # [{"seamark:type": "buoy_cardinal"}, Point(12.01631, 48.92595)],
         # [{"seamark:type": "separation_boundary"}, Point(12.01631, 48.92595)],
         # [{"seamark:type": "separation_crossing"}, Point(12.01631, 48.92595
-                                                        
-        lat_start=numpy.array((54.192091,54.1919199,54.1905871,54.189601))
-        lon_start=numpy.array((6.3732417,6.3593333,6.3310833,6.3182992))
-        lat_end=numpy.array((48.92595,48.02595,48.12595,48.22595,48.42595) )
-        lon_end=numpy.array((12.01631,12.04631,12.05631,12.08631))
+
+        lat_start = numpy.array((54.192091, 54.1919199, 54.1905871, 54.189601))
+        lon_start = numpy.array((6.3732417, 6.3593333, 6.3310833, 6.3182992))
+        lat_end = numpy.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595))
+        lon_end = numpy.array((12.01631, 12.04631, 12.05631, 12.08631))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         check_list = SeamarkCrossing().check_crossing(
-            lat_start=lat_start,lon_start=lon_start,lat_end=lat_end,lon_end=lon_end,
-            engine = engine,
+            lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end,
+            engine=engine,
             query=[
                 "SELECT * , geometry as geom FROM nodes",
                 "SELECT *, geometry AS geom FROM ways",
@@ -423,38 +408,34 @@ class TestContinuousCheck:
         )
 
         for i in range(len(check_list)):
-            assert (check_list[i] == True) or (check_list[i] == False)
-            # assert (
-            #         tuple_obj[1] in ContinuousCheck().predicates
-            # ), "Predicate instantiation error"
-            # assert tuple_obj[2] != [[], []], "Geometry object error"
-            # assert tuple_obj[3] == True, "Not crossing - take the route"
-            
+            assert (type(check_list[i]) == bool)
+
     def test_query_land_polygons(self):
-        gdf = LandPolygonsCrossing().query_land_polygons(engine=engine, query="SELECT *,geometry as geom from land_polygons")
+        gdf = LandPolygonsCrossing().query_land_polygons(engine=engine,
+                                                         query="SELECT *,geometry as geom from land_polygons")
         print(gdf)
-        assert isinstance(gdf,gpd.GeoDataFrame)
+        assert isinstance(gdf, gpd.GeoDataFrame)
         assert not gdf.empty, 'empty geodataframe'
-        
+
         for geom in gdf["geom"].to_list():
-            assert type(geom)==Polygon or type(geom)==LineString or type(geom)==MultiPolygon, "Geometry Instantiation Error"
-            
-    
+            assert type(geom) == Polygon or type(geom) == LineString or type(
+                geom) == MultiPolygon, "Geometry Instantiation Error"
+
     def test_check_land_crossing(self):
-        lat_start=numpy.array((54.192091,54.1919199,54.1905871,54.189601))
-        lon_start=numpy.array((6.3732417,6.3593333,6.3310833,6.3182992))
-        lat_end=numpy.array((48.92595,48.02595,48.12595,48.22595,48.42595) )
-        lon_end=numpy.array((12.01631,12.04631,12.05631,12.08631))
+        lat_start = numpy.array((54.192091, 54.1919199, 54.1905871, 54.189601))
+        lon_start = numpy.array((6.3732417, 6.3593333, 6.3310833, 6.3182992))
+        lat_end = numpy.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595))
+        lon_end = numpy.array((12.01631, 12.04631, 12.05631, 12.08631))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
         check_list = LandPolygonsCrossing().check_crossing(
-            lat_start=lat_start,lon_start=lon_start,lat_end=lat_end,lon_end=lon_end,
-            engine = engine,
-            query=
-                "SELECT *,geometry as geom from land_polygons"
+            lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end,
+            engine=engine,
+            query="SELECT *,geometry as geom from land_polygons"
         )
 
         for i in range(len(check_list)):
-            assert (check_list[i] == True) or (check_list[i] == False)
-              
+            assert (type(check_list[i]) == bool)
+
+
 # Closing engine
 engine.dispose()
