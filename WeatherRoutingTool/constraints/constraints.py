@@ -1,4 +1,3 @@
-import datetime as dt
 import logging
 
 import cartopy.crs as ccrs
@@ -586,7 +585,7 @@ class ContinuousCheck(NegativeContraint):
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine(
             "postgresql://{user}:{pw}@{host}/{db}".format(user=self.user, pw=self.password, host=self.host,
-                                                          db=self.database, port=self.port, ))
+                                                          db=self.database, ))
         return engine
 
 
