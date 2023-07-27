@@ -584,8 +584,8 @@ class ContinuousCheck(NegativeContraint):
         """
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine(
-            "postgresql://{user}:{pw}@{host}/{db}".format(user=self.user, pw=self.password, host=self.host,
-                                                          db=self.database, ))
+            "postgresql://{user}:{pwd}@{host}:{port}/{db}".format(user=self.user, pwd=self.password, host=self.host,
+                                                          db=self.database, port=self.port))
         return engine
 
 
