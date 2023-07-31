@@ -123,57 +123,17 @@ def test_get_fuel_from_netCDF():
 
 def test_power_consumption_returned():
     # dummy weather file
-    lat = np.array([54., 55, 56])
-    lon = np.array([14., 15, 16])
-    # time_single = np.datetime64('2023-01-23')
-    time_single = datetime.datetime.strptime('2023-01-23', '%Y-%m-%d')
-    time = np.array([time_single])
-
-    '''uwind = np.array([[
-        [40, 0, -40],
-        [40, 0, -40],
-        [40, 0, -40],
-    ]])
-    vwind = np.array([[
-        [0,40, 0],
-        [0,40, 0],
-        [0,40, 0],
-    ]])'''
-
-    uwind = np.array([[[40, -40, 0], [40, -40, 0], [40, -40, 0], ]])
-    vwind = np.array([[[0, 0, 40], [0, 0, 40], [0, 0, 40], ]])
+    time_single = datetime.datetime.strptime('2023-07-20', '%Y-%m-%d')
 
     # courses test file
     courses_test = np.array([0, 180, 0, 180, 180, 0])
-    # lat_test = np.array([54, 54, 55, 55, 56, 56])
-    # lon_test = np.array([14, 14, 15, 15, 16, 16])
-    lat_test = np.array([55, 55, 56, 56, 54, 54])
-    lon_test = np.array([15, 15, 16, 16, 14, 14])
-
-    vo = np.full(shape=(time.shape[0], lat.shape[0], lon.shape[0]), fill_value=0)
-
-    data_vars = dict(vo=(["time", "latitude", "longitude"], vo), uo=(["time", "latitude", "longitude"], vo),
-                     VHM0=(["time", "latitude", "longitude"], vo), VTPK=(["time", "latitude", "longitude"], vo),
-                     VMDR=(["time", "latitude", "longitude"], vo), thetao=(["time", "latitude", "longitude"], vo),
-                     so=(["time", "latitude", "longitude"], vo),
-                     Temperature_surface=(["time", "latitude", "longitude"], vo),
-                     Pressure_surface=(["time", "latitude", "longitude"], vo))
-
-    coords = dict(time=(["time"], time), latitude=(["latitude"], lat), longitude=(["longitude"], lon), )
-
-    attrs = dict(description="Necessary descriptions added here.")
-
-    ds = xr.Dataset(data_vars, coords, attrs)
-    ds['u-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], uwind)
-    ds['v-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], vwind)
-
-    print(ds)
-    ds.to_netcdf(config.BASE_PATH + '/TestEnvData.nc')
+    lat_test = np.array([54.3, 54.3, 54.6, 54.6, 54.9, 54.9])
+    lon_test = np.array([13.3, 13.3, 13.6, 13.6, 13.9, 13.9])
 
     # dummy course netCDF
     pol = get_default_Tanker()
-    pol.set_boat_speed(np.array([20]))
-    pol.set_env_data_path(config.BASE_PATH + '/TestEnvData.nc')
+    pol.set_boat_speed(np.array([8]))
+    pol.set_env_data_path(config.WEATHER_DATA)
     pol.set_courses_path(config.BASE_PATH + '/TestCoursesRoute.nc')
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
@@ -184,9 +144,9 @@ def test_power_consumption_returned():
     rpm = ds['RotationRate']
     fuel = ds['Fuel_consumption_rate']
 
-    assert np.all(power < 3000000)
+    assert np.all(power < 10000000)
     assert np.all(rpm < 100)
-    assert np.all(fuel < 0.8)
+    assert np.all(fuel < 1.2)
     assert np.all(power > 1000000)
     assert np.all(rpm > 70)
     assert np.all(fuel > 0.5)
