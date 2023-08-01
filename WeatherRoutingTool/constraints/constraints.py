@@ -215,7 +215,7 @@ class ConstraintsList:
 
         print("Tuple of positive constraints:")
         print("lat: ", lat)
-        print("lon: " , lon)
+        print("lon: ", lon)
 
         self.positive_point_dict = {"lat": lat, "lon": lon}
         self.current_positive = 0
