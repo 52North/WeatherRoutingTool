@@ -7,7 +7,6 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytest
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 
