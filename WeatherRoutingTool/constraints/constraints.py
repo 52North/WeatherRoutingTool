@@ -585,7 +585,7 @@ class ContinuousCheck(NegativeContraint):
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = db.create_engine(
             "postgresql://{user}:{pwd}@{host}:{port}/{db}".format(user=self.user, pwd=self.password, host=self.host,
-                                                          db=self.database, port=self.port))
+                                                                  db=self.database, port=self.port))
         return engine
 
 
@@ -756,7 +756,7 @@ class SeamarkCrossing(ContinuousCheck):
 
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                if type(gdf["tags"][i]) == str:
+                if isinstance(gdf["tags"][i], str):
                     gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
                     gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
@@ -806,7 +806,7 @@ class SeamarkCrossing(ContinuousCheck):
 
             gdf_list = []
             for i in range(0, len(seamark_list)):
-                if type(gdf["tags"][i]) == str:
+                if isinstance(gdf["tags"][i], str):
                     gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
                     gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                     gdf_list.append(gdf1)
@@ -900,7 +900,7 @@ class SeamarkCrossing(ContinuousCheck):
                 gdf = self.concat_nodes_ways(query=query, engine=engine)
                 gdf_list = []
                 for i in range(0, len(seamark_list)):
-                    if type(gdf["tags"].iloc[i]) == str:
+                    if isinstance(gdf["tags"].iloc[i], str):
                         gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
                         gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)
@@ -923,7 +923,7 @@ class SeamarkCrossing(ContinuousCheck):
                 print(f"concat gdf {gdf}")
                 gdf_list = []
                 for i in range(0, len(seamark_list)):
-                    if type(gdf["tags"].iloc[i]) == str:
+                    if isinstance(gdf["tags"].iloc[i], str):
                         gdf["tags"] = gdf["tags"].apply(ast.literal_eval)
                         gdf1 = gdf[gdf["tags"].apply(lambda x: seamark_list[i] in x.values())]
                         gdf_list.append(gdf1)

@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
 from WeatherRoutingTool.constraints.constraints import ContinuousCheck, SeamarkCrossing, LandPolygonsCrossing
+import pytest
 
 # Create engine using SQLite
 engine = db.create_engine("sqlite:///gdfDB.sqlite")
@@ -154,6 +155,7 @@ class TestContinuousCheck:
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="land_polygons", overwrite=True
     )
 
+    @pytest.mark.skip(reason="Might miss files for github actions")
     def test_connect_database(self):
         """
         Test for checking the engine object and if the connection with the db is estabilished
@@ -180,7 +182,7 @@ class TestContinuousCheck:
         # assert type(check.con) == type(check.connect_database())
         assert len(gdf) > 0
         assert not gdf.empty, "GeoDataFrame is empty."
-        assert type(gdf) == type(point_df), "GeoDataFrame Type Error"
+        assert isinstance(gdf, type(point_df)), "GeoDataFrame Type Error"
         for geom in point_df["geometry"]:
             assert isinstance(geom, Point), "Point Instantiation Error"
         print("point type checked")
@@ -199,7 +201,8 @@ class TestContinuousCheck:
 
         assert isinstance(gdf, gpd.GeoDataFrame)
         assert not gdf.empty, "GeoDataFrame is empty."
-        assert type(gdf) == type(line_df), "GeoDataFrame Type Error"
+        assert isinstance(gdf, type(line_df))
+        # assert type(gdf) == type(line_df), "GeoDataFrame Type Error"
         for geom in gdf["geom"]:
             assert isinstance(geom, LineString), "LineString Instantiation Error"
         print("Linestring type checked")
@@ -232,7 +235,7 @@ class TestContinuousCheck:
 
         assert isinstance(nodes_concat, gpd.GeoDataFrame)
         assert not nodes_concat.empty, "GeoDataFrame is empty."
-        assert type(concat_df) == type(nodes_concat)
+        assert isinstance(concat_df, type(nodes_concat))
 
         nodes_tags = [item["seamark:type"] for item in list(nodes_concat["tags"])]
         test_tags = [item["seamark:type"] for item in list(concat_df["tags"])]
@@ -268,7 +271,7 @@ class TestContinuousCheck:
 
         assert isinstance(lines_concat, gpd.GeoDataFrame)
         assert not lines_concat.empty, "GeoDataFrame is empty."
-        assert type(concat_df) == type(lines_concat)
+        assert isinstance(concat_df, type(lines_concat))
         lines_tags = [item["seamark:type"] for item in list(lines_concat["tags"])]
         test_tags = [item["seamark:type"] for item in list(concat_df["tags"])]
         assert len(set(lines_tags).intersection(set(test_tags))) > 0, "no intersection"
@@ -305,7 +308,7 @@ class TestContinuousCheck:
         assert isinstance(concat_all, gpd.GeoDataFrame)
         assert not concat_all.empty, "GeoDataFrame is empty."
 
-        assert type(concat_all) == type(concat_df_all)
+        assert isinstance(concat_all, type(concat_df_all))
 
         type_list = [type(geometry) for geometry in concat_all["geom"]]
         assert set(type_list).intersection([Point, LineString]), "Geometry type error"
@@ -358,7 +361,7 @@ class TestContinuousCheck:
 
         assert isinstance(nodes_lines_concat, gpd.GeoDataFrame)
         assert not nodes_lines_concat.empty, "GeoDataFrame is empty."
-        assert type(concat_df) == type(nodes_lines_concat), "DataFrame type error"
+        assert isinstance(concat_df, type(nodes_lines_concat)), "DataFrame type error"
 
         nodes_lines_tags = [
             item["seamark:type"] for item in list(nodes_lines_concat["tags"])
@@ -408,7 +411,7 @@ class TestContinuousCheck:
         )
 
         for i in range(len(check_list)):
-            assert (type(check_list[i]) == bool)
+            assert isinstance(check_list[i], bool)
 
     def test_query_land_polygons(self):
         gdf = LandPolygonsCrossing().query_land_polygons(engine=engine,
@@ -418,8 +421,8 @@ class TestContinuousCheck:
         assert not gdf.empty, 'empty geodataframe'
 
         for geom in gdf["geom"].to_list():
-            assert type(geom) == Polygon or type(geom) == LineString or type(
-                geom) == MultiPolygon, "Geometry Instantiation Error"
+            assert isinstance(geom, Polygon) or isinstance(geom, LineString) or isinstance(
+                geom, MultiPolygon), "Geometry Instantiation Error"
 
     def test_check_land_crossing(self):
         lat_start = numpy.array((54.192091, 54.1919199, 54.1905871, 54.189601))
@@ -434,7 +437,7 @@ class TestContinuousCheck:
         )
 
         for i in range(len(check_list)):
-            assert (type(check_list[i]) == bool)
+            assert isinstance(check_list[i], bool)
 
 
 # Closing engine
