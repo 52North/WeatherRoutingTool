@@ -1,42 +1,32 @@
 import os
 
-##
-# Defaults
-DEFAULT_MAP = [42, -17.5, 52, 2.5]  # med sea
-# DEFAULT_MAP = [51, 1.2,60,12]
-# DEFAULT_ROUTE = [51.121667, 1.355833, 57.56141, 11.65856]
-DEFAULT_ROUTE = [51.121667, 1.355833, 45.4907, -1.491394]
-TIME_FORECAST = 80  # forecast hours weather
-ROUTING_STEPS = 20  # number of routing steps
-DELTA_TIME_FORECAST = 3600  # time resolution of weather forecast (seconds)
-# DELTA_FUEL = 30000000*1000*1 # [Ws]
-DELTA_FUEL = 1 * 1000  # amount of fuel per routing step (kg)
-START_TIME = '2023062609'  # start time of travelling
-BOAT_SPEED = 20  # (m/s)
-BOAT_DROUGHT = 10  # (m)
+import WeatherRoutingTool.utils.formatting as format
 
 ##
-# File paths
-WEATHER_DATA = os.getenv('WEATHER_DATA')  # path to weather data
-DEPTH_DATA = os.getenv('DEPTH_DATA')  # path to depth data
-PERFORMANCE_LOG_FILE = os.getenv('PERFORMANCE_LOG_FILE')  # path to log file which logs performance
-INFO_LOG_FILE = os.getenv('INFO_LOG_FILE')  # path to log file which logs information
-FIGURE_PATH = os.getenv('FIGURE_PATH')  # path to figure repository
+# Output variables
 COURSES_FILE = os.getenv(
-    'BASE_PATH') + '/CoursesRoute.nc'  # path to file that acts as intermediate storage for courses per routing step
-ROUTE_PATH = os.getenv('ROUTE_PATH')
-BASE_PATH = os.getenv('BASE_PATH')
+    'WRT_BASE_PATH') + '/CoursesRoute.nc'  # path to file that acts as intermediate storage for courses per routing step
+FIGURE_PATH = os.getenv('WRT_FIGURE_PATH')  # path to figure repository
+PERFORMANCE_LOG_FILE = os.getenv('WRT_PERFORMANCE_LOG_FILE')  # path to log file which logs performance
+INFO_LOG_FILE = os.getenv('WRT_INFO_LOG_FILE')  # path to log file which logs information
+ROUTE_PATH = os.getenv('WRT_ROUTE_PATH')  # path to json file to which the route will be written
+BASE_PATH = os.getenv('WRT_BASE_PATH')  # path towards the WeatherRoutingTool base directory
 
 ##
-# Database connection paramteters
-HOST = os.getenv('HOST')
-DATABASE = os.getenv('DATABASE')
-MYUSERNAME = os.getenv('MYUSERNAME')
-PASSWORD = os.getenv('PASSWORD')
-PORT = os.getenv('PORT')
+# Input variables
+DEFAULT_ROUTE = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_ROUTE'))
+START_TIME = os.getenv('WRT_START_TIME')  # start time of travelling
+DEFAULT_MAP = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_MAP'))
+BOAT_SPEED = float(os.getenv('WRT_BOAT_SPEED'))  # (m/s)
+BOAT_DROUGHT = 10  # os.getenv('WRT_BOAT_DROUGHT')  # (m)
 
 ##
-# Isochrone routing parameters
+# Constant settings for isobased algorithm
+TIME_FORECAST = 80  # forecast hours weather
+ROUTING_STEPS = 2  # number of routing steps
+DELTA_TIME_FORECAST = 3600  # time resolution of weather forecast (seconds)
+DELTA_FUEL = 1 * 1000  # amount of fuel per routing step (kg)
+
 ROUTER_HDGS_SEGMENTS = 30  # total number of courses : put even number!!
 ROUTER_HDGS_INCREMENTS_DEG = 6  # increment of headings
 ROUTER_RPM_SEGMENTS = 1  # not used yet
@@ -44,12 +34,18 @@ ROUTER_RPM_INCREMENTS_DEG = 1  # not used yet
 ISOCHRONE_EXPECTED_SPEED_KTS = 8  # not used yet
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91  # angular range of azimuth angle that is considered for pruning (only one half!)
 ISOCHRONE_PRUNE_SEGMENTS = 20  # total number of azimuth bins that are used for pruning in prune sector which is 2x
-# ISOCHRONE_PRUNE_SECTOR_DEG_HALF : put even number !
 
 ##
-# boat settings
-DEFAULT_BOAT = os.getenv('BOAT_FILE')  # path to data for sailing boat (not maintained)
+# configurations for local execution
+WEATHER_DATA = os.getenv('WRT_WEATHER_DATA')  # path to weather data
+DEPTH_DATA = os.getenv('WRT_DEPTH_DATA')  # path to depth data
+CMEMS_USER = os.getenv('WRT_CMEMS_USER')
+CMEMS_PASSWORD = os.getenv('WRT_CMEMS_PASSWORD')
 
 ##
-CMEMS_USER = os.getenv('CMEMS_USER')
-CMEMS_PASSWORD = os.getenv('CMEMS_PASSWORD')
+# Database connection paramteters
+HOST = os.getenv('WRT_HOST')
+DATABASE = os.getenv('WRT_DATABASE')
+MYUSERNAME = os.getenv('WRT_MYUSERNAME')
+PASSWORD = os.getenv('WRT_PASSWORD')
+PORT = os.getenv('WRT_PORT')

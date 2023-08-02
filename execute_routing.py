@@ -37,39 +37,28 @@ if __name__ == "__main__":
 
     # *******************************************
     # basic settings
-    model = config.START_TIME
-    boatfile = config.DEFAULT_BOAT
+    start_time = config.START_TIME
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
     figurepath = config.FIGURE_PATH
     routepath = config.ROUTE_PATH
-    delta_time = config.DELTA_TIME_FORECAST
-    delta_fuel = config.DELTA_FUEL
-    hours = config.TIME_FORECAST
-    routing_steps = config.ROUTING_STEPS
+    time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    r_la1, r_lo1, r_la2, r_lo2 = config.DEFAULT_ROUTE
-    start = (r_la1, r_lo1)
-    finish = (r_la2, r_lo2)
     start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
-    map = Map(lat1, lon1, lat2, lon2)
+    default_map = Map(lat1, lon1, lat2, lon2)
 
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
     boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
-    # boat.calibrate_simple_fuel()
-    # boat.write_simple_fuel()
-    # boat.test_power_consumption_per_course()
-    # boat.test_power_consumption_per_speed()
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondFromFile(model, start_time, hours, 3)
-    # wt = WeatherCondODC(model, start_time,hours,3)
-    wt.set_map_size(map)
+    wt = WeatherCondFromFile(start_time, start_time, time_forecast, 3)
+    # wt = WeatherCondODC(start_time, start_time,time_forecast,3)
+    wt.set_map_size(default_map)
     wt.read_dataset(windfile)
     # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
@@ -77,7 +66,7 @@ if __name__ == "__main__":
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map,
+    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, default_map,
                              False)
     # seamarks_crossing = SeamarkCrossing()
     # water_depth.write_reduced_depth_data(
@@ -88,33 +77,6 @@ if __name__ == "__main__":
     continuous_checks_seamarks = SeamarkCrossing()
     continuous_checks_land = LandPolygonsCrossing()
 
-    # Simulationsstudie 2, Thames <-> Gothenburg
-    # over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
-    # over_waypoint2 = PositiveConstraintPoint(51.753670, 2.600120)
-    # over_waypoint3 = PositiveConstraintPoint(53.121505, 2.722398)
-
-    # over_waypoint4 = PositiveConstraintPoint(55.796111, 3.100278)  # good
-    # weather
-    # over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)  # ok
-    # weather
-    # over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad
-    # weather
-
-    # Simulationsstudie 2, Thames <-> Bordeaux
-    # over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
-    # over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
-    # over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
-
-    over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
-    # over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
-
-    # over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      #
-    # good weather
-    # over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok
-    # weather
-    # over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)   # bad
-    # weather
-
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
@@ -122,20 +84,13 @@ if __name__ == "__main__":
     # constraint_list.add_neg_constraint(continuous_checks_seamarks,
     # 'continuous')
     # constraint_list.add_neg_constraint(continuous_checks_land, 'continuous')
-
-    # constraint_list.add_pos_constraint(over_waypoint1)
-    # constraint_list.add_pos_constraint(over_waypoint2)
-    # constraint_list.add_pos_constraint(over_waypoint3)
-    constraint_list.add_pos_constraint(over_waypoint3)
-
-    # constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
     # *******************************************
     # initialise rout
     route_factory = RoutingAlgFactory()
     min_fuel_route = route_factory.get_routing_alg('ISOFUEL')
-    min_fuel_route.init_fig(water_depth, map)
+    min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************
     # routing

@@ -12,9 +12,9 @@ class RoutingAlgFactory():
     def get_routing_alg(self, alg_type):
         ra = None
 
-        r_la1, r_lo1, r_la2, r_lo2 = config.DEFAULT_ROUTE
-        start = (r_la1, r_lo1)
-        finish = (r_la2, r_lo2)
+        lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
+        start = (lat_start, lon_start)
+        finish = (lat_end, lon_end)
         start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
         delta_fuel = config.DELTA_FUEL
         fig_path = config.FIGURE_PATH

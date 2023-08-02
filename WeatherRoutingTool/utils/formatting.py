@@ -25,6 +25,16 @@ def print_current_time(function: str, start_time: time.time):
     print('Time after ' + function + ':' + str(time_passed))
 
 
+def get_point_from_string(point):
+    lat, lon = point.split(',')
+    return float(lat), float(lon)
+
+
+def get_bbox_from_string(bbox):
+    lat_start, lon_start, lat_end, lon_end = bbox.split(',')
+    return float(lat_start), float(lon_start), float(lat_end), float(lon_end)
+
+
 class NumpyArrayEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, numpy.ndarray):
