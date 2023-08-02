@@ -16,10 +16,9 @@ from WeatherRoutingTool.ship.ship import Tanker
 #    assert pol.inc(3) == 5
 
 def get_default_Tanker():
-    DEFAULT_GFS_FILE = os.environ[
-                           'BASE_PATH'] + '/reduced_testdata_weather.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
-    COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'
-    DEPTH_FILE = os.environ['DEPTH_DATA']
+    DEFAULT_GFS_FILE = config.BASE_PATH + '/reduced_testdata_weather.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    COURSES_FILE = config.BASE_PATH + '/CoursesRoute.nc'
+    DEPTH_FILE = config.DEPTH_DATA
 
     pol = Tanker(2)
     pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE, DEPTH_FILE)

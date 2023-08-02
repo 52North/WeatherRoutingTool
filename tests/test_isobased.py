@@ -7,7 +7,7 @@ import xarray as xr
 from geovectorslib import geod
 
 import tests.basic_test_func as basic_test_func
-import WeatherRoutingTool.config
+import WeatherRoutingTool.config as config
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -194,9 +194,9 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    weatherpath = os.environ['WEATHER_DATA']
-    routepath = os.environ['BASE_PATH'] + 'CoursesRoute.nc'
-    depthpath = os.environ['DEPTH_DATA']
+    weatherpath = config.WEATHER_DATA
+    routepath = config.BASE_PATH + 'CoursesRoute.nc'
+    depthpath = config.DEPTH_DATA
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
     tk.init_hydro_model_Route(weatherpath, routepath, depthpath)

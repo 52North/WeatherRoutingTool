@@ -14,10 +14,10 @@ BASE_PATH = os.getenv('WRT_BASE_PATH')  # path towards the WeatherRoutingTool ba
 
 ##
 # Input variables
-DEFAULT_ROUTE = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_ROUTE'))
+DEFAULT_ROUTE = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_ROUTE', '-99'))
 START_TIME = os.getenv('WRT_START_TIME')  # start time of travelling
-DEFAULT_MAP = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_MAP'))
-BOAT_SPEED = float(os.getenv('WRT_BOAT_SPEED'))  # (m/s)
+DEFAULT_MAP = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_MAP', '-99'))
+BOAT_SPEED = float(os.getenv('WRT_BOAT_SPEED', '-99'))  # (m/s)
 BOAT_DROUGHT = 10  # os.getenv('WRT_BOAT_DROUGHT')  # (m)
 
 ##
