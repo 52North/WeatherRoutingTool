@@ -20,7 +20,6 @@ logger = logging.getLogger('WRT.weather')
 
 
 class WeatherCond():
-    model: str
     time_steps: int
     time_res: dt.timedelta
     time_start: dt.datetime
@@ -28,11 +27,10 @@ class WeatherCond():
     map_size: Map
     ds: xr.Dataset
 
-    def __init__(self, model, time, hours, time_res):
+    def __init__(self,  time, hours, time_res):
         form.print_line()
         logger.info('Initialising weather')
 
-        self.model = model
         self.time_res = time_res
         self.time_start = time
         self.time_end = time + dt.timedelta(hours=hours)
@@ -88,8 +86,8 @@ class WeatherCond():
 
 class WeatherCondODC(WeatherCond):
 
-    def __init__(self, model, time, hours, time_res):
-        super().__init__(model, time, hours, time_res)
+    def __init__(self, time, hours, time_res):
+        super().__init__(time, hours, time_res)
 
     def check_data_consistency(self, ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS):
         ############################################
@@ -229,8 +227,8 @@ class WeatherCondFromFile(WeatherCond):
     wind_functions: None
     wind_vectors: None
 
-    def __init__(self, model, time, hours, time_res):
-        super().__init__(model, time, hours, time_res)
+    def __init__(self, time, hours, time_res):
+        super().__init__(time, hours, time_res)
 
     def calculate_wind_function(self, time):
         time_str = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -435,7 +433,7 @@ class WeatherCondFromFile(WeatherCond):
             """
 
         wind_vectors = {}
-        wind_vectors['model'] = self.model
+        wind_vectors['start_time'] = self.time_start
 
         for i in range(self.time_steps):
             time = self.time_start + self.time_res * i

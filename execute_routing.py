@@ -37,7 +37,6 @@ if __name__ == "__main__":
 
     # *******************************************
     # basic settings
-    start_time = config.START_TIME
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
@@ -45,7 +44,7 @@ if __name__ == "__main__":
     routepath = config.ROUTE_PATH
     time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
+    departure_time = dt.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
     # *******************************************
@@ -56,7 +55,7 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondFromFile(start_time, start_time, time_forecast, 3)
+    wt = WeatherCondFromFile(departure_time, time_forecast, 3)
     # wt = WeatherCondODC(start_time, start_time,time_forecast,3)
     wt.set_map_size(default_map)
     wt.read_dataset(windfile)
