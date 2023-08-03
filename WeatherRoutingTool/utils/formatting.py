@@ -6,8 +6,12 @@ from json import JSONEncoder
 import numpy
 
 
+def get_line_string():
+    return '---------------------------------------------------'
+
+
 def print_line():
-    print('---------------------------------------------------')
+    print(get_line_string())
 
 
 def print_step(stepnote, istep=0):

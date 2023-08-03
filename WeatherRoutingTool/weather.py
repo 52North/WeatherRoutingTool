@@ -59,7 +59,6 @@ class WeatherCond():
 
     @time_start.setter
     def time_start(self, value):
-        print('type: ', type(value))
         rounded_time = value - self.time_res / 2
         rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
         self._time_start = rounded_time
@@ -464,5 +463,3 @@ class WeatherCondFromFile(WeatherCond):
         logger.info(form.get_log_step('Reading dataset from' + str(filepath), 1))
         self.ds = xr.open_dataset(filepath)
         # self.ds = self.manipulate_dataset()
-
-        print(self.ds)

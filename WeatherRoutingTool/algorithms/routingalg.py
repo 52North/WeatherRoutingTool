@@ -85,8 +85,8 @@ class RoutingAlg():
         pass
 
     def terminate(self):
-        form.print_line()
-        print('Terminating...')
+        logger.info(form.get_line_string())
+        logger.info('Terminating...')
 
         self.check_destination()
         self.check_positive_power()

@@ -1,6 +1,7 @@
 import datetime as dt
 
 import WeatherRoutingTool.config as config
+import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 
 
@@ -19,6 +20,11 @@ class RoutingAlgFactory():
         delta_fuel = config.DELTA_FUEL
         fig_path = config.FIGURE_PATH
         routing_steps = config.ROUTING_STEPS
+
+        print(
+            'Initialising and starting routing procedure. For log output check the files "info.log" and '
+            '"performance.log".')
+        form.print_line()
 
         if alg_type == 'ISOFUEL':
             ra = IsoFuel(start, finish, departure_time, delta_fuel, fig_path)

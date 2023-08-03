@@ -2,6 +2,7 @@ import datetime
 import datetime as dt
 import json
 
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from geovectorslib import geod
@@ -10,6 +11,8 @@ import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
 from WeatherRoutingTool.ship.shipparams import ShipParams
+
+logger = logging.getLogger('WRT.Routeparams')
 
 
 ##
@@ -107,7 +110,7 @@ class RouteParams():
         rp_dict['type'] = 'FeatureCollection'
         feature_list = []
 
-        print('Writing params to ', filename)
+        logger.info('Write route parameters to ' + filename)
 
         for i in range(0, self.count + 1):
             feature = {}

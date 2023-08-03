@@ -18,7 +18,7 @@ from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.weather import WeatherCond
 
-logger = logging.getLogger('WRT.Pruning')
+logger = logging.getLogger('WRT.Isobased')
 
 
 class IsoBased(RoutingAlg):
@@ -200,8 +200,8 @@ class IsoBased(RoutingAlg):
         # start_time=time.time()
         # self.print_shape()
         for i in range(self.ncount):
-            form.print_line()
-            print('Step ', i)
+            logger.info(form.get_line_string())
+            logger.info('Step ' + str(i))
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
@@ -617,7 +617,7 @@ class IsoBased(RoutingAlg):
         self.generate_basemap()
 
         final_path = self.figure_path + '/fig0.png'
-        print('Saving start figure to ', final_path)
+        logger.info('Save start figure to ' + final_path)
         plt.savefig(final_path)
 
     def generate_basemap(self):
@@ -665,7 +665,7 @@ class IsoBased(RoutingAlg):
             fig.canvas.flush_events()
 
         final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
-        print('Saving updated figure to ', final_path)
+        logger.info('Save updated figure to ' + final_path)
         plt.savefig(final_path)
 
     def expand_axis_for_intermediate(self):
