@@ -428,6 +428,21 @@ class IsoBased(RoutingAlg):
 
         mean_azimuth = new_azi_sorted[meadian_indx]
 
+        if debug:
+	      # plot symmetry axis and boundaries of pruning area
+          symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth, 1000000)
+          lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth - self.prune_sector_deg_half, 1000000)
+          upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth + self.prune_sector_deg_half, 1000000)
+
+          fig = self.fig
+          self.ax.plot( [self.lons_per_step[1][meadian_indx],symmetry_axis["lon2"] ],[self.lats_per_step[1][meadian_indx],symmetry_axis["lat2"] ], color="blue")
+          self.ax.plot( [self.lons_per_step[1][meadian_indx],lower_bound["lon2"] ],[self.lats_per_step[1][meadian_indx],lower_bound["lat2"] ], color="blue")
+          self.ax.plot( [self.lons_per_step[1][meadian_indx],upper_bound["lon2"] ],[self.lats_per_step[1][meadian_indx],upper_bound["lat2"] ], color="blue")
+
+          final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
+          print('Saving updated figure to ', final_path)
+          plt.savefig(final_path)
+
         # define pruning area
         bins = np.linspace(mean_azimuth - self.prune_sector_deg_half, mean_azimuth + self.prune_sector_deg_half,
                            self.prune_segments + 1)
@@ -571,18 +586,21 @@ class IsoBased(RoutingAlg):
             print('path of this step' +  # str(move['lat1']) +
                   # str(move['lon1']) +
                   str(move['lat2']) + str(move['lon2']))
+            print('dist_per_step', self.dist_per_step)
             print('dist', dist)
-            print('bs=', self.speed_per_step)
 
-        start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
-        start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
-        gcrs = geod.inverse(start_lats, start_lons, move['lat2'], move[
-            'lon2'])  # calculate full distance traveled, azimuth of gcr connecting start and new position
-        self.current_variant = gcrs['azi1']
-        self.current_azimuth = gcrs['azi1']
+        # start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
+        # start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
+        # gcrs = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])       #calculate full distance
+        # traveled, azimuth of gcr connecting start and new position
+        # self.current_variant = gcrs['azi1']
+        # self.current_azimuth = gcrs['azi1']
+        # gcrs['s12'][is_constrained] = 0
 
-        gcrs['s12'][is_constrained] = 0
-        self.full_dist_traveled = gcrs['s12']
+        concatenated_distance = np.sum(self.dist_per_step, axis=0)
+        concatenated_distance[is_constrained] = 0
+
+        self.full_dist_traveled = concatenated_distance
         if (debug):
             print('full_dist_traveled:', self.full_dist_traveled)
 
