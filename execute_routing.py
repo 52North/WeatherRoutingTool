@@ -50,19 +50,19 @@ if __name__ == "__main__":
     # *******************************************
     # initialise weather
     #
-    # wt = WeatherCondODC(departure_time, time_forecast, 3)
-    # wt.set_map_size(default_map)
-    # wt.read_dataset()
-    # weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+    wt = WeatherCondODC(departure_time, time_forecast, 3)
+    wt.set_map_size(default_map)
+    wt.read_dataset()
+    weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
-    wt_read.read_dataset(windfile)
+    wt_read.read_dataset(weather_path)
     # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
+    boat.init_hydro_model_Route(weather_path, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
 
     # *******************************************
