@@ -429,19 +429,24 @@ class IsoBased(RoutingAlg):
         mean_azimuth = new_azi_sorted[meadian_indx]
 
         if debug:
-	      # plot symmetry axis and boundaries of pruning area
-          symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth, 1000000)
-          lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth - self.prune_sector_deg_half, 1000000)
-          upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]], mean_azimuth + self.prune_sector_deg_half, 1000000)
+            # plot symmetry axis and boundaries of pruning area
+            symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+                                        mean_azimuth, 1000000)
+            lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+                                      mean_azimuth - self.prune_sector_deg_half, 1000000)
+            upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+                                      mean_azimuth + self.prune_sector_deg_half, 1000000)
 
-          fig = self.fig
-          self.ax.plot( [self.lons_per_step[1][meadian_indx],symmetry_axis["lon2"] ],[self.lats_per_step[1][meadian_indx],symmetry_axis["lat2"] ], color="blue")
-          self.ax.plot( [self.lons_per_step[1][meadian_indx],lower_bound["lon2"] ],[self.lats_per_step[1][meadian_indx],lower_bound["lat2"] ], color="blue")
-          self.ax.plot( [self.lons_per_step[1][meadian_indx],upper_bound["lon2"] ],[self.lats_per_step[1][meadian_indx],upper_bound["lat2"] ], color="blue")
+            self.ax.plot([self.lons_per_step[1][meadian_indx], symmetry_axis["lon2"]],
+                         [self.lats_per_step[1][meadian_indx], symmetry_axis["lat2"]], color="blue")
+            self.ax.plot([self.lons_per_step[1][meadian_indx], lower_bound["lon2"]],
+                         [self.lats_per_step[1][meadian_indx], lower_bound["lat2"]], color="blue")
+            self.ax.plot([self.lons_per_step[1][meadian_indx], upper_bound["lon2"]],
+                         [self.lats_per_step[1][meadian_indx], upper_bound["lat2"]], color="blue")
 
-          final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
-          print('Saving updated figure to ', final_path)
-          plt.savefig(final_path)
+            final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
+            print('Saving updated figure to ', final_path)
+            plt.savefig(final_path)
 
         # define pruning area
         bins = np.linspace(mean_azimuth - self.prune_sector_deg_half, mean_azimuth + self.prune_sector_deg_half,

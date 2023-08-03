@@ -50,27 +50,26 @@ if __name__ == "__main__":
     # *******************************************
     # initialise weather
     #
-    wt = WeatherCondODC(departure_time, time_forecast, 3)
-    wt.set_map_size(default_map)
-    wt.read_dataset()
-    weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+    # wt = WeatherCondODC(departure_time, time_forecast, 3)
+    # wt.set_map_size(default_map)
+    # wt.read_dataset()
+    # weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
-    wt_read.read_dataset(weather_path)
+    wt_read.read_dataset(windfile)
     # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_Route(weather_path, coursesfile, depthfile)
+    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
 
     # *******************************************
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, default_map,
-                             False)
+    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, default_map, False)
     # seamarks_crossing = SeamarkCrossing()
     # water_depth.write_reduced_depth_data(
     # '/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
@@ -101,12 +100,10 @@ if __name__ == "__main__":
     # min_fuel_route.print_route()
     # min_fuel_route.write_to_file(str(min_fuel_route.route_type) +
     # "route.json")
-    min_fuel_route.return_route_to_API(
-        routepath + '/' + str(min_fuel_route.route_type) + ".json")
+    min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
     # *******************************************
     # plot route in constraints
     fig, ax = plt.subplots(figsize=(12, 7))
-    water_depth.plot_route_in_constraint(min_fuel_route,
-                                         graphics.get_colour(1), fig, ax)
+    water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
     plt.savefig(figurepath + '/route_waterdepth.png')
