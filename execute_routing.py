@@ -48,18 +48,22 @@ if __name__ == "__main__":
     default_map = Map(lat1, lon1, lat2, lon2)
 
     # *******************************************
-    # initialise boat
-    boat = Tanker(-99)
-    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
-    boat.set_boat_speed(config.BOAT_SPEED)
+    # initialise weather
+    #
+    wt = WeatherCondODC(departure_time, time_forecast, 3)
+    wt.set_map_size(default_map)
+    wt.read_dataset()
+    weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+
+    wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
+    wt_read.read_dataset(weather_path)
+    # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
-    # initialise weather
-    wt = WeatherCondFromFile(departure_time, time_forecast, 3)
-    # wt = WeatherCondODC(start_time, start_time,time_forecast,3)
-    wt.set_map_size(default_map)
-    wt.read_dataset(windfile)
-    # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+    # initialise boat
+    boat = Tanker(-99)
+    boat.init_hydro_model_Route(weather_path, coursesfile, depthfile)
+    boat.set_boat_speed(config.BOAT_SPEED)
 
     # *******************************************
     # initialise constraints
@@ -93,7 +97,7 @@ if __name__ == "__main__":
 
     # *******************************************
     # routing
-    min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
+    min_fuel_route = min_fuel_route.execute_routing(boat, wt_read, constraint_list)
     # min_fuel_route.print_route()
     # min_fuel_route.write_to_file(str(min_fuel_route.route_type) +
     # "route.json")
