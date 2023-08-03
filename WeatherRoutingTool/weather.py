@@ -137,6 +137,7 @@ class WeatherCondODC(WeatherCond):
 
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
+
         time_min_CMEMS_phys = (self.time_start - datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
         time_max_CMEMS_phys = (self.time_end + datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -158,7 +159,7 @@ class WeatherCondODC(WeatherCond):
         start_time = time.time()
         # download GFS data
         par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground",
-                   "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl"]
+                   "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", "Pressure_surface"]
         sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
                         'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min, lon_max),
                         'latitude': slice(lat_min_GFS, lat_max_GFS)}
