@@ -105,20 +105,17 @@ class WeatherCondODC(WeatherCond):
         time_wind_sec = np.full(time_wind.shape[0], 0)
         time_GFS_sec = np.full(time_GFS.shape[0], 0)
 
-        assert time_wave.shape[0] == time_wind.shape[
-            0] + 1  # CMEMS wave dataset contains 1 more time step than CMEMS physics
+        assert time_wave.shape[0] == time_wind.shape[0]  # CMEMS wave dataset contains 1 more time step than CMEMS physics
         assert time_wave.shape[0] == time_GFS.shape[0]
 
         for itime in range(0, time_wave.shape[0]):
             time_wave_sec[itime] = convert_nptd64_to_ints(time_wave[itime])
-        time_wave_sec = time_wave_sec + 30 * 60
-        for itime in range(0, time_wind.shape[0]):
+        time_wave_sec = time_wave_sec - 30*60
+        for itime in range(0,time_wind.shape[0]):
             time_wind_sec[itime] = convert_nptd64_to_ints(time_wind[itime])
         for itime in range(0, time_GFS.shape[0]):
             time_GFS_sec[itime] = convert_nptd64_to_ints(time_GFS[itime])
-        time_GFS_sec = time_GFS_sec + 30 * 60
-        time_wave_sec = np.delete(time_wave_sec, time_wave_sec.shape[0] - 1)
-        time_GFS_sec = np.delete(time_GFS_sec, time_GFS_sec.shape[0] - 1)
+        time_GFS_sec = time_GFS_sec - 30*60
 
         assert np.array_equal(time_wind_sec, time_wave_sec)
         assert np.array_equal(time_wind_sec, time_GFS_sec)
@@ -140,6 +137,8 @@ class WeatherCondODC(WeatherCond):
 
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
+        time_min_CMEMS_phys = (self.time_start - datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_max_CMEMS_phys = (self.time_end + datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
 
         lon_min = self.map_size.lon1
         lon_max = self.map_size.lon2
@@ -179,7 +178,7 @@ class WeatherCondODC(WeatherCond):
 
         # download CMEMS physics data
         par_CMEMS_phys = ["thetao", "vo", "uo", "so"]
-        sel_dict_CMEMS_phys = {'time': slice(time_min, time_max, 3), 'latitude': slice(lat_min, lat_max),
+        sel_dict_CMEMS_phys = {'time': slice(time_min_CMEMS_phys, time_max_CMEMS_phys, 3), 'latitude': slice(lat_min, lat_max),
                                'longitude': slice(lon_min, lon_max)}
         downloader_cmems_phys = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
                                                                  product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
@@ -211,16 +210,15 @@ class WeatherCondODC(WeatherCond):
         form.print_current_time('end time', start_time)
 
     def write_data(self, filepath):
-        time_str_start = self.time_start.strftime("%Y-%m-%d_%H")
-        time_str_end = self.time_end.strftime("%Y-%m-%d_%H")
+        time_str_start = self.time_start.strftime("%Y-%m-%d-%H")
+        time_str_end = self.time_end.strftime("%Y-%m-%d-%H")
 
-        filename = str(time_str_start) + '_' + str(time_str_end) + '_' + str(self.map_size.lat1) + '_' + str(
-            self.map_size.lon1) + str(self.map_size.lat2) + '_' + str(self.map_size.lon2) + '.nc'
+        filename = str(time_str_start) + '_' + str(time_str_end) + '_' + str(self.map_size.lat1) + '_' +  str(self.map_size.lon1) + '_' + str(self.map_size.lat2) + '_' + str(self.map_size.lon2) + '.nc'
         full_path = filepath + '/' + filename
         print('Writing weather data to file ' + str(full_path))
         self.ds.to_netcdf(full_path)
         self.ds.close()
-
+        return full_path
 
 class WeatherCondFromFile(WeatherCond):
     wind_functions: None
