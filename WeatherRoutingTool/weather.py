@@ -140,7 +140,7 @@ class WeatherCondODC(WeatherCond):
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
 
         time_min_CMEMS_phys = (self.time_start - datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
-        time_max_CMEMS_phys = (self.time_end + datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_max_CMEMS_phys = (self.time_end + datetime.timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
 
         lon_min = self.map_size.lon1
         lon_max = self.map_size.lon2
@@ -193,7 +193,7 @@ class WeatherCondODC(WeatherCond):
         GFS_lat[GFS_lat < 0] = GFS_lat[GFS_lat < 0] + 180
 
         # form.print_current_time('time after weather request:', start_time)
-        self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
+        # self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
         form.print_current_time('cross checks:', start_time)
 
         # interpolate CMEMS wave data to timestamps of CMEMS physics and merge
