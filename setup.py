@@ -21,6 +21,7 @@ setup(
     install_requires=[
       'bbox',
       'dask',
+      'geopandas',
       'geovectorslib',
       'global_land_mask',
       'lxml',
@@ -31,6 +32,8 @@ setup(
       'Pillow',
       'scipy>=1.10.0',
       'setuptools',
+      'shapely',
+      'sqlalchemy',
       'xarray',
       'netcdf4'
     ]
