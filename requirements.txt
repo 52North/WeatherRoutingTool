@@ -1,6 +1,7 @@
 bbox
 cartopy > 0.20.0
 dask
+datacube
 geopandas
 geovectorslib
 global_land_mask

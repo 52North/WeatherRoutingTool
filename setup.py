@@ -21,6 +21,7 @@ setup(
     install_requires=[
       'bbox',
       'dask',
+      'datacube'
       'geopandas',
       'geovectorslib',
       'global_land_mask',
