@@ -6,7 +6,7 @@ import logging.handlers
 import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship import Tanker
-from WeatherRoutingTool.weather import WeatherCondFromFile, WeatherCondODC
+from WeatherRoutingTool.weather import WeatherCondFromFile, WeatherCondEnvAutomatic
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.algorithms.routingalg_factory import *
 from WeatherRoutingTool.utils.maps import Map
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # *******************************************
     # initialise weather
     #
-    wt = WeatherCondODC(departure_time, time_forecast, 3)
+    wt = WeatherCondEnvAutomatic(departure_time, time_forecast, 3)
     wt.set_map_size(default_map)
     wt.read_dataset()
     weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')

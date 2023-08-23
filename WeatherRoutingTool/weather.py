@@ -83,7 +83,7 @@ class WeatherCond():
         pass
 
 
-class WeatherCondODC(WeatherCond):
+class WeatherCondEnvAutomatic(WeatherCond):
 
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
