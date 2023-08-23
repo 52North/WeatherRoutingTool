@@ -24,7 +24,7 @@ BOAT_DROUGHT = 10  # os.getenv('WRT_BOAT_DROUGHT')  # (m)
 # Constant settings for isobased algorithm
 TIME_FORECAST = 3  # forecast hours weather
 ROUTING_STEPS = 2  # number of routing steps
-DELTA_TIME_FORECAST = 3600  # time resolution of weather forecast (seconds)
+DELTA_TIME_FORECAST = 3  # time resolution of weather forecast (hours)
 DELTA_FUEL = 1 * 1000  # amount of fuel per routing step (kg)
 
 ROUTER_HDGS_SEGMENTS = 30  # total number of courses : put even number!!
@@ -50,4 +50,4 @@ MYUSERNAME = os.getenv('WRT_MYUSERNAME')
 PASSWORD = os.getenv('WRT_PASSWORD')
 PORT = os.getenv('WRT_PORT')
 
-DATA_MODE = 'from_file'
+DATA_MODE = 'automatic'

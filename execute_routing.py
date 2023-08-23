@@ -42,7 +42,7 @@ if __name__ == "__main__":
     coursesfile = config.COURSES_FILE
     figurepath = config.FIGURE_PATH
     routepath = config.ROUTE_PATH
-    time_resolution = 3
+    time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     departure_time = dt.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
