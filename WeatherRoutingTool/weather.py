@@ -212,16 +212,16 @@ class WeatherCondEnvAutomatic(WeatherCond):
         form.print_current_time('end time', start_time)
 
     def write_data(self, filepath):
-        time_str_start = self.time_start.strftime("%Y-%m-%d-%H")
-        time_str_end = self.time_end.strftime("%Y-%m-%d-%H")
+        # time_str_start = self.time_start.strftime("%Y-%m-%d-%H")
+        # time_str_end = self.time_end.strftime("%Y-%m-%d-%H")
 
-        filename = str(time_str_start) + '_' + str(time_str_end) + '_' + str(self.map_size.lat1) + '_' + str(
-            self.map_size.lon1) + '_' + str(self.map_size.lat2) + '_' + str(self.map_size.lon2) + '.nc'
-        full_path = filepath + '/' + filename
-        print('Writing weather data to file ' + str(full_path))
-        self.ds.to_netcdf(full_path)
+        # filename = str(time_str_start) + '_' + str(time_str_end) + '_' + str(self.map_size.lat1) + '_' + str(
+        #    self.map_size.lon1) + '_' + str(self.map_size.lat2) + '_' + str(self.map_size.lon2) + '.nc'
+        # full_path = filepath + '/' + filename
+        print('Writing weather data to file ' + str(filepath))
+        self.ds.to_netcdf(filepath)
         self.ds.close()
-        return full_path
+        return filepath
 
 
 class WeatherCondFromFile(WeatherCond):

@@ -6,7 +6,7 @@ import logging.handlers
 import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship import Tanker
-from WeatherRoutingTool.weather import WeatherCondFromFile, WeatherCondEnvAutomatic
+from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.algorithms.routingalg_factory import *
 from WeatherRoutingTool.utils.maps import Map
@@ -42,6 +42,7 @@ if __name__ == "__main__":
     coursesfile = config.COURSES_FILE
     figurepath = config.FIGURE_PATH
     routepath = config.ROUTE_PATH
+    time_resolution = 3
     time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     departure_time = dt.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
@@ -50,19 +51,21 @@ if __name__ == "__main__":
     # *******************************************
     # initialise weather
     #
-    wt = WeatherCondEnvAutomatic(departure_time, time_forecast, 3)
-    wt.set_map_size(default_map)
-    wt.read_dataset()
-    weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+    # wt = WeatherCondEnvAutomatic(departure_time, time_forecast, 3)
+    # wt.set_map_size(default_map)
+    # wt.read_dataset()
+    # weather_path = wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
-    wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
-    wt_read.read_dataset(weather_path)
+    # wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
+    # wt_read.read_dataset(weather_path)
     # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
+    wf = WeatherFactory()
+    wt = wf.get_weather(config.DATA_MODE, windfile, departure_time, time_forecast, time_resolution, default_map)
 
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_Route(weather_path, coursesfile, depthfile)
+    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
 
     # *******************************************
@@ -96,7 +99,7 @@ if __name__ == "__main__":
 
     # *******************************************
     # routing
-    min_fuel_route = min_fuel_route.execute_routing(boat, wt_read, constraint_list)
+    min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
     # min_fuel_route.write_to_file(str(min_fuel_route.route_type) +
     # "route.json")

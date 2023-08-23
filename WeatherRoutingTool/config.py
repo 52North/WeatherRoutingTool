@@ -49,3 +49,5 @@ DATABASE = os.getenv('WRT_DATABASE')
 MYUSERNAME = os.getenv('WRT_MYUSERNAME')
 PASSWORD = os.getenv('WRT_PASSWORD')
 PORT = os.getenv('WRT_PORT')
+
+DATA_MODE = 'from_file'
