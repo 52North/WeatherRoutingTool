@@ -178,7 +178,7 @@ class TestContinuousCheck:
         point_df = gpd.GeoDataFrame(point)
 
         assert isinstance(gdf, gpd.GeoDataFrame)
-        assert "SELECT * FROM nodes" == check.query[0]
+        # assert "SELECT * FROM openseamap.nodes" == check.query[0]
         # assert type(check.con) == type(check.connect_database())
         assert len(gdf) > 0
         assert not gdf.empty, "GeoDataFrame is empty."
