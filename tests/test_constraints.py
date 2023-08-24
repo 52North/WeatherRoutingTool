@@ -134,7 +134,7 @@ def test_safe_waterdepth():
     time = 0
     depthfile = config.DEPTH_DATA
     map = Map(50, 0, 55, 5)
-    waterdepth = WaterDepth(depthfile, 20, map)
+    waterdepth = WaterDepth("from_file", 20, map, depthfile)
     # waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]

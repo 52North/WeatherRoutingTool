@@ -8,6 +8,7 @@ import xarray as xr
 from global_land_mask import globe
 import ast
 
+from maridatadownloader import DownloaderFactory
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.routeparams import RouteParams
@@ -408,29 +409,24 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, data_mode, drougth, map, depth_path='', rename=True):
+    def __init__(self, data_mode, drougth, map, depth_path=''):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
-        depth_temp = None
-
-        if data_mode == 'ODC':
-            depth_temp = self.load_data_ODC()
-        if data_mode == 'automatic':
-            depth_temp = self.load_data_automatic()
-        if data_mode == 'from_file':
-            depth_temp = self.load_data_from_file(depth_path)
-
-        if depth_temp is None:
-            raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
-
-        if rename:
-            self.depth_data = depth_temp.rename(z="depth", lat="latitude", lon="longitude")
-        else:
-            self.depth_data = depth_temp
-
         self.current_depth = np.array([-99])
         self.min_depth = drougth
         self.map = map
+
+        self.depth_data = None
+
+        if data_mode == 'ODC':
+            self.depth_data = self.load_data_ODC()
+        elif data_mode == 'automatic':
+            self.depth_data = self.load_data_automatic()
+        elif data_mode == 'from_file':
+            self.depth_data = self.load_data_from_file(depth_path)
+            print('depth_data', self.depth_data)
+        else:
+            raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
 
     def load_data_ODC(self):
         logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
@@ -439,8 +435,14 @@ class WaterDepth(NegativeContraint):
 
     def load_data_automatic(self):
         logger.info(form.get_log_step('Automatic download of depth data', 0))
-        raise Exception('Automatic download of depth data not implemented yet!')
-        pass
+
+        downloader = DownloaderFactory.get_downloader(downloader_type='opendap', platform='etoponcei')
+        depth_data = downloader.download()
+        depth_data_chunked = depth_data.chunk(chunks={"lat": "100MB", "lon": "100MB"})
+        depth_data_chunked = depth_data_chunked.rename(z="depth", lat="latitude", lon="longitude")
+        depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map.lat1, self.map.lat2),
+                                                    longitude=slice(self.map.lon1, self.map.lon2))
+        return depth_data_chunked
 
     def load_data_from_file(self, depth_path):
         logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))

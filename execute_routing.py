@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DROUGHT, default_map, depthfile, False)
+    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DROUGHT, default_map, depthfile)
     # seamarks_crossing = SeamarkCrossing()
     # water_depth.write_reduced_depth_data(
     # '/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
