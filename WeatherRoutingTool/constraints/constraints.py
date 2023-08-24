@@ -418,7 +418,7 @@ class WaterDepth(NegativeContraint):
 
         self.depth_data = None
 
-        if data_mode == 'ODC':
+        if data_mode == 'odc':
             self.depth_data = self.load_data_ODC()
         elif data_mode == 'automatic':
             self.depth_data = self.load_data_automatic()

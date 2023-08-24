@@ -26,7 +26,7 @@ class RoutingAlgFactory():
             '"performance.log".')
         form.print_line()
 
-        if alg_type == 'ISOFUEL':
+        if alg_type == 'isofuel':
             ra = IsoFuel(start, finish, departure_time, delta_fuel, fig_path)
             ra.set_steps(routing_steps)
             ra.set_pruning_settings(config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF, config.ISOCHRONE_PRUNE_SEGMENTS)
