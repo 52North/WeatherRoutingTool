@@ -146,6 +146,35 @@ class ConstraintPars:
         logger.info(form.get_log_step("bCheckEndPoints=" + str(self.bCheckEndPoints), 1))
 
 
+class ConstraintsListFactory:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def get_constraints_list(cls, constraints_string_list, data_mode, boat_drough, map, depthfile):
+        pars = ConstraintPars()
+        constraints_list = ConstraintsList(pars)
+
+        if 'land_crossing_global_land_mask' in constraints_string_list:
+            land_crossing = LandCrossing()
+            constraints_list.add_neg_constraint(land_crossing)
+
+        if 'land_crossing_polygons' in constraints_string_list:
+            land_crossing_polygons = LandPolygonsCrossing()
+            constraints_list.add_neg_constraint(land_crossing_polygons)
+
+        if 'seamarks' in constraints_string_list:
+            seamarks = SeamarkCrossing()
+            constraints_list.add_neg_constraint(seamarks, 'continuous')
+
+        if 'water_depth' in constraints_string_list:
+            water_depth = WaterDepth(data_mode, boat_drough, map, depthfile)
+            constraints_list.add_neg_constraint(water_depth)
+
+        constraints_list.print_settings()
+        return constraints_list
+
+
 class ConstraintsList:
     pars: ConstraintPars
     positive_constraints: list

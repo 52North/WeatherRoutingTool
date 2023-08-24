@@ -221,15 +221,14 @@ class IsoBased(RoutingAlg):
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
                     self.finish_temp))
-                self.update_fig('p')
+                # self.update_fig('p')
                 continue
 
             # if i>9:
             # self.update_fig('bp')
-            self.pruning_per_step(True)
-            # form.print_current_time('move_boat: Step=' + str(i), start_time)
-            # if i>9:
-            self.update_fig('p')
+            self.pruning_per_step(
+                True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
+            # self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate()
