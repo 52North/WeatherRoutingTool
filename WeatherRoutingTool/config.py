@@ -50,4 +50,4 @@ MYUSERNAME = os.getenv('WRT_MYUSERNAME')
 PASSWORD = os.getenv('WRT_PASSWORD')
 PORT = os.getenv('WRT_PORT')
 
-DATA_MODE = 'automatic'
+DATA_MODE = 'from_file'

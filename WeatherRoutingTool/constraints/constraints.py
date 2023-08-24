@@ -408,19 +408,44 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, depth_path, drougth, map, rename=True):
+    def __init__(self, data_mode, drougth, map, depth_path='', rename=True):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
+        depth_temp = None
 
-        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        if data_mode == 'ODC':
+            depth_temp = self.load_data_ODC()
+        if data_mode == 'automatic':
+            depth_temp = self.load_data_automatic()
+        if data_mode == 'from_file':
+            depth_temp = self.load_data_from_file(depth_path)
+
+        if depth_temp is None:
+            raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
+
         if rename:
-            self.depth_data = ds_depth.rename(z="depth", lat="latitude", lon="longitude")
+            self.depth_data = depth_temp.rename(z="depth", lat="latitude", lon="longitude")
         else:
-            self.depth_data = ds_depth
+            self.depth_data = depth_temp
 
         self.current_depth = np.array([-99])
         self.min_depth = drougth
         self.map = map
+
+    def load_data_ODC(self):
+        logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
+        raise Exception('Loading of depth data from ODC not implemented yet!')
+        pass
+
+    def load_data_automatic(self):
+        logger.info(form.get_log_step('Automatic download of depth data', 0))
+        raise Exception('Automatic download of depth data not implemented yet!')
+        pass
+
+    def load_data_from_file(self, depth_path):
+        logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
+        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        return ds_depth
 
     def write_reduced_depth_data(self, filename):
         depth_renamed = self.depth_data.rename(z="depth", lat="latitude", lon="longitude")
@@ -457,7 +482,7 @@ class WaterDepth(NegativeContraint):
         ds_depth = xr.open_dataset(path)
         depth = ds_depth["z"].where(
             (ds_depth.lat > self.map.lat1) & (ds_depth.lat < self.map.lat2) & (ds_depth.lon > self.map.lon1) & (
-                        ds_depth.lon < self.map.lon2) & (ds_depth.z < 0), drop=True, )
+                    ds_depth.lon < self.map.lon2) & (ds_depth.z < 0), drop=True, )
 
         # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (
         # ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100)
@@ -487,8 +512,8 @@ class WaterDepth(NegativeContraint):
 
         self.depth_data = ds_depth_coarsened.where(
             (ds_depth_coarsened.latitude > self.map.lat1) & (ds_depth_coarsened.latitude < self.map.lat2) & (
-                        ds_depth_coarsened.longitude > self.map.lon1) & (
-                        ds_depth_coarsened.longitude < self.map.lon2) & (ds_depth_coarsened.depth < 0), drop=True, )
+                    ds_depth_coarsened.longitude > self.map.lon1) & (ds_depth_coarsened.longitude < self.map.lon2) & (
+                    ds_depth_coarsened.depth < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
         cp = self.depth_data["depth"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
