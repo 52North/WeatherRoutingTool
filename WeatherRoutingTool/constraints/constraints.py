@@ -151,7 +151,7 @@ class ConstraintsListFactory:
         pass
 
     @classmethod
-    def get_constraints_list(cls, constraints_string_list, data_mode, boat_drough, map, depthfile):
+    def get_constraints_list(cls, constraints_string_list, data_mode, boat_draught, map, depthfile):
         pars = ConstraintPars()
         constraints_list = ConstraintsList(pars)
 
@@ -168,7 +168,7 @@ class ConstraintsListFactory:
             constraints_list.add_neg_constraint(seamarks, 'continuous')
 
         if 'water_depth' in constraints_string_list:
-            water_depth = WaterDepth(data_mode, boat_drough, map, depthfile)
+            water_depth = WaterDepth(data_mode, boat_draught, map, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
         constraints_list.print_settings()
@@ -438,11 +438,11 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, data_mode, drougth, map, depth_path=''):
+    def __init__(self, data_mode, draught, map, depth_path=''):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
         self.current_depth = np.array([-99])
-        self.min_depth = drougth
+        self.min_depth = draught
         self.map = map
 
         self.depth_data = None
@@ -485,7 +485,7 @@ class WaterDepth(NegativeContraint):
         depth.to_netcdf(filename)
         depth.close()
 
-    def set_drought(self, depth):
+    def set_draught(self, depth):
         self.min_depth = depth
 
     def constraint_on_point(self, lat, lon, time):

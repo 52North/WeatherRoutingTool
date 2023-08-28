@@ -56,7 +56,7 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
   </li>
   <li> 
     Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to 
-    a map size that encompasses the final route. The boat speed and drought can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
+    a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
   </li>
   <li>
     Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*: 
