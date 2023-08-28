@@ -97,8 +97,7 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise rout
-    route_factory = RoutingAlgFactory()
-    min_fuel_route = route_factory.get_routing_alg('isofuel')
+    min_fuel_route = RoutingAlgFactory.get_routing_alg('isofuel')
     # min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************

@@ -5,12 +5,10 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 
 
-class RoutingAlgFactory():
+class RoutingAlgFactory:
 
-    def __init__(self):
-        pass
-
-    def get_routing_alg(self, alg_type):
+    @classmethod
+    def get_routing_alg(cls, alg_type):
         ra = None
 
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
