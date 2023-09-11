@@ -9,9 +9,9 @@ n_offspring = 4
 problem = RoutingProblem()
 algorithm = NSGA2(pop_size=pop_size,
                   sampling= Population(start, end, cost),
-                  crossover= Crossover1(),
+                  crossover= GeneticCrossover(),
                   n_offsprings = 2,
-                  mutation= Mutation1(),
+                  mutation= GeneticMutation(),
                   eliminate_duplicates=False)
 termination = get_termination("n_gen", n_gen)
 

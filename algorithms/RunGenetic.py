@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib
 from routeparams import RouteParams
 import config
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 
@@ -96,12 +96,14 @@ class RunGenetic():
 
         dt = '2020.12.02 00:00:00' 
         dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
-        times = np.array([dt_obj]*len(lats))
+        time = np.array([dt_obj]*len(lats))
+        times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
+        #times = np.array([dt_obj]*len(lats))
         route = RouteParams(
             count = self.count,
             start = self.start,
             finish = self.finish,
-            gcr = -1,
+            gcr = np.sum(dists),
             route_type = 'min_time_route',
             time = diffs, # time diffs
             lats_per_step = lats.to_numpy(),

@@ -24,7 +24,7 @@ class Population(Sampling):
         #print(self.X.shape)
         return self.X
     
-class Crossover1(Crossover):
+class GeneticCrossover(Crossover):
     def __init__(self, prob=0.7):
 
         # define the crossover: number of parents and number of offsprings
@@ -43,7 +43,7 @@ class Crossover1(Crossover):
         #print("Y:",Y)
         return Y
     
-class Mutation1(Mutation):
+class GeneticMutation(Mutation):
     def __init__(self, prob =0.4):
         super().__init__()
         self.prob  = prob 
@@ -81,9 +81,9 @@ def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
     problem = RoutingProblem()
     algorithm = NSGA2(pop_size=pop_size,
                     sampling= Population(strt, end, cost_mat),
-                    crossover= Crossover1(),
+                    crossover= GeneticCrossover(),
                     n_offsprings = 2,
-                    mutation= Mutation1(),
+                    mutation= GeneticMutation(),
                     eliminate_duplicates=False)
     termination = get_termination("n_gen", n_gen)
 

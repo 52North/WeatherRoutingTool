@@ -82,27 +82,28 @@ def distance(route):
         dists.append(d)
         lat1 = lat2
         lon1 = lon2
-    dists = np.array(dists)/1000
+    dists = np.array(dists)
     #print(dists)
     return dists
 
 def time_diffs(speed, route):
     geod = Geodesic.WGS84
-    speed = speed * 1.852
+    #speed = speed * 1.852
 
     lat1 = route[0,1]
     lon1 = route[0,0]
     diffs = []
-
+    d = 0
     for coord in route:
         lat2 = coord[1]
         lon2 = coord[0]
-        d = geod.Inverse(lat1, lon1, lat2, lon2)['s12']
+        print("time_diffs:", lat2, lon2)
+        d = d + geod.Inverse(lat1, lon1, lat2, lon2)['s12']
         diffs.append(d)
         lat1 = lat2
         lon1 = lon2
 
-    diffs = np.array(diffs) / (speed * 1000)
+    diffs = np.array(diffs) / (speed)
     #print(diffs)
     return diffs
 
