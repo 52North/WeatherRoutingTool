@@ -4,16 +4,18 @@ import os
 import xarray
 import pytest
 
-from algorithms.isobased import IsoBased
-from algorithms.isofuel import IsoFuel
-from constraints.constraints import *
+from WeatherRoutingTool.algorithms.isobased import IsoBased
+from WeatherRoutingTool.algorithms.isofuel import IsoFuel
+from WeatherRoutingTool.constraints.constraints import *
+
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
-    pars.resolution = 1./10
+    pars.resolution = 1. / 10
 
     constraint_list = ConstraintsList(pars)
     return constraint_list
+
 
 def create_dummy_IsoBased_object():
     start = (30, 45)
@@ -28,6 +30,7 @@ def create_dummy_IsoBased_object():
     ra.set_pruning_settings(prune_sector_half, nof_prune_segments)
     ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
     return ra
+
 
 def create_dummy_IsoFuel_object():
     start = (30, 45)

@@ -9,10 +9,10 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='weather_routing_tool',
+    name='WeatherRoutingTool',
     version='0.1',
-    packages=find_packages(),
     include_package_data=True,
+    packages=find_packages(),
     url='',
     license='',
     author='52N Developers',
@@ -20,18 +20,25 @@ setup(
     description='Python package for weather routing',
     install_requires=[
       'bbox',
-      'numpy > 1.23.4',
-      'cartopy',
+      'dask',
+      'datacube',
+      'geopandas',
       'geovectorslib',
       'global_land_mask',
+      'lxml',
       'matplotlib',
+      'numpy == 1.23.4',
       'pandas',
       'pytest',
-      'python-dotenv',
       'Pillow',
-      'scipy == 1.9.2',
+      'scipy>=1.10.0',
       'setuptools',
+      'shapely',
+      'sqlalchemy',
       'xarray',
       'netcdf4'
     ]
 )
+os.system('pip install wheel')
+os.system('pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader')
+os.system('pip install cartopy')
