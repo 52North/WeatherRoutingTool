@@ -130,12 +130,12 @@ class RouteParams():
                 properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
             else:
                 time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
-                properties['speed'] = {'value': self.ship_params_per_step.speed[i + 1], 'unit': 'm/s'}
-                properties['engine_power'] = {'value': self.ship_params_per_step.power[i + 1] / 1000, 'unit': 'kW'}
-                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i + 1] / (time_passed * 1000),
+                properties['speed'] = {'value': self.ship_params_per_step.speed[i], 'unit': 'm/s'}
+                properties['engine_power'] = {'value': self.ship_params_per_step.power[i] / 1000, 'unit': 'kW'}
+                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i] / (time_passed * 1000),
                                                   'unit': 'mt/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i + 1], 'unit': 'Hz'}
+                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i], 'unit': 'Hz'}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
