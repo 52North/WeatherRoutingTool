@@ -139,7 +139,8 @@ class RouteParams():
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
-            feature['property'] = properties
+            feature['properties'] = properties
+            feature['id'] = "123" #### yet to be decided
 
             feature_list.append(feature)
 
@@ -173,7 +174,7 @@ class RouteParams():
             lats_per_step[ipoint] = coord_pair[0]
             lons_per_step[ipoint] = coord_pair[1]
 
-            property = point_list[ipoint]['property']
+            property = point_list[ipoint]['properties']
             start_time_per_step[ipoint] = dt.datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
             speed[ipoint] = property['speed']['value']
             power[ipoint] = property['engine_power']['value']
