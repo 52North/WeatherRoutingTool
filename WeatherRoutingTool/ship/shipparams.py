@@ -83,7 +83,7 @@ class ShipParams():
         self.rpm = self.rpm[:, idxs]
 
     def flip(self):
-        #should be replaced by more careful implementation
+        # should be replaced by more careful implementation
         self.speed = self.speed[:-1]
         self.fuel = self.fuel[:-1]
         self.power = self.power[:-1]
@@ -98,8 +98,6 @@ class ShipParams():
         self.fuel = np.append(self.fuel, -99)
         self.power = np.append(self.power, -99)
         self.rpm = np.append(self.rpm, -99)
-
-
 
     def expand_axis_for_intermediate(self):
         self.speed = np.expand_dims(self.speed, axis=1)
