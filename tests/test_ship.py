@@ -92,7 +92,7 @@ def test_get_fuel_from_netCDF():
     rpm = np.array([[10, 14], [11, 15], [20, 60], [15, 5]])
     fcr = np.array([[2, 3], [4, 5], [6, 7], [8, 9]])
 
-    data_vars = dict(Power_delivered=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
+    data_vars = dict(Power_brake=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
                      Fuel_consumption_rate=(["lat", "it"], fcr), )
 
     coords = dict(lat=(["lat"], lat), it=(["it"], it), )
@@ -139,7 +139,7 @@ def test_power_consumption_returned():
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
     ds = pol.get_fuel_netCDF()
 
-    power = ds['Power_delivered']
+    power = ds['Power_brake']
     rpm = ds['RotationRate']
     fuel = ds['Fuel_consumption_rate']
 

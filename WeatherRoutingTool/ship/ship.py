@@ -317,7 +317,7 @@ class Tanker(Boat):
         if (debug):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
-        power = ds['Power_delivered'].to_numpy().flatten()
+        power = ds['Power_brake'].to_numpy().flatten()
         rpm = ds['RotationRate'].to_numpy().flatten()
         fuel = ds[
                    'Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
@@ -366,6 +366,7 @@ class Tanker(Boat):
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
+        print('maripower dataset: ', ds_read)
         return ds_read
 
     ##
