@@ -104,3 +104,27 @@ class ShipParams():
         self.fuel = np.expand_dims(self.fuel, axis=1)
         self.power = np.expand_dims(self.power, axis=1)
         self.rpm = np.expand_dims(self.rpm, axis=1)
+
+    def get_element(self, idx):
+        try:
+            speed = self.speed[idx]
+            fuel = self.fuel[idx]
+            power = self.power[idx]
+            rpm = self.rpm[idx]
+        except ValueError:
+            raise ValueError(
+                'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
+        return fuel, power, rpm, speed
+
+    def get_single_object(self, idx):
+        try:
+            speed = self.speed[idx]
+            fuel = self.fuel[idx]
+            power = self.power[idx]
+            rpm = self.rpm[idx]
+        except ValueError:
+            raise ValueError(
+                'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
+
+        sp = ShipParams(fuel, power, rpm, speed)
+        return sp
