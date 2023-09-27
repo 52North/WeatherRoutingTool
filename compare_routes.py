@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 
-import utils.graphics as graphics
-import config
-from constraints.constraints import *
-from routeparams import RouteParams
-from utils.maps import Map
-from weather import WeatherCondFromFile
+import datetime as dt
+
+import WeatherRoutingTool.config as config
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather_factory import WeatherFactory
 
 if __name__ == "__main__":
     # Intermediate waypoints plot
@@ -31,16 +33,21 @@ if __name__ == "__main__":
 
     ##
     # init wheather
-    windfile = config.WEATHER_DATA
-    model = config.START_TIME
-    start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
-    hours = config.TIME_FORECAST
-    lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    depthfile = config.DEPTH_DATA
-    map = Map(lat1, -10., lat2, lon2)
-    wt = WeatherCondFromFile(model, start_time, hours, 3)
-    wt.set_map_size(map)
-    wt.read_dataset(windfile)
+    windfile = "/home/kdemmich/MariData/Code/Data/WheatherFiles/2023_06_22_BritishChannel.nc"
+    departure_time = "2023-06-22T12:00Z"
+    time_for_plotting = "2023-06-23T12:00Z"
+    time_forecast = 60
+    lat1, lon1, lat2, lon2 = '44', '-15', '53', '3'
+
+    departure_time_dt = dt.datetime.strptime(departure_time, '%Y-%m-%dT%H:%MZ')
+    plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')
+    default_map = Map(lat1, -10., lat2, lon2)
+
+    wf = WeatherFactory()
+    wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+    wt.plot_weather_map(fig, ax, plot_time, "current")
 
     ##
     # init Constraints
@@ -79,7 +86,5 @@ if __name__ == "__main__":
     ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/route_power.png')
 
-    # plotting routes in wind data
-    # fig, ax = plt.subplots(figsize=(12, 7))
-    # wt.plot_weather_map(fig,ax,
+    # plotting routes in wind data  # fig, ax = plt.subplots(figsize=(12, 7))  # wt.plot_weather_map(fig,ax,
     # "2023-02-08T06:00:00.000000000")  # plt.show()
