@@ -9,6 +9,7 @@ import xarray as xr
 
 import WeatherRoutingTool.config as config
 from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.shipparams import ShipParams
 
 
 # def test_inc():
@@ -116,7 +117,7 @@ def test_get_fuel_from_netCDF():
     rpm = np.array([[10, 14], [11, 15], [20, 60], [15, 5]])
     fcr = np.array([[2, 3], [4, 5], [6, 7], [8, 9]])
 
-    data_vars = dict(Power_delivered=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
+    data_vars = dict(Power_brake=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
                      Fuel_consumption_rate=(["lat", "it"], fcr), )
 
     coords = dict(lat=(["lat"], lat), it=(["it"], it), )
@@ -144,6 +145,11 @@ def test_get_fuel_from_netCDF():
     ds.close()
 
 
+'''
+    check return values by maripower: has there been renaming? Do the return values have a sensible order of magnitude?
+'''
+
+
 def test_power_consumption_returned():
     # dummy weather file
     time_single = datetime.datetime.strptime('2023-07-20', '%Y-%m-%d')
@@ -162,7 +168,7 @@ def test_power_consumption_returned():
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
     ds = pol.get_fuel_netCDF()
 
-    power = ds['Power_delivered']
+    power = ds['Power_brake']
     rpm = ds['RotationRate']
     fuel = ds['Fuel_consumption_rate']
 
@@ -172,3 +178,47 @@ def test_power_consumption_returned():
     assert np.all(power > 1000000)
     assert np.all(rpm > 70)
     assert np.all(fuel > 0.5)
+
+
+'''
+    test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
+'''
+
+
+def test_shipparams_get_element():
+    fuel = np.array([1, 2, 3, 4])
+    speed = np.array([0.1, 0.2, 0.3, 0.4])
+    power = np.array([11, 21, 31, 41])
+    rpm = np.array([21, 22, 23, 24])
+
+    sp = ShipParams(fuel, power, rpm, speed)
+    idx = 2
+
+    fuel_test, power_test, rpm_test, speed_test = sp.get_element(idx)
+
+    assert fuel[idx] == fuel_test
+    assert speed[idx] == speed_test
+    assert power[idx] == power_test
+    assert rpm[idx] == rpm_test
+
+
+'''
+    test whether ShipParams object for single waypoint is correctly returned by ShipParams.get_single_object(idx)
+'''
+
+
+def test_shipparams_get_single():
+    fuel = np.array([1, 2, 3, 4])
+    speed = np.array([0.1, 0.2, 0.3, 0.4])
+    power = np.array([11, 21, 31, 41])
+    rpm = np.array([21, 22, 23, 24])
+
+    sp = ShipParams(fuel, power, rpm, speed)
+    idx = 2
+
+    sp_test = sp.get_single_object(idx)
+
+    assert sp_test.fuel == fuel[idx]
+    assert sp_test.power == power[idx]
+    assert sp_test.rpm == rpm[idx]
+    assert sp_test.speed == speed[idx]

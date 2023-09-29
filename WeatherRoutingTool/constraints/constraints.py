@@ -21,7 +21,7 @@ import sqlalchemy as db
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point, LineString, box
-from shapely import STRtree
+from shapely.strtree import STRtree
 from WeatherRoutingTool.config import DEFAULT_MAP
 
 # Load the environment variables from the .env file

@@ -300,41 +300,70 @@ class WeatherCondFromFile(WeatherCond):
 
         return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
 
-    def plot_weather_map(self, fig, ax, time):
-        rebinx = 10
-        rebiny = 10
+    def plot_weather_map(self, fig, ax, time, varname):
+        rebinx = 2
+        rebiny = 2
 
-        u = self.ds['u-component_of_wind_height_above_ground'].sel(time=time, height_above_ground2=10)  # .where((
-        # ds_wind.latitude>=lat1) & (ds_wind.latitude<=lat2) & (
-        # ds_wind.longitude>=lon1) & (ds_wind.longitude<=lon2), drop=True)
-        v = self.ds['v-component_of_wind_height_above_ground'].sel(time=time, height_above_ground2=10)  # .where((
-        # ds_wind.latitude>=lat1) & (ds_wind.latitude<=lat2) & (
-        # ds_wind.longitude>=lon1) & (ds_wind.longitude<=lon2), drop=True)
+        if varname == 'wind':
+            u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time,
+                                                                                               height_above_ground=10)
+            v = self.ds['v-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time,
+                                                                                               height_above_ground=10)
 
-        u = u[::3, ::6]
-        v = u[::3, ::6]
+            # u = u[::3, ::6]
+            # v = u[::3, ::6]
 
-        # u = u.coarsen(latitude=100).to_numpy()
-        # v = v.coarsen(latitude=100).to_numpy()
-        # ds_rebin = self.ds.coarsen(latitude=100)
-        unp = u.to_numpy()
-        vnp = v.to_numpy()
-        unp = graphics.rebin(unp, rebinx, rebiny)
-        vnp = graphics.rebin(vnp, rebinx, rebiny)
+            unp = u.to_numpy()
+            vnp = v.to_numpy()
+            unp = graphics.rebin(unp, rebinx, rebiny)
+            vnp = graphics.rebin(vnp, rebinx, rebiny)
+            windspeed = np.sqrt(u ** 2 + v ** 2)
 
-        windspeed = np.sqrt(u ** 2 + v ** 2)
-        windspeed.plot()
-        plt.title('ECMWF wind speed and direction, June 1, 1984')
-        plt.ylabel('latitude')
-        plt.xlabel('longitude')
-        x = windspeed.coords['longitude'].values
-        y = windspeed.coords['latitude'].values
+            cp = windspeed.plot()
+            cp.set_clim(0, 20)
+            plt.title('wind speed and direction')
+            plt.ylabel('latitude')
+            plt.xlabel('longitude')
+            x = windspeed.coords['longitude'].values
+            y = windspeed.coords['latitude'].values
+            plt.quiver(x, y, u.values, v.values, clim=[0, 20])
+            plt.show()
 
-        print('x = ', x.shape)
-        print('y = ', y.shape)
+        if varname == 'waveheight':
+            height = self.ds['VHM0'].sel(time=time)
+            h = height.plot()
+            h.set_clim(0, 10)
+            plt.title('wave heigh')
+            plt.ylabel('latitude')
+            plt.xlabel('longitude')
+            plt.show()
 
-        # plt.barbs(x, y, u.values, v.values)
-        plt.quiver(x, y, u.values, v.values)
+        if varname == 'current':
+            u = self.ds['uo'].sel(time=time)
+            v = self.ds['vo'].sel(time=time)
+            u = u.isel(depth=0)
+            v = v.isel(depth=0)
+
+            # u = u[::3, ::6]
+            # v = u[::3, ::6]
+
+            unp = u.to_numpy()
+            vnp = v.to_numpy()
+            unp = graphics.rebin(unp, rebinx, rebiny)
+            vnp = graphics.rebin(vnp, rebinx, rebiny)
+
+            windspeed = np.sqrt(u ** 2 + v ** 2)
+            c = windspeed.plot()
+            c.set_clim(0, 1)
+            plt.title('current')
+            plt.ylabel('latitude')
+            plt.xlabel('longitude')
+            x = windspeed.coords['longitude'].values
+            y = windspeed.coords['latitude'].values
+
+            # plt.barbs(x, y, u.values, v.values)
+            plt.quiver(x, y, u.values, v.values)
+            plt.show()
 
     def close_env_file(self):
         self.ds.close()
