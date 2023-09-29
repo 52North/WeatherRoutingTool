@@ -5,11 +5,11 @@ import sys
 import os
 
 current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-#print(current_path)
+print(current_path)
 sys.path.append(os.path.join(current_path, '..', ''))
 
-from constraints.constraints import *
-from algorithms.DataUtils import *
+from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.algorithms.DataUtils import *
 
 
 
@@ -39,13 +39,23 @@ def is_neg_constraints(lat, lon, wh, time):
     is_constrained = [False for i in range(0, lat.shape[0])]
     is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
     #print(is_constrained)
-    return 1 if not is_constrained else 9999999
+    return 0 if not is_constrained else 1
+
+def route_const(routes):
+    crossing = 0
+    costs = []
+    #print(routes[0][0])
+    for route in routes:
+        costs.append(np.sum([is_neg_constraints(wave_height.coords['latitude'][i],
+                                                          wave_height.coords['longitude'][j], cost[i,j], 0) for i,j in route[0]]))
+    #print(costs)
+    return costs
 
 def index_to_coords(route):
     lats = wave_height.coords['latitude'][route[:,0]]
     lons = wave_height.coords['longitude'][route[:,1]]
     route = [[x,y] for x,y in zip(lats, lons)]
-    print(type(lats))
+    #print(type(lats))
     return lats, lons,np.array(route)
 
 # make initial population for genetic algorithm
@@ -53,10 +63,15 @@ def population(size, src, dest, cost):
     shuffled_cost = cost.copy()
     #print(shuffled_cost)
     #routes = []
+    nan_mask = np.isnan(shuffled_cost)
     routes = np.zeros((size,1), dtype=object)
     for i in range(size):
+        shuffled_cost = cost.copy()
+        shuffled_cost[nan_mask] = 1
         shuffled_indices = np.random.permutation(len(shuffled_cost))
         shuffled_cost = shuffled_cost[shuffled_indices]
+        shuffled_cost[nan_mask] = 1e20
+
         route, _ = route_through_array(shuffled_cost,src, dest, fully_connected=True, geometric=False)
         routes[i][0] = np.array(route)
     return routes
@@ -96,20 +111,26 @@ def power_cost(routes):
         #print(fuels.get_full_fuel())
         #costs.append(np.sum([fuel for fuel in fuels.]))
         costs.append(fuels.get_full_fuel())
-    print(costs)
+    #print(costs)
     return costs    
         
 
 def mutate(route):
     source = route[0]
     destination = route[-1]
+    shuffled_cost = cost.copy()
+    nan_mask = np.isnan(shuffled_cost)
 
     path = route.copy()
     size = len(route)
-    for i in range(1, size):
-        end = random.randint(i+1,size-2)
-        subpath, _ = route_through_array(cost,route[i-1], route[end+1], fully_connected=True, geometric=False)
-        newPath = np.concatenate((route[:i-1],np.array(subpath),route[end+2:]), axis=0)
-        #print(newPath)
-        #if len(newPath) == len(set(newPath)):
-        return newPath
+
+    start = random.randint(1,size-2)
+    end = random.randint(start,size-2)
+    
+    shuffled_cost = np.ones(cost.shape, dtype=np.float)
+    shuffled_cost[nan_mask] = 1e20
+   
+    subpath, _ = route_through_array(shuffled_cost,route[start], route[end], fully_connected=True, geometric=False)
+    newPath = np.concatenate((route[:start],np.array(subpath),route[end+1:]), axis=0)
+
+    return newPath

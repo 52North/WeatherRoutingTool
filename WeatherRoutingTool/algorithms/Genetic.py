@@ -8,7 +8,7 @@ import numpy as np
 from pymoo.factory import get_termination
 from pymoo.optimize import minimize
 from pymoo.operators.crossover.sbx import SBX
-from algorithms.GeneticUtils import *
+from WeatherRoutingTool.algorithms.GeneticUtils import *
 
 class Population(Sampling):
     def __init__(self, src, dest, X,var_type=np.float64):
@@ -25,7 +25,7 @@ class Population(Sampling):
         return self.X
     
 class GeneticCrossover(Crossover):
-    def __init__(self, prob=0.7):
+    def __init__(self, prob=1):
 
         # define the crossover: number of parents and number of offsprings
         super().__init__(2, 2)
@@ -50,7 +50,7 @@ class GeneticMutation(Mutation):
 
     def _do(self, problem, X, **kwargs):
         
-        offsprings = np.zeros((2,1), dtype=object)
+        offsprings = np.zeros((len(X),1), dtype=object)
         # loop over individuals in population
         for idx,i in enumerate(X):
             # performe mutation with certain probability
@@ -68,12 +68,14 @@ class RoutingProblem(Problem):
         super().__init__(
             n_var=1, 
             n_obj=1, 
-            n_constr=0)
+            n_constr=1)
     def _evaluate(self, X, out, *args, **kwargs):
         #costs = route_cost(X)
         costs = power_cost(X)
+        constraints = route_const(X)
         #print(costs.shape)
         out['F'] = np.column_stack([costs])
+        out['G'] = np.column_stack([constraints])
 
 
 def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
@@ -82,7 +84,7 @@ def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
     algorithm = NSGA2(pop_size=pop_size,
                     sampling= Population(strt, end, cost_mat),
                     crossover= GeneticCrossover(),
-                    n_offsprings = 2,
+                    n_offsprings = n_offspring,
                     mutation= GeneticMutation(),
                     eliminate_duplicates=False)
     termination = get_termination("n_gen", n_gen)

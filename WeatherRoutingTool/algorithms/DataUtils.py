@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 import os
 from geographiclib.geodesic import Geodesic
 import math
-from ship.ship import Tanker
+from WeatherRoutingTool.ship.ship import Tanker
 from datetime import datetime
-import config
+import WeatherRoutingTool.config as config
 
 
 def loadData(path):
@@ -32,12 +32,18 @@ def get_closest(array, value):
     return np.abs(array - value).argmin()
 
 def getBBox(lon1, lat1,lon2,lat2, data):
-    bbox = ((lon1, lat1),(lon2, lat2))
-    time_slice = 0
-    lon_min = get_closest(data.longitude.data, bbox[0][0])
-    lat_min = get_closest(data.latitude.data, bbox[0][1])
-    lon_max = get_closest(data.longitude.data, bbox[1][0])
-    lat_max = get_closest(data.latitude.data, bbox[1][1])
+        
+
+    lon_min = get_closest(data.longitude.data,lon1)
+    lon_max = get_closest(data.longitude.data,lon2)
+    lat_min = get_closest(data.latitude.data,lat1)
+    lat_max = get_closest(data.latitude.data,lat2)
+
+    lon_min = lon_min if lon_min < lon_max else lon_max 
+    lon_max = lon_max if lon_min < lon_max else lon_min
+    lat_min = lat_min if lat_min < lat_max else lat_max 
+    lat_max = lat_max if lat_min < lat_max else lat_min
+    #print(lon_min, lon_max, lat_min, lat_max)
     return lon_min, lon_max, lat_min, lat_max
 
 def cleanData(data):
@@ -46,7 +52,7 @@ def cleanData(data):
     cost = data.copy()
     #np.random.shuffle(cost)
     nan_mask = np.isnan(cost)
-    cost[nan_mask] = 2* np.nanmax(cost) if np.nanmax(cost) else 0
+    cost[nan_mask] = 1e100* np.nanmax(cost) if np.nanmax(cost) else 0
 
     return cost
 
@@ -97,7 +103,6 @@ def time_diffs(speed, route):
     for coord in route:
         lat2 = coord[1]
         lon2 = coord[0]
-        print("time_diffs:", lat2, lon2)
         d = d + geod.Inverse(lat1, lon1, lat2, lon2)['s12']
         diffs.append(d)
         lat1 = lat2
@@ -113,7 +118,7 @@ def calculate_course_for_route(route, wave_height):
     lats = np.zeros(len(route)-1)
     lons = np.zeros(len(route)-1)
     
-    print(route)
+    #print(route)
     for i in range(len(route) - 1):
         # Get the coordinates of the current and next waypoints
         lat1, lon1 = route[i]
@@ -147,17 +152,19 @@ def calculate_course_for_route(route, wave_height):
 
 def getPower(route, wave_height):
     #base = config.BASE_PATH
-    DEFAULT_GFS_FILE = config.GFS  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    DEFAULT_GFS_FILE = config.WEATHER_DATA  # CMEMS needs lat: 30 to 45, lon: 0 to 20
     COURSES_FILE = config.COURSES_FILE
     #print(route)
     courses, lats, lons = calculate_course_for_route(route[0], wave_height)
     #print(lons.shape)
 
     tank = Tanker(2)
-    tank.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE)
+    tank.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE,'')
     dt = '2020.12.02 00:00:00' 
     dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
-    time = np.array([dt_obj]*len(courses))
+    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+
+    time = np.array([departure_time]*len(courses))
     power = tank.get_fuel_per_time_netCDF(courses, lats, lons, time)
     return power
 

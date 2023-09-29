@@ -1,10 +1,10 @@
-from algorithms.DataUtils import *
-from algorithms.Genetic import *
-from algorithms.GeneticUtils import *
+from WeatherRoutingTool.algorithms.DataUtils import *
+from WeatherRoutingTool.algorithms.Genetic import *
+from WeatherRoutingTool.algorithms.GeneticUtils import *
 import numpy as np
 import matplotlib
-from routeparams import RouteParams
-import config
+from WeatherRoutingTool.routeparams import RouteParams
+import WeatherRoutingTool.config as config
 from datetime import datetime, timedelta
 
 
@@ -21,33 +21,36 @@ class RunGenetic():
     route_ensemble : list
     route : np.array # temp
 
-
-
     pop_size : int
-    n_offsprings : int
+    n_offsprings : int 
 
     def __init__(self, start, finish, departure_time, figure_path="") -> None:
-        self.ncount = config.N_GEN
+        self.ncount = 20 #config.N_GEN
         self.count = 0
         self.start = start
         self.finish = finish
         self.departure_time = departure_time
 
-        self.pop_size = config.POP_SIZE
-        self.n_offsprings = config.N_OFFSPRINGS
+        self.pop_size = 20 #config.POP_SIZE
+        self.n_offsprings = 2 #config.N_OFFSPRINGS
 
         self.figure_path = figure_path
+        self.ship_params = None
 
         self.print_init()
 
     def execute_routing(self):
         path = config.WEATHER_DATA
         data = loadData(path)
-        lon_min, lon_max, lat_min, lat_max = getBBox(-80, 32, -5, 47, data)
-        wave_height = data.VHM0.isel(time=0, longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
+        lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
+        print(lat1, lon1, lat2, lon2 )
+        lon_min, lon_max, lat_min, lat_max = getBBox(lat1,lon1, lat2, lon2, data)
+        wave_height = data.VHM0.isel(time=0)
+        print(wave_height)
 
         #wave_height = data.isel(longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
-        cost = cleanData(wave_height.data)
+        #cost = cleanData(wave_height.data)
+        cost = wave_height.data
         start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1], wave_height)
         set_data(wave_height, cost)
         res = optimize(start, end, cost, self.pop_size, self.ncount, self.n_offsprings)
@@ -58,11 +61,10 @@ class RunGenetic():
         best_f = res.F[best_idx]
         route=best_x[0]
         self.route = route
-
+        self.ship_params = getPower([route], wave_height)
         result = self.terminate()
-        print(route)
-        ship_params = getPower([route], wave_height)
-        result.set_ship_params(ship_params)
+
+        #print(route)
         print(result)
 
 
@@ -98,9 +100,11 @@ class RunGenetic():
         dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
         time = np.array([dt_obj]*len(lats))
         times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
+
         #times = np.array([dt_obj]*len(lats))
         route = RouteParams(
-            count = self.count,
+
+            count = self.count-3,
             start = self.start,
             finish = self.finish,
             gcr = np.sum(dists),
@@ -111,7 +115,7 @@ class RunGenetic():
             azimuths_per_step = np.zeros(778),
             dists_per_step = dists, # dist of waypoints
             starttime_per_step = times, # time for each point
-            ship_params_per_step = None
+            ship_params_per_step = self.ship_params
         )
 
         self.check_destination()

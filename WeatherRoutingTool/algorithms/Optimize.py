@@ -2,15 +2,15 @@ from pymoo.factory import get_termination
 from pymoo.optimize import minimize
 from pymoo.operators.crossover.sbx import SBX
 
-pop_size = 2
-n_gen = 2
+pop_size = 30
+n_gen = 50
 n_offspring = 4
 #cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
 problem = RoutingProblem()
 algorithm = NSGA2(pop_size=pop_size,
                   sampling= Population(start, end, cost),
                   crossover= GeneticCrossover(),
-                  n_offsprings = 2,
+                  n_offsprings = n_offspring,
                   mutation= GeneticMutation(),
                   eliminate_duplicates=False)
 termination = get_termination("n_gen", n_gen)
