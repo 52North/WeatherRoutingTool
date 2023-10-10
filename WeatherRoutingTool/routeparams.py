@@ -140,7 +140,7 @@ class RouteParams():
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
             feature['properties'] = properties
-            feature['id'] = "123"      # yet to be decided
+            feature['id'] = i
 
             feature_list.append(feature)
 
