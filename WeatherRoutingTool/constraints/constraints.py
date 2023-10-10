@@ -320,7 +320,7 @@ class ConstraintsList:
             print('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
-            is_constrained_temp = constr.check_crossing(lat_start, lat_end, lon_start, lon_end, current_time)
+            is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end, current_time)
             print('is_constrained_temp: ', is_constrained_temp)
             print('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
@@ -624,7 +624,7 @@ class ContinuousCheck(NegativeContraint):
         self.query = ["SELECT * FROM openseamap.nodes", "SELECT *, linestring AS geom FROM openseamap.ways",
                       "SELECT *,geometry as geom FROM openseamap.land_polygons"]
         self.predicates = ["intersects", "contains", "touches", "crosses", "overlaps"]
-        self.tags = ["separation_zone", "separation_line", "restricted_area", ]
+        self.tags = ["separation_zone", "separation_line", "restricted_area"]
         self.land_polygon_gdf = None
 
     def print_info(self):
@@ -765,10 +765,10 @@ class SeamarkCrossing(ContinuousCheck):
         # gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
 
         if (engine is None) and (query is None):
-            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[1], geom_col="geom")
+            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[1], geom_col="geom",crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
         else:
-            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
+            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom",crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
             print("engine connection failed")
 
@@ -802,7 +802,7 @@ class SeamarkCrossing(ContinuousCheck):
             gdf including all the features with specified seamark tags using nodes OSM element
         """
         if seamark_list is None:
-            seamark_list = ["separation_line", "separation_zone", "restricted_areas"]
+            seamark_list = ["separation_line", "separation_zone", "restricted_area"]
         if seamark_object is None:
             seamark_object = self.seamark_object
 
@@ -853,7 +853,7 @@ class SeamarkCrossing(ContinuousCheck):
              gdf including all the features with specified seamark tags using ways OSM element
          """
         if seamark_list is None:
-            seamark_list = ["separation_line", "separation_zone", "restricted_areas"]
+            seamark_list = ["separation_line", "separation_zone", "restricted_area"]
         if seamark_object is None:
             seamark_object = self.seamark_object
 
@@ -1029,6 +1029,7 @@ class SeamarkCrossing(ContinuousCheck):
         query_tree = []
         if engine is None and query is None:
             concat_gdf = self.gdf_seamark_combined_nodes_ways()
+            # ways_gdf = self.query_ways()
 
             for i in range(len(lat_start)):
                 # start_point = Point(lat_start[i], lon_start[i])
@@ -1047,6 +1048,7 @@ class SeamarkCrossing(ContinuousCheck):
                 # checking the spatial relations using shapely.STRTree spatial indexing method
                 # for predicate in self.predicates:
                 concat_df = concat_gdf
+                # concat_df = ways_gdf  # with all the ways from the seamarks data
                 print(f'PRINT CONCAT DF {concat_df}')
                 tree = STRtree(concat_df["geom"])
                 geom_object = tree.query(route_df["geom"], predicate='intersects').tolist()
