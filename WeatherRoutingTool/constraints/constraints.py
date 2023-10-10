@@ -718,13 +718,13 @@ class SeamarkCrossing(ContinuousCheck):
         # Define SQL query to retrieve list of tables
         # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
         if (engine is None) and (query is None):
-            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[0], geom_col="geom")
+            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[0], geom_col="geom", crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
         # elif (engine is not None) and (query is not None):
         #     gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
         #     gdf = gdf[gdf["geom"] != None]
         else:
-            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
+            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom", crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
             print("engine connection failed")
 
@@ -765,10 +765,10 @@ class SeamarkCrossing(ContinuousCheck):
         # gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom")
 
         if (engine is None) and (query is None):
-            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[1], geom_col="geom",crs="epsg:4326")
+            gdf = gpd.read_postgis(con=self.connect_database(), sql=self.query[1], geom_col="geom", crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
         else:
-            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom",crs="epsg:4326")
+            gdf = gpd.read_postgis(con=engine, sql=query, geom_col="geom", crs="epsg:4326")
             gdf = gdf[gdf["geom"] != None]
             print("engine connection failed")
 
@@ -917,10 +917,6 @@ class SeamarkCrossing(ContinuousCheck):
 
                 gdf_nodes = self.query_nodes(engine=engine, query=query[0])
                 gdf_ways = self.query_ways(engine=engine, query=query[0])
-                # elif (query is not None) and (engine is None):
-                #     gdf_nodes = self.query_nodes(query=query[0])
-                #     gdf_ways = self.query_ways(query=query[1])
-                # checks if there are repeated values in both gdfs
                 if gdf_nodes.overlaps(gdf_ways).values.sum() == 0:
                     gdf_all = pd.concat([gdf_nodes, gdf_ways])
                 else:
@@ -1029,18 +1025,11 @@ class SeamarkCrossing(ContinuousCheck):
         query_tree = []
         if engine is None and query is None:
             concat_gdf = self.gdf_seamark_combined_nodes_ways()
-            # ways_gdf = self.query_ways()
 
             for i in range(len(lat_start)):
-                # start_point = Point(lat_start[i], lon_start[i])
-                # end_point = Point(lat_end[i], lon_end[i])
                 start_point = Point(lon_start[i], lat_start[i])
                 end_point = Point(lon_end[i], lat_end[i])
                 line = LineString([start_point, end_point])
-                # lines.append(line)
-
-                # print(f'START POINT: {start_point}')
-                # print(f'END POINT: {end_point}')
 
                 # creating geospatial dataframe objects from linestring geometries
                 route_df = gpd.GeoDataFrame(geometry=[line])
@@ -1072,15 +1061,9 @@ class SeamarkCrossing(ContinuousCheck):
             # generating the LineString geometry from start and end point
             print(type(lat_start))
             for i in range(len(lat_start)):
-                # start_point = Point(lat_start[i], lon_start[i])
-                # end_point = Point(lat_end[i], lon_end[i])
                 start_point = Point(lon_start[i], lat_start[i])
                 end_point = Point(lon_end[i], lat_end[i])
                 line = LineString([start_point, end_point])
-                # lines.append(line)
-
-                # print(f'START POINT: {start_point}')
-                # print(f'END POINT: {end_point}')
 
                 # creating geospatial dataframe objects from linestring geometries
                 route_df = gpd.GeoDataFrame(geometry=[line])
@@ -1127,14 +1110,6 @@ class LandPolygonsCrossing(ContinuousCheck):
         gdf : GeoDataFrame
             gdf including all the features from public.ways table
         """
-
-        # Define SQL query to retrieve list of tables
-        # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-        # if query is None:
-        #     query = self.query[2]
-        #
-        # if engine is None:
-        #     engine = self.connect_database()
 
         # Use geopandas to read the SQL query into a dataframe from postgis
         if query is None and engine is None:
