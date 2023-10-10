@@ -300,6 +300,8 @@ class ConstraintsList:
         return is_constrained
 
     def safe_crossing(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
+        is_constrained_discrete = is_constrained
+        is_constrained_continuous = is_constrained
         is_constrained_discrete = self.safe_crossing_discrete(lat_start, lon_start, lat_end, lon_end, current_time,
                                                               is_constrained)
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end, current_time)
