@@ -572,7 +572,7 @@ class IsoBased(RoutingAlg):
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
         if (debug):
             form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
-        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], move['lat2'], self.lons_per_step[0],
+        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0], move['lat2'],
                                                        move['lon2'], self.time, is_constrained)
         if (debug):
             form.print_step('is_constrained after checking' + str(is_constrained), 1)

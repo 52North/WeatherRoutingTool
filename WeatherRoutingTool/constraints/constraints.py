@@ -299,10 +299,10 @@ class ConstraintsList:
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
-    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
-        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lat_end, lon_start, lon_end, current_time,
+    def safe_crossing(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
+        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lon_start, lat_end, lon_end, current_time,
                                                               is_constrained)
-        is_constrained_continuous = self.safe_crossing_continuous(lat_start, lat_end, lon_start, lon_end, current_time)
+        is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end, current_time)
 
         # TO NBE UPDATED
         is_constrained = is_constrained + is_constrained_discrete + is_constrained_continuous
@@ -310,7 +310,7 @@ class ConstraintsList:
         # is_constrained.append(is_constrained_continuous)
         return is_constrained
 
-    def safe_crossing_continuous(self, lat_start, lat_end, lon_start, lon_end, current_time):
+    def safe_crossing_continuous(self, lat_start, lon_start, lat_end, lon_end, current_time):
         debug = False
         is_constrained = [False for i in range(0, len(lat_start))]
         is_constrained = np.array(is_constrained)
@@ -335,7 +335,7 @@ class ConstraintsList:
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and
     # loops through all these steps
     # calling ConstraintList.safe_endpoint()
-    def safe_crossing_discrete(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
+    def safe_crossing_discrete(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
         debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
@@ -1182,6 +1182,7 @@ class LandPolygonsCrossing(ContinuousCheck):
                 tree = STRtree(concat_df["geom"])
             else:
                 tree = STRtree(concat_df["geom"])
+
             geom_object = tree.query(route_df["geometry"], predicate="intersects").tolist()
 
             # checks if there is spatial relation between routes and seamarks objects
