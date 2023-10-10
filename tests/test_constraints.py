@@ -100,7 +100,7 @@ def test_safe_crossing_land_crossing():
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :],lat[0, :],  lon[0, :], time, is_constrained)
+    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
@@ -140,7 +140,7 @@ def test_safe_waterdepth():
     is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(waterdepth)
-    is_constrained = constraint_list.safe_crossing(lat[1, :],  lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
+    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
