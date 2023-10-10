@@ -357,8 +357,7 @@ class IsoBased(RoutingAlg):
             raise Exception('Pruned indices running out of bounds.')
 
     def pruning_per_step(self, trim=True):
-        self.pruning_headings_centered(trim)
-        #self.pruning_gcr_centered(trim)
+        self.pruning_headings_centered(trim)  # self.pruning_gcr_centered(trim)
 
     def pruning_gcr_centered(self, trim=True):
         '''
@@ -595,11 +594,10 @@ class IsoBased(RoutingAlg):
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
-        travel_dist = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])       #calculate full distance
-        end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
-        end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
-        dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
-
+        travel_dist = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])  # calculate full distance
+        # end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
+        # end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
+        # dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
 
         # traveled, azimuth of gcr connecting start and new position
         # self.current_variant = gcrs['azi1']
@@ -610,7 +608,7 @@ class IsoBased(RoutingAlg):
         concatenated_distance = np.sum(self.dist_per_step, axis=0)
         concatenated_distance[is_constrained] = 0
 
-        self.full_dist_traveled = travel_dist['s12']   #*travel_dist['s12']/dist_to_dest['s12']
+        self.full_dist_traveled = travel_dist['s12']  # *travel_dist['s12']/dist_to_dest['s12']
         if (debug):
             print('full_dist_traveled:', self.full_dist_traveled)
 
