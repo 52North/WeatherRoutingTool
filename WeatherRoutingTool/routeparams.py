@@ -171,8 +171,8 @@ class RouteParams():
 
         for ipoint in range(0, count):
             coord_pair = point_list[ipoint]['geometry']['coordinates']
-            lats_per_step[ipoint] = coord_pair[0]
-            lons_per_step[ipoint] = coord_pair[1]
+            lats_per_step[ipoint] = coord_pair[1]
+            lons_per_step[ipoint] = coord_pair[0]
 
             property = point_list[ipoint]['properties']
             start_time_per_step[ipoint] = dt.datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')

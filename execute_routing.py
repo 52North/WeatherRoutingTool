@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # initialise constraints
     '''pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
+    
     # seamarks_crossing = SeamarkCrossing()
     # water_depth.write_reduced_depth_data(
     # '/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
@@ -91,14 +91,16 @@ if __name__ == "__main__":
     # constraint_list.add_neg_constraint(continuous_checks_land, 'continuous')
     constraint_list.print_settings()'''
 
-    constraint_list = ConstraintsListFactory.get_constraints_list(['land_crossing_global_land_mask', 'water_depth'],
+    constraint_list = ConstraintsListFactory.get_constraints_list(['land_crossing_global_land_mask', 'water_depth', 'on_map'],
                                                                   config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
                                                                   depthfile)
 
     # *******************************************
     # initialise rout
     min_fuel_route = RoutingAlgFactory.get_routing_alg('isofuel')
-    # min_fuel_route.init_fig(water_depth, default_map)
+    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
+    #water_depth.write_reduced_depth_data("/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_2022_v1_30s_N90W180_bed_renamed.nc")
+    min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************
     # routing
@@ -108,6 +110,3 @@ if __name__ == "__main__":
     # "route.json")
     min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
-    # *******************************************  # plot route in constraints  # fig, ax = plt.subplots(figsize=(12,
-    # 7))  # water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)  # plt.savefig(
-    # figurepath + '/route_waterdepth.png')

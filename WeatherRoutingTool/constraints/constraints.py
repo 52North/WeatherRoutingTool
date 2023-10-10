@@ -171,6 +171,11 @@ class ConstraintsListFactory:
             water_depth = WaterDepth(data_mode, boat_draught, map, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
+        if 'on_map' in constraints_string_list:
+            on_map = StayOnMap()
+            on_map.set_map(map.lat1, map.lon1, map.lat2, map.lon2)
+            constraints_list.add_neg_constraint(on_map)
+
         constraints_list.print_settings()
         return constraints_list
 

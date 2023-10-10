@@ -332,7 +332,7 @@ class WeatherCondFromFile(WeatherCond):
         if varname == 'waveheight':
             height = self.ds['VHM0'].sel(time=time)
             h = height.plot()
-            h.set_clim(0, 10)
+            h.set_clim(0, 5)
             plt.title('wave heigh')
             plt.ylabel('latitude')
             plt.xlabel('longitude')
@@ -354,7 +354,7 @@ class WeatherCondFromFile(WeatherCond):
 
             windspeed = np.sqrt(u ** 2 + v ** 2)
             c = windspeed.plot()
-            c.set_clim(0, 1)
+            c.set_clim(0, 0.6)
             plt.title('current')
             plt.ylabel('latitude')
             plt.xlabel('longitude')
