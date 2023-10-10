@@ -39,8 +39,8 @@ ISOCHRONE_PRUNE_SEGMENTS = 20  # total number of azimuth bins that are used for 
 # configurations for local execution
 WEATHER_DATA = os.getenv('WRT_WEATHER_DATA')  # path to weather data
 DEPTH_DATA = os.getenv('WRT_DEPTH_DATA')  # path to depth data
-CMEMS_USER = os.getenv('WRT_CMEMS_USER')
-CMEMS_PASSWORD = os.getenv('WRT_CMEMS_PASSWORD')
+CMEMS_USER = os.getenv('CMEMS_USER')
+CMEMS_PASSWORD = os.getenv('CMEMS_PASSWORD')
 
 ##
 # Database connection paramteters
