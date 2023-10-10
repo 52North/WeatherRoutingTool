@@ -228,7 +228,7 @@ class IsoBased(RoutingAlg):
             # self.update_fig('bp')
             self.pruning_per_step(
                 True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
-            self.update_fig('p')
+            # self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate()
