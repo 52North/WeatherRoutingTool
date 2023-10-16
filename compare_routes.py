@@ -17,11 +17,9 @@ if __name__ == "__main__":
     # /Thames_Bordeaux_WP3_WH8.json"
 
     # simulation study plot
-    filename1 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_290823/28_06_23/min_time_route.json"
-    filename2 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_290823/28_06_23_squaredistance"
-                 "/min_time_route.json")
-    filename3 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_290823/28_06_23_distancemax"
-                 "/min_time_route.json")
+    filename1 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231013/min_time_route_260623_21Uhr.json"
+    filename2 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231013/min_time_route_270623_03Uhr.json"
+    filename3 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
     rp_read1 = RouteParams.from_file(filename1)
@@ -37,8 +35,8 @@ if __name__ == "__main__":
     # time_forecast = 60
     # lat1, lon1, lat2, lon2 = '44', '-15', '53', '3'
     # Iceland
-    departure_time = "2023-09-27T12:00Z"
-    time_for_plotting = "2023-09-28T12:00Z"
+    departure_time = "2023-09-28T09:00Z"
+    time_for_plotting = "2023-09-28T09:00Z"
     time_forecast = 60
     lat1, lon1, lat2, lon2 = '60', '-30', '69', '-8'
 
@@ -50,7 +48,7 @@ if __name__ == "__main__":
     wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    wt.plot_weather_map(fig, ax, plot_time, "waveheight")
+    wt.plot_weather_map(fig, ax, plot_time, "current")
 
     ##
     # init Constraints
@@ -60,8 +58,8 @@ if __name__ == "__main__":
     # plotting routes in depth profile
     fig, ax = plt.subplots(figsize=(12, 7))
     # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
-    ax = rp_read1.plot_route(ax, graphics.get_colour(0), "Route travel_dist/dist_to_dest")
-    ax = rp_read2.plot_route(ax, graphics.get_colour(1), "Route travel_dist^2/dist_to_dest")
+    ax = rp_read1.plot_route(ax, graphics.get_colour(0), "wind scenario")
+    ax = rp_read2.plot_route(ax, graphics.get_colour(1), "current scenario")
     ax = rp_read3.plot_route(ax, graphics.get_colour(2), "Route travel_dist")
 
     # rp_read1.plot_route(ax, 'orangered', "10m Tiefgang")
@@ -77,19 +75,33 @@ if __name__ == "__main__":
     #        markeredgecolor=graphics.get_colour(1), markersize=10)
     # ax.set_xlim(-8, 2.5)
     # ax.set_ylim(44, 52)
-    # ax.legend()
+    ax.legend()
     plt.savefig(figurefile + '/route_waterdepth.png')
 
     ##
     # plotting power vs. distance
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    rp_read1.plot_power_vs_dist(graphics.get_colour(0), "Route travel_dist/dist_to_dest")
-    rp_read2.plot_power_vs_dist(graphics.get_colour(1), "Route travel_dist^2/dist_to_dest")
+    rp_read1.plot_power_vs_dist(graphics.get_colour(0), "wind scenario")
+    rp_read2.plot_power_vs_dist(graphics.get_colour(1), "current scenario")
     rp_read3.plot_power_vs_dist(graphics.get_colour(2), "Route travel_dist")
 
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/route_power.png')
+
+
+    ##
+    # plotting power vs. lon
+    coordstring="lon"
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    rp_read1.plot_power_vs_coord(ax, graphics.get_colour(0), "wind scenario", coordstring)
+    rp_read2.plot_power_vs_coord(ax, graphics.get_colour(1), "current scenario", coordstring)
+    rp_read3.plot_power_vs_coord(ax, graphics.get_colour(2), "good weather", coordstring)
+
+    ax.legend(loc='lower left')
+    # ax.set_ylim(0, 0.016)
+    plt.savefig(figurefile + '/route_powervs' + coordstring + '.png')
+
 
     # plotting routes in wind data  # fig, ax = plt.subplots(figsize=(12, 7))  # wt.plot_weather_map(fig,ax,
     # "2023-02-08T06:00:00.000000000")  # plt.show()

@@ -322,8 +322,12 @@ class WeatherCondFromFile(WeatherCond):
             cp = windspeed.plot()
             cp.set_clim(0, 20)
             plt.title('wind speed and direction')
-            plt.ylabel('latitude')
-            plt.xlabel('longitude')
+            plt.rcParams['font.size'] = '20'
+            plt.title('current')
+            plt.ylabel('latitude (°N)', fontsize=20)
+            plt.xlabel('longitude (°W)', fontsize=20)
+            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                label.set_fontsize(20)
             x = windspeed.coords['longitude'].values
             y = windspeed.coords['latitude'].values
             plt.quiver(x, y, u.values, v.values, clim=[0, 20])
@@ -332,10 +336,14 @@ class WeatherCondFromFile(WeatherCond):
         if varname == 'waveheight':
             height = self.ds['VHM0'].sel(time=time)
             h = height.plot()
-            h.set_clim(0, 5)
+            h.set_clim(0, 7)
             plt.title('wave heigh')
-            plt.ylabel('latitude')
-            plt.xlabel('longitude')
+            plt.rcParams['font.size'] = '20'
+            plt.title('current')
+            plt.ylabel('latitude (°N)', fontsize=20)
+            plt.xlabel('longitude (°W)', fontsize=20)
+            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                label.set_fontsize(20)
             plt.show()
 
         if varname == 'current':
@@ -355,11 +363,36 @@ class WeatherCondFromFile(WeatherCond):
             windspeed = np.sqrt(u ** 2 + v ** 2)
             c = windspeed.plot()
             c.set_clim(0, 0.6)
+            plt.rcParams['font.size'] = '20'
             plt.title('current')
-            plt.ylabel('latitude')
-            plt.xlabel('longitude')
+            plt.ylabel('latitude (°N)', fontsize=20)
+            plt.xlabel('longitude (°W)', fontsize=20)
+            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                label.set_fontsize(20)
             x = windspeed.coords['longitude'].values
             y = windspeed.coords['latitude'].values
+
+            # plt.barbs(x, y, u.values, v.values)
+            plt.quiver(x, y, u.values, v.values)
+            plt.show()
+
+        if varname == 'wavedir':
+            wavedir = self.ds['VMDR'].sel(time=time)
+            waveheight = self.ds['VHM0'].sel(time=time)
+
+            u=np.cos(wavedir)*waveheight
+            v=np.sin(wavedir)*waveheight
+
+            h = waveheight.plot()
+            #h.set_clim(0, 0.6)
+            plt.rcParams['font.size'] = '20'
+            plt.title('current')
+            plt.ylabel('latitude (°N)', fontsize=20)
+            plt.xlabel('longitude (°W)', fontsize=20)
+            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                label.set_fontsize(20)
+            x = waveheight.coords['longitude'].values
+            y = waveheight.coords['latitude'].values
 
             # plt.barbs(x, y, u.values, v.values)
             plt.quiver(x, y, u.values, v.values)
