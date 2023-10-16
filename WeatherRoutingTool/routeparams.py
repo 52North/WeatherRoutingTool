@@ -230,6 +230,22 @@ class RouteParams():
         plt.ylabel('Treibstoffverbrauch (t/km)')
         plt.xticks()
 
+    def plot_power_vs_coord(self, ax, color, label, coordstring):
+        power = self.ship_params_per_step.get_fuel()
+        if coordstring=='lat':
+            coord = self.lats_per_step
+        else:
+            coord = self.lons_per_step
+        power = np.delete(power, power.shape[0]-1)
+        coord = np.delete(coord, coord.shape[0]-1)
+
+        ax.plot(coord, power, color=color, label=label)
+        plt.xlabel('longitude (°W)')
+        # plt.ylabel('Energie (kWh/km)')
+        plt.ylabel('Treibstoffverbrauch (t/h)')
+        #plt.ylim(1.8,2.2)
+        plt.xticks()
+
     def get_fuel_per_dist(self):
         fuel_per_hour = self.ship_params_per_step.fuel
         delta_time = np.full(self.count - 1, datetime.timedelta(seconds=0))
