@@ -22,13 +22,15 @@ BOAT_DRAUGHT = 10  # os.getenv('WRT_BOAT_DRAUGHT')  # (m)
 
 ##
 # Constant settings for isobased algorithm
-TIME_FORECAST = 3  # forecast hours weather
-ROUTING_STEPS = 16  # number of routing steps
+TIME_FORECAST = 90  # forecast hours weather
+ROUTING_STEPS = 25  # number of routing steps
 DELTA_TIME_FORECAST = 3  # time resolution of weather forecast (hours)
-DELTA_FUEL = 1 * 1000  # amount of fuel per routing step (kg)
+DELTA_FUEL = 1 * 2000  # amount of fuel per routing step (kg)
 
-ROUTER_HDGS_SEGMENTS = 30  # total number of courses : put even number!!
-ROUTER_HDGS_INCREMENTS_DEG = 6  # increment of headings
+ROUTER_HDGS_SEGMENTS = 40  # total number of courses : put even number!!
+ROUTER_HDGS_INCREMENTS_DEG = 3  # increment of headings
+#ROUTER_HDGS_SEGMENTS = 4  # total number of courses : put even number!!
+#ROUTER_HDGS_INCREMENTS_DEG = 10  # increment of headings
 ROUTER_RPM_SEGMENTS = 1  # not used yet
 ROUTER_RPM_INCREMENTS_DEG = 1  # not used yet
 ISOCHRONE_EXPECTED_SPEED_KTS = 8  # not used yet
