@@ -6,31 +6,54 @@ class ShipParams():
     power: np.ndarray  # (W)
     rpm: np.ndarray  # (Hz)
     speed: np.ndarray  # (m/s)
+    r_calm: np.ndarray  # (N)
+    r_wind: np.ndarray  # (N)
+    r_waves: np.ndarray  # (N)
+    r_shallow: np.ndarray  # (N)
+    r_roughness: np.ndarray  # (N)
     fuel_type: str
 
-    def __init__(self, fuel, power, rpm, speed):
+    def __init__(self, fuel, power, rpm, speed, r_calm, r_wind, r_waves, r_shallow, r_roughness):
         self.fuel = fuel
         self.power = power
         self.rpm = rpm
         self.speed = speed
+        self.r_calm = r_calm
+        self.r_wind = r_wind
+        self.r_waves = r_waves
+        self.r_shallow = r_shallow
+        self.r_roughness = r_roughness
+
         self.fuel_type = 'HFO'
 
     @classmethod
     def set_default_array(cls):
-        return cls(speed=np.array([[0]]), fuel=np.array([[0]]), power=np.array([[0]]), rpm=np.array([[0]]))
+        return cls(speed=np.array([[0]]), fuel=np.array([[0]]), power=np.array([[0]]), rpm=np.array([[0]]),
+                   r_calm=np.array([[0]]), r_wind=np.array([[0]]), r_waves=np.array([[0]]), r_shallow=np.array([[0]]),
+                   r_roughness=np.array([[0]]))
 
     @classmethod
     def set_default_array_1D(cls, ncoorinate_points):
         return cls(speed=np.full(shape=ncoorinate_points, fill_value=0),
                    fuel=np.full(shape=ncoorinate_points, fill_value=0),
                    power=np.full(shape=ncoorinate_points, fill_value=0),
-                   rpm=np.full(shape=ncoorinate_points, fill_value=0), )
+                   rpm=np.full(shape=ncoorinate_points, fill_value=0),
+                   r_calm=np.full(shape=ncoorinate_points, fill_value=0),
+                   r_wind=np.full(shape=ncoorinate_points, fill_value=0),
+                   r_waves=np.full(shape=ncoorinate_points, fill_value=0),
+                   r_shallow=np.full(shape=ncoorinate_points, fill_value=0),
+                   r_roughness=np.full(shape=ncoorinate_points, fill_value=0), )
 
     def print(self):
         print('fuel: ', self.fuel)
         print('rpm: ', self.rpm)
         print('power: ', self.power)
         print('speed: ', self.speed)
+        print('r_calm: ', self.r_calm)
+        print('r_wind: ', self.r_wind)
+        print('r_waves: ', self.r_waves)
+        print('r_shallow: ', self.r_shallow)
+        print('r_roughness: ', self.r_roughness)
         print('fuel_type: ', self.fuel_type)
 
     def print_shape(self):
@@ -38,18 +61,43 @@ class ShipParams():
         print('rpm: ', self.rpm.shape)
         print('power: ', self.power.shape)
         print('speed: ', self.speed.shape)
+        print('r_calm: ', self.r_calm.shape)
+        print('r_wind: ', self.r_wind.shape)
+        print('r_waves: ', self.r_waves.shape)
+        print('r_shallow: ', self.r_shallow.shape)
+        print('r_roughness: ', self.r_roughness.shape)
 
     def define_variants(self, variant_segments):
         self.speed = np.repeat(self.speed, variant_segments + 1, axis=1)
         self.fuel = np.repeat(self.fuel, variant_segments + 1, axis=1)
         self.power = np.repeat(self.power, variant_segments + 1, axis=1)
         self.rpm = np.repeat(self.rpm, variant_segments + 1, axis=1)
+        self.r_calm = np.repeat(self.r_calm, variant_segments + 1, axis=1)
+        self.r_wind = np.repeat(self.r_wind, variant_segments + 1, axis=1)
+        self.r_waves = np.repeat(self.r_waves, variant_segments + 1, axis=1)
+        self.r_shallow = np.repeat(self.r_shallow, variant_segments + 1, axis=1)
+        self.r_roughness = np.repeat(self.r_roughness, variant_segments + 1, axis=1)
 
     def get_power(self):
         return self.power
 
     def get_fuel(self):
         return self.fuel
+
+    def get_rwind(self):
+        return self.r_wind
+
+    def get_rcalm(self):
+        return self.r_calm
+
+    def get_rwaves(self):
+        return self.r_waves
+
+    def get_rshallow(self):
+        return self.r_shallow
+
+    def get_rroughness(self):
+        return self.r_roughness
 
     def get_full_fuel(self):
         fuel = np.sum(self.fuel)
@@ -76,11 +124,31 @@ class ShipParams():
     def set_power(self, new_power):
         self.power = new_power
 
+    def set_rwind(self, new_rwind):
+        self.r_wind = new_rwind
+
+    def set_rcalm(self, new_rcalm):
+        self.r_calm = new_rcalm
+
+    def set_rwaves(self, new_rwaves):
+        self.r_waves = new_rwaves
+
+    def set_rshallow(self, new_rshallow):
+        self.r_shallow = new_rshallow
+
+    def set_rroughness(self, new_rroughnes):
+        self.r_roughness = new_rroughnes
+
     def select(self, idxs):
         self.speed = self.speed[:, idxs]
         self.fuel = self.fuel[:, idxs]
         self.power = self.power[:, idxs]
         self.rpm = self.rpm[:, idxs]
+        self.r_wind = self.r_wind[:, idxs]
+        self.r_calm = self.r_calm[:, idxs]
+        self.r_waves = self.r_waves[:, idxs]
+        self.r_shallow = self.r_shallow[:, idxs]
+        self.r_roughness = self.r_roughness[:, idxs]
 
     def flip(self):
         # should be replaced by more careful implementation
@@ -88,22 +156,42 @@ class ShipParams():
         self.fuel = self.fuel[:-1]
         self.power = self.power[:-1]
         self.rpm = self.rpm[:-1]
+        self.r_wind = self.r_wind[:-1]
+        self.r_calm = self.r_calm[:-1]
+        self.r_waves = self.r_waves[:-1]
+        self.r_shallow = self.r_shallow[:-1]
+        self.r_roughness = self.r_roughness[:-1]
 
         self.speed = np.flip(self.speed, 0)
         self.fuel = np.flip(self.fuel, 0)
         self.power = np.flip(self.power, 0)
         self.rpm = np.flip(self.rpm, 0)
+        self.r_wind = np.flip(self.r_wind, 0)
+        self.r_calm = np.flip(self.r_calm, 0)
+        self.r_waves = np.flip(self.r_waves, 0)
+        self.r_shallow = np.flip(self.r_shallow, 0)
+        self.r_roughness = np.flip(self.r_roughness, 0)
 
         self.speed = np.append(self.speed, -99)
         self.fuel = np.append(self.fuel, -99)
         self.power = np.append(self.power, -99)
         self.rpm = np.append(self.rpm, -99)
+        self.r_wind = np.append(self.r_wind, -99)
+        self.r_calm = np.append(self.r_calm, -99)
+        self.r_waves = np.append(self.r_waves, -99)
+        self.r_shallow = np.append(self.r_shallow, -99)
+        self.r_roughness = np.append(self.r_roughness, -99)
 
     def expand_axis_for_intermediate(self):
         self.speed = np.expand_dims(self.speed, axis=1)
         self.fuel = np.expand_dims(self.fuel, axis=1)
         self.power = np.expand_dims(self.power, axis=1)
         self.rpm = np.expand_dims(self.rpm, axis=1)
+        self.r_wind = np.expand_dims(self.r_wind, axis=1)
+        self.r_calm = np.expand_dims(self.r_calm, axis=1)
+        self.r_waves = np.expand_dims(self.r_waves, axis=1)
+        self.r_shallow = np.expand_dims(self.r_shallow, axis=1)
+        self.r_roughness = np.expand_dims(self.r_roughness, axis=1)
 
     def get_element(self, idx):
         try:
@@ -111,10 +199,15 @@ class ShipParams():
             fuel = self.fuel[idx]
             power = self.power[idx]
             rpm = self.rpm[idx]
+            r_wind = self.r_wind[idx]
+            r_calm = self.r_calm[idx]
+            r_waves = self.r_waves[idx]
+            r_shallow = self.r_shallow[idx]
+            r_roughness = self.r_roughness[idx]
         except ValueError:
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
-        return fuel, power, rpm, speed
+        return fuel, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness
 
     def get_single_object(self, idx):
         try:
@@ -122,9 +215,14 @@ class ShipParams():
             fuel = self.fuel[idx]
             power = self.power[idx]
             rpm = self.rpm[idx]
+            r_wind = self.r_wind[idx]
+            r_calm = self.r_calm[idx]
+            r_waves = self.r_waves[idx]
+            r_shallow = self.r_shallow[idx]
+            r_roughness = self.r_roughness[idx]
         except ValueError:
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
 
-        sp = ShipParams(fuel, power, rpm, speed)
+        sp = ShipParams(fuel, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness)
         return sp

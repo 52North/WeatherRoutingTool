@@ -228,7 +228,7 @@ class IsoBased(RoutingAlg):
             # self.update_fig('bp')
             self.pruning_per_step(
                 True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
-            # self.update_fig('p')
+            self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate()
@@ -277,10 +277,21 @@ class IsoBased(RoutingAlg):
         new_rpm = np.vstack((ship_params_single_step.get_rpm(), self.shipparams_per_step.get_rpm()))
         new_power = np.vstack((ship_params_single_step.get_power(), self.shipparams_per_step.get_power()))
         new_speed = np.vstack((ship_params_single_step.get_speed(), self.shipparams_per_step.get_speed()))
+        new_rwind = np.vstack((ship_params_single_step.get_rwind(), self.shipparams_per_step.get_rwind()))
+        new_rcalm = np.vstack((ship_params_single_step.get_rcalm(), self.shipparams_per_step.get_rcalm()))
+        new_rwaves = np.vstack((ship_params_single_step.get_rwaves(), self.shipparams_per_step.get_rwaves()))
+        new_rshallow = np.vstack((ship_params_single_step.get_rshallow(), self.shipparams_per_step.get_rshallow()))
+        new_rroughness = np.vstack((ship_params_single_step.get_rroughness(), self.shipparams_per_step.get_rroughness()))
 
         self.shipparams_per_step.set_rpm(new_rpm)
         self.shipparams_per_step.set_power(new_power)
         self.shipparams_per_step.set_speed(new_speed)
+        self.shipparams_per_step.set_rwind(new_rwind)
+        self.shipparams_per_step.set_rcalm(new_rcalm)
+        self.shipparams_per_step.set_rwaves(new_rwaves)
+        self.shipparams_per_step.set_rshallow(new_rshallow)
+        self.shipparams_per_step.set_rroughness(new_rroughness)
+
 
     def check_variant_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (

@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # simulation study plot
     filename1 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231013/min_time_route_260623_21Uhr.json"
-    filename2 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231013/min_time_route_270623_03Uhr.json"
+    filename2 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
     filename3 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     ##
     # init wheather
-    windfile = "/home/kdemmich/MariData/Code/Data/WheatherFiles/2023_09_28_Iceland_long.nc"
+    windfile = "/home/kdemmich/MariData/Code/Data/WheatherFiles/2023_06_27_Iceland_long.nc"
     # British Channel
     # departure_time = "2023-06-21T12:00Z"
     # time_for_plotting = "2023-06-21T12:00Z"
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # lat1, lon1, lat2, lon2 = '44', '-15', '53', '3'
     # Iceland
     departure_time = "2023-09-28T09:00Z"
-    time_for_plotting = "2023-09-28T09:00Z"
+    time_for_plotting = "2023-06-27T21:00Z"
     time_forecast = 60
     lat1, lon1, lat2, lon2 = '60', '-30', '69', '-8'
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    wt.plot_weather_map(fig, ax, plot_time, "current")
+    wt.plot_weather_map(fig, ax, plot_time, "wind")
 
     ##
     # init Constraints

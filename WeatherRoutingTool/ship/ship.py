@@ -319,11 +319,18 @@ class Tanker(Boat):
 
         power = ds['Power_brake'].to_numpy().flatten()
         rpm = ds['RotationRate'].to_numpy().flatten()
-        fuel = ds[
-                   'Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
+        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
+        r_wind = ds['Wind_resistance'].to_numpy().flatten()
+        r_calm = ds['Calm_resistance'].to_numpy().flatten()
+        r_waves = ds['Wave_resistance'].to_numpy().flatten()
+        r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten()
+        r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten()
+
         # fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(self.speed, power.shape, axis=0))
+        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(self.speed, power.shape, axis=0),
+                                 r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
+                                 r_roughness=r_roughness)
 
         if (debug):
             form.print_step('Dataset with fuel' + str(ds), 1)
@@ -366,7 +373,6 @@ class Tanker(Boat):
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
-        print('maripower dataset: ', ds_read)
         return ds_read
 
     ##

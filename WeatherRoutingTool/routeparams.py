@@ -128,6 +128,11 @@ class RouteParams():
                 properties['fuel_consumption'] = {'value': -99, 'unit': 'mt/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
                 properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
+                properties['calm_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['wind_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['wave_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['shallow_water_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['hull_roughness_resistance'] = {'value': -99, 'unit': 'N'}
             else:
                 time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i], 'unit': 'm/s'}
@@ -136,6 +141,11 @@ class RouteParams():
                                                   'unit': 'mt/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
                 properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i], 'unit': 'Hz'}
+                properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i], 'unit': 'N'}
+                properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i], 'unit': 'N'}
+                properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i], 'unit': 'N'}
+                properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i], 'unit': 'N'}
+                properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i], 'unit': 'N'}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
@@ -166,6 +176,11 @@ class RouteParams():
         power = np.full(count, -99.)
         fuel = np.full(count, -99.)
         rpm = np.full(count, -99.)
+        r_wind = np.full(count, -99.)
+        r_calm = np.full(count, -99.)
+        r_waves = np.full(count, -99.)
+        r_shallow = np.full(count, -99.)
+        r_roughness = np.full(count, -99.)
         azimuths_per_step = np.full(count, -99.)
         fuel_type = np.full(count, "")
 
@@ -181,6 +196,17 @@ class RouteParams():
             fuel[ipoint] = property['fuel_consumption']['value']
             fuel_type[ipoint] = property['fuel_type']
             rpm[ipoint] = property['propeller_revolution']['value']
+            r_wind[ipoint] = property['fuel_consumption']['value']
+            r_calm[ipoint] = property['fuel_consumption']['value']
+            r_waves[ipoint] = property['fuel_consumption']['value']
+            r_shallow[ipoint] = property['fuel_consumption']['value']
+            r_roughness[ipoint] = property['fuel_consumption']['value']
+
+            #r_wind[ipoint] = property['wind_resistance']['value']
+            #r_calm[ipoint] = property['calm_resistance']['value']
+            #r_waves[ipoint] = property['wave_resistance']['value']
+            #r_shallow[ipoint] = property['shallow_water_resistance']['value']
+            #r_roughness[ipoint] = property['hull_roughness_resistance']['value']
 
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
@@ -190,7 +216,7 @@ class RouteParams():
 
         dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
 
-        ship_params_per_step = ShipParams(fuel, power, rpm, speed)
+        ship_params_per_step = ShipParams(fuel, power, rpm, speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
                    lats_per_step=lats_per_step, lons_per_step=lons_per_step, azimuths_per_step=azimuths_per_step,
