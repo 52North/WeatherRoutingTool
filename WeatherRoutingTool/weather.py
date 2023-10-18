@@ -380,11 +380,11 @@ class WeatherCondFromFile(WeatherCond):
             wavedir = self.ds['VMDR'].sel(time=time)
             waveheight = self.ds['VHM0'].sel(time=time)
 
-            u=np.cos(wavedir)*waveheight
-            v=np.sin(wavedir)*waveheight
+            u = np.cos(wavedir) * waveheight
+            v = np.sin(wavedir) * waveheight
 
             h = waveheight.plot()
-            #h.set_clim(0, 0.6)
+            # h.set_clim(0, 0.6)
             plt.rcParams['font.size'] = '20'
             plt.title('current')
             plt.ylabel('latitude (°N)', fontsize=20)

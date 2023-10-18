@@ -19,7 +19,8 @@ def test_plot_power_vs_dist():
         [datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19) + datetime.timedelta(days=180),
          datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
 
-    sp = ShipParams(fuel_consumed, dummy_list, dummy_list, dummy_list)
+    sp = ShipParams(fuel_consumed, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list,
+                    dummy_list)
 
     route = RouteParams(count=count,  # routing step
                         start=dummy_list,  # lat, lon at start

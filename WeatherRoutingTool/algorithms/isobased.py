@@ -281,7 +281,8 @@ class IsoBased(RoutingAlg):
         new_rcalm = np.vstack((ship_params_single_step.get_rcalm(), self.shipparams_per_step.get_rcalm()))
         new_rwaves = np.vstack((ship_params_single_step.get_rwaves(), self.shipparams_per_step.get_rwaves()))
         new_rshallow = np.vstack((ship_params_single_step.get_rshallow(), self.shipparams_per_step.get_rshallow()))
-        new_rroughness = np.vstack((ship_params_single_step.get_rroughness(), self.shipparams_per_step.get_rroughness()))
+        new_rroughness = np.vstack(
+            (ship_params_single_step.get_rroughness(), self.shipparams_per_step.get_rroughness()))
 
         self.shipparams_per_step.set_rpm(new_rpm)
         self.shipparams_per_step.set_power(new_power)
@@ -291,7 +292,6 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_rwaves(new_rwaves)
         self.shipparams_per_step.set_rshallow(new_rshallow)
         self.shipparams_per_step.set_rroughness(new_rroughness)
-
 
     def check_variant_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (

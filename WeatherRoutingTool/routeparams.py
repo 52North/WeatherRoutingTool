@@ -145,7 +145,8 @@ class RouteParams():
                 properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i], 'unit': 'N'}
                 properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i], 'unit': 'N'}
                 properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i], 'unit': 'N'}
-                properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i], 'unit': 'N'}
+                properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i],
+                                                           'unit': 'N'}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
@@ -196,17 +197,12 @@ class RouteParams():
             fuel[ipoint] = property['fuel_consumption']['value']
             fuel_type[ipoint] = property['fuel_type']
             rpm[ipoint] = property['propeller_revolution']['value']
-            r_wind[ipoint] = property['fuel_consumption']['value']
-            r_calm[ipoint] = property['fuel_consumption']['value']
-            r_waves[ipoint] = property['fuel_consumption']['value']
-            r_shallow[ipoint] = property['fuel_consumption']['value']
-            r_roughness[ipoint] = property['fuel_consumption']['value']
 
-            #r_wind[ipoint] = property['wind_resistance']['value']
-            #r_calm[ipoint] = property['calm_resistance']['value']
-            #r_waves[ipoint] = property['wave_resistance']['value']
-            #r_shallow[ipoint] = property['shallow_water_resistance']['value']
-            #r_roughness[ipoint] = property['hull_roughness_resistance']['value']
+            r_wind[ipoint] = property['wind_resistance']['value']
+            r_calm[ipoint] = property['calm_resistance']['value']
+            r_waves[ipoint] = property['wave_resistance']['value']
+            r_shallow[ipoint] = property['shallow_water_resistance']['value']
+            r_roughness[ipoint] = property['hull_roughness_resistance']['value']
 
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
@@ -216,7 +212,8 @@ class RouteParams():
 
         dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
 
-        ship_params_per_step = ShipParams(fuel, power, rpm, speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
+        ship_params_per_step = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm,
+                                          r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
                    lats_per_step=lats_per_step, lons_per_step=lons_per_step, azimuths_per_step=azimuths_per_step,
@@ -258,18 +255,18 @@ class RouteParams():
 
     def plot_power_vs_coord(self, ax, color, label, coordstring):
         power = self.ship_params_per_step.get_fuel()
-        if coordstring=='lat':
+        if coordstring == 'lat':
             coord = self.lats_per_step
         else:
             coord = self.lons_per_step
-        power = np.delete(power, power.shape[0]-1)
-        coord = np.delete(coord, coord.shape[0]-1)
+        power = np.delete(power, power.shape[0] - 1)
+        coord = np.delete(coord, coord.shape[0] - 1)
 
         ax.plot(coord, power, color=color, label=label)
         plt.xlabel('longitude (°W)')
         # plt.ylabel('Energie (kWh/km)')
         plt.ylabel('Treibstoffverbrauch (t/h)')
-        #plt.ylim(1.8,2.2)
+        # plt.ylim(1.8,2.2)
         plt.xticks()
 
     def get_fuel_per_dist(self):

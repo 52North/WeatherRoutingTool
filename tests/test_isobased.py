@@ -296,7 +296,9 @@ def test_pruning_select_correct_idxs():
     ra.azimuth_per_step = np.array([ra.current_azimuth])
 
     sp = ShipParams(full_fuel_consumed, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
-                    speed_per_step)
+                    speed_per_step, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
+                    np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
+                    np.full(full_fuel_consumed.shape, 0), )
     ra.shipparams_per_step = sp
 
     cur_var_test = np.array([16, 22, 45, 71])

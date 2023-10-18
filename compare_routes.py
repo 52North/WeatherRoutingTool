@@ -17,9 +17,12 @@ if __name__ == "__main__":
     # /Thames_Bordeaux_WP3_WH8.json"
 
     # simulation study plot
-    filename1 = "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231013/min_time_route_260623_21Uhr.json"
-    filename2 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
-    filename3 = "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json"
+    filename1 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231016/min_time_route_260623_18Uh"
+                 ".json")
+    filename2 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231016/min_time_route_270623_3Uhr"
+                 ".json")
+    filename3 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_231016/min_time_route_281023_9Uhr"
+                 ".json")
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
     rp_read1 = RouteParams.from_file(filename1)
@@ -28,7 +31,7 @@ if __name__ == "__main__":
 
     ##
     # init wheather
-    windfile = "/home/kdemmich/MariData/Code/Data/WheatherFiles/2023_06_27_Iceland_long.nc"
+    windfile = "/home/kdemmich/MariData/Code/Data/WheatherFiles/2023_09_28_Iceland_long.nc"
     # British Channel
     # departure_time = "2023-06-21T12:00Z"
     # time_for_plotting = "2023-06-21T12:00Z"
@@ -36,7 +39,7 @@ if __name__ == "__main__":
     # lat1, lon1, lat2, lon2 = '44', '-15', '53', '3'
     # Iceland
     departure_time = "2023-09-28T09:00Z"
-    time_for_plotting = "2023-06-27T21:00Z"
+    time_for_plotting = "2023-09-29T09:00Z"
     time_forecast = 60
     lat1, lon1, lat2, lon2 = '60', '-30', '69', '-8'
 
@@ -89,10 +92,9 @@ if __name__ == "__main__":
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/route_power.png')
 
-
     ##
     # plotting power vs. lon
-    coordstring="lon"
+    coordstring = "lon"
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     rp_read1.plot_power_vs_coord(ax, graphics.get_colour(0), "wind scenario", coordstring)
     rp_read2.plot_power_vs_coord(ax, graphics.get_colour(1), "current scenario", coordstring)
@@ -101,7 +103,6 @@ if __name__ == "__main__":
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/route_powervs' + coordstring + '.png')
-
 
     # plotting routes in wind data  # fig, ax = plt.subplots(figsize=(12, 7))  # wt.plot_weather_map(fig,ax,
     # "2023-02-08T06:00:00.000000000")  # plt.show()

@@ -460,7 +460,6 @@ class WaterDepth(NegativeContraint):
             self.depth_data = self.load_data_automatic()
         elif data_mode == 'from_file':
             self.depth_data = self.load_data_from_file(depth_path)
-            print('depth_data', self.depth_data)
         else:
             raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
 

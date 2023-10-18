@@ -224,5 +224,6 @@ class ShipParams():
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
 
-        sp = ShipParams(fuel, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness)
+        sp = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves,
+                        r_shallow=r_shallow, r_roughness=r_roughness)
         return sp
