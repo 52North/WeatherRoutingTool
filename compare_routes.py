@@ -106,4 +106,6 @@ if __name__ == "__main__":
 
     ##
     # plotting power vs dist vs weather
-    rp_read1.plot_power_vs_dist_with_weather()
+    data_array = [rp_read1, rp_read3]
+    label_array = ['wind scenario', 'good weather']
+    rp_read1.plot_power_vs_dist_with_weather(data_array, label_array, 2)

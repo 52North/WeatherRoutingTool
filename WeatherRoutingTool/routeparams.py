@@ -282,35 +282,46 @@ class RouteParams():
 
         return fuel
 
-    def plot_power_vs_dist_with_weather(self):
-        color = graphics.get_colour(0)
-        label = 'test'
-        power = self.get_fuel_per_dist()
-        dist = self.dists_per_step
-        dist = dist / 1000  # [m] -> [km]
-        normalised_power = graphics.get_hist_values_from_widths(dist, power)
-        r_wind = self.ship_params_per_step.get_rwind()
-        r_wind = r_wind/1000
+    def plot_power_vs_dist_with_weather(self, data_array, label_array, n_datasets):
+        if n_datasets < 1:
+            raise ValueError('You should at least provide 1 dataset!')
 
-        fig = plt.figure(figsize=(12, 7))
+        fig = plt.figure(figsize=(25, 15))
         gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
-        ax_power = plt.subplot(gs[0])
-        line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_content"], dist, fill=False, color=color, edgecolor=color,
-                label=label, linewidth=2)
-        ax_power.set_ylabel('Treibstoffverbrauch (t/km)', fontsize=20)
+        ax_power = None
+        ax_rwind = None
+        list_lines = []
 
-        ax_rwind = plt.subplot(gs[1], sharex=ax_power)
-        line_rwind = ax_rwind.bar(normalised_power["bin_centres"], r_wind, dist, fill=False, color=color, edgecolor=color,
-               label=label, linewidth=2)
-        ax_rwind.set_ylabel('Windwiderstand (kN)', fontsize=20)
-        ax_rwind.set_ylim(-30, 30)
+        for idata in range(0, n_datasets):
+            color = graphics.get_colour(idata)
+            label = label_array[idata]
+            power = data_array[idata].get_fuel_per_dist()
+            dist = data_array[idata].dists_per_step
+            dist = dist / 1000  # [m] -> [km]
+            normalised_power = graphics.get_hist_values_from_widths(dist, power)
+            r_wind = data_array[idata].ship_params_per_step.get_rwind()
+            r_wind = r_wind / 1000
 
-        #ax0.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
+            if idata == 0:
+                ax_power = plt.subplot(gs[0])
+                ax_power.set_ylabel('Treibstoffverbrauch (t/km)', fontsize=20)
+                ax_rwind = plt.subplot(gs[1], sharex=ax_power)
+                ax_rwind.set_ylabel('Windwiderstand (kN)', fontsize=20)
+                ax_rwind.set_ylim(-40, 40)
+                ax_power = graphics.set_graphics_standards(ax_power)
+                ax_rwind = graphics.set_graphics_standards(ax_rwind)
 
-        ax_power = graphics.set_graphics_standards(ax_power)
-        ax_rwind = graphics.set_graphics_standards(ax_rwind)
+            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_content"], dist,
+                                      fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+            list_lines.append(line_power)
 
+            ax_rwind.bar(normalised_power["bin_centres"], r_wind, dist, fill=False, color=color, edgecolor=color,
+                        linewidth=2)
+
+        # ax_power.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
+        ax_rwind.axhline(y=0., color='gray', linestyle='dashed', linewidth=2)
         plt.xlabel('Weglänge (km)', fontsize=20)
+        fig.legend(loc='outside upper right')
 
         plt.xticks()
         plt.show()
