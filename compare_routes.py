@@ -51,7 +51,7 @@ if __name__ == "__main__":
     wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    wt.plot_weather_map(fig, ax, plot_time, "wind")
+    #wt.plot_weather_map(fig, ax, plot_time, "wind")
 
     ##
     # init Constraints
@@ -104,5 +104,6 @@ if __name__ == "__main__":
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/route_powervs' + coordstring + '.png')
 
-    # plotting routes in wind data  # fig, ax = plt.subplots(figsize=(12, 7))  # wt.plot_weather_map(fig,ax,
-    # "2023-02-08T06:00:00.000000000")  # plt.show()
+    ##
+    # plotting power vs dist vs weather
+    rp_read1.plot_power_vs_dist_with_weather()
