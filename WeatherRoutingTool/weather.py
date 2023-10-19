@@ -552,7 +552,8 @@ class WeatherCondODC(WeatherCond):
             else:
                 # Check if requested measurements are available in ODC (measurements or aliases)
                 measurements_odc = list(self.dc.list_measurements().loc[product_name].index)
-                aliases_odc = [alias for aliases_per_var in list(self.dc.list_measurements().loc[product_name]['aliases'])
+                aliases_odc = [alias for aliases_per_var in
+                               list(self.dc.list_measurements().loc[product_name]['aliases'])
                                for alias in aliases_per_var]
                 for measurement in measurements:
                     if (measurement not in measurements_odc) and (measurement not in aliases_odc):
