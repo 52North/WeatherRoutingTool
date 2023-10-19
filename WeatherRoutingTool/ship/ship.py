@@ -257,11 +257,6 @@ class Tanker(Boat):
         debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
 
-        assert courses.shape == lats.shape
-        assert courses.shape == lons.shape
-        assert courses.shape == speed.shape
-        assert courses.shape == time.shape
-
         if (debug):
             print('Requesting power calculation')
             time_str = 'Time:' + str(time)
@@ -275,31 +270,42 @@ class Tanker(Boat):
             form.print_step(course_str, 1)
             form.print_step(speed_str, 1)
 
-        it = np.arange(np.unique(lons, return_counts=True)[1][0]) + 1
-        it = np.hstack((it,) * np.unique(lons).shape[0])
+        n_coords = lons.shape[0]  # number or coordinate pairs
+        n_courses = int(courses.shape[0] / n_coords)  # number of courses per coordinate pair
+
+        # generate iterator for courses and coordinate pairs
+        it_course = np.arange(n_courses) + 1  # get iterator with a length of the number of unique longitude values
+        it_course = np.hstack(
+                (it_course,) * n_coords)  # prepare iterator for Data Frame: repeat each element as often as
+        it_pos = np.arange(n_coords) + 1
+        it_pos = np.repeat(it_pos, n_courses)  # np.hstack((it_pos,) * n_courses)
 
         if (debug):
-            form.print_step('it=' + str(it))
-            form.print_step('lons=' + str(lons))
+            form.print_step('it_course=' + str(it_course))
+            form.print_step('it_pos=' + str(it_pos))
 
-        df = pd.DataFrame({'lat': lats, 'it': it, 'courses': courses, 'speed': speed, })
+        assert courses.shape == it_pos.shape
+        assert courses.shape == it_course.shape
+        assert courses.shape == speed.shape
 
-        df = df.set_index(['lat', 'it'])
+        # generate pandas DataFrame
+        df = pd.DataFrame({'it_pos': it_pos, 'it_course': it_course, 'courses': courses, 'speed': speed, })
+
+        df = df.set_index(['it_pos', 'it_course'])
         if (debug):
             print('pandas DataFrame:', df)
 
         ds = df.to_xarray()
-        lon_ind = np.unique(lons, return_index=True)[1]
-        lons = [lons[index] for index in sorted(lon_ind)]
-        time_reshape = time.reshape(ds['lat'].shape[0], ds['it'].shape[0])[:, 0]
 
-        print('Request power calculation for ' + str(courses.shape) + ' courses and ' + str(len(lons)) + ' coordinates')
+        time_reshape = time.reshape(ds['it_pos'].shape[0], ds['it_course'].shape[0])[:, 0]
 
-        ds["lon"] = (['lat'], lons)
-        ds["time"] = (['lat'], time_reshape)
+        print('Request power calculation for ' + str(n_courses) + ' courses and ' + str(n_coords) + ' coordinates')
+
+        ds["lon"] = (['it_pos'], lons)
+        ds["lat"] = (['it_pos'], lats)
+        ds["time"] = (['it_pos'], time_reshape)
         assert ds['lon'].shape == ds['lat'].shape
         assert ds['time'].shape == ds['lat'].shape
-        # np.set_printoptions(threshold=sys.maxsize)
 
         if (debug):
             print('xarray DataSet', ds)
