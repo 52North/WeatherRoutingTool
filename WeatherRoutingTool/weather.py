@@ -1,9 +1,9 @@
 """Weather functions."""
 import datetime as dt
 import logging
-import sys
 import time
 
+import datacube
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -85,6 +85,8 @@ class WeatherCond():
 
 class WeatherCondEnvAutomatic(WeatherCond):
 
+    # FIXME: add currents?
+
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
 
@@ -157,7 +159,6 @@ class WeatherCondEnvAutomatic(WeatherCond):
         height_min = 10
         height_max = 20
 
-        start_time = time.time()
         # download GFS data
         par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground",
                    "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", "Pressure_surface"]
@@ -192,14 +193,14 @@ class WeatherCondEnvAutomatic(WeatherCond):
         GFS_lat = ds_GFS['latitude'].to_numpy()
         GFS_lat[GFS_lat < 0] = GFS_lat[GFS_lat < 0] + 180
 
-        # form.print_current_time('time after weather request:', start_time)
+        # form.print_current_time('time after weather request:', time.time())
         # self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
-        form.print_current_time('cross checks:', start_time)
+        form.print_current_time('cross checks:', time.time())
 
         # interpolate CMEMS wave data to timestamps of CMEMS physics and merge
-        wind_interpolated = ds_CMEMS_phys.interp_like(ds_CMEMS_wave)
-        full_CMEMS_data = xr.merge([wind_interpolated, ds_CMEMS_wave])
-        form.print_current_time('CMEMS merge', start_time)
+        phys_interpolated = ds_CMEMS_phys.interp_like(ds_CMEMS_wave)
+        full_CMEMS_data = xr.merge([phys_interpolated, ds_CMEMS_wave])
+        form.print_current_time('CMEMS merge', time.time())
 
         # interpolate GFS data to lat/lon resolution of CMEMS full data and merge
         check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'latitude', 'GFS', 'Full CMEMS')
@@ -207,9 +208,9 @@ class WeatherCondEnvAutomatic(WeatherCond):
         check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'time', 'GFS', 'Full CMEMS')
 
         GFS_interpolated = ds_GFS.interp_like(full_CMEMS_data)
-        form.print_current_time('interpolation', start_time)
+        form.print_current_time('interpolation', time.time())
         self.ds = xr.merge([full_CMEMS_data, GFS_interpolated])
-        form.print_current_time('end time', start_time)
+        form.print_current_time('end time', time.time())
 
     def write_data(self, filepath):
         # time_str_start = self.time_start.strftime("%Y-%m-%d-%H")
@@ -526,3 +527,91 @@ class WeatherCondFromFile(WeatherCond):
     def read_dataset(self, filepath):
         logger.info(form.get_log_step('Reading dataset from' + str(filepath), 1))
         self.ds = xr.open_dataset(filepath)  # self.ds = self.manipulate_dataset()
+
+
+class WeatherCondODC(WeatherCond):
+    def __init__(self, time, hours, time_res):
+        super().__init__(time, hours, time_res)
+        self.dc = datacube.Datacube()
+
+    def load_odc_product(self, product_name, res_x, res_y, output_crs="EPSG:4326", measurements=None):
+        try:
+            if product_name not in list(self.dc.list_products().index):
+                raise ValueError(f"{product_name} is not known in the Open Data Cube instance")
+
+            time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
+            time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
+
+            lon_min = self.map_size.lon1
+            lon_max = self.map_size.lon2
+            lat_min = self.map_size.lat1
+            lat_max = self.map_size.lat2
+
+            if measurements is None:
+                measurements = list(self.dc.list_measurements().loc[product_name].index)
+            else:
+                # Check if requested measurements are available in ODC (measurements or aliases)
+                measurements_odc = list(self.dc.list_measurements().loc[product_name].index)
+                aliases_odc = [alias for aliases_per_var in list(self.dc.list_measurements().loc[product_name]['aliases'])
+                               for alias in aliases_per_var]
+                for measurement in measurements:
+                    if (measurement not in measurements_odc) and (measurement not in aliases_odc):
+                        raise KeyError(f"{measurement} is not a valid measurement for odc product {product_name}")
+            # FIXME: is the order (res_x, res_y) correct in resolution and align?
+            # FIXME: do we need a minus sign for res_x?
+            query = {
+                'resolution': (res_x, res_y),
+                'align': (res_x / 2, res_y / 2),
+                'latitude': (lat_min, lat_max),
+                'longitude': (lon_min, lon_max),
+                'output_crs': output_crs,
+                'time': (time_min, time_max),
+                'measurements': measurements
+            }
+            ds_datacube = self.dc.load(product=product_name, **query)
+            # Apply scale_factor and offset if necessary (needs to be done explicitly as ODC is only setting
+            # the attributes)
+            if self._has_scaling(ds_datacube):
+                ds_datacube = self._scale(ds_datacube)
+            return ds_datacube
+        except Exception as e:
+            raise e
+
+    def read_dataset(self):
+        # ODC doesn't allow hyphens ("-") in band names. Because we would like to keep the original band
+        # names from GFS with hyphen we use band aliases instead.
+        measurements_gfs = ['Temperature_surface', 'Pressure_reduced_to_MSL_msl', 'Wind_speed_gust_surface',
+                            'u-component_of_wind_height_above_ground', 'v-component_of_wind_height_above_ground']
+
+        # FIXME: add currents?
+        ds_CMEMS_phys = self.load_odc_product('physics', res_x=1/12, res_y=1/12)
+        ds_CMEMS_wave = self.load_odc_product('waves', res_x=1/12, res_y=1/12)
+        ds_GFS = self.load_odc_product('weather', res_x=0.25, res_y=0.25, measurements=measurements_gfs)
+
+        # form.print_current_time('time after weather request:', time.time())
+        # self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
+        form.print_current_time('cross checks:', time.time())
+        # interpolate CMEMS wave data to timestamps of CMEMS physics and merge
+        phys_interpolated = ds_CMEMS_phys.interp_like(ds_CMEMS_wave)
+        full_CMEMS_data = xr.merge([phys_interpolated, ds_CMEMS_wave])
+        form.print_current_time('CMEMS merge', time.time())
+        # interpolate GFS data to lat/lon resolution of CMEMS full data and merge
+        check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'latitude', 'GFS', 'Full CMEMS')
+        check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'longitude', 'GFS', 'Full CMEMS')
+        check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'time', 'GFS', 'Full CMEMS')
+
+        GFS_interpolated = ds_GFS.interp_like(full_CMEMS_data)
+        form.print_current_time('interpolation', time.time())
+        self.ds = xr.merge([full_CMEMS_data, GFS_interpolated])
+        form.print_current_time('end time', time.time())
+
+    def _has_scaling(self, dataset):
+        """Check if any of the included data variables has a scale_factor or add_offset"""
+        for var in dataset.data_vars:
+            if 'scale_factor' in dataset[var].attrs or 'add_offset' in dataset[var].attrs:
+                return True
+        return False
+
+    def _scale(self, dataset):
+        # FIXME: decode_cf also scales the nodata values, e.g. -32767 -> -327.67
+        return xr.decode_cf(dataset)
