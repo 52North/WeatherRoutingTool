@@ -17,7 +17,7 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 #    assert pol.inc(3) == 5
 
 def get_default_Tanker():
-    DEFAULT_GFS_FILE = config.BASE_PATH + '/reduced_testdata_weather.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    DEFAULT_GFS_FILE = config.BASE_PATH + '/tests/data/reduced_testdata_weather.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
     COURSES_FILE = config.BASE_PATH + '/CoursesRoute.nc'
     DEPTH_FILE = config.DEPTH_DATA
 
@@ -245,3 +245,34 @@ def test_shipparams_get_single():
     assert sp_test.r_waves == rwaves[idx]
     assert sp_test.r_shallow == rshallow[idx]
     assert sp_test.r_roughness == rroughness[idx]
+
+def test_get_fuel_for_fixed_waypoints():
+    bs = 6
+    start_time = datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
+    route_lats = np.array([54.9, 54.7, 54.5, 54.2])
+    route_lons = np.array([13.2, 13.4,13.7, 13.9])
+
+    pol = get_default_Tanker()
+    pol.set_boat_speed(bs)
+    ship_params = pol.get_fuel_for_fixed_waypoints(route_lats, route_lons, start_time, bs)
+    ship_params.print()
+
+    ds = xr.open_dataset(pol.courses_path)
+    test_lat_start = ds.lat
+    test_lon_start = ds.lon
+    test_courses = ds.courses.to_numpy()[:,0]
+    print('test_courses shape: ', test_courses.shape)
+
+    ref_lat_start =  np.array([54.9, 54.7, 54.5])
+    ref_lon_start =  np.array([13.2, 13.4,13.7])
+    ref_courses = np.array([149.958, 138.89,158.685])
+    ref_dist = np.array([25712, 29522, 35836])
+
+    assert test_lon_start.any() == ref_lon_start.any()
+    assert test_lat_start.any() == ref_lat_start.any()
+
+    print('test_courses: ', test_courses)
+    print('ref_courses: ', ref_courses)
+    assert np.allclose(test_courses, ref_courses, 0.1)
+
+    assert 1==2
