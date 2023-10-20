@@ -4,6 +4,7 @@ import logging
 import math
 
 import numpy as np
+from zoneinfo import ZoneInfo
 
 import WeatherRoutingTool.utils.formatting as form
 
@@ -68,6 +69,12 @@ def convert_nptd64_to_ints(time):
     ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     return ts
 
+def convert_npdt64_to_datetime(time):
+    timestamp = ((time - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
+    print('timestampt', type(timestamp))
+    TIME = datetime.datetime.fromtimestamp(timestamp) - datetime.timedelta(hours=2)
+    return TIME
+
 
 def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
     coord1 = ds1[coord].to_numpy()
@@ -90,3 +97,15 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
     logger.info(form.get_log_step(ds2_name + ' is shifted wrt. ' + ds1_name + ' by ' + str(shift2), 2))
 
     return res1, res2, shift2
+
+def compare_times(time1, time2):
+    time1 = (time1 - datetime.datetime(1970, 1, 1, 0, 0))
+    time2 = (time2 - datetime.datetime(1970, 1, 1, 0, 0))
+    for iTime in range(0, time1.shape[0]):
+        time1[iTime] = time1[iTime].total_seconds()
+        time2[iTime] = time2[iTime].total_seconds()
+
+    #assert np.array_equal(time1, time2)
+    print('time1: ', dtype(time1))
+    print('time2: ', time2)
+    return np.allclose(time1, time2,0.1)

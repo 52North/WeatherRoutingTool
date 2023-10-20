@@ -8,6 +8,7 @@ import pytest
 import xarray as xr
 
 import WeatherRoutingTool.config as config
+import WeatherRoutingTool.utils.unit_conversion as utils
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
@@ -38,7 +39,7 @@ def compare_times(time64, time):
     test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
      match properties of original array)
 '''
-
+'''
 
 def test_get_netCDF_courses():
     lat = np.array([1., 1., 1, 2, 2, 2])
@@ -79,7 +80,7 @@ def test_get_netCDF_courses():
             assert courses[iprev] == courses_read[ilat][iit]
 
     ds.close()
-
+'''
 
 '''
     test whether power is correctly extracted from courses netCDF
@@ -246,6 +247,95 @@ def test_shipparams_get_single():
     assert sp_test.r_shallow == rshallow[idx]
     assert sp_test.r_roughness == rroughness[idx]
 
+def compare_times(time64, time):
+    time64 = (time64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+    time = (time - datetime.datetime(1970, 1, 1, 0, 0))
+    for iTime in range(0, time.shape[0]):
+        time[iTime] = time[iTime].total_seconds()
+    assert np.array_equal(time64, time)
+'''
+    test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
+     match properties of original array)
+'''
+def test_get_netCDF_courses_isobased():
+    lat = np.array([1., 1., 1, 2, 2, 2])
+    lon = np.array([4., 4., 4, 3, 3, 3])
+    courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+    # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
+
+    pol = get_default_Tanker()
+    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
+                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
+                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
+                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
+
+    pol.write_netCDF_courses(courses, lat, lon, time, True)
+    ds = xr.open_dataset(pol.courses_path)
+
+    print('ds: ', ds)
+
+    lat_read = ds['lat'].to_numpy()
+    lon_read = ds['lon'].to_numpy()
+    courses_read = ds['courses'].to_numpy()
+    time_read = ds['time'].to_numpy()
+
+    lat_ind = np.unique(lat, return_index=True)[1]
+    lon_ind = np.unique(lon, return_index=True)[1]
+    time_ind = np.unique(time, return_index=True)[1]
+    lat = [lat[index] for index in sorted(lat_ind)]
+    lon = [lon[index] for index in sorted(lon_ind)]
+    time = [time[index] for index in sorted(time_ind)]
+    time = np.array(time)
+
+    print('lat: ', lat)
+    print('lon:' , lat_read)
+
+    assert np.array_equal(lat, lat_read)
+    assert np.array_equal(lon, lon_read)
+    compare_times(time_read, time)
+
+    assert courses.shape[0] == courses_read.shape[0] * courses_read.shape[1]
+    for ilat in range(0, courses_read.shape[0]):
+        for iit in range(0, courses_read.shape[1]):
+            iprev = ilat * courses_read.shape[1] + iit
+            assert courses[iprev] == courses_read[ilat][iit]
+
+    ds.close()
+    assert 1==2
+
+'''
+    test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
+     match properties of original array) for the genetic algorithm
+'''
+def test_get_netCDF_courses_GA():
+    lat_short = np.array([1,2, 1])
+    lon_short = np.array([4,4, 1.5])
+    courses = np.array([0.1, 0.2, 0.3])
+
+    pol = get_default_Tanker()
+    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=180), datetime.datetime(2022, 12, 19)+datetime.timedelta(days=360)])
+
+    pol.write_netCDF_courses(courses, lat_short, lon_short,  time)
+    ds = xr.open_dataset(pol.courses_path)
+
+    lat_read = ds['lat'].to_numpy()
+    lon_read = ds['lon'].to_numpy()
+    courses_read = ds['courses'].to_numpy()
+    time_read = ds['time'].to_numpy()
+
+    assert np.array_equal(lat_short,lat_read)
+    assert np.array_equal(lon_short,lon_read)
+    compare_times(time_read,time)
+
+    assert courses.shape[0] == courses_read.shape[0]*courses_read.shape[1]
+    for ilat in range(0, courses_read.shape[0]):
+        for iit in range(0, courses_read.shape[1]):
+            iprev=ilat*courses_read.shape[1]+iit
+            assert courses[iprev]==courses_read[ilat][iit]
+
+    ds.close()
+    assert 1==2
+
 def test_get_fuel_for_fixed_waypoints():
     bs = 6
     start_time = datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
@@ -261,12 +351,20 @@ def test_get_fuel_for_fixed_waypoints():
     test_lat_start = ds.lat
     test_lon_start = ds.lon
     test_courses = ds.courses.to_numpy()[:,0]
-    print('test_courses shape: ', test_courses.shape)
+    test_time = ds.time.to_numpy()
+
+    test_time_dt = np.full(3,datetime.datetime(1970, 1, 1, 0, 0))
+    for t in range(0,3):
+        test_time_dt[t] = utils.convert_npdt64_to_datetime(test_time[t])
+    print('test_time shape: ', test_time_dt)
 
     ref_lat_start =  np.array([54.9, 54.7, 54.5])
     ref_lon_start =  np.array([13.2, 13.4,13.7])
     ref_courses = np.array([149.958, 138.89,158.685])
-    ref_dist = np.array([25712, 29522, 35836])
+    ref_dist = np.array([25712., 29522., 35836.])
+    ref_time = np.array([start_time, start_time + datetime.timedelta(seconds=ref_dist[0]/bs), start_time + datetime.timedelta(seconds=ref_dist[0]/bs) + datetime.timedelta(seconds=ref_dist[1]/bs)])
+    print('ref_time shape: ', ref_time)
+
 
     assert test_lon_start.any() == ref_lon_start.any()
     assert test_lat_start.any() == ref_lat_start.any()
@@ -274,5 +372,7 @@ def test_get_fuel_for_fixed_waypoints():
     print('test_courses: ', test_courses)
     print('ref_courses: ', ref_courses)
     assert np.allclose(test_courses, ref_courses, 0.1)
+    res = utils.compare_times(test_time_dt, ref_time)
+    assert res == True
 
     assert 1==2
