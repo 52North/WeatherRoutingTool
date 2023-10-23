@@ -51,7 +51,7 @@ if __name__ == "__main__":
     wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    #wt.plot_weather_map(fig, ax, plot_time, "wind")
+    # wt.plot_weather_map(fig, ax, plot_time, "wind")
 
     ##
     # init Constraints
