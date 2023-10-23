@@ -492,7 +492,7 @@ class WaterDepth(NegativeContraint):
         if self._has_scaling(ds_datacube):
             ds_datacube = self._scale(ds_datacube)
         # Note: if depth_path already exists, the file will be overwritten!
-        ds_datacube.to_netcdf(depth_path)
+        self._to_netcdf(ds_datacube, depth_path)
         return ds_datacube
 
     def load_data_automatic(self, depth_path):
@@ -505,7 +505,7 @@ class WaterDepth(NegativeContraint):
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map.lat1, self.map.lat2),
                                                     longitude=slice(self.map.lon1, self.map.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
-        depth_data_chunked.to_netcdf(depth_path, format='NETCDF3_CLASSIC')
+        self._to_netcdf(depth_data_chunked, depth_path)
         return depth_data_chunked
 
     def load_data_from_file(self, depth_path):
@@ -598,6 +598,17 @@ class WaterDepth(NegativeContraint):
     def _scale(self, dataset):
         # FIXME: decode_cf also scales the nodata values, e.g. -32767 -> -327.67
         return xr.decode_cf(dataset)
+
+    def _to_netcdf(self, dataset, file_out):
+        """
+        Customized method to fix 'AttributeError: NetCDF: String match to name in use' error
+        References:
+            - https://github.com/pydata/xarray/issues/2822
+            - https://github.com/Unidata/netcdf4-python/issues/1020
+        """
+        if '_NCProperties' in dataset.attrs:
+            del dataset.attrs['_NCProperties']
+        dataset.to_netcdf(file_out)
 
 
 class StayOnMap(NegativeContraint):
