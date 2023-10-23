@@ -600,17 +600,18 @@ class WeatherCondODC(WeatherCond):
         measurements_gfs = ['Temperature_surface', 'Pressure_reduced_to_MSL_msl', 'Wind_speed_gust_surface',
                             'u-component_of_wind_height_above_ground', 'v-component_of_wind_height_above_ground']
 
-        # FIXME: add currents?
         ds_CMEMS_phys = self.load_odc_product('physics', res_x=1 / 12, res_y=1 / 12)
         ds_CMEMS_wave = self.load_odc_product('waves', res_x=1 / 12, res_y=1 / 12)
+        ds_CMEMS_curr = self.load_odc_product('currents', res_x=1 / 12, res_y=1 / 12)
         ds_GFS = self.load_odc_product('weather', res_x=0.25, res_y=0.25, measurements=measurements_gfs)
 
         # form.print_current_time('time after weather request:', time.time())
         # self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_GFS)
-        form.print_current_time('cross checks:', time.time())
+        form.print_current_time('weather checks:', time.time())
         # interpolate CMEMS wave data to timestamps of CMEMS physics and merge
         phys_interpolated = ds_CMEMS_phys.interp_like(ds_CMEMS_wave)
-        full_CMEMS_data = xr.merge([phys_interpolated, ds_CMEMS_wave])
+        curr_interpolated = ds_CMEMS_curr.interp_like(ds_CMEMS_wave)
+        full_CMEMS_data = xr.merge([curr_interpolated, phys_interpolated, ds_CMEMS_wave])
         form.print_current_time('CMEMS merge', time.time())
         # interpolate GFS data to lat/lon resolution of CMEMS full data and merge
         check_dataset_spacetime_consistency(ds_GFS, full_CMEMS_data, 'latitude', 'GFS', 'Full CMEMS')
