@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     ##
     # suppress warnings from mariPower
-    warnings.filterwarnings("ignore")
+    # warnings.filterwarnings("ignore")
 
     # *******************************************
     # basic settings
