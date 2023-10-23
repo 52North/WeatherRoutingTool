@@ -316,7 +316,7 @@ class RouteParams():
             list_lines.append(line_power)
 
             ax_rwind.bar(normalised_power["bin_centres"], r_wind, dist, fill=False, color=color, edgecolor=color,
-                        linewidth=2)
+                         linewidth=2)
 
         # ax_power.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
         ax_rwind.axhline(y=0., color='gray', linestyle='dashed', linewidth=2)
