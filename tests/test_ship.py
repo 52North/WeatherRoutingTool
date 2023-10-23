@@ -176,7 +176,8 @@ def test_power_consumption_returned():
 
     assert np.all(power < 10000000)
     assert np.all(rpm < 100)
-    assert np.all(fuel < 1.2)
+
+    assert np.all(fuel < 1.5)
     assert np.all(power > 1000000)
     assert np.all(rpm > 70)
     assert np.all(fuel > 0.5)

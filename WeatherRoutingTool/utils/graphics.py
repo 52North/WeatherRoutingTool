@@ -7,6 +7,7 @@ from geovectorslib import geod
 from matplotlib.figure import Figure
 from PIL import Image
 
+
 def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
     """Discretize gcr between two scalar coordinate points."""
     points = [(lat1, lon1)]
@@ -216,6 +217,7 @@ def get_accumulated_dist(dist_arr):
         full_dist = full_dist + dist
 
     return dist_acc
+
 
 def set_graphics_standards(ax):
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
