@@ -477,22 +477,17 @@ class WaterDepth(NegativeContraint):
         else:
             # Check if requested measurements are available in ODC (measurements or aliases)
             measurements_odc = list(dc.list_measurements().loc[product_name].index)
-            aliases_odc = [alias for aliases_per_var in list(dc.list_measurements().loc[product_name]['aliases'])
-                           for alias in aliases_per_var]
+            aliases_odc = [alias for aliases_per_var in list(dc.list_measurements().loc[product_name]['aliases']) for
+                           alias in aliases_per_var]
             for measurement in measurements:
                 if (measurement not in measurements_odc) and (measurement not in aliases_odc):
                     raise KeyError(f"{measurement} is not a valid measurement for odc product {product_name}")
 
         res_x = 30 / 3600  # 30 arc seconds to degrees
         res_y = 30 / 3600  # 30 arc seconds to degrees
-        query = {
-            'resolution': (res_x, res_y),
-            'align': (res_x / 2, res_y / 2),
-            'latitude': (self.map.lat1, self.map.lat2),
-            'longitude': (self.map.lon1, self.map.lon2),
-            'output_crs': 'EPSG:4326',
-            'measurements': measurements
-        }
+        query = {'resolution': (res_x, res_y), 'align': (res_x / 2, res_y / 2),
+                 'latitude': (self.map.lat1, self.map.lat2), 'longitude': (self.map.lon1, self.map.lon2),
+                 'output_crs': 'EPSG:4326', 'measurements': measurements}
         ds_datacube = dc.load(product=product_name, **query).drop('time')
         if self._has_scaling(ds_datacube):
             ds_datacube = self._scale(ds_datacube)
@@ -510,7 +505,7 @@ class WaterDepth(NegativeContraint):
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map.lat1, self.map.lat2),
                                                     longitude=slice(self.map.lon1, self.map.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
-        depth_data_chunked.to_netcdf(depth_path)
+        depth_data_chunked.to_netcdf(depth_path, format='NETCDF3_CLASSIC')
         return depth_data_chunked
 
     def load_data_from_file(self, depth_path):
