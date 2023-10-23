@@ -73,8 +73,6 @@ if __name__ == "__main__":
     '''pars = ConstraintPars()
     land_crossing = LandCrossing()
     # seamarks_crossing = SeamarkCrossing()
-    # water_depth.write_reduced_depth_data(
-    # '/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -95,11 +93,9 @@ if __name__ == "__main__":
         depthfile)
 
     # *******************************************
-    # initialise rout
+    # initialise route
     min_fuel_route = RoutingAlgFactory.get_routing_alg('isofuel')
     water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
-    # water_depth.write_reduced_depth_data(
-    # "/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_2022_v1_30s_N90W180_bed_renamed.nc")
     min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************

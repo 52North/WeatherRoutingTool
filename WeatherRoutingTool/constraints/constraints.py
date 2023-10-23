@@ -2,6 +2,7 @@ import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import datacube
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -441,7 +442,7 @@ class WaveHeight(NegativeConstraintFromWeather):
 
 class WaterDepth(NegativeContraint):
     map: Map
-    depth_data: xr
+    depth_data: xr  # the xarray.Dataset is expected to have a variable called "depth"
     current_depth: np.ndarray
     min_depth: float
 
@@ -455,20 +456,51 @@ class WaterDepth(NegativeContraint):
         self.depth_data = None
 
         if data_mode == 'odc':
-            self.depth_data = self.load_data_ODC()
+            self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['depth'])
         elif data_mode == 'automatic':
-            self.depth_data = self.load_data_automatic()
+            self.depth_data = self.load_data_automatic(depth_path)
         elif data_mode == 'from_file':
             self.depth_data = self.load_data_from_file(depth_path)
         else:
             raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
 
-    def load_data_ODC(self):
+    def load_data_ODC(self, depth_path, product_name, measurements=None):
         logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
-        raise Exception('Loading of depth data from ODC not implemented yet!')
-        pass
 
-    def load_data_automatic(self):
+        dc = datacube.Datacube()
+
+        if product_name not in list(dc.list_products().index):
+            raise ValueError(f"{product_name} is not known in the Open Data Cube instance")
+
+        if measurements is None:
+            measurements = list(dc.list_measurements().loc[product_name].index)
+        else:
+            # Check if requested measurements are available in ODC (measurements or aliases)
+            measurements_odc = list(dc.list_measurements().loc[product_name].index)
+            aliases_odc = [alias for aliases_per_var in list(dc.list_measurements().loc[product_name]['aliases'])
+                           for alias in aliases_per_var]
+            for measurement in measurements:
+                if (measurement not in measurements_odc) and (measurement not in aliases_odc):
+                    raise KeyError(f"{measurement} is not a valid measurement for odc product {product_name}")
+
+        res_x = 30 / 3600  # 30 arc seconds to degrees
+        res_y = 30 / 3600  # 30 arc seconds to degrees
+        query = {
+            'resolution': (res_x, res_y),
+            'align': (res_x / 2, res_y / 2),
+            'latitude': (self.map.lat1, self.map.lat2),
+            'longitude': (self.map.lon1, self.map.lon2),
+            'output_crs': 'EPSG:4326',
+            'measurements': measurements
+        }
+        ds_datacube = dc.load(product=product_name, **query).drop('time')
+        if self._has_scaling(ds_datacube):
+            ds_datacube = self._scale(ds_datacube)
+        # Note: if depth_path already exists, the file will be overwritten!
+        ds_datacube.to_netcdf(depth_path)
+        return ds_datacube
+
+    def load_data_automatic(self, depth_path):
         logger.info(form.get_log_step('Automatic download of depth data', 0))
 
         downloader = DownloaderFactory.get_downloader(downloader_type='opendap', platform='etoponcei')
@@ -477,19 +509,15 @@ class WaterDepth(NegativeContraint):
         depth_data_chunked = depth_data_chunked.rename(z="depth", lat="latitude", lon="longitude")
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map.lat1, self.map.lat2),
                                                     longitude=slice(self.map.lon1, self.map.lon2))
+        # Note: if depth_path already exists, the file will be overwritten!
+        depth_data_chunked.to_netcdf(depth_path)
         return depth_data_chunked
 
     def load_data_from_file(self, depth_path):
+        # FIXME: if this loads the whole file into memory, apply subsetting already here
         logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
         ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
         return ds_depth
-
-    def write_reduced_depth_data(self, filename):
-        depth_renamed = self.depth_data.rename(z="depth", lat="latitude", lon="longitude")
-        depth = depth_renamed.sel(latitude=slice(self.map.lat1, self.map.lat2),
-                                  longitude=slice(self.map.lon1, self.map.lon2))
-        depth.to_netcdf(filename)
-        depth.close()
 
     def set_draught(self, depth):
         self.min_depth = depth
@@ -564,6 +592,17 @@ class WaterDepth(NegativeContraint):
         plt.title("")
 
         return fig, ax
+
+    def _has_scaling(self, dataset):
+        """Check if any of the included data variables has a scale_factor or add_offset"""
+        for var in dataset.data_vars:
+            if 'scale_factor' in dataset[var].attrs or 'add_offset' in dataset[var].attrs:
+                return True
+        return False
+
+    def _scale(self, dataset):
+        # FIXME: decode_cf also scales the nodata values, e.g. -32767 -> -327.67
+        return xr.decode_cf(dataset)
 
 
 class StayOnMap(NegativeContraint):
