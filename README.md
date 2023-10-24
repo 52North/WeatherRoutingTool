@@ -168,12 +168,12 @@ Let's consider only two routing steps of the form that is sketched in Fig. XXX. 
 * lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)
 
 i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.<br>
-The arguments that are passed for the second routing step are the start and end coordinates of the routing segments &#945 to &#950:
+The arguments that are passed for the second routing step are the start and end coordinates of the routing segments &#945; to &#950;:
 
-* lat_start = (lat_start<sub>&#945&#946&#947</sub>, lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#948&#949&#950</sub>, lat_start<sub>&#948&#949&#950</sub>,lat_start<sub>&#948&#949&#950</sub>)
-* lat_end = (lat_end<sub>&#945</sub>, lat_end<sub>&#946</sub>,lat_end<sub>&#947</sub>,lat_end<sub>&#948</sub>, lat_end<sub>&#949</sub>,lat_end<sub>&#950</sub>)
-* lon_start = (lon_start<sub>&#945&#946&#947</sub>, lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#948&#949&#950</sub>, lon_start<sub>&#948&#949&#950</sub>,lon_start<sub>&#948&#949&#950</sub>)
-* lon_end =  (lon_end<sub>&#945</sub>, lon_end<sub>&#946</sub>,lon_end<sub>&#947</sub>,lon_end<sub>&#948</sub>, lon_end<sub>&#949</sub>,lon_end<sub>&#950</sub>)
+* lat_start = (lat_start<sub>&#945;&#946;&#947;</sub>, lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>, lat_start<sub>&#948;&#949;&#950;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>)
+* lat_end = (lat_end<sub>&#945;</sub>, lat_end<sub>&#946;</sub>,lat_end<sub>&#947;</sub>,lat_end<sub>&#948;</sub>, lat_end<sub>&#949;</sub>,lat_end<sub>&#950;</sub>)
+* lon_start = (lon_start<sub>&#945;&#946;&#947;</sub>, lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>, lon_start<sub>&#948;&#949;&#950;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>)
+* lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
 
