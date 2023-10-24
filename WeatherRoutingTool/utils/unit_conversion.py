@@ -47,15 +47,11 @@ def round_time(dt=None, round_to=60):
 
 
 def degree_to_pmpi(degrees):
-    if (degrees >= 360):
-        degrees = degrees - 360
-    if (degrees <= -360):
-        degrees = degrees + 360
-    if (degrees > 180):
-        degrees = degrees - 360
-    if (degrees < -180):
-        degrees = degrees + 360
-    degrees = math.radians(degrees)
+    degrees[degrees>=360]=degrees[degrees>=360] - 360
+    degrees[degrees<=-360]=degrees[degrees<=-360] + 360
+    degrees[degrees > 180] = degrees[degrees > 180] - 360
+    degrees[degrees < -180] =  degrees[degrees < -180] + 360
+    degrees = np.radians(degrees)
     return degrees
 
 
@@ -107,3 +103,20 @@ def compare_times(time1, time2):
         assert np.abs(time1[iTime]-time2[iTime]) < 0.2
 
     return True
+
+def get_angle_bins(min_alpha, max_alpha, levels):
+    if max_alpha<min_alpha:
+        raise ValueError('Maximum angle needs to be larger than minimum angle!')
+
+    result = np.linspace(min_alpha, max_alpha,
+                levels)
+    cut_angles(result)
+
+    return result
+
+def cut_angles(angles):
+    angles[angles > 360] = angles[angles > 360] - 360
+    angles[angles < 0] = 360 + angles[angles < 0]
+    return angles
+
+

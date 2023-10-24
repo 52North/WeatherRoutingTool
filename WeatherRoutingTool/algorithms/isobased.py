@@ -11,6 +11,7 @@ from scipy.stats import binned_statistic
 
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
+import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -170,6 +171,7 @@ class IsoBased(RoutingAlg):
         self.current_variant = new_azi['azi1']  # center courses around gcr
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
+        self.current_variant = units.cut_angles(self.current_variant)
 
     def define_initial_variants(self):
         pass
@@ -247,7 +249,9 @@ class IsoBased(RoutingAlg):
         bs = np.repeat(bs, (self.get_current_azimuth().shape[0]), axis=0)
 
         ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-                                                    self.get_current_lons(), self.time)
+                                                    self.get_current_lons(), self.time, True)
+        units.cut_angles(self.current_variant)
+
         # ship_params.print()
 
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
@@ -401,8 +405,7 @@ class IsoBased(RoutingAlg):
         # define pruning area
         azi0s = np.repeat(new_azi['azi1'], self.prune_segments + 1)
 
-        delta_hdgs = np.linspace(-self.prune_sector_deg_half, +self.prune_sector_deg_half,
-                                 self.prune_segments + 1)  # -90,+90,181
+        delta_hdgs = units.get_angle_bins(-self.prune_sector_deg_half, +self.prune_sector_deg_half, self.prune_segments + 1)
 
         bins = azi0s - delta_hdgs
         bins = np.sort(bins)
@@ -458,8 +461,7 @@ class IsoBased(RoutingAlg):
             plt.savefig(final_path)
 
         # define pruning area
-        bins = np.linspace(mean_azimuth - self.prune_sector_deg_half, mean_azimuth + self.prune_sector_deg_half,
-                           self.prune_segments + 1)
+        bins = units.get_angle_bins(mean_azimuth - self.prune_sector_deg_half, mean_azimuth + self.prune_sector_deg_half, self.prune_segments + 1)
 
         bins = np.sort(bins)
 
@@ -606,9 +608,9 @@ class IsoBased(RoutingAlg):
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         travel_dist = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])  # calculate full distance
-        # end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
-        # end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
-        # dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
+        end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
+        end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
+        dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
 
         # traveled, azimuth of gcr connecting start and new position
         # self.current_variant = gcrs['azi1']
@@ -619,7 +621,10 @@ class IsoBased(RoutingAlg):
         concatenated_distance = np.sum(self.dist_per_step, axis=0)
         concatenated_distance[is_constrained] = 0
 
-        self.full_dist_traveled = travel_dist['s12']  # *travel_dist['s12']/dist_to_dest['s12']
+        if np.all(dist_to_dest['s12'])>0 :
+            self.full_dist_traveled = travel_dist['s12']*travel_dist['s12']/dist_to_dest['s12']
+        else:
+            self.full_dist_traveled = travel_dist['s12']
         if (debug):
             print('full_dist_traveled:', self.full_dist_traveled)
 

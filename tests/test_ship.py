@@ -2,6 +2,7 @@ import datetime
 import math
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,9 +10,11 @@ import xarray as xr
 
 import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.unit_conversion as utils
+
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
+
 
 
 # def test_inc():
@@ -295,7 +298,7 @@ def test_get_netCDF_courses_isobased():
     for ilat in range(0, courses_read.shape[0]):
         for iit in range(0, courses_read.shape[1]):
             iprev = ilat * courses_read.shape[1] + iit
-            assert courses[iprev] == courses_read[ilat][iit]
+            assert courses[iprev] == np.rad2deg(courses_read[ilat][iit])
 
     ds.close()
 
@@ -327,10 +330,14 @@ def test_get_netCDF_courses_GA():
     for ilat in range(0, courses_read.shape[0]):
         for iit in range(0, courses_read.shape[1]):
             iprev=ilat*courses_read.shape[1]+iit
-            assert courses[iprev]==courses_read[ilat][iit]
+            assert np.radians(courses[iprev])==courses_read[ilat][iit]
 
     ds.close()
 
+'''
+    test whether lat, lon, time and courses are correctly written to course netCDF & wheather start_times_per_step and dist_per_step
+    are correctly calculated
+'''
 def test_get_fuel_for_fixed_waypoints():
     bs = 6
     start_time = datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
@@ -348,7 +355,7 @@ def test_get_fuel_for_fixed_waypoints():
     ds = xr.open_dataset(pol.courses_path)
     test_lat_start = ds.lat
     test_lon_start = ds.lon
-    test_courses = ds.courses.to_numpy()[:,0]
+    test_courses = np.rad2deg(ds.courses.to_numpy()[:,0])
     test_time = ds.time.to_numpy()
 
     test_time_dt = np.full(3,datetime.datetime(1970, 1, 1, 0, 0))
@@ -366,3 +373,41 @@ def test_get_fuel_for_fixed_waypoints():
     assert np.allclose(test_courses, ref_courses, 0.1)
     assert utils.compare_times(test_time_dt, ref_time) == True
     assert np.allclose(waypoint_dict['dist'], ref_dist, 0.1)
+
+'''
+    test whether power and wind resistance that are returned by maripower lie on an ellipse
+'''
+
+def test_wind_force():
+    lats = np.full(10, 54.9)  # 37
+    lons = np.full(10, 13.2)
+    courses = np.linspace(0,360, 10)
+    courses = utils.degree_to_pmpi(courses)
+
+    time = np.full(10, datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
+    bs=6
+
+    pol = get_default_Tanker()
+    pol.set_boat_speed(bs)
+    #pol.write_netCDF_courses(courses, lats, lons, time)
+    #ds = xr.open_dataset(pol.courses_path)
+    ship_params = pol.get_fuel_per_time_netCDF(courses, lats,lons, time, True)
+    power = ship_params.get_power()
+    rwind = ship_params.get_rwind()
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+    for i in range(0, courses.shape[0]):
+        courses[i] = math.radians(courses[i])
+    #wind_dir = math.radians(wind_dir)
+
+    axes[0].plot(courses, power)
+    axes[0].legend()
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[1].plot(courses, rwind)
+    axes[0].set_title("Power", va='bottom')
+    axes[1].set_title("Wind resistence", va='top')
+
+

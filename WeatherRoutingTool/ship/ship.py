@@ -256,6 +256,7 @@ class Tanker(Boat):
     def write_netCDF_courses(self, courses, lats, lons, time, unique_coords=False):
         debug = True
         speed = np.repeat(self.speed, courses.shape, axis=0)
+        courses = units.degree_to_pmpi(courses)
 
         if (debug):
             print('Requesting power calculation')
@@ -272,8 +273,6 @@ class Tanker(Boat):
         n_coords = None
         if unique_coords:
             it = sorted(np.unique(lons, return_index=True)[1])
-            print('it: ', it)
-            print('unique: ', np.unique(lons, return_index=True))
             lons = lons[it]
             lats = lats[it]
             n_coords = lons.shape[0]
@@ -448,8 +447,9 @@ class Tanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_fuel_per_time_netCDF(self, courses, lats, lons, time):
-        self.write_netCDF_courses(courses, lats, lons, time)
+    def get_fuel_per_time_netCDF(self, courses, lats, lons, time, unique_coords=False):
+        self.write_netCDF_courses(courses, lats, lons, time, unique_coords)
+
         # ds = self.get_fuel_netCDF_loop()
         # ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
         ds = self.get_fuel_netCDF()
