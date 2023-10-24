@@ -546,7 +546,9 @@ class WeatherCondFromFile(WeatherCond):
 
         return self.wind_vectors[idx]
 
-    def read_dataset(self, filepath):
+    def read_dataset(self, filepath=None):
+        if filepath is None:
+            raise RuntimeError("filepath must not be None for data_mode = 'from_file'")
         logger.info(form.get_log_step('Reading dataset from' + str(filepath), 1))
         self.ds = xr.open_dataset(filepath)  # self.ds = self.manipulate_dataset()
 
@@ -594,7 +596,7 @@ class WeatherCondODC(WeatherCond):
         except Exception as e:
             raise e
 
-    def read_dataset(self):
+    def read_dataset(self, filepath=None):
         # ODC doesn't allow hyphens ("-") in band names. Because we would like to keep the original band
         # names from GFS with hyphen we use band aliases instead.
         measurements_gfs = ['Temperature_surface', 'Pressure_reduced_to_MSL_msl', 'Wind_speed_gust_surface',
@@ -622,6 +624,12 @@ class WeatherCondODC(WeatherCond):
         form.print_current_time('interpolation', time.time())
         self.ds = xr.merge([full_CMEMS_data, GFS_interpolated])
         form.print_current_time('end time', time.time())
+
+    def write_data(self, filepath):
+        print('Writing weather data to file ' + str(filepath))
+        self.ds.to_netcdf(filepath)
+        self.ds.close()
+        return filepath
 
     def _has_scaling(self, dataset):
         """Check if any of the included data variables has a scale_factor or add_offset"""
