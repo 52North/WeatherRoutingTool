@@ -88,14 +88,14 @@ if __name__ == "__main__":
     # constraint_list.add_neg_constraint(continuous_checks_land, 'continuous')
     constraint_list.print_settings()'''
 
+    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
-        ['land_crossing_global_land_mask', 'water_depth', 'on_map'], config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
+        ['land_crossing_global_land_mask','water_depth','on_map'], config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
         depthfile)
 
     # *******************************************
     # initialise route
     min_fuel_route = RoutingAlgFactory.get_routing_alg('isofuel')
-    water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************
