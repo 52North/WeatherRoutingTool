@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
-        ['land_crossing_global_land_mask','water_depth','on_map'], config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
+        ['land_crossing_global_land_mask', 'water_depth', 'on_map'], config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
         depthfile)
 
     # *******************************************

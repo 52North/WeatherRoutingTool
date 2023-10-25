@@ -9,7 +9,6 @@ import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
 from geovectorslib import geod
 
-
 import mariPower
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
@@ -254,7 +253,7 @@ class Tanker(Boat):
     #   lons = {lon1, lon1, lon1}
 
     def write_netCDF_courses(self, courses, lats, lons, time, unique_coords=False):
-        debug = True
+        debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
         courses = units.degree_to_pmpi(courses)
 
@@ -278,13 +277,13 @@ class Tanker(Boat):
             n_coords = lons.shape[0]
         else:
             n_coords = lons.shape[0]
-          # number or coordinate pairs
+        # number or coordinate pairs
         n_courses = int(courses.shape[0] / n_coords)  # number of courses per coordinate pair
 
         # generate iterator for courses and coordinate pairs
         it_course = np.arange(n_courses) + 1  # get iterator with a length of the number of unique longitude values
         it_course = np.hstack(
-                (it_course,) * n_coords)  # prepare iterator for Data Frame: repeat each element as often as
+            (it_course,) * n_coords)  # prepare iterator for Data Frame: repeat each element as often as
         it_pos = np.arange(n_coords) + 1
         it_pos = np.repeat(it_pos, n_courses)  # np.hstack((it_pos,) * n_courses)
 

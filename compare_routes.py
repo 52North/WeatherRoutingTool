@@ -17,14 +17,16 @@ if __name__ == "__main__":
     # /Thames_Bordeaux_WP3_WH8.json"
 
     # simulation study plot
-    filename1 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_NorthAtlantic/min_time_route_leftright.json")
-    filename2 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_NorthAtlantic/min_time_route_rightleft.json")
-    #filename3 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
+    filename1 = (
+        "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
+    filename2 = (
+        "/home/kdemmich/MariData/Code/Data/RouteCollection/CompareWeather_NorthAtlantic/min_time_route_rightleft.json")
+    # filename3 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
-    #rp_read3 = RouteParams.from_file(filename3)
+    # rp_read3 = RouteParams.from_file(filename3)
 
     ##
     # init wheather
@@ -60,7 +62,7 @@ if __name__ == "__main__":
     # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
     ax = rp_read1.plot_route(ax, graphics.get_colour(0), "wind scenario")
     ax = rp_read2.plot_route(ax, graphics.get_colour(1), "current scenario")
-    #ax = rp_read3.plot_route(ax, graphics.get_colour(2), "Route travel_dist")
+    # ax = rp_read3.plot_route(ax, graphics.get_colour(2), "Route travel_dist")
 
     # rp_read1.plot_route(ax, 'orangered', "10m Tiefgang")
     # rp_read2.plot_route(ax, 'cyan', "kein Tiefgang")
@@ -83,7 +85,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     rp_read1.plot_power_vs_dist(graphics.get_colour(0), "wind scenario")
     rp_read2.plot_power_vs_dist(graphics.get_colour(1), "current scenario")
-    #rp_read3.plot_power_vs_dist(graphics.get_colour(2), "Route travel_dist")
+    # rp_read3.plot_power_vs_dist(graphics.get_colour(2), "Route travel_dist")
 
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     rp_read1.plot_power_vs_coord(ax, graphics.get_colour(0), "wind scenario", coordstring)
     rp_read2.plot_power_vs_coord(ax, graphics.get_colour(1), "current scenario", coordstring)
-    #rp_read3.plot_power_vs_coord(ax, graphics.get_colour(2), "good weather", coordstring)
+    # rp_read3.plot_power_vs_coord(ax, graphics.get_colour(2), "good weather", coordstring)
 
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)

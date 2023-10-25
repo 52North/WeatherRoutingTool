@@ -29,8 +29,8 @@ DELTA_FUEL = 1 * 2000  # amount of fuel per routing step (kg)
 
 ROUTER_HDGS_SEGMENTS = 30  # total number of courses : put even number!!
 ROUTER_HDGS_INCREMENTS_DEG = 6  # increment of headings
-#ROUTER_HDGS_SEGMENTS = 40  # total number of courses : put even number!!
-#ROUTER_HDGS_INCREMENTS_DEG = 3  # increment of headings
+# ROUTER_HDGS_SEGMENTS = 40  # total number of courses : put even number!!
+# ROUTER_HDGS_INCREMENTS_DEG = 3  # increment of headings
 # ROUTER_HDGS_SEGMENTS = 4  # total number of courses : put even number!!
 # ROUTER_HDGS_INCREMENTS_DEG = 10  # increment of headings
 ROUTER_RPM_SEGMENTS = 1  # not used yet
@@ -38,7 +38,7 @@ ROUTER_RPM_INCREMENTS_DEG = 1  # not used yet
 ISOCHRONE_EXPECTED_SPEED_KTS = 8  # not used yet
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91  # angular range of azimuth angle that is considered for pruning (only one half!)
 ISOCHRONE_PRUNE_SEGMENTS = 20  # total number of azimuth bins that are used for pruning in prune sector which is 2x
-#ISOCHRONE_PRUNE_SEGMENTS=20
+# ISOCHRONE_PRUNE_SEGMENTS=20
 ##
 # configurations for local execution
 WEATHER_DATA = os.getenv('WRT_WEATHER_DATA')  # path to weather data

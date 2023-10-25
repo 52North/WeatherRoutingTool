@@ -405,7 +405,8 @@ class IsoBased(RoutingAlg):
         # define pruning area
         azi0s = np.repeat(new_azi['azi1'], self.prune_segments + 1)
 
-        delta_hdgs = units.get_angle_bins(-self.prune_sector_deg_half, +self.prune_sector_deg_half, self.prune_segments + 1)
+        delta_hdgs = units.get_angle_bins(-self.prune_sector_deg_half, +self.prune_sector_deg_half,
+                                          self.prune_segments + 1)
 
         bins = azi0s - delta_hdgs
         bins = np.sort(bins)
@@ -461,7 +462,8 @@ class IsoBased(RoutingAlg):
             plt.savefig(final_path)
 
         # define pruning area
-        bins = units.get_angle_bins(mean_azimuth - self.prune_sector_deg_half, mean_azimuth + self.prune_sector_deg_half, self.prune_segments + 1)
+        bins = units.get_angle_bins(mean_azimuth - self.prune_sector_deg_half,
+                                    mean_azimuth + self.prune_sector_deg_half, self.prune_segments + 1)
 
         bins = np.sort(bins)
 
@@ -621,8 +623,8 @@ class IsoBased(RoutingAlg):
         concatenated_distance = np.sum(self.dist_per_step, axis=0)
         concatenated_distance[is_constrained] = 0
 
-        if np.all(dist_to_dest['s12'])>0 :
-            self.full_dist_traveled = travel_dist['s12']*travel_dist['s12']/dist_to_dest['s12']
+        if np.all(dist_to_dest['s12']) > 0:
+            self.full_dist_traveled = travel_dist['s12'] * travel_dist['s12'] / dist_to_dest['s12']
         else:
             self.full_dist_traveled = travel_dist['s12']
         if (debug):
