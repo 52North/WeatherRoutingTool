@@ -2,6 +2,7 @@
 import datetime
 import logging
 import math
+from datetime import timezone
 
 import numpy as np
 from zoneinfo import ZoneInfo
@@ -69,7 +70,7 @@ def convert_nptd64_to_ints(time):
 def convert_npdt64_to_datetime(time):
     timestamp = ((time - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
     print('timestampt', type(timestamp))
-    TIME = datetime.datetime.fromtimestamp(timestamp)  # - datetime.timedelta(hours=2)
+    TIME = datetime.datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
 
 
@@ -97,9 +98,12 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
 
 
 def compare_times(time1, time2):
-    time1 = (time1 - datetime.datetime.strptime("1970-01-01T00:00Z", '%Y-%m-%dT%H:%MZ'))
-    time2 = (time2 - datetime.datetime.strptime("1970-01-01T00:00Z", '%Y-%m-%dT%H:%MZ'))
+    utc_timeoffset = datetime.datetime(1970, 1, 1, 0, 0, 0)
     for iTime in range(0, time1.shape[0]):
+        time1[iTime] = time1[iTime].replace(tzinfo=datetime.timezone.utc) - utc_timeoffset.replace(
+            tzinfo=datetime.timezone.utc)
+        time2[iTime] = time2[iTime].replace(tzinfo=datetime.timezone.utc) - utc_timeoffset.replace(
+            tzinfo=datetime.timezone.utc)
         time1[iTime] = time1[iTime].total_seconds()
         time2[iTime] = time2[iTime].total_seconds()
         print('time1: ', time1)
