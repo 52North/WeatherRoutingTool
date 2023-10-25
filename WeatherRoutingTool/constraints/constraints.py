@@ -152,7 +152,7 @@ class ConstraintsListFactory:
         pass
 
     @classmethod
-    def get_constraints_list(cls, constraints_string_list, data_mode, boat_draught, map, depthfile):
+    def get_constraints_list(cls, constraints_string_list, **kwargs):
         pars = ConstraintPars()
         constraints_list = ConstraintsList(pars)
 
@@ -169,13 +169,33 @@ class ConstraintsListFactory:
             constraints_list.add_neg_constraint(seamarks, 'continuous')
 
         if 'water_depth' in constraints_string_list:
-            water_depth = WaterDepth(data_mode, boat_draught, map, depthfile)
+            if ('data_mode' not in kwargs) or ('boat_draught' not in kwargs) or ('depthfile' not in kwargs) or (
+                    'map' not in kwargs):
+                raise ValueError(
+                    'To use the depth constraint module, you need to provide the data mode for the download, '
+                    'the boat draught, the map size and the path to the depth file.')
+            data_mode = kwargs.get('data_mode')
+            boat_draught = kwargs.get('boat_draught')
+            map_size = kwargs.get('map')
+            depthfile = kwargs.get('depthfile')
+            water_depth = WaterDepth(data_mode, boat_draught, map_size, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
         if 'on_map' in constraints_string_list:
+            if 'map' not in kwargs:
+                raise ValueError('To use the on-map constraint module, you need to providethe map size.')
+            map_size = kwargs.get('map')
             on_map = StayOnMap()
-            on_map.set_map(map.lat1, map.lon1, map.lat2, map.lon2)
+            on_map.set_map(map_size.lat1, map_size.lon1, map_size.lat2, map_size.lon2)
             constraints_list.add_neg_constraint(on_map)
+
+        if 'via_waypoints' in constraints_string_list:
+            if 'waypoints' not in kwargs:
+                raise ValueError('To use the waypoints constraint module, you need to provide the waypoints.')
+            waypoints = kwargs.get('waypoints')
+            for (lat, lon) in waypoints:
+                wp = PositiveConstraintPoint(lat, lon)
+                constraints_list.add_pos_constraint(wp)
 
         constraints_list.print_settings()
         return constraints_list

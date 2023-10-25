@@ -90,8 +90,9 @@ if __name__ == "__main__":
 
     water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
-        ['land_crossing_global_land_mask', 'water_depth', 'on_map'], config.DATA_MODE, config.BOAT_DRAUGHT, default_map,
-        depthfile)
+        ['land_crossing_global_land_mask', 'water_depth', 'on_map', 'via_waypoints'], data_mode=config.DATA_MODE,
+        boat_draught=config.BOAT_DRAUGHT, map=default_map, depthfile=depthfile,
+        waypoints=[(35.534, 17.035), (38.32, 8.04), (43.184, 9.438)])
 
     # *******************************************
     # initialise route
