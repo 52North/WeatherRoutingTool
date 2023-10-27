@@ -317,7 +317,7 @@ def test_pruning_select_correct_idxs():
     ra.print_current_status()
     form.print_line()
 
-    ra.pruning(True, pruning_bins)
+    ra.pruning(True, pruning_bins, False)
 
     assert np.array_equal(cur_var_test, ra.current_variant)
     assert np.array_equal(cur_azi_test, ra.current_azimuth)
