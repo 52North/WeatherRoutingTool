@@ -392,7 +392,7 @@ class IsoBased(RoutingAlg):
         return bin_stat, bin_edges, bin_number
 
     def pruning_per_step(self, trim=True):
-        #self.pruning_headings_centered(trim)
+        # self.pruning_headings_centered(trim)
         self.pruning_gcr_centered(trim)
 
     def pruning_gcr_centered(self, trim=True):
@@ -429,8 +429,7 @@ class IsoBased(RoutingAlg):
         # define pruning area
         azi0s = np.repeat(new_azi['azi1'], self.prune_segments + 1)
 
-        delta_hdgs = np.linspace(-self.prune_sector_deg_half, +self.prune_sector_deg_half,
-                                          self.prune_segments + 1)
+        delta_hdgs = np.linspace(-self.prune_sector_deg_half, +self.prune_sector_deg_half, self.prune_segments + 1)
 
         bins = units.cut_angles(azi0s - delta_hdgs)
         bins = np.sort(bins)
@@ -501,7 +500,6 @@ class IsoBased(RoutingAlg):
             self.pruning(trim, bins, True)
         else:
             self.pruning(trim, bins)
-
 
     def define_variants_per_step(self):
         self.define_variants()
@@ -772,7 +770,7 @@ class IsoBased(RoutingAlg):
         print('start_temp: ', self.start_temp)
         print('finish_temp: ', self.finish_temp)
         self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
-        print('gcr_azi_temp: ',self.gcr_azi_temp)
+        print('gcr_azi_temp: ', self.gcr_azi_temp)
 
         print('Currently going from')
         print(self.start_temp)
