@@ -321,8 +321,8 @@ class IsoBased(RoutingAlg):
             print('full_dist_traveled', self.full_time_traveled)
 
         idxs = []
-        bin_stat, bin_edges, bin_number = binned_statistic(self.current_variant, self.full_dist_traveled,
-                                                           statistic=np.nanmax, bins=bins)
+        # bin_stat, bin_edges, bin_number = self.courses_based_pruning(bins)
+        bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
 
         if trim:
             for i in range(len(bin_edges) - 1):
@@ -370,6 +370,20 @@ class IsoBased(RoutingAlg):
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
+
+    def courses_based_pruning(self, bins):
+        bin_stat, bin_edges, bin_number = binned_statistic(self.current_variant, self.full_dist_traveled,
+                                                           statistic=np.nanmax, bins=bins)
+        return bin_stat, bin_edges, bin_number
+
+    def larger_direction_based_pruning(self, bins):
+        start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
+        start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
+        larger_direction = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
+        larger_direction = larger_direction['azi1']
+        bin_stat, bin_edges, bin_number = binned_statistic(larger_direction, self.full_dist_traveled,
+                                                           statistic=np.nanmax, bins=bins)
+        return bin_stat, bin_edges, bin_number
 
     def pruning_per_step(self, trim=True):
         self.pruning_headings_centered(trim)  # self.pruning_gcr_centered(trim)
