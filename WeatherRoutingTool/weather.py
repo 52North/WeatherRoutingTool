@@ -160,14 +160,6 @@ class WeatherCondEnvAutomatic(WeatherCond):
         lon_max = self.map_size.lon2
         lat_min = self.map_size.lat1
         lat_max = self.map_size.lat2
-        lat_min_GFS = lat_min
-        lat_max_GFS = lat_max
-
-        if lat_min_GFS < 0:
-            lat_min_GFS = lat_min_GFS + 180
-        if lat_max_GFS < 0:
-            lat_max_GFS = lat_max_GFS + 180
-
         height_min = 10
         height_max = 20
 
@@ -176,7 +168,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
                    "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", "Pressure_surface"]
         sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
                         'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min, lon_max),
-                        'latitude': slice(lat_min_GFS, lat_max_GFS)}
+                        'latitude': slice(lat_min, lat_max)}
 
         downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
         ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
