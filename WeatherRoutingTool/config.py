@@ -18,14 +18,14 @@ DEFAULT_ROUTE = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_ROUTE', '-99'
 DEPARTURE_TIME = os.getenv('WRT_DEPARTURE_TIME')  # start time of travelling
 DEFAULT_MAP = format.get_bbox_from_string(os.getenv('WRT_DEFAULT_MAP', '-99'))
 BOAT_SPEED = float(os.getenv('WRT_BOAT_SPEED', '-99'))  # (m/s)
-BOAT_DRAUGHT = 20  # os.getenv('WRT_BOAT_DRAUGHT')  # (m)
+BOAT_DRAUGHT = 10  # os.getenv('WRT_BOAT_DRAUGHT')  # (m)
 
 ##
 # Constant settings for isobased algorithm
 TIME_FORECAST = 90  # forecast hours weather
-ROUTING_STEPS = 30  # number of routing steps
+ROUTING_STEPS = 60  # number of routing steps
 DELTA_TIME_FORECAST = 3  # time resolution of weather forecast (hours)
-DELTA_FUEL = 1 * 2000  # amount of fuel per routing step (kg)
+DELTA_FUEL = 1 * 5000  # amount of fuel per routing step (kg)
 
 ROUTER_HDGS_SEGMENTS = 30  # total number of courses : put even number!!
 ROUTER_HDGS_INCREMENTS_DEG = 6  # increment of headings
@@ -39,6 +39,11 @@ ISOCHRONE_EXPECTED_SPEED_KTS = 8  # not used yet
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91  # angular range of azimuth angle that is considered for pruning (only one half!)
 ISOCHRONE_PRUNE_SEGMENTS = 20  # total number of azimuth bins that are used for pruning in prune sector which is 2x
 # ISOCHRONE_PRUNE_SEGMENTS=20
+ISOCHRONE_PRUNE_GCR_CENTERED = False
+ISOCHRONE_PRUNE_BEARING = True
+ISOCHRONE_MINIMISATION_CRITERION = 'squareddist_over_disttodest'  # minimisation criterion. Can be full travel distance ('dist') and travel
+# distance squared divided by the distance towards the destination ('squareddist_over_disttodest')
+
 ##
 # configurations for local execution
 WEATHER_DATA = os.getenv('WRT_WEATHER_DATA')  # path to weather data

@@ -69,6 +69,9 @@ class IsoBased(RoutingAlg):
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
+    prune_gcr_centered: bool
+    prune_bearings: bool
+    minimisation_criterion: str
 
     def __init__(self, start, finish, departure_time, figurepath=""):
         super().__init__(start, finish, departure_time, figurepath)
@@ -96,6 +99,14 @@ class IsoBased(RoutingAlg):
 
     def print_init(self):
         RoutingAlg.print_init(self)
+        logger.info(form.get_log_step('pruning settings', 1))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_SECTOR_DEG_HALF: ' + str(self.prune_sector_deg_half), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_SEGMENTS: ' + str(self.prune_segments), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_GCR_CENTERED: '+ str(self.prune_gcr_centered), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: '+ str(self.prune_bearings), 2))
+        logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: '+ str(self.minimisation_criterion), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: '+ str(self.variant_segments), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: '+ str(self.variant_increments_deg), 2))
 
     def print_current_status(self):
         print('PRINTING ALG SETTINGS')
@@ -392,8 +403,10 @@ class IsoBased(RoutingAlg):
         return bin_stat, bin_edges, bin_number
 
     def pruning_per_step(self, trim=True):
-        # self.pruning_headings_centered(trim)
-        self.pruning_gcr_centered(trim)
+        if self.prune_gcr_centered:
+            self.pruning_gcr_centered(trim)
+        else:
+            self.pruning_headings_centered(trim)
 
     def pruning_gcr_centered(self, trim=True):
         '''
@@ -434,10 +447,13 @@ class IsoBased(RoutingAlg):
         bins = units.cut_angles(azi0s - delta_hdgs)
         bins = np.sort(bins)
 
-        if ((self.ncount % 10) < 3) and (self.ncount > 10):
-            self.pruning(trim, bins, True)
+        if self.prune_bearings:
+            self.pruning(trim, bins, False)
         else:
-            self.pruning(trim, bins)
+            if ((self.ncount % 10) < 3) and (self.ncount > 10):
+                self.pruning(trim, bins, True)
+            else:
+                self.pruning(trim, bins, False)
 
     def pruning_headings_centered(self, trim=True):
         '''
@@ -496,17 +512,25 @@ class IsoBased(RoutingAlg):
         if debug:
             print('bins: ', bins)
 
-        if ((self.ncount % 10) < 3) and (self.ncount > 10):
-            self.pruning(trim, bins, True)
+        if self.prune_bearings:
+            self.pruning(trim, bins, False)
         else:
-            self.pruning(trim, bins)
+            if ((self.ncount % 10) < 3) and (self.ncount > 10):
+                self.pruning(trim, bins, True)
+            else:
+                self.pruning(trim, bins, False)
 
     def define_variants_per_step(self):
         self.define_variants()
 
-    def set_pruning_settings(self, sector_deg_half, seg):
+    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings, prune_gcr_centered):
         self.prune_sector_deg_half = sector_deg_half
         self.prune_segments = seg
+        self.prune_bearings = prune_bearings
+        self.prune_gcr_centered = prune_gcr_centered
+
+    def set_minimisation_criterion(self, min_str):
+        self.minimisation_criterion = min_str
 
     def set_variant_segments(self, seg, inc):
         self.variant_segments = seg
@@ -653,7 +677,10 @@ class IsoBased(RoutingAlg):
         concatenated_distance[is_constrained] = 0
 
         if np.all(dist_to_dest['s12']) > 0:
-            self.full_dist_traveled = travel_dist['s12'] * travel_dist['s12'] / dist_to_dest['s12']
+            if self.minimisation_criterion == 'squareddist_over_disttodest':
+                self.full_dist_traveled = travel_dist['s12'] * travel_dist['s12'] / dist_to_dest['s12']
+            if self.minimisation_criterion == 'dist':
+                self.full_dist_traveled = travel_dist['s12']
         else:
             self.full_dist_traveled = travel_dist['s12']
         if (debug):

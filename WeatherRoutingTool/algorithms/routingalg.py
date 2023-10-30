@@ -54,8 +54,6 @@ class RoutingAlg():
 
         self.figure_path = figure_path
 
-        self.print_init()
-
     def init_fig(self):
         pass
 
