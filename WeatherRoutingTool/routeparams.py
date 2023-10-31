@@ -370,15 +370,15 @@ class RouteParams():
         waypoint_coors['start_times'] = start_times
         return waypoint_coors
 
-    def get_full_dist(self, unit = 'km'):
+    def get_full_dist(self, unit='km'):
         dist = np.sum(self.dists_per_step)
 
         if unit == 'km':
-            return dist/1000
+            return dist / 1000
         if unit == 'm':
             return dist
 
-    def get_full_travel_time(self, unit = 'h'):
+    def get_full_travel_time(self, unit='h'):
         if unit == 'h':
             return self.time.total_seconds() / 3600
         if unit == 'min':
@@ -388,15 +388,14 @@ class RouteParams():
         if unit == 'datetime':
             return self.time
 
-    def get_full_fuel(self, unit = 't'):
+    def get_full_fuel(self, unit='t'):
         full_fuel = 0
-        for ipoint in range(0,self.count-1):
+        for ipoint in range(0, self.count - 1):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds() / 3600
             fuel_per_step = self.ship_params_per_step.fuel[ipoint] * time_passed
 
             if unit == 'kg':
                 fuel_per_step = fuel_per_step * 1000
-            full_fuel = full_fuel+ fuel_per_step
+            full_fuel = full_fuel + fuel_per_step
 
         return full_fuel
-

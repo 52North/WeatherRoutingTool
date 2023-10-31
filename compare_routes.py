@@ -18,9 +18,11 @@ if __name__ == "__main__":
 
     # simulation study plot
     filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestFOC/min_time_route.json")
-    filename2 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestWeather/min_time_route.json")
+    filename2 = (
+        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestWeather/min_time_route.json")
     filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/fastest/min_time_route.json")
-    filename4 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/original/min_time_route.json")
+    filename4 = (
+        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/original/min_time_route.json")
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
 
@@ -56,7 +58,7 @@ if __name__ == "__main__":
     wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
     fig, ax = plt.subplots(figsize=(12, 7))
-    #wt.plot_weather_map(fig, ax, plot_time, "wind")
+    # wt.plot_weather_map(fig, ax, plot_time, "wind")
 
     ##
     # init Constraints
@@ -126,4 +128,3 @@ if __name__ == "__main__":
     print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time()))
     print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time()))
     print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time()))
-

@@ -20,6 +20,7 @@ from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.ship')
 
+
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.
 # SailingBoat: implements sailing boat as originally done in wind-router package. Deprecated. ToDo: can be deleted?

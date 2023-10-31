@@ -104,11 +104,11 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('pruning settings', 1))
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_SECTOR_DEG_HALF: ' + str(self.prune_sector_deg_half), 2))
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_SEGMENTS: ' + str(self.prune_segments), 2))
-        logger.info(form.get_log_step('ISOCHRONE_PRUNE_GCR_CENTERED: '+ str(self.prune_gcr_centered), 2))
-        logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: '+ str(self.prune_bearings), 2))
-        logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: '+ str(self.minimisation_criterion), 2))
-        logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: '+ str(self.variant_segments), 2))
-        logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: '+ str(self.variant_increments_deg), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_GCR_CENTERED: ' + str(self.prune_gcr_centered), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: ' + str(self.prune_bearings), 2))
+        logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: ' + str(self.minimisation_criterion), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: ' + str(self.variant_segments), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.variant_increments_deg), 2))
 
     def print_current_status(self):
         print('PRINTING ALG SETTINGS')
@@ -525,7 +525,7 @@ class IsoBased(RoutingAlg):
     def define_variants_per_step(self):
         self.define_variants()
 
-    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings = False, prune_gcr_centered = True):
+    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings=False, prune_gcr_centered=True):
         self.prune_sector_deg_half = sector_deg_half
         self.prune_segments = seg
         self.prune_bearings = prune_bearings
