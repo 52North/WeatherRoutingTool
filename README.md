@@ -1,62 +1,69 @@
-# ISOCHRONE CODE
+# Weather Routing Tool
 
 ## Installation instructions
 
-The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages. 
+The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages.
+
 ### Installation via the requirements.txt
-- generate a virtual environment e.g. via 
-    ```python -m venv "venv"```
-- activate the virtual environment: ```source venv/bin/activate```
-- install the routing tool: ```pip install -r /path-to-WRT/requirements.txt```
-- install the python package for downloading the environmental data: ```pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader```
+
+- generate a virtual environment e.g. via `python -m venv "venv"`
+- activate the virtual environment: `source venv/bin/activate`
+- install the routing tool: `pip install -r /path-to-WRT/requirements.txt`
+- install the python package for downloading the environmental data: `pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader`
 - install mariPower:
-    - request access to the respective git repository and clone it
-    - open setup.py in maripower directory
-    - delete requirement pickle
-    - fix smt to version 1.3.0 (```smt==1.3.9```)
-    - install maripower: ```pip install -e maripower```
+  - request access to the respective git repository and clone it
+  - open setup.py in maripower directory
+  - delete requirement pickle
+  - fix smt to version 1.3.0 (`smt==1.3.9`)
+  - install maripower: `pip install -e maripower`
 
 ### Installation via the setup.py
-- generate a virtual environment e.g. via 
-    ```python3.9 -m venv "venv"```
-- activate the virtual environment: ```source venv/bin/activate```
-- export the path variable for the WRT: ```export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/```
-- install the WRT: ```/path/to/WRT/setup.py install```
+
+- generate a virtual environment e.g. via `python3.9 -m venv "venv"`
+- activate the virtual environment: `source venv/bin/activate`
+- export the path variable for the WRT: `export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/`
+- install the WRT: `/path/to/WRT/setup.py install`
 - install mariPower:
-    - request access to the respective git repository and clone it
-    - open setup.py in maripower directory
-    - delete the requirement pickle
-    - fix smt to version 1.3.0 (```smt==1.3.9```)
-    - install maripower: ```pip install -e maripower```
+  - request access to the respective git repository and clone it
+  - open setup.py in maripower directory
+  - delete the requirement pickle
+  - fix smt to version 1.3.0 (`smt==1.3.9`)
+  - install maripower: `pip install -e maripower`
 
 ### Run the software
+
 Before running the WRT, the necessary input data needs to be setup. Please follow these steps:
+
 1. For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
-   * u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
-   * v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
-   * vtotal (Northward total velocity: Eulerian + Waves + Tide)
-   * utotal (Eastward total velocity: Eulerian + Waves + Tide)
-   * VHMO (spectral significant wave height @ sea surface)
-   * VMDR (mean wave direction @ sea surface)
-   * VTPK (wave period at spectral peak)
-   * thetao (potential temperature)
-   * Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
-   * Temperature_surface (temperature at the water surface)
-   * so (salinity)
+   - u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
+   - v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
+   - vtotal (Northward total velocity: Eulerian + Waves + Tide)
+   - utotal (Eastward total velocity: Eulerian + Waves + Tide)
+   - VHMO (spectral significant wave height @ sea surface)
+   - VMDR (mean wave direction @ sea surface)
+   - VTPK (wave period at spectral peak)
+   - thetao (potential temperature)
+   - Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
+   - Temperature_surface (temperature at the water surface)
+   - so (salinity)
 2. For standalone execution, download data on the water depth from [here](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc).
 3. Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file). If you want to import the WRT into another python project, export the environment variables via doing
-```sh
-  source /home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/load_wrt.sh
-```
+
+   ```sh
+   source /home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/load_wrt.sh
+   ```
+
 4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
 5. Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*:
-```sh
-  python WeatherRoutingTool/execute_routing.py 
-```
+
+   ```sh
+   python WeatherRoutingTool/execute_routing.py
+   ```
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
 ## Logging
+
 The routing tool writes log output using the python package logging.
 Information about basic settings are written to a file which is specified by the environment variable `INFO_LOG_FILE`. Warnings and performance information are written to the file which is specified by the environment variable `PERFORMANCE_LOG_FILE`.
 Further debug information are written to stdout.
@@ -64,7 +71,8 @@ Further debug information are written to stdout.
 ## Isofuel Algorithm
 
 ### General concept
-The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
+
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*.
 
 The algorithm is the following:
 
@@ -97,13 +105,14 @@ lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
 ## Fuel estimation -- The communication between mariPower and the WRT
+
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
 Dimensions:                    (it_pos: 2, it_course: 3)
 Coordinates:
    * it_pos                    (it_pos) int64 1 2
-   * it_course                 (it_course) int64 1 2 3 
+   * it_course                 (it_course) int64 1 2 3
 Data variables:
     courses                    (it_pos, it_course) float64 ...
     speed                      (it_pos, it_course) int64 ...
@@ -120,7 +129,7 @@ Data variables:
     Hull_roughness_resistance  (it_pos, it_course) float64 ...
 ```
 
-The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordinate pairs and the courses that need to be checked per coordinate pair, respectively. The function in the WRT that writes the route parameters to the netCDF file is called ``` ship.write_netCDF_courses ```. Following up on this, the function ``` get_fuel_netCDF``` in the WRT calls the function ``` PredictPowerOrSpeedRoute ``` in mariPower which itself initiates the calcualation of the ship parameters. The netCDF file is overwritten by the WRT for every routing step s.t. the size of the file is not increasing during the routing process. 
+The coordinates `it_pos` and `it_course` are iterators for the coordinate pairs and the courses that need to be checked per coordinate pair, respectively. The function in the WRT that writes the route parameters to the netCDF file is called `ship.write_netCDF_courses`. Following up on this, the function `get_fuel_netCDF` in the WRT calls the function `PredictPowerOrSpeedRoute` in mariPower which itself initiates the calcualation of the ship parameters. The netCDF file is overwritten by the WRT for every routing step s.t. the size of the file is not increasing during the routing process.
 
 <figure>
   <p align="center">
@@ -139,7 +148,6 @@ The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordi
 <br>
 <br>
 
-
 Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. 2). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. 3).
 
 ## The constraints module
@@ -156,29 +164,29 @@ Both for the isofuel algorithm and the genetic algorithm the same structure of t
 <br>
 
 As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Thereby, several routing segments can be processed in only one request. This means that for the genetic algorithm, only one request needs to be performed for every route that is considered in a single generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this
-```
+
+```python
    safe_crossing(lat_start, lat_end, lon_start, lon_end)
 ```
-then, the arguments ```lat_start```, ```lat_end```, ```lon_start``` and ```lon_end``` correspond to arrays for which every element characterises a different routing segment. Thus the length of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following. <br>
+
+then, the arguments `lat_start`, `lat_end`, `lon_start` and `lon_end` correspond to arrays for which every element characterises a different routing segment. Thus the length of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following.
 
 Let's consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that are passed to the constraints module for the first routing step are the latitudes and longitudes of start and end points for the routing segments _a_ to _e_ which are
 
-* lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>)
-* lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)
-* lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)
-* lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)
+- lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>)
+- lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)
+- lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)
+- lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)
 
 i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.<br>
 The arguments that are passed for the second routing step are the start and end coordinates of the routing segments &#945; to &#950;:
 
-* lat_start = (lat_start<sub>&#945;&#946;&#947;</sub>, lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>, lat_start<sub>&#948;&#949;&#950;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>)
-* lat_end = (lat_end<sub>&#945;</sub>, lat_end<sub>&#946;</sub>,lat_end<sub>&#947;</sub>,lat_end<sub>&#948;</sub>, lat_end<sub>&#949;</sub>,lat_end<sub>&#950;</sub>)
-* lon_start = (lon_start<sub>&#945;&#946;&#947;</sub>, lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>, lon_start<sub>&#948;&#949;&#950;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>)
-* lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
+- lat_start = (lat_start<sub>&#945;&#946;&#947;</sub>, lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#945;&#946;&#947;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>, lat_start<sub>&#948;&#949;&#950;</sub>,lat_start<sub>&#948;&#949;&#950;</sub>)
+- lat_end = (lat_end<sub>&#945;</sub>, lat_end<sub>&#946;</sub>,lat_end<sub>&#947;</sub>,lat_end<sub>&#948;</sub>, lat_end<sub>&#949;</sub>,lat_end<sub>&#950;</sub>)
+- lon_start = (lon_start<sub>&#945;&#946;&#947;</sub>, lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#945;&#946;&#947;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>, lon_start<sub>&#948;&#949;&#950;</sub>,lon_start<sub>&#948;&#949;&#950;</sub>)
+- lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
-
-
 
 ## References
 
