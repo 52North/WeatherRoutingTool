@@ -1,11 +1,9 @@
 """Utility functions."""
 import datetime
 import logging
-import math
 from datetime import timezone
 
 import numpy as np
-from zoneinfo import ZoneInfo
 
 import WeatherRoutingTool.utils.formatting as form
 
