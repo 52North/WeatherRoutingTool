@@ -269,9 +269,9 @@ class ConstraintsList:
         lat.append(finish[0])
         lon.append(finish[1])
 
-        print("Tuple of positive constraints:")
-        print("lat: ", lat)
-        print("lon: ", lon)
+        logger.info(form.get_log_step('Tuple of positive constraints:', 0))
+        logger.info(form.get_log_step('lat:' + str(lat), 1))
+        logger.info(form.get_log_step('lon:' + str(lon), 1))
 
         self.positive_point_dict = {"lat": lat, "lon": lon}
         self.current_positive = 0
