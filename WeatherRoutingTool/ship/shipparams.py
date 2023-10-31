@@ -99,10 +99,6 @@ class ShipParams():
     def get_rroughness(self):
         return self.r_roughness
 
-    def get_full_fuel(self):
-        fuel = np.sum(self.fuel)
-        return fuel
-
     def get_fuel_type(self):
         return self.fuel_type
 

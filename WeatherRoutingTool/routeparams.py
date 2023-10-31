@@ -63,7 +63,7 @@ class RouteParams():
 
         self.ship_params_per_step.print()
 
-        print('full fuel consumed (kg): ' + str(self.ship_params_per_step.get_full_fuel()))
+        print('full fuel consumed (kg): ' + str(self.get_full_fuel('kg')))
         print('full travel time (h): ' + str(self.time))
         print('travel distance on great circle (m): ' + str(self.gcr))
 
@@ -369,3 +369,34 @@ class RouteParams():
         waypoint_coors['courses'] = courses
         waypoint_coors['start_times'] = start_times
         return waypoint_coors
+
+    def get_full_dist(self, unit = 'km'):
+        dist = np.sum(self.dists_per_step)
+
+        if unit == 'km':
+            return dist/1000
+        if unit == 'm':
+            return dist
+
+    def get_full_travel_time(self, unit = 'h'):
+        if unit == 'h':
+            return self.time.total_seconds() / 3600
+        if unit == 'min':
+            return self.time.total_seconds() / 60
+        if unit == 'sec':
+            return self.time.total_seconds()
+        if unit == 'datetime':
+            return self.time
+
+    def get_full_fuel(self, unit = 't'):
+        full_fuel = 0
+        for ipoint in range(0,self.count-1):
+            time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds() / 3600
+            fuel_per_step = self.ship_params_per_step.fuel[ipoint] * time_passed
+
+            if unit == 'kg':
+                fuel_per_step = fuel_per_step * 1000
+            full_fuel = full_fuel+ fuel_per_step
+
+        return full_fuel
+
