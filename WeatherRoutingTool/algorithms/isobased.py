@@ -97,6 +97,8 @@ class IsoBased(RoutingAlg):
         self.start_temp = self.start
         self.gcr_azi_temp = self.gcr_azi
 
+        self.minimisation_criterion = 'squareddist_over_disttodest'
+
     def print_init(self):
         RoutingAlg.print_init(self)
         logger.info(form.get_log_step('pruning settings', 1))
@@ -523,7 +525,7 @@ class IsoBased(RoutingAlg):
     def define_variants_per_step(self):
         self.define_variants()
 
-    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings, prune_gcr_centered):
+    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings = False, prune_gcr_centered = True):
         self.prune_sector_deg_half = sector_deg_half
         self.prune_segments = seg
         self.prune_bearings = prune_bearings
