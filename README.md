@@ -62,6 +62,12 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
+## Utilised Conventions
+
+  - latitude: -90° - 90°
+  - longitude: 0° - 360°
+  - headings: angular difference between North and the ship's direction, angles are going in the negative mathematical direction (clockwise)
+
 ## Logging
 
 The routing tool writes log output using the python package logging.
