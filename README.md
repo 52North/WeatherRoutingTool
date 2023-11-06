@@ -65,8 +65,8 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 ## Utilised Conventions
 
   - latitude: -90° - 90°
-  - longitude: 0° - 360°
-  - headings: angular difference between North and the ship's direction, angles are going in the negative mathematical direction (clockwise)
+  - longitude: -180° - 180°
+  - headings: 0° - 360°, angular difference between North and the ship's direction, angles are going in the negative mathematical direction (clockwise)
 
 ## Logging
 
