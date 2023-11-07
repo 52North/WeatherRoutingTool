@@ -23,28 +23,34 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--file',
                         help="Config file name (absolute path)",
                         required=True, type=str)
+    parser.add_argument('--performance-log-file',
+                        help="Performance logging file name (absolute path). Default: '/dev/stdout'",
+                        required=False, type=str, default='/dev/stdout')
+    parser.add_argument('--info-log-file',
+                        help="Info logging file name (absolute path). Default: '/dev/stdout'",
+                        required=False, type=str, default='/dev/stdout')
     args = parser.parse_args()
     if not args.file:
         raise RuntimeError("No config file name provided!")
 
     ##
-    # create config object
-    config = Config(file_name=args.file)
-    config.print()
-
-    ##
     # initialise logging
     logger = logging.getLogger('WRT')
     logger.setLevel(logging.INFO)
-    fh = logging.FileHandler(config.PERFORMANCE_LOG_FILE, mode='w')
+    fh = logging.FileHandler(args.performance_log_file, mode='w')
     fh.setLevel(logging.WARNING)
-    fhinfo = logging.FileHandler(config.INFO_LOG_FILE, mode='w')
+    fhinfo = logging.FileHandler(args.info_log_file, mode='w')
     fhinfo.setLevel(logging.INFO)
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
     fh.setFormatter(formatter)
     fhinfo.setFormatter(formatter)
     logger.addHandler(fh)
     logger.addHandler(fhinfo)
+
+    ##
+    # create config object
+    config = Config(file_name=args.file)
+    config.print()
 
     ##
     # suppress warnings from mariPower

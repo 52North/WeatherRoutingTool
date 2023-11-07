@@ -19,13 +19,11 @@ OPTIONAL_VARIABLES = {
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
     'FIGURE_PATH': None,  # FIXME: write only if path is set (see routingalg_factory.py)
-    'INFO_LOG_FILE': '/dev/stdout',  # FIXME: Windows?
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ISOCHRONE_PRUNE_GCR_CENTERED': True,
     'ISOCHRONE_PRUNE_BEARING': False,
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
-    'PERFORMANCE_LOG_FILE': '/dev/stdout',  # FIXME: Windows?
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'ROUTING_STEPS': 60,
@@ -52,13 +50,11 @@ class Config:
         self.DEPARTURE_TIME = None  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
         self.DEPTH_DATA = None  # path to depth data
         self.FIGURE_PATH = None  # path to figure repository
-        self.INFO_LOG_FILE = None  # path to log file which logs information
         self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning
         self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector
         self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
         self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
-        self.PERFORMANCE_LOG_FILE = None  # path to log file which logs performance
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
@@ -83,6 +79,7 @@ class Config:
                            "constraint modules.")
 
     def print(self):
+        # ToDo: prettify output
         logger.info(self.__dict__)
 
     def read_from_json(self, json_file):
@@ -101,12 +98,12 @@ class Config:
                 setattr(self, mandatory_variable, config_dict[mandatory_variable])
 
     def _set_recommended_config(self, config_dict):
-        for recommended_variable, default_value in RECOMMENDED_CONFIG_VARIABLES.items():
-            if recommended_variable not in config_dict.keys():
-                logger.warning(f"'{recommended_variable}' was not provided in the config and is set to the default value")
-                setattr(self, recommended_variable, default_value)
+        for recommended_var, default_value in RECOMMENDED_CONFIG_VARIABLES.items():
+            if recommended_var not in config_dict.keys():
+                logger.warning(f"'{recommended_var}' was not provided in the config and is set to the default value")
+                setattr(self, recommended_var, default_value)
             else:
-                setattr(self, recommended_variable, config_dict[recommended_variable])
+                setattr(self, recommended_var, config_dict[recommended_var])
 
     def _set_optional_config(self, config_dict):
         for optional_var, default_value in OPTIONAL_VARIABLES.items():
