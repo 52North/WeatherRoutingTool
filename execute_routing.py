@@ -1,10 +1,11 @@
+import argparse
 import datetime as dt
 import logging
 import warnings
 import logging.handlers
 
-import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import *
@@ -17,6 +18,20 @@ def merge_figures_to_gif(path, nof_figures):
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Weather Routing Tool')
+    parser.add_argument('-f', '--file',
+                        help="Config file name (absolute path)",
+                        required=True, type=str)
+    args = parser.parse_args()
+    if not args.file:
+        raise RuntimeError("No config file name provided!")
+
+    ##
+    # create config object
+    config = Config(file_name=args.file)
+    config.print()
+
     ##
     # initialise logging
     logger = logging.getLogger('WRT')
