@@ -6,7 +6,6 @@ import xarray
 import pytest
 
 import tests.basic_test_func as basic_test_func
-import WeatherRoutingTool.config
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import *
@@ -132,7 +131,8 @@ def test_safe_waterdepth():
     lat = np.array([[51.16, 52.5], [52, 52], ])
     lon = np.array([[2.5, 2.5], [2.05, 2.5], ])
     time = 0
-    depthfile = config.DEPTH_DATA
+    dirname = os.path.dirname(__file__)
+    depthfile = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     map = Map(50, 0, 55, 5)
     waterdepth = WaterDepth("from_file", 20, map, depthfile)
     # waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)

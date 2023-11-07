@@ -23,7 +23,6 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
-from WeatherRoutingTool.config import DEFAULT_MAP
 
 # Load the environment variables from the .env file
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -161,7 +160,8 @@ class ConstraintsListFactory:
             constraints_list.add_neg_constraint(land_crossing)
 
         if 'land_crossing_polygons' in constraints_string_list:
-            land_crossing_polygons = LandPolygonsCrossing()
+            map_size = kwargs.get('map_size')
+            land_crossing_polygons = LandPolygonsCrossing(map_size)
             constraints_list.add_neg_constraint(land_crossing_polygons)
 
         if 'seamarks' in constraints_string_list:
@@ -170,21 +170,21 @@ class ConstraintsListFactory:
 
         if 'water_depth' in constraints_string_list:
             if ('data_mode' not in kwargs) or ('boat_draught' not in kwargs) or ('depthfile' not in kwargs) or (
-                    'map' not in kwargs):
+                    'map_size' not in kwargs):
                 raise ValueError(
                     'To use the depth constraint module, you need to provide the data mode for the download, '
                     'the boat draught, the map size and the path to the depth file.')
             data_mode = kwargs.get('data_mode')
             boat_draught = kwargs.get('boat_draught')
-            map_size = kwargs.get('map')
+            map_size = kwargs.get('map_size')
             depthfile = kwargs.get('depthfile')
             water_depth = WaterDepth(data_mode, boat_draught, map_size, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
         if 'on_map' in constraints_string_list:
-            if 'map' not in kwargs:
+            if 'map_size' not in kwargs:
                 raise ValueError('To use the on-map constraint module, you need to providethe map size.')
-            map_size = kwargs.get('map')
+            map_size = kwargs.get('map_size')
             on_map = StayOnMap()
             on_map.set_map(map_size.lat1, map_size.lon1, map_size.lat2, map_size.lon2)
             constraints_list.add_neg_constraint(on_map)
@@ -461,17 +461,17 @@ class WaveHeight(NegativeConstraintFromWeather):
 
 
 class WaterDepth(NegativeContraint):
-    map: Map
+    map_size: Map
     depth_data: xr  # the xarray.Dataset is expected to have a variable called "depth"
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, data_mode, draught, map, depth_path=''):
+    def __init__(self, data_mode, draught, map_size, depth_path=''):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
         self.current_depth = np.array([-99])
         self.min_depth = draught
-        self.map = map
+        self.map_size = map_size
 
         self.depth_data = None
 
@@ -506,7 +506,7 @@ class WaterDepth(NegativeContraint):
         res_x = 30 / 3600  # 30 arc seconds to degrees
         res_y = 30 / 3600  # 30 arc seconds to degrees
         query = {'resolution': (res_x, res_y), 'align': (res_x / 2, res_y / 2),
-                 'latitude': (self.map.lat1, self.map.lat2), 'longitude': (self.map.lon1, self.map.lon2),
+                 'latitude': (self.map_size.lat1, self.map_size.lat2), 'longitude': (self.map_size.lon1, self.map_size.lon2),
                  'output_crs': 'EPSG:4326', 'measurements': measurements}
         ds_datacube = dc.load(product=product_name, **query).drop('time')
         if self._has_scaling(ds_datacube):
@@ -522,8 +522,8 @@ class WaterDepth(NegativeContraint):
         depth_data = downloader.download()
         depth_data_chunked = depth_data.chunk(chunks={"lat": "100MB", "lon": "100MB"})
         depth_data_chunked = depth_data_chunked.rename(z="depth", lat="latitude", lon="longitude")
-        depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map.lat1, self.map.lat2),
-                                                    longitude=slice(self.map.lon1, self.map.lon2))
+        depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),
+                                                    longitude=slice(self.map_size.lon1, self.map_size.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
         self._to_netcdf(depth_data_chunked, depth_path)
         return depth_data_chunked
@@ -561,8 +561,9 @@ class WaterDepth(NegativeContraint):
 
         ds_depth = xr.open_dataset(path)
         depth = ds_depth["z"].where(
-            (ds_depth.lat > self.map.lat1) & (ds_depth.lat < self.map.lat2) & (ds_depth.lon > self.map.lon1) & (
-                    ds_depth.lon < self.map.lon2) & (ds_depth.z < 0), drop=True, )
+            (ds_depth.lat > self.map_size.lat1) & (ds_depth.lat < self.map_size.lat2) & (
+                    ds_depth.lon > self.map_size.lon1) & (ds_depth.lon < self.map_size.lon2) & (
+                    ds_depth.z < 0), drop=True, )
 
         # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (
         # ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100)
@@ -591,8 +592,8 @@ class WaterDepth(NegativeContraint):
         ds_depth_coarsened = ds_depth.compute()
 
         self.depth_data = ds_depth_coarsened.where(
-            (ds_depth_coarsened.latitude > self.map.lat1) & (ds_depth_coarsened.latitude < self.map.lat2) & (
-                    ds_depth_coarsened.longitude > self.map.lon1) & (ds_depth_coarsened.longitude < self.map.lon2) & (
+            (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) & (
+                    ds_depth_coarsened.longitude > self.map_size.lon1) & (ds_depth_coarsened.longitude < self.map_size.lon2) & (
                     ds_depth_coarsened.depth < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
@@ -1156,8 +1157,9 @@ class SeamarkCrossing(ContinuousCheck):
 
 
 class LandPolygonsCrossing(ContinuousCheck):
-    def __init__(self):
+    def __init__(self, map_size):
         super().__init__()
+        self.map_size = map_size
 
     def query_land_polygons(self, engine=None, query=None):
         """
@@ -1230,7 +1232,7 @@ class LandPolygonsCrossing(ContinuousCheck):
             concat_gdf = self.query_land_polygons(engine=engine, query=query)
         else:
             concat_gdf = self.get_land_polygons()
-            concat_gdf.clip(box(DEFAULT_MAP[1], DEFAULT_MAP[0], DEFAULT_MAP[3], DEFAULT_MAP[2]))
+            concat_gdf.clip(box(self.map_size[1], self.map_size[0], self.map_size[3], self.map_size[2]))
 
         # generating the LineString geometry from start and end point
         for i in range(len(lat_start)):

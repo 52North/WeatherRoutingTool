@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
 from WeatherRoutingTool.constraints.constraints import ContinuousCheck, SeamarkCrossing, LandPolygonsCrossing
+from WeatherRoutingTool.utils.maps import Map
 import pytest
 
 # Create engine using SQLite
@@ -414,7 +415,7 @@ class TestContinuousCheck:
             assert isinstance(check_list[i], bool)
 
     def test_query_land_polygons(self):
-        gdf = LandPolygonsCrossing().query_land_polygons(engine=engine,
+        gdf = LandPolygonsCrossing(Map(0, 0, 0, 0)).query_land_polygons(engine=engine,
                                                          query="SELECT *,geometry as geom from land_polygons")
         print(gdf)
         assert isinstance(gdf, gpd.GeoDataFrame)
@@ -430,7 +431,7 @@ class TestContinuousCheck:
         lat_end = numpy.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595))
         lon_end = numpy.array((12.01631, 12.04631, 12.05631, 12.08631))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        check_list = LandPolygonsCrossing().check_crossing(
+        check_list = LandPolygonsCrossing(Map(0, 0, 0, 0)).check_crossing(
             lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end,
             engine=engine,
             query="SELECT *,geometry as geom from land_polygons"

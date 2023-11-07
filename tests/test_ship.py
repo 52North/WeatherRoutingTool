@@ -8,7 +8,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.unit_conversion as utils
 
 from WeatherRoutingTool.routeparams import RouteParams
@@ -21,10 +20,11 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 #    assert pol.inc(3) == 5
 
 def get_default_Tanker():
-    DEFAULT_GFS_FILE = config.BASE_PATH + '/tests/data/reduced_testdata_weather.nc'  # CMEMS needs lat: 30 to 45,
+    dirname = os.path.dirname(__file__)
+    DEFAULT_GFS_FILE = os.path.join(dirname, 'data/reduced_testdata_weather.nc')  # CMEMS needs lat: 30 to 45,
     # lon: 0 to 20
-    COURSES_FILE = config.BASE_PATH + '/CoursesRoute.nc'
-    DEPTH_FILE = config.DEPTH_DATA
+    COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
+    DEPTH_FILE = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
     pol = Tanker(2)
     pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE, DEPTH_FILE)
@@ -166,8 +166,6 @@ def test_power_consumption_returned():
     # dummy course netCDF
     pol = get_default_Tanker()
     pol.set_boat_speed(np.array([8]))
-    pol.set_env_data_path(config.WEATHER_DATA)
-    pol.set_courses_path(config.BASE_PATH + '/TestCoursesRoute.nc')
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)

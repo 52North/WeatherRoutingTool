@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 
 import datetime as dt
 
-import WeatherRoutingTool.config as config
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
@@ -26,6 +25,8 @@ if __name__ == "__main__":
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
 
+    depth_data = ""
+
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
     rp_read3 = RouteParams.from_file(filename3)
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     rp_4_str = 'original'
 
     ##
-    # init wheather
+    # init weather
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/mediteranean_sea_manipulated.nc"
     # British Channel
     # departure_time = "2023-06-21T12:00Z"
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     departure_time = "2023-09-28T09:00Z"
     time_for_plotting = "2023-11-01T09:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
+    lat1, lon1, lat2, lon2 = (44, -15, 53, 3)
 
     departure_time_dt = dt.datetime.strptime(departure_time, '%Y-%m-%dT%H:%MZ')
     plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')
@@ -62,7 +63,7 @@ if __name__ == "__main__":
 
     ##
     # init Constraints
-    water_depth = WaterDepth('from_file', 20, default_map, config.DEPTH_DATA)
+    water_depth = WaterDepth('from_file', 20, default_map, depth_data)
 
     ##
     # plotting routes in depth profile

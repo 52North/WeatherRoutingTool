@@ -61,7 +61,6 @@ if __name__ == "__main__":
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
-    figurepath = config.FIGURE_PATH
     routepath = config.ROUTE_PATH
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
         ['land_crossing_global_land_mask', 'water_depth', 'on_map', 'via_waypoints'], data_mode=config.DATA_MODE,
-        boat_draught=config.BOAT_DRAUGHT, map=default_map, depthfile=depthfile,  # waypoints Alexandria - Marseille
+        boat_draught=config.BOAT_DRAUGHT, map_size=default_map, depthfile=depthfile,  # waypoints Alexandria - Marseille
         # waypoints=[(35.534, 17.035), (39.431, 7.129)])  # original
         # waypoints=[(35.534, 17.035), (37.766, 11.056), (41.287, 9.138)]) #fastest
         # waypoints=[(35.534, 17.035), (38.123, 15.557), (43.270, 9.331)]) # best FOC
@@ -124,7 +123,7 @@ if __name__ == "__main__":
     # waypoints=[(43.171, -132.077), (55.483, -141.686)])  # original
     # *******************************************
     # initialise route
-    min_fuel_route = RoutingAlgFactory.get_routing_alg('isofuel')
+    min_fuel_route = RoutingAlgFactory.get_routing_alg(config)
     min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************

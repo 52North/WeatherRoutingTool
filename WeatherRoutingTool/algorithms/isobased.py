@@ -501,9 +501,10 @@ class IsoBased(RoutingAlg):
             self.ax.plot([self.lons_per_step[1][meadian_indx], upper_bound["lon2"]],
                          [self.lats_per_step[1][meadian_indx], upper_bound["lat2"]], color="blue")
 
-            final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
-            print('Saving updated figure to ', final_path)
-            plt.savefig(final_path)
+            if self.figure_path is not None:
+                final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
+                print('Saving updated figure to ', final_path)
+                plt.savefig(final_path)
 
         # define pruning area
         bins = units.get_angle_bins(mean_azimuth - self.prune_sector_deg_half,
@@ -700,6 +701,8 @@ class IsoBased(RoutingAlg):
         pass
 
     def init_fig(self, water_depth, map, showDepth=True):
+        if self.figure_path is None:
+            return
         self.showDepth = showDepth
         plt.rcParams['font.size'] = 20
         self.fig, self.ax = plt.subplots(figsize=(12, 10))
@@ -749,6 +752,8 @@ class IsoBased(RoutingAlg):
         plt.title('')
 
     def update_fig(self, status):
+        if self.figure_path is None:
+            return
         fig = self.fig
         route_ensemble = []
         self.ax.remove()

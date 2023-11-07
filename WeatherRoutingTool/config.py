@@ -16,6 +16,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 
 # optional variables with default values
 OPTIONAL_VARIABLES = {
+    'ALGORITHM_TYPE': 'isofuel',
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
     'FIGURE_PATH': None,  # FIXME: write only if path is set (see routingalg_factory.py)
@@ -39,6 +40,7 @@ class Config:
 
     def __init__(self, init_mode='from_json', file_name=None):
         # Details in README
+        self.ALGORITHM_TYPE = None  # options: 'isofuel'
         self.BOAT_DRAUGHT = None  # in m
         self.BOAT_SPEED = None  # in m/s
         self.COURSES_FILE = None   # path to file that acts as intermediate storage for courses per routing step
