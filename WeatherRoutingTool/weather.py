@@ -179,7 +179,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
                                'longitude': slice(lon_min, lon_max)}
         downloader_cmems_wave = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
                                                                  product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
-                                                                 product_type='nrt', username=config.CMEMS_USER,
+                                                                 product_type='nrt', username=config.CMEMS_USERNAME,
                                                                  password=config.CMEMS_PASSWORD)
         ds_CMEMS_wave = downloader_cmems_wave.download(parameters=par_CMEMS_wave, sel_dict=sel_dict_CMEMS_wave)
 
@@ -189,7 +189,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
                                'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
         downloader_cmems_phys = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
                                                                  product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
-                                                                 product_type='nrt', username=config.CMEMS_USER,
+                                                                 product_type='nrt', username=config.CMEMS_USERNAME,
                                                                  password=config.CMEMS_PASSWORD)
         ds_CMEMS_phys = downloader_cmems_phys.download(parameters=par_CMEMS_phys, sel_dict=sel_dict_CMEMS_phys)
 
@@ -199,7 +199,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
                                'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
         downloader_cmems_curr = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
                                                                  product='cmems_mod_glo_phy_anfc_merged-uv_PT1H-i',
-                                                                 product_type='nrt', username=config.CMEMS_USER,
+                                                                 product_type='nrt', username=config.CMEMS_USERNAME,
                                                                  password=config.CMEMS_PASSWORD)
         ds_CMEMS_curr = downloader_cmems_curr.download(parameters=par_CMEMS_curr, sel_dict=sel_dict_CMEMS_curr)
 

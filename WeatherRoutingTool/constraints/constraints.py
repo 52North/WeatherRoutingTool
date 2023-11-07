@@ -681,11 +681,11 @@ class ContinuousCheck(NegativeContraint):
 
     def __init__(self):
         NegativeContraint.__init__(self, "ContinuousChecks")
-        self.host = os.getenv("WRT_HOST")
-        self.database = os.getenv("WRT_DATABASE")
-        self.user = os.getenv("WRT_MYUSERNAME")
-        self.password = os.getenv("WRT_PASSWORD")
-        self.port = os.getenv("WRT_PORT")
+        self.host = os.getenv("WRT_DB_HOST")
+        self.database = os.getenv("WRT_DB_DATABASE")
+        self.user = os.getenv("WRT_DB_USERNAME")
+        self.password = os.getenv("WRT_DB_PASSWORD")
+        self.port = os.getenv("WRT_DB_PORT")
         self.seamark_object = ["nodes", "ways", "land_polygons"]
         self.query = ["SELECT * FROM openseamap.nodes", "SELECT *, linestring AS geom FROM openseamap.ways",
                       "SELECT *,geometry as geom FROM openseamap.land_polygons"]

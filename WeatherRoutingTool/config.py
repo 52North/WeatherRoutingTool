@@ -70,7 +70,6 @@ class Config:
             assert file_name
             self.read_from_json(file_name)
 
-        # FIXME: update usage of CMEMS and database variables
         if os.getenv('CMEMS_USERNAME') is None or os.getenv('CMEMS_PASSWORD') is None:
             logger.warning("No CMEMS username and/or password provided! Note that these are necessary if "
                            "DATA_MODE='automatic' used.")
