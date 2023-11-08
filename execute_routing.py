@@ -115,12 +115,14 @@ if __name__ == "__main__":
         # waypoints=[(35.534, 17.035), (39.431, 7.129)])  # original
         # waypoints=[(35.534, 17.035), (37.766, 11.056), (41.287, 9.138)]) #fastest
         # waypoints=[(35.534, 17.035), (38.123, 15.557), (43.270, 9.331)]) # best FOC
-        waypoints=[(35.534, 17.035), (37.766, 11.056), (43.270, 9.331)])  # best weather
-    # waypoints Columbo - Singapore
-    # waypoints = [(5.430, 88.759)])  # original
-    # waypoints = [(5.430, 88.759), (-5.968, 105.951)])  # fastest
-    # waypoints San Jose - Anchorage
-    # waypoints=[(43.171, -132.077), (55.483, -141.686)])  # original
+        # waypoints=[(35.534, 17.035), (37.766, 11.056), (43.270, 9.331)])  # best weather
+        # waypoints Columbo - Singapore
+        waypoints = [(5.430, 88.759)])  # original
+        # waypoints = [(5.430, 88.759), (-5.968, 105.951)])  # fastest
+        # waypoints=[(5.430, 88.759), (-2.965, 94.978), (-5.968, 105.951)]) # best FOC
+        # waypoints= [(5.430, 88.759), (-5.593, 92.826), (-5.968, 105.951)]) # best weather
+        # waypoints San Jose - Anchorage
+        # waypoints=[(43.171, -132.077), (55.483, -141.686)])  # original
     # *******************************************
     # initialise route
     min_fuel_route = RoutingAlgFactory.get_routing_alg(config)
