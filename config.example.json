@@ -1,0 +1,28 @@
+{
+  "DEFAULT_ROUTE": [37.416, -123.607, 58.760, -151.494],
+  "DEPARTURE_TIME": "2023-10-28T12:00Z",
+  "DEFAULT_MAP": [30, -155, 65, -115],
+  "BOAT_SPEED": 6,
+  "BOAT_DRAUGHT": 10,
+
+  "TIME_FORECAST": 90,
+  "ROUTING_STEPS": 60,
+  "DELTA_TIME_FORECAST": 3,
+  "DELTA_FUEL": 3000,
+
+  "COURSES_FILE": "/home/<user>/MariGeoRoute/WeatherRoutingTool/wrt_work_dir/data/courses_route_temp.nc",
+  "DEPTH_DATA": "/home/<user>/MariGeoRoute/WeatherRoutingTool/wrt_work_dir/data/depth_data_temp.nc",
+  "WEATHER_DATA": "/home/<user>/MariGeoRoute/WeatherRoutingTool/wrt_work_dir/data/weather_data_temp.nc",
+  "ROUTE_PATH": "/home/<user>/MariGeoRoute/WeatherRoutingTool/wrt_work_dir",
+
+  "DATA_MODE": "automatic",
+
+  "ROUTER_HDGS_SEGMENTS": 30,
+  "ROUTER_HDGS_INCREMENTS_DEG": 6,
+  "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
+  "ISOCHRONE_PRUNE_SEGMENTS": 20,
+
+  "ISOCHRONE_PRUNE_GCR_CENTERED": true,
+  "ISOCHRONE_PRUNE_BEARING": false,
+  "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest"
+}
