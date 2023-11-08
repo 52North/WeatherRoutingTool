@@ -382,7 +382,8 @@ def test_get_fuel_for_fixed_waypoints():
 
 
 '''
-    test whether power and wind resistance that are returned by maripower lie on an ellipse
+    test whether power and wind resistance that are returned by maripower lie on an ellipse. Wind is coming from the east, ellipse genreated
+    needs to be shifted towards the left
 '''
 
 
@@ -390,15 +391,14 @@ def test_wind_force():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
     courses = np.linspace(0, 360, 10)
-    courses = utils.degree_to_pmpi(courses)
+    courses_rad = utils.degree_to_pmpi(courses)
 
     time = np.full(10, datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
     bs = 6
 
     pol = get_default_Tanker()
     pol.set_boat_speed(bs)
-    # pol.write_netCDF_courses(courses, lats, lons, time)
-    # ds = xr.open_dataset(pol.courses_path)
+
     ship_params = pol.get_fuel_per_time_netCDF(courses, lats, lons, time, True)
     power = ship_params.get_power()
     rwind = ship_params.get_rwind()
@@ -408,12 +408,15 @@ def test_wind_force():
         courses[i] = math.radians(courses[i])
     # wind_dir = math.radians(wind_dir)
 
-    axes[0].plot(courses, power)
+    axes[0].plot(courses_rad, power)
     axes[0].legend()
     for ax in axes.flatten():
         ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
         ax.set_theta_zero_location("S")
         ax.grid(True)
-    axes[1].plot(courses, rwind)
+    axes[1].plot(courses_rad, rwind)
     axes[0].set_title("Power", va='bottom')
     axes[1].set_title("Wind resistence", va='top')
+
+    plt.show()
+
