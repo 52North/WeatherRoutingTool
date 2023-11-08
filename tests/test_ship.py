@@ -382,8 +382,8 @@ def test_get_fuel_for_fixed_waypoints():
 
 
 '''
-    test whether power and wind resistance that are returned by maripower lie on an ellipse. Wind is coming from the east, ellipse genreated
-    needs to be shifted towards the left
+    test whether power and wind resistance that are returned by maripower lie on an ellipse. Wind is coming from the
+    east, ellipse generated needs to be shifted towards the left
 '''
 
 
@@ -419,4 +419,3 @@ def test_wind_force():
     axes[1].set_title("Wind resistence", va='top')
 
     plt.show()
-

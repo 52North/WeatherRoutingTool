@@ -16,19 +16,21 @@ if __name__ == "__main__":
     # /Thames_Bordeaux_WP3_WH8.json"
 
     # simulation: Alexandria - Marseille
-    #filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestFOC/min_time_route.json")
-    #filename2 = (
+    # filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestFOC/min_time_route
+    # .json")
+    # filename2 = (
     #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestWeather/min_time_route.json")
-    #filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/fastest/min_time_route.json")
-    #filename4 = (
-    #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Manipulated_Routes/Alexandria_Marseille/original/min_time_route.json")
+    # filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/fastest/min_time_route
+    # .json")
+    # filename4 = (
+    #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Manipulated_Routes/Alexandria_Marseille/original
+    #    /min_time_route.json")
 
     filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestFOC/min_time_route.json")
     filename2 = (
         "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestWeather/min_time_route.json")
     filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/fastest/min_time_route.json")
-    filename4 = (
-        "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
+    filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
 
@@ -86,9 +88,9 @@ if __name__ == "__main__":
     ##
     # plotting power vs. distance
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    #rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
-    #rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
-    #rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
+    # rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
+    # rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
+    # rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
     rp_read4.plot_power_vs_dist(graphics.get_colour(3), rp_4_str)
 
     ax.legend(loc='lower left')

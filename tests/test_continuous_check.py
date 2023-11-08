@@ -415,8 +415,8 @@ class TestContinuousCheck:
             assert isinstance(check_list[i], bool)
 
     def test_query_land_polygons(self):
-        gdf = LandPolygonsCrossing(Map(0, 0, 0, 0)).query_land_polygons(engine=engine,
-                                                         query="SELECT *,geometry as geom from land_polygons")
+        gdf = LandPolygonsCrossing(Map(0, 0, 0, 0)).query_land_polygons(
+            engine=engine, query="SELECT *,geometry as geom from land_polygons")
         print(gdf)
         assert isinstance(gdf, gpd.GeoDataFrame)
         assert not gdf.empty, 'empty geodataframe'
