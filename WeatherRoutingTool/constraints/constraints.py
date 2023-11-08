@@ -112,6 +112,9 @@ class PositiveConstraintPoint(PositiveConstraint):
     def get_points(self):
         return self.coord
 
+    def print_info(self):
+        logger.info(form.get_log_step("intermediate waypoints activated for: " + str(self.coord), 1))
+
 
 class NegativeContraint(Constraint):
     def __init__(self, name):
@@ -506,7 +509,8 @@ class WaterDepth(NegativeContraint):
         res_x = 30 / 3600  # 30 arc seconds to degrees
         res_y = 30 / 3600  # 30 arc seconds to degrees
         query = {'resolution': (res_x, res_y), 'align': (res_x / 2, res_y / 2),
-                 'latitude': (self.map_size.lat1, self.map_size.lat2), 'longitude': (self.map_size.lon1, self.map_size.lon2),
+                 'latitude': (self.map_size.lat1, self.map_size.lat2),
+                 'longitude': (self.map_size.lon1, self.map_size.lon2),
                  'output_crs': 'EPSG:4326', 'measurements': measurements}
         ds_datacube = dc.load(product=product_name, **query).drop('time')
         if self._has_scaling(ds_datacube):
@@ -592,9 +596,9 @@ class WaterDepth(NegativeContraint):
         ds_depth_coarsened = ds_depth.compute()
 
         self.depth_data = ds_depth_coarsened.where(
-            (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) & (
-                    ds_depth_coarsened.longitude > self.map_size.lon1) & (ds_depth_coarsened.longitude < self.map_size.lon2) & (
-                    ds_depth_coarsened.depth < 0), drop=True, )
+            (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) &
+            (ds_depth_coarsened.longitude > self.map_size.lon1) & (ds_depth_coarsened.longitude < self.map_size.lon2) &
+            (ds_depth_coarsened.depth < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
         cp = self.depth_data["depth"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
