@@ -15,13 +15,20 @@ if __name__ == "__main__":
     # filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230509_results
     # /Thames_Bordeaux_WP3_WH8.json"
 
-    # simulation study plot
-    filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestFOC/min_time_route.json")
+    # simulation: Alexandria - Marseille
+    #filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestFOC/min_time_route.json")
+    #filename2 = (
+    #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestWeather/min_time_route.json")
+    #filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/fastest/min_time_route.json")
+    #filename4 = (
+    #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Manipulated_Routes/Alexandria_Marseille/original/min_time_route.json")
+
+    filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestFOC/min_time_route.json")
     filename2 = (
-        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/bestWeather/min_time_route.json")
-    filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/fastest/min_time_route.json")
+        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestWeather/min_time_route.json")
+    filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/fastest/min_time_route.json")
     filename4 = (
-        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Alexandria_Marseille/original/min_time_route.json")
+        "/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
     figurefile = "/home/kdemmich/MariData/Code/Figures"
 
@@ -38,8 +45,8 @@ if __name__ == "__main__":
     rp_4_str = 'original'
 
     ##
-    # init weather
-    windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/mediteranean_sea_manipulated.nc"
+    # init wheather
+    windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
     # British Channel
     # departure_time = "2023-06-21T12:00Z"
     # time_for_plotting = "2023-06-21T12:00Z"
@@ -79,9 +86,9 @@ if __name__ == "__main__":
     ##
     # plotting power vs. distance
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
-    rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
-    rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
+    #rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
+    #rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
+    #rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
     rp_read4.plot_power_vs_dist(graphics.get_colour(3), rp_4_str)
 
     ax.legend(loc='lower left')
@@ -103,9 +110,9 @@ if __name__ == "__main__":
 
     ##
     # plotting power vs dist vs weather
-    data_array = [rp_read1, rp_read2, rp_read3, rp_read4]
-    label_array = [rp_1_str, rp_2_str, rp_3_str, rp_4_str]
-    rp_read1.plot_power_vs_dist_with_weather(data_array, label_array, 4)
+    data_array = [rp_read4]
+    label_array = [rp_4_str]
+    rp_read1.plot_power_vs_dist_with_weather(data_array, label_array, 1)
 
     plt.savefig(figurefile + '/route_power_vs_dist_weather.png')
 
@@ -125,7 +132,7 @@ if __name__ == "__main__":
     print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
 
     print('Full travel time:')
-    print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time('h')))
-    print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time()))
-    print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time()))
-    print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time()))
+    print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time('datetime')))
+    print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time('datetime')))
+    print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
+    print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))
