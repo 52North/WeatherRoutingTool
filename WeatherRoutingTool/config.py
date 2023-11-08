@@ -4,7 +4,6 @@ import os
 
 logger = logging.getLogger('WRT.Config')
 
-# FIXME: update tests which use BASE_PATH!
 MANDATORY_CONFIG_VARIABLES = ['COURSES_FILE', 'DEFAULT_MAP', 'DEFAULT_ROUTE', 'DEPARTURE_TIME', 'DEPTH_DATA',
                               'ROUTE_PATH', 'WEATHER_DATA']
 
@@ -15,11 +14,11 @@ RECOMMENDED_CONFIG_VARIABLES = {
 }
 
 # optional variables with default values
-OPTIONAL_VARIABLES = {
+OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
-    'FIGURE_PATH': None,  # FIXME: write only if path is set (see routingalg_factory.py)
+    'FIGURE_PATH': None,
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ISOCHRONE_PRUNE_GCR_CENTERED': True,
@@ -93,11 +92,11 @@ class Config:
             self._set_optional_config(config_dict)
 
     def _set_mandatory_config(self, config_dict):
-        for mandatory_variable in MANDATORY_CONFIG_VARIABLES:
-            if mandatory_variable not in config_dict.keys():
-                raise RequiredConfigError(f"'{mandatory_variable}' is mandatory!")
+        for mandatory_var in MANDATORY_CONFIG_VARIABLES:
+            if mandatory_var not in config_dict.keys():
+                raise RequiredConfigError(f"'{mandatory_var}' is mandatory!")
             else:
-                setattr(self, mandatory_variable, config_dict[mandatory_variable])
+                setattr(self, mandatory_var, config_dict[mandatory_var])
 
     def _set_recommended_config(self, config_dict):
         for recommended_var, default_value in RECOMMENDED_CONFIG_VARIABLES.items():
@@ -108,7 +107,7 @@ class Config:
                 setattr(self, recommended_var, config_dict[recommended_var])
 
     def _set_optional_config(self, config_dict):
-        for optional_var, default_value in OPTIONAL_VARIABLES.items():
+        for optional_var, default_value in OPTIONAL_CONFIG_VARIABLES.items():
             if optional_var not in config_dict.keys():
                 setattr(self, optional_var, default_value)
             else:
