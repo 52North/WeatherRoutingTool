@@ -42,7 +42,7 @@ class RoutingAlg():
     route_ensemble: list
     figure_path: str
 
-    def __init__(self, start, finish, departure_time, figure_path=""):
+    def __init__(self, start, finish, departure_time, figure_path=None):
         self.count = 0
         self.start = start
         self.finish = finish
@@ -53,8 +53,6 @@ class RoutingAlg():
         self.gcr_azi = gcr
 
         self.figure_path = figure_path
-
-        self.print_init()
 
     def init_fig(self):
         pass

@@ -222,3 +222,10 @@ def get_accumulated_dist(dist_arr):
         full_dist = full_dist + dist
 
     return dist_acc
+
+
+def set_graphics_standards(ax):
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(20)
+    plt.rcParams['font.size'] = '20'
+    return ax
