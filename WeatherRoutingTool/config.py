@@ -21,11 +21,11 @@ OPTIONAL_CONFIG_VARIABLES = {
     'DELTA_TIME_FORECAST': 3,
     'FIGURE_PATH': None,
     'INTERMEDIATE_WAYPOINTS': [],
+    'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
+    'ISOCHRONE_PRUNE_BEARING': False,
+    'ISOCHRONE_PRUNE_GCR_CENTERED': True,
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
-    'ISOCHRONE_PRUNE_GCR_CENTERED': True,
-    'ISOCHRONE_PRUNE_BEARING': False,
-    'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'ROUTING_STEPS': 60,
@@ -56,11 +56,11 @@ class Config:
         self.DEPTH_DATA = None  # path to depth data
         self.FIGURE_PATH = None  # path to figure repository
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
+        self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
+        self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
+        self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
         self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning
         self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector
-        self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
-        self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
-        self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
