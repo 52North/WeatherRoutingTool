@@ -30,7 +30,90 @@ The routing tool can be installed in two ways: via the file requirements.txt and
   - fix smt to version 1.3.0 (`smt==1.3.9`)
   - install maripower: `pip install -e maripower`
 
-### Run the software
+## Configuration
+
+Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.example.json`.
+
+The configuration file has to be provided when calling the Weather Routing Tool from the command line:
+```shell
+python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+```
+
+Additionally, it's possible to define files for logging (default is `/dev/stdout`).
+Check the help text to get an overview of all CLI arguments:
+```shell
+$ python WeatherRoutingTool/execute_routing.py --help
+
+usage: execute_routing.py [-h] -f FILE [--performance-log-file PERFORMANCE_LOG_FILE] [--info-log-file INFO_LOG_FILE]
+
+Weather Routing Tool
+
+options:
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  Config file name (absolute path)
+  --performance-log-file PERFORMANCE_LOG_FILE
+                        Performance logging file name (absolute path). Default: '/dev/stdout'
+  --info-log-file INFO_LOG_FILE
+                        Info logging file name (absolute path). Default: '/dev/stdout'
+```
+
+Some variables have to be set using environment variables (see below).
+
+### Config file
+
+The following lists contain information on each variable which can be set.
+
+Required variables (no default values provided):
+- `COURSES_FILE`: path to file that acts as intermediate storage for courses per routing step
+- `DEFAULT_MAP`: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
+- `DEFAULT_ROUTE`: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
+- `DEPARTURE_TIME`: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
+- `DEPTH_DATA`: path to depth data
+- `ROUTE_PATH`: path to json file to which the route will be written
+- `WEATHER_DATA`: path to weather data
+
+Recommended variables (default values provided but might be inaccurate/unsuitable):
+- `BOAT_DRAUGHT`: in m
+- `BOAT_SPEED`: in m/s
+- `DATA_MODE`: options: 'automatic', 'from_file', 'odc'
+
+Optional variables (default values provided and don't need to be changed normally):
+- `ALGORITHM_TYPE`: options: 'isofuel'
+- `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints'
+- `DELTA_FUEL`: amount of fuel per routing step (kg)
+- `DELTA_TIME_FORECAST`: time resolution of weather forecast (hours)
+- `FIGURE_PATH`: path to figure repository. If o path is provided, no figures will be saved
+- `INTERMEDIATE_WAYPOINTS`: [[lat_one,lon_one], [lat_two,lon_two] ... ]
+- `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
+- `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
+- `ISOCHRONE_PRUNE_GCR_CENTERED`: symmetry axis for pruning
+- `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning
+- `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector
+- `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
+- `ROUTER_HDGS_SEGMENTS`: otal number of headings : put even number!!
+- `ROUTING_STEPS`: number of routing steps
+- `TIME_FORECAST`: forecast hours weather
+
+### Environment variables
+
+Credentials for the Copernicus Marine Environment Monitoring Service (CMEMS) to download weather/ocean data:
+
+- `CMEMS_USERNAME`
+- `CMEMS_PASSWORD`
+
+If not provided `DATA_MODE='automatic'` cannot be used.
+
+Configuration parameter for the database which stores OpenSeaMap data (used in the constraints modules):
+
+- `WRT_DB_HOST`
+- `WRT_DB_PORT`
+- `WRT_DB_DATABASE`
+- `WRT_DB_USERNAME`
+- `WRT_DB_PASSWORD`
+
+If not provided the 'land_crossing_polygons' and 'seamarks' options of `CONSTRAINTS_LIST` cannot be used.
+
+## Run the software
 
 Before running the WRT, the necessary input data needs to be setup. Please follow these steps:
 
@@ -56,9 +139,9 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
 5. Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*:
 
-   ```sh
-   python WeatherRoutingTool/execute_routing.py
-   ```
+    ```sh
+    python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+    ```
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
