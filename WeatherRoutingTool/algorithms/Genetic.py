@@ -64,23 +64,26 @@ class GeneticMutation(Mutation):
         return offsprings
     
 class RoutingProblem(Problem):
-    def __init__(self):
+    def __init__(self, boat, departure_time):
         super().__init__(
             n_var=1, 
             n_obj=1, 
             n_constr=1)
+        self.boat = boat
+        self.departure_time = departure_time
+
     def _evaluate(self, X, out, *args, **kwargs):
         #costs = route_cost(X)
-        costs = power_cost(X)
+        costs = power_cost(X, self.boat, self.departure_time)
         constraints = route_const(X)
         #print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
 
 
-def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
+def optimize(strt, end, cost_mat,pop_size, n_gen, n_offspring, boat, departure_time):
     #cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
-    problem = RoutingProblem()
+    problem = RoutingProblem(boat, departure_time)
     algorithm = NSGA2(pop_size=pop_size,
                     sampling= Population(strt, end, cost_mat),
                     crossover= GeneticCrossover(),

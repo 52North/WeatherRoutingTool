@@ -103,16 +103,24 @@ def route_cost(routes):
     #print(costs)
     return costs
 
-def power_cost(routes):
+def power_cost(routes, boat, departure_time):
     costs = []
 
     for route in routes:
-        fuels = getPower(route, wave_height)
+        fuels = getPower(route, wave_height, boat, departure_time)
         #print(fuels.get_full_fuel())
         #costs.append(np.sum([fuel for fuel in fuels.]))
         costs.append(fuels.get_full_fuel())
     #print(costs)
-    return costs    
+    return costs
+
+def getPower(route, wave_height, boat, departure_time):
+    courses, lats, lons = calculate_course_for_route(route[0], wave_height)
+
+    # FIXME: why are we passing the departure time here? Should be the times where we start from each waypoint.
+    time = np.array([departure_time] * len(courses))
+    power = boat.get_fuel_per_time_netCDF(courses, lats, lons, time)
+    return power
         
 
 def mutate(route):

@@ -7,8 +7,6 @@ from geographiclib.geodesic import Geodesic
 import math
 from WeatherRoutingTool.ship.ship import Tanker
 from datetime import datetime
-import WeatherRoutingTool.config as config
-
 
 def loadData(path):
     '''
@@ -117,7 +115,7 @@ def calculate_course_for_route(route, wave_height):
     courses = np.zeros(len(route)-1)
     lats = np.zeros(len(route)-1)
     lons = np.zeros(len(route)-1)
-    
+
     #print(route)
     for i in range(len(route) - 1):
         # Get the coordinates of the current and next waypoints
@@ -125,46 +123,30 @@ def calculate_course_for_route(route, wave_height):
         lats[i] = wave_height.coords['latitude'] [lat1]
         lons[i] = wave_height.coords['longitude'] [lon1]
         lat2, lon2 = route[i+1]
-        
+
         # Convert latitude and longitude to radians
         lat1_rad = math.radians(lat1)
         lon1_rad = math.radians(lon1)
         lat2_rad = math.radians(lat2)
         lon2_rad = math.radians(lon2)
-        
+
         # Calculate the course in radians
         delta_lon = lon2_rad - lon1_rad
         y = math.sin(delta_lon) * math.cos(lat2_rad)
         x = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(delta_lon)
         course_rad = math.atan2(y, x)
-        
+
         # Convert the course to degrees
         course_deg = math.degrees(course_rad)
-        
+
         # Adjust the degrees to be in the range of 0-360
         course = (course_deg + 360) % 360
-        
+
         # Append the course to the list
         courses[i] = course
-    
+
     #print(courses, lats, lons)
     return courses, lats, lons
 
-def getPower(route, wave_height):
-    #base = config.BASE_PATH
-    DEFAULT_GFS_FILE = config.WEATHER_DATA  # CMEMS needs lat: 30 to 45, lon: 0 to 20
-    COURSES_FILE = config.COURSES_FILE
-    #print(route)
-    courses, lats, lons = calculate_course_for_route(route[0], wave_height)
-    #print(lons.shape)
 
-    tank = Tanker(2)
-    tank.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE,'')
-    dt = '2020.12.02 00:00:00' 
-    dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
-    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
-
-    time = np.array([departure_time]*len(courses))
-    power = tank.get_fuel_per_time_netCDF(courses, lats, lons, time)
-    return power
 

@@ -23,6 +23,9 @@ logger = logging.getLogger('WRT.Isobased')
 
 
 class IsoBased(RoutingAlg):
+    ncount: int  # total number of routing steps
+    count: int  # current routing step
+
     is_last_step: bool
     is_pos_constraint_step: bool
 
@@ -73,18 +76,21 @@ class IsoBased(RoutingAlg):
     prune_bearings: bool
     minimisation_criterion: str
 
-    def __init__(self, start, finish, departure_time, figurepath=""):
-        super().__init__(start, finish, departure_time, figurepath)
+    def __init__(self, config):
+        super().__init__(config)
 
-        self.lats_per_step = np.array([[start[0]]])
-        self.lons_per_step = np.array([[start[1]]])
+        self.ncount = config.ROUTING_STEPS
+        self.count = 0
+
+        self.lats_per_step = np.array([[self.start[0]]])
+        self.lons_per_step = np.array([[self.start[1]]])
         self.azimuth_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
-        self.starttime_per_step = np.array([[departure_time]])
+        self.starttime_per_step = np.array([[self.departure_time]])
 
-        self.time = np.array([departure_time])
+        self.time = np.array([self.departure_time])
         self.full_time_traveled = np.array([0])
         self.full_fuel_consumed = np.array([0])
         self.full_dist_traveled = np.array([0])
@@ -98,6 +104,12 @@ class IsoBased(RoutingAlg):
         self.gcr_azi_temp = self.gcr_azi
 
         self.minimisation_criterion = 'squareddist_over_disttodest'
+
+        self.set_pruning_settings(sector_deg_half=config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF,
+                                  seg=config.ISOCHRONE_PRUNE_SEGMENTS, prune_bearings=config.ISOCHRONE_PRUNE_BEARING,
+                                  prune_gcr_centered=config.ISOCHRONE_PRUNE_GCR_CENTERED)
+        self.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
+        self.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
 
     def print_init(self):
         RoutingAlg.print_init(self)

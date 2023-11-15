@@ -11,70 +11,62 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.utils.maps import Map
 
 
 class RunGenetic(RoutingAlg):
-    ncount : int
-    count : int
-    start : tuple
-    finish : tuple
-    departure_time: np.ndarray
-    figure_path : str
     fig: matplotlib.figure
-    grc_azi : float
     route_ensemble : list
     route : np.array # temp
 
     pop_size : int
-    n_offsprings : int 
+    n_offsprings : int
 
-    def __init__(self, start, finish, departure_time, figure_path="") -> None:
-        self.ncount = 20 #config.N_GEN
+    default_map: Map
+    weather_path: str
+
+    def __init__(self, config) -> None:
+        super().__init__(config)
+
+        self.default_map = config.DEFAULT_MAP
+        self.weather_path = config.WEATHER_DATA
+
+        self.ncount = 20  # config.N_GEN
         self.count = 0
-        self.start = start
-        self.finish = finish
-        self.departure_time = departure_time
 
         self.pop_size = 20 #config.POP_SIZE
         self.n_offsprings = 2 #config.N_OFFSPRINGS
 
-        self.figure_path = figure_path
         self.ship_params = None
 
         self.print_init()
 
     # FIXME: use arguments
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
-        path = config.WEATHER_DATA
-        data = loadData(path)
-        lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-        print(lat1, lon1, lat2, lon2 )
-        lon_min, lon_max, lat_min, lat_max = getBBox(lat1,lon1, lat2, lon2, data)
+        data = loadData(self.weather_path)
         wave_height = data.VHM0.isel(time=0)
         print(wave_height)
 
-        #wave_height = data.isel(longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
-        #cost = cleanData(wave_height.data)
+        # lon_min, lon_max, lat_min, lat_max = getBBox(self.default_map.lat1, self.default_map.lon1,
+        #                                              self.default_map.lat2, self.default_map.lon2, data)
+        # wave_height = data.isel(longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
+        # cost = cleanData(wave_height.data)
         cost = wave_height.data
         start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1], wave_height)
         set_data(wave_height, cost)
-        res = optimize(start, end, cost, self.pop_size, self.ncount, self.n_offsprings)
+        res = optimize(start, end, cost, self.pop_size, self.ncount, self.n_offsprings, boat, self.departure_time)
 
         # get the best solution
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
         best_f = res.F[best_idx]
-        route=best_x[0]
+        route = best_x[0]
         self.route = route
-        self.ship_params = getPower([route], wave_height)
+        self.ship_params = getPower([route], wave_height, boat)
         result = self.terminate()
 
-        #print(route)
-        print(result)
-
-
         return result
-    
+
     def print_init(self):
         print("Initializing Routing......")
         print('route from ' + str(self.start) + ' to ' + str(self.finish))
@@ -96,7 +88,7 @@ class RunGenetic(RoutingAlg):
 
         lats, lons, route = index_to_coords(self.route)
         dists = distance(route)
-        speed = config.BOAT_SPEED
+        speed = self.ship_params.get_speed()[0]
         diffs = time_diffs(speed, route)
         #ship_params = getPower()
         self.count = len(lats)
