@@ -8,30 +8,31 @@ import math
 from WeatherRoutingTool.ship.ship import Tanker
 from datetime import datetime
 
+
 def loadData(path):
-    '''
+    """
     This function take a string as the path of the file and load the data from the file.
     Parameters:
     path: String, path of the file
     Returns:
     data: xarray, dataset
-    '''
+    """
     # Path of the data file
     file = os.path.join(path)
 
     # read the dataset
     data = xr.open_dataset(file)
-    #data = data.VHM0.isel(time=0)
+    # data = data.VHM0.isel(time=0)
     return data
+
 
 # create a bounding box from the coordinates
 # NY to Lisbon 
 def get_closest(array, value):
     return np.abs(array - value).argmin()
 
-def getBBox(lon1, lat1,lon2,lat2, data):
-        
 
+def getBBox(lon1, lat1,lon2,lat2, data):
     lon_min = get_closest(data.longitude.data,lon1)
     lon_max = get_closest(data.longitude.data,lon2)
     lat_min = get_closest(data.latitude.data,lat1)
@@ -41,18 +42,20 @@ def getBBox(lon1, lat1,lon2,lat2, data):
     lon_max = lon_max if lon_min < lon_max else lon_min
     lat_min = lat_min if lat_min < lat_max else lat_max 
     lat_max = lat_max if lat_min < lat_max else lat_min
-    #print(lon_min, lon_max, lat_min, lat_max)
+    # print(lon_min, lon_max, lat_min, lat_max)
     return lon_min, lon_max, lat_min, lat_max
+
 
 def cleanData(data):
     # copy the data and remove NaN
-    #cost = wave_height.data
+    # cost = wave_height.data
     cost = data.copy()
-    #np.random.shuffle(cost)
+    # np.random.shuffle(cost)
     nan_mask = np.isnan(cost)
     cost[nan_mask] = 1e100* np.nanmax(cost) if np.nanmax(cost) else 0
 
     return cost
+
 
 def findStartAndEnd(lat1, lon1, lat2, lon2, wave_height):
     # Define start and end points
@@ -71,6 +74,7 @@ def findStartAndEnd(lat1, lon1, lat2, lon2, wave_height):
 
     return start, end
 
+
 def distance(route):
     geod = Geodesic.WGS84
     dists = []
@@ -87,12 +91,13 @@ def distance(route):
         lat1 = lat2
         lon1 = lon2
     dists = np.array(dists)
-    #print(dists)
+    # print(dists)
     return dists
+
 
 def time_diffs(speed, route):
     geod = Geodesic.WGS84
-    #speed = speed * 1.852
+    # speed = speed * 1.852
 
     lat1 = route[0,1]
     lon1 = route[0,0]
@@ -107,7 +112,7 @@ def time_diffs(speed, route):
         lon1 = lon2
 
     diffs = np.array(diffs) / (speed)
-    #print(diffs)
+    # print(diffs)
     return diffs
 
 
@@ -116,7 +121,7 @@ def calculate_course_for_route(route, wave_height):
     lats = np.zeros(len(route)-1)
     lons = np.zeros(len(route)-1)
 
-    #print(route)
+    # print(route)
     for i in range(len(route) - 1):
         # Get the coordinates of the current and next waypoints
         lat1, lon1 = route[i]
@@ -145,8 +150,5 @@ def calculate_course_for_route(route, wave_height):
         # Append the course to the list
         courses[i] = course
 
-    #print(courses, lats, lons)
+    # print(courses, lats, lons)
     return courses, lats, lons
-
-
-

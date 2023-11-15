@@ -17,10 +17,10 @@ from WeatherRoutingTool.utils.maps import Map
 class RunGenetic(RoutingAlg):
     fig: matplotlib.figure
     route_ensemble : list
-    route : np.array # temp
+    route: np.array # temp
 
-    pop_size : int
-    n_offsprings : int
+    pop_size: int
+    n_offsprings: int
 
     default_map: Map
     weather_path: str
@@ -34,8 +34,8 @@ class RunGenetic(RoutingAlg):
         self.ncount = 20  # config.N_GEN
         self.count = 0
 
-        self.pop_size = 20 #config.POP_SIZE
-        self.n_offsprings = 2 #config.N_OFFSPRINGS
+        self.pop_size = 20  # config.POP_SIZE
+        self.n_offsprings = 2  # config.N_OFFSPRINGS
 
         self.ship_params = None
 
@@ -70,9 +70,9 @@ class RunGenetic(RoutingAlg):
     def print_init(self):
         print("Initializing Routing......")
         print('route from ' + str(self.start) + ' to ' + str(self.finish))
-        #print('strart time ' + str(self.time))
+        # print('strart time ' + str(self.time))
         logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
-        #logger.info(form.get_log_step('start time ' + str(self.time),1))
+        # logger.info(form.get_log_step('start time ' + str(self.time),1))
 
     def print_current_status(self):
         print("ALGORITHM SETTINGS:")
@@ -90,7 +90,7 @@ class RunGenetic(RoutingAlg):
         dists = distance(route)
         speed = self.ship_params.get_speed()[0]
         diffs = time_diffs(speed, route)
-        #ship_params = getPower()
+        # ship_params = getPower()
         self.count = len(lats)
 
         dt = '2020.12.02 00:00:00' 
@@ -98,21 +98,20 @@ class RunGenetic(RoutingAlg):
         time = np.array([dt_obj]*len(lats))
         times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
 
-        #times = np.array([dt_obj]*len(lats))
+        # times = np.array([dt_obj]*len(lats))
         route = RouteParams(
-
-            count = self.count-3,
-            start = self.start,
-            finish = self.finish,
-            gcr = np.sum(dists),
-            route_type = 'min_time_route',
-            time = diffs, # time diffs
-            lats_per_step = lats.to_numpy(),
-            lons_per_step = lons.to_numpy(),
-            azimuths_per_step = np.zeros(778),
-            dists_per_step = dists, # dist of waypoints
-            starttime_per_step = times, # time for each point
-            ship_params_per_step = self.ship_params
+            count=self.count-3,
+            start=self.start,
+            finish=self.finish,
+            gcr=np.sum(dists),
+            route_type='min_time_route',
+            time=diffs,  # time diffs
+            lats_per_step=lats.to_numpy(),
+            lons_per_step=lons.to_numpy(),
+            azimuths_per_step=np.zeros(778),
+            dists_per_step=dists,  # dist of waypoints
+            starttime_per_step=times,  # time for each point
+            ship_params_per_step=self.ship_params
         )
 
         self.check_destination()
@@ -124,4 +123,3 @@ class RunGenetic(RoutingAlg):
 
     def check_positive_power(self):
         pass
-

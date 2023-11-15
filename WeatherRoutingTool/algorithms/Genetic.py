@@ -3,36 +3,37 @@ from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
-#from pymoo.model.callback import Callback
+# from pymoo.model.callback import Callback
 import numpy as np
 from pymoo.factory import get_termination
 from pymoo.optimize import minimize
 from pymoo.operators.crossover.sbx import SBX
 from WeatherRoutingTool.algorithms.GeneticUtils import *
 
+
 class Population(Sampling):
-    def __init__(self, src, dest, X,var_type=np.float64):
+    def __init__(self, src, dest, X, var_type=np.float64):
         super().__init__()
         self.var_type = var_type
         self.src = src
         self.dest = dest
         self.X = X
+
     def _do(self, problem, n_samples, **kwargs):
         routes = population(n_samples, self.src, self.dest, self.X)
-        #print(routes.shape)
+        # print(routes.shape)
         self.X = routes
-        #print(self.X.shape)
+        # print(self.X.shape)
         return self.X
-    
+
+
 class GeneticCrossover(Crossover):
     def __init__(self, prob=1):
-
         # define the crossover: number of parents and number of offsprings
         super().__init__(2, 2)
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-
         # The input of has the following shape (n_parents, n_matings, n_var)
         _, n_matings, n_var = X.shape
         Y = np.full_like(X, None, dtype=object)
@@ -40,29 +41,30 @@ class GeneticCrossover(Crossover):
             # get the first and the second parent
             a, b = X[0, k, 0], X[1, k, 0]
             Y[0, k, 0], Y[1, k, 0] = crossOver(a,b)
-        #print("Y:",Y)
+        # print("Y:",Y)
         return Y
-    
+
+
 class GeneticMutation(Mutation):
     def __init__(self, prob =0.4):
         super().__init__()
-        self.prob  = prob 
+        self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-        
         offsprings = np.zeros((len(X),1), dtype=object)
         # loop over individuals in population
-        for idx,i in enumerate(X):
-            # performe mutation with certain probability
+        for idx, i in enumerate(X):
+            # perform mutation with certain probability
             if np.random.uniform(0, 1) < self.prob:
                 mutated_individual = mutate(i[0])
-                #print("mutated_individual",mutated_individual, "###")
+                # print("mutated_individual",mutated_individual, "###")
                 offsprings[idx][0]=mutated_individual
         # if no mutation
             else:
-                 offsprings[idx][0] =i[0]
+                offsprings[idx][0] =i[0]
         return offsprings
-    
+
+
 class RoutingProblem(Problem):
     def __init__(self, boat, departure_time):
         super().__init__(
@@ -72,31 +74,41 @@ class RoutingProblem(Problem):
         self.boat = boat
         self.departure_time = departure_time
 
-    def _evaluate(self, X, out, *args, **kwargs):
-        #costs = route_cost(X)
-        costs = power_cost(X, self.boat, self.departure_time)
-        constraints = route_const(X)
-        #print(costs.shape)
+    def _evaluate(self, x, out, *args, **kwargs):
+        """
+        Method defined by pymoo which has to be overriden
+        :param x: numpy matrix with shape (number of solutions, number of design variables)
+        :param out:
+            out['F']: function values, vector of length of number of solutions
+            out['G']: constraints
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        # costs = route_cost(x)
+        costs = power_cost(x, self.boat, self.departure_time)
+        constraints = route_const(x)
+        # print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
 
 
-def optimize(strt, end, cost_mat,pop_size, n_gen, n_offspring, boat, departure_time):
-    #cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
+def optimize(strt, end, cost_mat, pop_size, n_gen, n_offspring, boat, departure_time):
+    # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
     problem = RoutingProblem(boat, departure_time)
     algorithm = NSGA2(pop_size=pop_size,
-                    sampling= Population(strt, end, cost_mat),
-                    crossover= GeneticCrossover(),
-                    n_offsprings = n_offspring,
-                    mutation= GeneticMutation(),
-                    eliminate_duplicates=False)
+                      sampling=Population(strt, end, cost_mat),
+                      crossover=GeneticCrossover(),
+                      n_offsprings=n_offspring,
+                      mutation=GeneticMutation(),
+                      eliminate_duplicates=False)
     termination = get_termination("n_gen", n_gen)
 
     res = minimize(problem,
-                algorithm,
-                termination,
-                save_history=True, 
-                verbose=True)
-    #stop = timeit.default_timer()
-    #route_cost(res.X)
+                   algorithm,
+                   termination,
+                   save_history=True,
+                   verbose=True)
+    # stop = timeit.default_timer()
+    # route_cost(res.X)
     return res
