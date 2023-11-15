@@ -33,9 +33,8 @@ class RoutingAlgFactory:
             ra.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
             ra.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
 
-	if config.ALGORITHM_TYPE == 'genetic':
+        if config.ALGORITHM_TYPE == 'genetic':
             ra = RunGenetic(start, finish, departure_time, "")
-         
-	ra.print_init()
 
+        ra.print_init()
         return ra

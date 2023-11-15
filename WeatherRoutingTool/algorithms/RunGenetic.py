@@ -1,15 +1,19 @@
+from datetime import datetime, timedelta
+
+import numpy as np
+import matplotlib
+
+from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.DataUtils import *
 from WeatherRoutingTool.algorithms.Genetic import *
 from WeatherRoutingTool.algorithms.GeneticUtils import *
-import numpy as np
-import matplotlib
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
-import WeatherRoutingTool.config as config
-from datetime import datetime, timedelta
+from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.weather import WeatherCond
 
 
-
-class RunGenetic():
+class RunGenetic(RoutingAlg):
     ncount : int
     count : int
     start : tuple

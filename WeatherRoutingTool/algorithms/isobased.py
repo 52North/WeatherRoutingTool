@@ -701,7 +701,7 @@ class IsoBased(RoutingAlg):
     def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
         pass
 
-    def init_fig(self, water_depth, map, showDepth=True):
+    def init_fig(self, water_depth, map_size, showDepth=True):
         if self.figure_path is None:
             return
         self.showDepth = showDepth
@@ -716,8 +716,8 @@ class IsoBased(RoutingAlg):
             ds_depth_coarsened = ds_depth.compute()
 
             self.depth = ds_depth_coarsened.where(
-                (ds_depth_coarsened.latitude > map.lat1) & (ds_depth_coarsened.latitude < map.lat2) & (
-                        ds_depth_coarsened.longitude > map.lon1) & (ds_depth_coarsened.longitude < map.lon2) & (
+                (ds_depth_coarsened.latitude > map_size.lat1) & (ds_depth_coarsened.latitude < map_size.lat2) & (
+                        ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) & (
                         ds_depth_coarsened.depth < 0), drop=True)
 
         self.generate_basemap()
