@@ -1,14 +1,14 @@
-# Classes Boat, Tanker, SailingBoat
-#
-#
+import logging
 import math
 import sys
 
+import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
+from geovectorslib import geod
 
 import mariPower
 import WeatherRoutingTool.utils.formatting as form
@@ -17,6 +17,8 @@ from mariPower import __main__
 from WeatherRoutingTool.utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.weather import WeatherCond
+
+logger = logging.getLogger('WRT.ship')
 
 
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
@@ -78,6 +80,9 @@ class Tanker(Boat):
     def __init__(self, rpm):
         Boat.__init__(self)
         self.rpm = rpm
+
+    def print_init(self):
+        logger.info(form.get_log_step('Boat speed' + str(self.speed), 1))
 
     def init_hydro_model_single_pars(self):
         self.hydro_model = mariPower.ship.CBT()
@@ -253,9 +258,10 @@ class Tanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time):
+    def write_netCDF_courses(self, courses, lats, lons, time, unique_coords=False):
         debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
+        courses = units.degree_to_pmpi(courses)
 
         if (debug):
             print('Requesting power calculation')
@@ -269,17 +275,25 @@ class Tanker(Boat):
             form.print_step(lons_str, 1)
             form.print_step(course_str, 1)
             form.print_step(speed_str, 1)
-
-        n_coords = lons.shape[0]                     # number or coordinate pairs
-        n_courses = int(courses.shape[0]/n_coords)   # number of courses per coordinate pair
+        n_coords = None
+        if unique_coords:
+            it = sorted(np.unique(lons, return_index=True)[1])
+            lons = lons[it]
+            lats = lats[it]
+            n_coords = lons.shape[0]
+        else:
+            n_coords = lons.shape[0]
+        # number or coordinate pairs
+        n_courses = int(courses.shape[0] / n_coords)  # number of courses per coordinate pair
 
         # generate iterator for courses and coordinate pairs
-        it_course = np.arange(n_courses)+1      # get iterator with a length of the number of unique longitude values
-        it_course = np.hstack((it_course,) * n_coords)          # prepare iterator for Data Frame: repeat each element as often as
-        it_pos = np.arange(n_coords)+1
-        it_pos = np.repeat(it_pos, n_courses) #np.hstack((it_pos,) * n_courses)
+        it_course = np.arange(n_courses) + 1  # get iterator with a length of the number of unique longitude values
+        it_course = np.hstack(
+            (it_course,) * n_coords)  # prepare iterator for Data Frame: repeat each element as often as
+        it_pos = np.arange(n_coords) + 1
+        it_pos = np.repeat(it_pos, n_courses)  # np.hstack((it_pos,) * n_courses)
 
-        if(debug):
+        if (debug):
             form.print_step('it_course=' + str(it_course))
             form.print_step('it_pos=' + str(it_pos))
 
@@ -288,19 +302,15 @@ class Tanker(Boat):
         assert courses.shape == speed.shape
 
         # generate pandas DataFrame
-        df = pd.DataFrame({
-            'it_pos': it_pos,
-            'it_course': it_course,
-            'courses': courses,
-            'speed': speed,
-        })
+        df = pd.DataFrame({'it_pos': it_pos, 'it_course': it_course, 'courses': courses, 'speed': speed, })
 
         df = df.set_index(['it_pos', 'it_course'])
-        if(debug): print('pandas DataFrame:', df)
+        if (debug):
+            print('pandas DataFrame:', df)
 
         ds = df.to_xarray()
 
-        time_reshape = time.reshape(ds['it_pos'].shape[0], ds['it_course'].shape[0])[:,0]
+        time_reshape = time.reshape(ds['it_pos'].shape[0], ds['it_course'].shape[0])[:, 0]
 
         print('Request power calculation for ' + str(n_courses) + ' courses and ' + str(n_coords) + ' coordinates')
 
@@ -328,11 +338,18 @@ class Tanker(Boat):
 
         power = ds['Power_brake'].to_numpy().flatten()
         rpm = ds['RotationRate'].to_numpy().flatten()
-        fuel = ds[
-                   'Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
+        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
+        r_wind = ds['Wind_resistance'].to_numpy().flatten()
+        r_calm = ds['Calm_resistance'].to_numpy().flatten()
+        r_waves = ds['Wave_resistance'].to_numpy().flatten()
+        r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten()
+        r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten()
+
         # fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(self.speed, power.shape, axis=0))
+        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(self.speed, power.shape, axis=0),
+                                 r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
+                                 r_roughness=r_roughness)
 
         if (debug):
             form.print_step('Dataset with fuel' + str(ds), 1)
@@ -371,17 +388,73 @@ class Tanker(Boat):
         ship = mariPower.ship.CBT()
 
         # start_time = time.time()
-        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
-        print('maripower dataset: ', ds_read)
         return ds_read
 
     ##
+    # @brief splits data in 'courses netCDF' one bunches per course per space point, sends them to mariPower
+    # separately and merges them again afterwards.
+    #
+    # mariPower can currently handle only requests with 1 course per space point. Thus, the data in the 'course
+    # netCDF' is split in
+    # several bunchs each one containing an xarray with only one course per space point. The bunches are send to
+    # mariPower separately
+    # and the returned data sets are merged into one. Will (hopefully) be redundant as soon as mariPower accepts
+    # requests with several
+    # courses per space-time point and will then be replaced by Tanker.get_fuel_netCDF()
+    def get_fuel_netCDF_loop(self):
+        debug = False
+        filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
+        # filename_single = 'C:/Users/Maneesha/Documents/GitHub/MariGeoRoute/WeatherRoutingTool/CoursesRouteSingle.nc'
+        ds = xr.load_dataset(self.courses_path)
+        n_vars = ds['it'].shape[0]
+        ds_merged = xr.Dataset()
+
+        if (debug):
+            form.print_line()
+            form.print_step('get_fuel_netCDF_loop: loop over all variants per space point', 0)
+            form.print_step('original dataset: ' + str(ds), 0)
+
+        for ivar in range(1, n_vars + 1):
+            ds_read_temp = ds.isel(it=[ivar - 1])
+            ds_read_temp.coords['it'] = [1]
+            ds_read_temp.to_netcdf(filename_single, mode='w')
+            ds_read_temp.close()
+            ship = mariPower.ship.CBT()
+            if (debug):
+                ds_read_test = xr.load_dataset(filename_single)
+                courses_test = ds_read_test['courses']
+                form.print_step('courses_test' + str(courses_test.to_numpy()), 1)
+                form.print_step('speed' + str(ds_read_test['speed'].to_numpy()), 1)
+            # start_time = time.time()
+            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False,
+                                                        False)
+            # form.print_current_time('time for mariPower request:', start_time)
+
+            ds_temp = xr.load_dataset(filename_single)
+            ds_temp.coords['it'] = [ivar]
+            if ivar == 1:
+                ds_merged = ds_temp.copy()
+            else:
+                ds_merged = xr.concat([ds_merged, ds_temp], dim="it")
+            if (debug):
+                form.print_step('step ' + str(ivar) + ': merged dataset:' + str(ds_merged), 1)
+        ds_merged['lon'] = ds_merged['lon'].sel(it=1).drop('it')
+        ds_merged['time'] = ds_merged['time'].sel(it=1).drop('it')
+
+        if (debug):
+            form.print_step('final merged dataset:' + str(ds_merged))
+        ds.close()
+        return ds_merged
+
+    ##
     # main function for communication with mariPower package (see documentation above)
-    def get_fuel_per_time_netCDF(self, courses, lats, lons, time):
-        self.write_netCDF_courses(courses, lats, lons, time)
+    def get_fuel_per_time_netCDF(self, courses, lats, lons, time, unique_coords=False):
+        self.write_netCDF_courses(courses, lats, lons, time, unique_coords)
+
         # ds = self.get_fuel_netCDF_loop()
         # ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
         ds = self.get_fuel_netCDF()

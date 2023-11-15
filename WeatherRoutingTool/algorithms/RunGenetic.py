@@ -39,7 +39,8 @@ class RunGenetic():
 
         self.print_init()
 
-    def execute_routing(self):
+    # FIXME: use arguments
+    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         path = config.WEATHER_DATA
         data = loadData(path)
         lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
@@ -127,3 +128,4 @@ class RunGenetic():
 
     def check_positive_power(self):
         pass
+
