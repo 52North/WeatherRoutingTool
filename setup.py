@@ -34,7 +34,7 @@ setup(
       'scipy>=1.10.0',
       'setuptools',
       'shapely',
-      'sqlalchemy',
+      'sqlalchemy<2.0,>=1.4',
       'xarray',
       'netcdf4'
     ]

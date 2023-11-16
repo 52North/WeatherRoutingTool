@@ -11,25 +11,26 @@ from pymoo.operators.crossover.sbx import SBX
 from WeatherRoutingTool.algorithms.GeneticUtils import *
 
 class Population(Sampling):
-    def __init__(self, src, dest, X,var_type=np.float64):
+    def __init__(self, src, dest, util,var_type=np.float64):
         super().__init__()
         self.var_type = var_type
         self.src = src
         self.dest = dest
-        self.X = X
+        self.util = util
     def _do(self, problem, n_samples, **kwargs):
-        routes = population(n_samples, self.src, self.dest, self.X)
+        routes = self.util.population(n_samples, self.src, self.dest)
         #print(routes.shape)
         self.X = routes
         #print(self.X.shape)
         return self.X
     
 class GeneticCrossover(Crossover):
-    def __init__(self, prob=1):
+    def __init__(self, util, prob=1):
 
         # define the crossover: number of parents and number of offsprings
         super().__init__(2, 2)
         self.prob = prob
+        self.util = util
 
     def _do(self, problem, X, **kwargs):
 
@@ -39,14 +40,15 @@ class GeneticCrossover(Crossover):
         for k in range(n_matings):
             # get the first and the second parent
             a, b = X[0, k, 0], X[1, k, 0]
-            Y[0, k, 0], Y[1, k, 0] = crossOver(a,b)
+            Y[0, k, 0], Y[1, k, 0] = self.util.crossOver(a,b)
         #print("Y:",Y)
         return Y
     
 class GeneticMutation(Mutation):
-    def __init__(self, prob =0.4):
+    def __init__(self,util, prob =0.4):
         super().__init__()
-        self.prob  = prob 
+        self.prob  = prob
+        self.util = util 
 
     def _do(self, problem, X, **kwargs):
         
@@ -55,7 +57,7 @@ class GeneticMutation(Mutation):
         for idx,i in enumerate(X):
             # performe mutation with certain probability
             if np.random.uniform(0, 1) < self.prob:
-                mutated_individual = mutate(i[0])
+                mutated_individual = self.util.mutate(i[0])
                 #print("mutated_individual",mutated_individual, "###")
                 offsprings[idx][0]=mutated_individual
         # if no mutation
@@ -64,28 +66,29 @@ class GeneticMutation(Mutation):
         return offsprings
     
 class RoutingProblem(Problem):
-    def __init__(self):
+    def __init__(self, util):
         super().__init__(
             n_var=1, 
             n_obj=1, 
             n_constr=1)
+        self.util = util
     def _evaluate(self, X, out, *args, **kwargs):
         #costs = route_cost(X)
-        costs = power_cost(X)
-        constraints = route_const(X)
+        costs = self.util.power_cost(X)
+        constraints = self.util.route_const(X)
         #print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
 
 
-def optimize( strt, end, cost_mat,pop_size, n_gen, n_offspring):
+def optimize( strt, end,pop_size, n_gen, n_offspring, util):
     #cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
-    problem = RoutingProblem()
+    problem = RoutingProblem(util)
     algorithm = NSGA2(pop_size=pop_size,
-                    sampling= Population(strt, end, cost_mat),
-                    crossover= GeneticCrossover(),
+                    sampling= Population(strt, end, util),
+                    crossover= GeneticCrossover(util),
                     n_offsprings = n_offspring,
-                    mutation= GeneticMutation(),
+                    mutation= GeneticMutation(util),
                     eliminate_duplicates=False)
     termination = get_termination("n_gen", n_gen)
 

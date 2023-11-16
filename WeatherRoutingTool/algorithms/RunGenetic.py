@@ -14,17 +14,17 @@ class RunGenetic():
     count : int
     start : tuple
     finish : tuple
-    departure_time: np.ndarray
+    departure_time: None
     figure_path : str
+    weather_path: str
     fig: matplotlib.figure
     grc_azi : float
     route_ensemble : list
     route : np.array # temp
-
     pop_size : int
     n_offsprings : int 
 
-    def __init__(self, start, finish, departure_time, figure_path="") -> None:
+    def __init__(self, start, finish, departure_time, weather_path, figure_path="") -> None:
         self.ncount = 20 #config.N_GEN
         self.count = 0
         self.start = start
@@ -35,39 +35,28 @@ class RunGenetic():
         self.n_offsprings = 2 #config.N_OFFSPRINGS
 
         self.figure_path = figure_path
+        self.weather_path = weather_path
         self.ship_params = None
 
         self.print_init()
 
-    def execute_routing(self):
-        path = config.WEATHER_DATA
-        data = loadData(path)
-        lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-        print(lat1, lon1, lat2, lon2 )
-        lon_min, lon_max, lat_min, lat_max = getBBox(lat1,lon1, lat2, lon2, data)
+    def execute_routing(self, boat, wt, constraint_list):
+
+        data = loadData(self.weather_path)
         wave_height = data.VHM0.isel(time=0)
-        print(wave_height)
-
-        #wave_height = data.isel(longitude=slice(lon_min, lon_max), latitude=slice(lat_min, lat_max))
-        #cost = cleanData(wave_height.data)
-        cost = wave_height.data
+        genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, wave_height=wave_height, constraint_list=constraint_list)
         start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1], wave_height)
-        set_data(wave_height, cost)
-        res = optimize(start, end, cost, self.pop_size, self.ncount, self.n_offsprings)
-
+        res = optimize(start, end, self.pop_size, self.ncount, self.n_offsprings, genetic_util)
         # get the best solution
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
         best_f = res.F[best_idx]
         route=best_x[0]
         self.route = route
-        self.ship_params = getPower([route], wave_height)
-        result = self.terminate()
-
+        _,self.ship_params = genetic_util.getPower([route], wave_height, self.departure_time)
+        result = self.terminate(genetic_util)
         #print(route)
-        print(result)
-
-
+        #print(result)
         return result
     
     def print_init(self):
@@ -85,23 +74,21 @@ class RunGenetic():
         print('pop_size: ' + str(self.pop_size))
         print('offsprings: ' + str(self.n_offsprings))
 
-    def terminate(self):
+    def terminate(self,genetic_util):
         form.print_line()
         print('Terminating...')
 
-        lats, lons, route = index_to_coords(self.route)
+        lats, lons, route = genetic_util.index_to_coords(self.route)
         dists = distance(route)
-        speed = config.BOAT_SPEED
+        speed = 6
         diffs = time_diffs(speed, route)
         #ship_params = getPower()
         self.count = len(lats)
 
-        dt = '2020.12.02 00:00:00' 
-        dt_obj = datetime.strptime(dt, '%Y.%m.%d %H:%M:%S')
-        time = np.array([dt_obj]*len(lats))
+        dt = self.departure_time
+        time = np.array([dt]*len(lats))
         times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
 
-        #times = np.array([dt_obj]*len(lats))
         route = RouteParams(
 
             count = self.count-3,

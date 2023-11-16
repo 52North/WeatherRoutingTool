@@ -7,7 +7,6 @@ import xarray as xr
 from geovectorslib import geod
 
 import tests.basic_test_func as basic_test_func
-import WeatherRoutingTool.config as config
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -194,9 +193,10 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    weatherpath = config.WEATHER_DATA
-    routepath = config.BASE_PATH + 'CoursesRoute.nc'
-    depthpath = config.DEPTH_DATA
+    dirname = os.path.dirname(__file__)
+    weatherpath = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    routepath = os.path.join(dirname, 'data/CoursesRoute.nc')
+    depthpath = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
     tk.init_hydro_model_Route(weatherpath, routepath, depthpath)
@@ -296,7 +296,9 @@ def test_pruning_select_correct_idxs():
     ra.azimuth_per_step = np.array([ra.current_azimuth])
 
     sp = ShipParams(full_fuel_consumed, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
-                    speed_per_step)
+                    speed_per_step, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
+                    np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
+                    np.full(full_fuel_consumed.shape, 0), )
     ra.shipparams_per_step = sp
 
     cur_var_test = np.array([16, 22, 45, 71])
@@ -315,7 +317,7 @@ def test_pruning_select_correct_idxs():
     ra.print_current_status()
     form.print_line()
 
-    ra.pruning(True, pruning_bins)
+    ra.pruning(True, pruning_bins, False)
 
     assert np.array_equal(cur_var_test, ra.current_variant)
     assert np.array_equal(cur_azi_test, ra.current_azimuth)

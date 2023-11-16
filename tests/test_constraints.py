@@ -6,7 +6,6 @@ import xarray
 import pytest
 
 import tests.basic_test_func as basic_test_func
-import WeatherRoutingTool.config
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import *
@@ -100,7 +99,7 @@ def test_safe_crossing_land_crossing():
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_crossing(lat[1, :], lat[0, :], lon[1, :], lon[0, :], time, is_constrained)
+    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
@@ -123,7 +122,7 @@ def test_safe_crossing_wave_height():
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_crossing(lat[1, :], lat[0, :], lon[1, :], lon[0, :], time, is_constrained)
+    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 0
     assert is_constrained[1] == 1
 
@@ -132,7 +131,8 @@ def test_safe_waterdepth():
     lat = np.array([[51.16, 52.5], [52, 52], ])
     lon = np.array([[2.5, 2.5], [2.05, 2.5], ])
     time = 0
-    depthfile = config.DEPTH_DATA
+    dirname = os.path.dirname(__file__)
+    depthfile = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     map = Map(50, 0, 55, 5)
     waterdepth = WaterDepth("from_file", 20, map, depthfile)
     # waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
@@ -140,7 +140,7 @@ def test_safe_waterdepth():
     is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(waterdepth)
-    is_constrained = constraint_list.safe_crossing(lat[1, :], lat[0, :], lon[1, :], lon[0, :], time, is_constrained)
+    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
 
