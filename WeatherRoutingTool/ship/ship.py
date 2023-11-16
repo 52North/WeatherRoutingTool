@@ -259,7 +259,7 @@ class Tanker(Boat):
     #   lons = {lon1, lon1, lon1}
 
     def write_netCDF_courses(self, courses, lats, lons, time, unique_coords=False):
-        debug = False
+        debug = True
         speed = np.repeat(self.speed, courses.shape, axis=0)
         courses = units.degree_to_pmpi(courses)
 
@@ -388,7 +388,7 @@ class Tanker(Boat):
         ship = mariPower.ship.CBT()
 
         # start_time = time.time()
-        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)

@@ -106,12 +106,12 @@ if __name__ == "__main__":
     water_depth = WaterDepth(config.DATA_MODE, config.BOAT_DRAUGHT, default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
         constraints_string_list=config.CONSTRAINTS_LIST, data_mode=config.DATA_MODE, boat_draught=config.BOAT_DRAUGHT,
-        map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS)
+        map_size=default_map)
 
     # *******************************************
     # initialise route
     min_fuel_route = RoutingAlgFactory.get_routing_alg(config)
-    min_fuel_route.init_fig(water_depth, default_map)
+    #min_fuel_route.init_fig(water_depth, default_map)
 
     # *******************************************
     # routing

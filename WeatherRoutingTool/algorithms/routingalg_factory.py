@@ -1,9 +1,4 @@
 import datetime as dt
-<<<<<<< HEAD
-import WeatherRoutingTool.config as config
-=======
-
->>>>>>> main
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.algorithms.RunGenetic import RunGenetic
@@ -38,9 +33,9 @@ class RoutingAlgFactory:
             ra.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
             ra.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
 
-        ra.print_init()
+            ra.print_init()
 
-        if alg_type == 'genetic':
-            ra = RunGenetic(start, finish, departure_time, "")
+        if config.ALGORITHM_TYPE == 'genetic':
+            ra = RunGenetic(start, finish, departure_time, config.WEATHER_DATA, "")
 
         return ra
