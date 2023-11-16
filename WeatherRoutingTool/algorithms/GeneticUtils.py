@@ -57,7 +57,7 @@ class GeneticUtils():
         costs = []
         for route in routes:
             costs.append(np.sum([self.is_neg_constraints(self.wave_height.coords['latitude'][i],
-                                                            self.wave_height.coords['longitude'][j], cost[i,j], 0) for i,j in route[0]]))
+                                                            self.wave_height.coords['longitude'][j], cost[i,j]) for i,j in route[0]]))
         #print(costs)
         return costs
 
