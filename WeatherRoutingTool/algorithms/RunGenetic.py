@@ -44,7 +44,8 @@ class RunGenetic(RoutingAlg):
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         data = loadData(self.weather_path)
         wave_height = data.VHM0.isel(time=0)
-        genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, wave_height=wave_height, constraint_list=constraint_list)
+        genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, wave_height=wave_height,
+                                    constraint_list=constraints_list)
         start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1], wave_height)
         res = optimize(start, end, self.pop_size, self.ncount, self.n_offsprings, genetic_util)
         # get the best solution

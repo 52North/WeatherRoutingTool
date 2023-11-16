@@ -47,10 +47,7 @@ def getBBox(lon1, lat1,lon2,lat2, data):
 
 
 def cleanData(data):
-    # copy the data and remove NaN
-    # cost = wave_height.data
     cost = data.copy()
-    # np.random.shuffle(cost)
     nan_mask = np.isnan(cost)
     cost[nan_mask] = 1e100* np.nanmax(cost) if np.nanmax(cost) else 0
 
@@ -95,8 +92,8 @@ def time_diffs(speed, route):
     geod = Geodesic.WGS84
     # speed = speed * 1.852
 
-    lat1 = route[0,1]
-    lon1 = route[0,0]
+    lat1 = route[0, 0]
+    lon1 = route[0, 1]
     diffs = []
     d = 0
     for coord in route:

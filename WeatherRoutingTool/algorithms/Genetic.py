@@ -75,8 +75,9 @@ class RoutingProblem(Problem):
             n_obj=1, 
             n_constr=1)
         self.util = util
+
     def _evaluate(self, X, out, *args, **kwargs):
- 	"""
+        """
         Method defined by pymoo which has to be overriden
         :param x: numpy matrix with shape (number of solutions, number of design variables)
         :param out:
@@ -94,22 +95,22 @@ class RoutingProblem(Problem):
         out['G'] = np.column_stack([constraints])
 
 
-def optimize( strt, end,pop_size, n_gen, n_offspring, util):
+def optimize(strt, end, pop_size, n_gen, n_offspring, util):
     # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
     problem = RoutingProblem(util)
     algorithm = NSGA2(pop_size=pop_size,
-                    sampling= Population(strt, end, util),
-                    crossover= GeneticCrossover(util),
-                    n_offsprings = n_offspring,
-                    mutation= GeneticMutation(util),
-                    eliminate_duplicates=False)
+                      sampling=Population(strt, end, util),
+                      crossover=GeneticCrossover(util),
+                      n_offsprings=n_offspring,
+                      mutation=GeneticMutation(util),
+                      eliminate_duplicates=False)
     termination = get_termination("n_gen", n_gen)
 
     res = minimize(problem,
-                algorithm,
-                termination,
-                save_history=True,
-                verbose=True)
+                   algorithm,
+                   termination,
+                   save_history=True,
+                   verbose=True)
     # stop = timeit.default_timer()
     # route_cost(res.X)
     return res
