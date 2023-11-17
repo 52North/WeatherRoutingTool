@@ -1,31 +1,16 @@
 #!/bin/bash
 
-pwd=${PWD}
-run_modus=$1
-
-if [ "${run_modus}" == 'test' ]
+if [ -z "$1" ]
 then
-  WRT_PATH=${pwd}'/WeatherRoutingTool'
+  ENV_FILE='.env'
 else
-  if ! [ -n "${WRT_PATH}" ]
-  then
-    echo 'Please set the path to the base folder of the WeatherRoutingTool package'
-  fi
+  ENV_FILE=$1
 fi
 
-echo 'WRT_PATH is set to ' ${WRT_PATH}
-
-cd ${WRT_PATH}
-
-if [ "${run_modus}" == 'test' ]
-then
-  echo 'Setting environment variables for test case'
-  export $(grep -v '^#' .env.test | xargs)
-else
-  echo 'Setting environment variables for normal use case'
-  export $(grep -v '^#' .env | xargs)
+if [ ! -f ${ENV_FILE} ]; then
+    echo "File ${ENV_FILE} not found!"
+    return
 fi
 
-cd ${pwd}
-
-
+echo "Setting environment variables from ${ENV_FILE} file"
+export $(grep -v '^#' ${ENV_FILE} | xargs)
