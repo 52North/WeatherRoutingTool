@@ -67,8 +67,8 @@ def distance(route):
     geod = Geodesic.WGS84
     dists = []
 
-    lat1 = route[0,1]
-    lon1 = route[0,0]
+    lat1 = route[0, 1]
+    lon1 = route[0, 0]
     d = 0
 
     for coord in route:

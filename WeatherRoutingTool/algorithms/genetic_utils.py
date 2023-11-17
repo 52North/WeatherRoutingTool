@@ -99,7 +99,7 @@ class GeneticUtils:
             idx1 = np.where((parent1 == cross_over_point).all(axis=1))[0][0]
             idx2 = np.where((parent2 == cross_over_point).all(axis=1))[0][0]
             child1 = np.concatenate((parent1[:idx1], parent2[idx2:]), axis=0)
-            child2 = np.concatenate((parent2[:idx2],parent1[idx1:]), axis=0)
+            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)
             # print(child1, child2)
         return child1, child2
 
@@ -120,13 +120,13 @@ class GeneticUtils:
         path = route.copy()
         size = len(route)
 
-        start = random.randint(1,size-2)
-        end = random.randint(start,size-2)
+        start = random.randint(1, size-2)
+        end = random.randint(start, size-2)
         
         shuffled_cost = np.ones(cost.shape, dtype=np.float)
         shuffled_cost[nan_mask] = 1e20
     
-        subpath, _ = route_through_array(shuffled_cost,route[start], route[end], fully_connected=True, geometric=False)
-        newPath = np.concatenate((route[:start],np.array(subpath), route[end+1:]), axis=0)
+        subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
+        newPath = np.concatenate((route[:start], np.array(subpath), route[end+1:]), axis=0)
 
         return newPath
