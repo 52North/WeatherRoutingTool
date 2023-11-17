@@ -6,7 +6,7 @@ import xarray as xr
 from skimage.graph import route_through_array
 
 from WeatherRoutingTool.algorithms.data_utils import calculate_course_for_route, time_diffs
-
+from WeatherRoutingTool.routeparams import *
 
 class GeneticUtils:
     wave_height: xr.Dataset
@@ -20,16 +20,17 @@ class GeneticUtils:
         self.constraint_list = constraint_list
         self.departure_time = departure_time
 
-    def get_power(self, route):
-        _, _, route = self.index_to_coords(route[0])
-        courses, lats, lons = calculate_course_for_route(route)
-        time = np.array([self.departure_time]*len(courses))
-        time_dif = time_diffs(self.boat.boat_speed_function(), route)
-        time = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, time_dif)])
-        shipparams = self.boat.get_fuel_per_time_netCDF(courses, lats, lons, time)
+    def getPower(self, route):
+        _,_,route = self.index_to_coords(route[0])
+        route_dict = RouteParams.get_per_waypoint_coords(route[:,0], route[:,1],
+                                                         self.departure_time, self.boat.boat_speed_function())
+
+        shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
+                                                        route_dict['start_lons'], route_dict['start_times'])
         fuel = shipparams.get_fuel()
-        fuel = (fuel/3600) * time_dif[:-1]
-        return np.sum(fuel), shipparams
+        fuel = (fuel/3600) * route_dict['travel_times']
+
+        return np.sum(fuel),shipparams
 
     def interpolate_grid(self, lat_int, lon_int):
         self.grid_points = self.grid_points[::lat_int, ::lon_int]
@@ -84,6 +85,18 @@ class GeneticUtils:
 
             route, _ = route_through_array(shuffled_cost, src, dest, fully_connected=True, geometric=False)
             routes[i][0] = np.array(route)
+
+        if debug:
+            fig, ax = plt.subplots(figsize=(12, 10))
+            ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+            ax.add_feature(cf.LAND)
+            ax.add_feature(cf.COASTLINE)
+            for i in range(0,size):
+                _, _, route = self.index_to_coords(routes[i][0])
+                ax.plot(route[:,1], route[:,0], color="firebrick")
+
+            plt.show()
+
         return routes
 
     def cross_over(self, parent1, parent2):

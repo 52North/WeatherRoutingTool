@@ -371,6 +371,7 @@ class RouteParams():
         waypoint_coors['dist'] = dist
         waypoint_coors['courses'] = courses
         waypoint_coors['start_times'] = start_times
+        waypoint_coors['travel_times'] = travel_times
         return waypoint_coors
 
     def get_full_dist(self, unit='km'):
