@@ -42,13 +42,13 @@ class RunGenetic(RoutingAlg):
         self.print_init()
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
-        data = loadData(self.weather_path)
+        data = load_data(self.weather_path)
         wave_height = data.VHM0.isel(time=0)
         genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
                                     constraint_list=constraints_list)
         genetic_util.interpolate_grid(10, 10)
-        start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1],
-                                     genetic_util.get_grid())
+        start, end = find_start_and_end(self.start[0], self.start[1], self.finish[0], self.finish[1],
+                                        genetic_util.get_grid())
         res = optimize(start, end, self.pop_size, self.ncount, self.n_offsprings, genetic_util)
         # get the best solution
         best_idx = res.F.argmin()
@@ -56,7 +56,7 @@ class RunGenetic(RoutingAlg):
         best_f = res.F[best_idx]
         route = best_x[0]
         self.route = route
-        _, self.ship_params = genetic_util.getPower([route], wave_height, self.departure_time)
+        _, self.ship_params = genetic_util.get_power([route], wave_height, self.departure_time)
         result = self.terminate(genetic_util)
         # print(route)
         # print(result)
@@ -86,7 +86,7 @@ class RunGenetic(RoutingAlg):
         dists = distance(route)
         speed = self.ship_params.get_speed()[0]
         diffs = time_diffs(speed, route)
-        # ship_params = getPower()
+        # ship_params = get_power()
         self.count = len(lats)
 
         dt = self.departure_time

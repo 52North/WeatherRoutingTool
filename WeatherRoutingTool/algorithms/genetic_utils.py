@@ -20,7 +20,7 @@ class GeneticUtils:
         self.constraint_list = constraint_list
         self.departure_time = departure_time
 
-    def getPower(self, route):
+    def get_power(self, route):
         _, _, route = self.index_to_coords(route[0])
         courses, lats, lons = calculate_course_for_route(route)
         time = np.array([self.departure_time]*len(courses))
@@ -41,7 +41,7 @@ class GeneticUtils:
     def power_cost(self, routes):
         costs = []
         for route in routes:
-            fuel,_ = self.getPower(route)
+            fuel, _ = self.get_power(route)
             costs.append(fuel)
         return costs
 
@@ -87,7 +87,7 @@ class GeneticUtils:
             routes[i][0] = np.array(route)
         return routes
 
-    def crossOver(self, parent1, parent2):
+    def cross_over(self, parent1, parent2):
         src = parent1[0]
         dest = parent1[-1]    
         intersect = np.array([x for x in parent1 if any((x == y).all() for y in parent2)])

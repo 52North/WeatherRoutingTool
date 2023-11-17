@@ -5,7 +5,7 @@ import xarray as xr
 from geographiclib.geodesic import Geodesic
 
 
-def loadData(path):
+def load_data(path):
     """
     This function take a string as the path of the file and load the data from the file.
     Parameters:
@@ -28,7 +28,7 @@ def get_closest(array, value):
     return np.abs(array - value).argmin()
 
 
-def getBBox(lon1, lat1, lon2, lat2, data):
+def get_bbox(lon1, lat1, lon2, lat2, data):
     lon_min = get_closest(data.longitude.data, lon1)
     lon_max = get_closest(data.longitude.data, lon2)
     lat_min = get_closest(data.latitude.data, lat1)
@@ -42,7 +42,7 @@ def getBBox(lon1, lat1, lon2, lat2, data):
     return lon_min, lon_max, lat_min, lat_max
 
 
-def cleanData(data):
+def clean_data(data):
     cost = data.copy()
     nan_mask = np.isnan(cost)
     cost[nan_mask] = 1e100* np.nanmax(cost) if np.nanmax(cost) else 0
@@ -50,7 +50,7 @@ def cleanData(data):
     return cost
 
 
-def findStartAndEnd(lat1, lon1, lat2, lon2, grid_points):
+def find_start_and_end(lat1, lon1, lat2, lon2, grid_points):
     # Define start and end points
     start_lon = get_closest(grid_points.longitude.data, lon1)
     start_lat = get_closest(grid_points.latitude.data, lat1)

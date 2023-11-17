@@ -39,7 +39,7 @@ class GeneticCrossover(Crossover):
         for k in range(n_matings):
             # get the first and the second parent
             a, b = X[0, k, 0], X[1, k, 0]
-            Y[0, k, 0], Y[1, k, 0] = self.util.crossOver(a,b)
+            Y[0, k, 0], Y[1, k, 0] = self.util.cross_over(a, b)
         # print("Y:",Y)
         return Y
     
