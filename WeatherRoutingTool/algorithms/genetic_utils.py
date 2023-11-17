@@ -21,7 +21,7 @@ class GeneticUtils:
         self.constraint_list = constraint_list
         self.departure_time = departure_time
 
-    def getPower(self, route):
+    def get_power(self, route):
         _, _, route = self.index_to_coords(route[0])
         route_dict = RouteParams.get_per_waypoint_coords(route[:, 0], route[:, 1], self.departure_time,
                                                          self.boat.boat_speed_function())
@@ -77,6 +77,9 @@ class GeneticUtils:
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
         routes = np.zeros((size, 1), dtype=object)
+
+        debug = False
+
         for i in range(size):
             shuffled_cost = cost.copy()
             shuffled_cost[nan_mask] = 1
