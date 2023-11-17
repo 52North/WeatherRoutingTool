@@ -19,15 +19,15 @@ class GeneticUtils():
     constraint_list: None
     departure_time: None
 
-    def __init__(self, departure_time, wave_height, boat, constraint_list):
-        self.wave_height = wave_height
+    def __init__(self, departure_time, grid_points, boat, constraint_list):
+        self.grid_points = grid_points
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
 
     def getPower(self, route):
         _,_,route = self.index_to_coords(route[0])
-        courses, lats, lons = calculate_course_for_route(route, self.wave_height)
+        courses, lats, lons = calculate_course_for_route(route)
         time = np.array([self.departure_time]*len(courses))
         time_dif = time_diffs(self.boat.boat_speed_function(), route)
         time = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, time_dif)])
@@ -36,6 +36,12 @@ class GeneticUtils():
         fuel = (fuel/3600) * time_dif[:-1]
         
         return np.sum(fuel),shipparams
+
+    def interpolate_grid(self, lat_int, lon_int):
+        self.grid_points = self.grid_points[::lat_int, ::lon_int]
+
+    def get_grid(self):
+        return self.grid_points
     
     def power_cost(self, routes):
         costs = []
@@ -54,24 +60,24 @@ class GeneticUtils():
         return 0 if not is_constrained else 1
 
     def route_const(self, routes):
-        cost = self.wave_height.data
+        cost = self.grid_points
         costs = []
         for route in routes:
-            costs.append(np.sum([self.is_neg_constraints(self.wave_height.coords['latitude'][i],
-                                                            self.wave_height.coords['longitude'][j], cost[i,j]) for i,j in route[0]]))
+            costs.append(np.sum([self.is_neg_constraints(self.grid_points.coords['latitude'][i],
+                                                            self.grid_points.coords['longitude'][j], cost[i,j]) for i,j in route[0]]))
         #print(costs)
         return costs
 
     def index_to_coords(self, route):
-        lats = self.wave_height.coords['latitude'][route[:,0]]
-        lons = self.wave_height.coords['longitude'][route[:,1]]
+        lats = self.grid_points.coords['latitude'][route[:,0]]
+        lons = self.grid_points.coords['longitude'][route[:,1]]
         route = [[x,y] for x,y in zip(lats, lons)]
         #print(type(lats))
         return lats, lons,np.array(route)
 
     # make initial population for genetic algorithm
     def population(self, size, src, dest):
-        cost = self.wave_height.data
+        cost = self.grid_points.data
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
         routes = np.zeros((size,1), dtype=object)
@@ -103,14 +109,14 @@ class GeneticUtils():
         return child1, child2
 
     def route_cost(self, routes):
-        cost = self.wave_height.data
+        cost = self.grid_points.data
         costs = []
         for route in routes:
             costs.append(np.sum([cost[i,j] for i,j in route[0]]))
         return costs       
 
     def mutate(self, route):
-        cost = self.wave_height.data
+        cost = self.grid_points.data
         source = route[0]
         destination = route[-1]
         shuffled_cost = cost.copy()

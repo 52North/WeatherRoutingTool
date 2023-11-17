@@ -54,13 +54,13 @@ def cleanData(data):
     return cost
 
 
-def findStartAndEnd(lat1, lon1, lat2, lon2, wave_height):
+def findStartAndEnd(lat1, lon1, lat2, lon2, grid_points):
     # Define start and end points
 
-    start_lon = get_closest(wave_height.longitude.data, lon1)
-    start_lat = get_closest(wave_height.latitude.data, lat1)
-    end_lon = get_closest(wave_height.longitude.data,lon2)
-    end_lat = get_closest(wave_height.latitude.data,lat2)
+    start_lon = get_closest(grid_points.longitude.data, lon1)
+    start_lat = get_closest(grid_points.latitude.data, lat1)
+    end_lon = get_closest(grid_points.longitude.data,lon2)
+    end_lat = get_closest(grid_points.latitude.data,lat2)
 
     start = (start_lat, start_lon)
     end = (end_lat, end_lon)
@@ -109,7 +109,7 @@ def time_diffs(speed, route):
     return diffs
 
 
-def calculate_course_for_route(route, wave_height):
+def calculate_course_for_route(route):
     geod = Geodesic.WGS84
     courses = np.zeros(len(route)-1)
     lats = np.zeros(len(route)-1)
