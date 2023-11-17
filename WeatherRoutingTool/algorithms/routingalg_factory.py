@@ -1,6 +1,6 @@
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
-from WeatherRoutingTool.algorithms.RunGenetic import RunGenetic
+from WeatherRoutingTool.algorithms.run_genetic import RunGenetic
 
 
 class RoutingAlgFactory:

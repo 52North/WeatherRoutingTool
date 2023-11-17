@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.config as config
 from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.algorithms.DataUtils import *
+from WeatherRoutingTool.algorithms.data_utils import *
 import xarray as xr
 import numpy as np
 

@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 from skimage.graph import route_through_array
 
-from WeatherRoutingTool.algorithms.DataUtils import calculate_course_for_route, time_diffs
+from WeatherRoutingTool.algorithms.data_utils import calculate_course_for_route, time_diffs
 
 
 class GeneticUtils:

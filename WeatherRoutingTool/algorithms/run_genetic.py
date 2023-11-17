@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.algorithms.DataUtils import *
-from WeatherRoutingTool.algorithms.Genetic import *
-from WeatherRoutingTool.algorithms.GeneticUtils import *
+from WeatherRoutingTool.algorithms.data_utils import *
+from WeatherRoutingTool.algorithms.genetic import *
+from WeatherRoutingTool.algorithms.genetic_utils import *
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
