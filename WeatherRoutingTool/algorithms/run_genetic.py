@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import numpy as np
@@ -8,10 +9,13 @@ from WeatherRoutingTool.algorithms.data_utils import distance, find_start_and_en
 from WeatherRoutingTool.algorithms.genetic import optimize
 from WeatherRoutingTool.algorithms.genetic_utils import GeneticUtils
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
+import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
+
+logger = logging.getLogger('WRT.Genetic')
 
 
 class RunGenetic(RoutingAlg):
