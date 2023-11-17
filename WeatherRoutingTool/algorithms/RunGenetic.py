@@ -16,8 +16,8 @@ from WeatherRoutingTool.utils.maps import Map
 
 class RunGenetic(RoutingAlg):
     fig: matplotlib.figure
-    route_ensemble : list
-    route: np.array # temp
+    route_ensemble: list
+    route: np.array  # temp
 
     pop_size: int
     n_offsprings: int
@@ -46,8 +46,9 @@ class RunGenetic(RoutingAlg):
         wave_height = data.VHM0.isel(time=0)
         genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
                                     constraint_list=constraints_list)
-        genetic_util.interpolate_grid(10,10)
-        start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1], genetic_util.get_grid())
+        genetic_util.interpolate_grid(10, 10)
+        start, end = findStartAndEnd(self.start[0], self.start[1], self.finish[0], self.finish[1],
+                                     genetic_util.get_grid())
         res = optimize(start, end, self.pop_size, self.ncount, self.n_offsprings, genetic_util)
         # get the best solution
         best_idx = res.F.argmin()
@@ -55,18 +56,18 @@ class RunGenetic(RoutingAlg):
         best_f = res.F[best_idx]
         route = best_x[0]
         self.route = route
-        _,self.ship_params = genetic_util.getPower([route], wave_height, self.departure_time)
+        _, self.ship_params = genetic_util.getPower([route], wave_height, self.departure_time)
         result = self.terminate(genetic_util)
-        #print(route)
-        #print(result)
+        # print(route)
+        # print(result)
         return result
 
     def print_init(self):
         print("Initializing Routing......")
         print('route from ' + str(self.start) + ' to ' + str(self.finish))
-        # print('strart time ' + str(self.time))
-        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
-        # logger.info(form.get_log_step('start time ' + str(self.time),1))
+        # print('start time ' + str(self.time))
+        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish), 1))
+        # logger.info(form.get_log_step('start time ' + str(self.time), 1))
 
     def print_current_status(self):
         print("ALGORITHM SETTINGS:")

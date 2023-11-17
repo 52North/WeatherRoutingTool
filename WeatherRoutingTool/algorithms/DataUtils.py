@@ -56,7 +56,6 @@ def cleanData(data):
 
 def findStartAndEnd(lat1, lon1, lat2, lon2, grid_points):
     # Define start and end points
-
     start_lon = get_closest(grid_points.longitude.data, lon1)
     start_lat = get_closest(grid_points.latitude.data, lat1)
     end_lon = get_closest(grid_points.longitude.data,lon2)
@@ -127,4 +126,3 @@ def calculate_course_for_route(route):
     
     # print(courses, lats, lons)
     return courses, lats, lons
-

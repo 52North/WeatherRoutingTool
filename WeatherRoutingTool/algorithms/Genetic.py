@@ -12,7 +12,7 @@ from WeatherRoutingTool.algorithms.GeneticUtils import *
 
 
 class Population(Sampling):
-    def __init__(self, src, dest, util,var_type=np.float64):
+    def __init__(self, src, dest, util, var_type=np.float64):
         super().__init__()
         self.var_type = var_type
         self.src = src
