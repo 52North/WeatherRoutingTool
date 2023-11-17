@@ -16,7 +16,8 @@ def test_plot_power_vs_dist():
     fuel_consumed = np.array([1, 2, 1])
     dist_per_step = np.array([1, 4, 5])
     time_per_step = np.array(
-        [datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19) + datetime.timedelta(days=180),
+        [datetime.datetime(2022, 12, 19),
+         datetime.datetime(2022, 12, 19) + datetime.timedelta(days=180),
          datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
 
     sp = ShipParams(fuel_consumed, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list,
@@ -36,12 +37,14 @@ def test_plot_power_vs_dist():
                         ship_params_per_step=sp, gcr=dummy_list)
     route.plot_power_vs_dist("orange", "Route X")
 
+
 def test_get_accumulated_dist():
     dist_per_step = np.array([1, 4, 5, 7])
     dist_acc_test = np.array([1, 5, 10, 17])
     dist = graphics.get_accumulated_dist(dist_per_step)
 
     assert np.array_equal(dist_acc_test, dist)
+
 
 def test_get_hist_values_from_boundaries():
     bin_boundaries = np.array([1, 4, 5, 7])
@@ -55,6 +58,7 @@ def test_get_hist_values_from_boundaries():
     assert np.array_equal(bin_centres_test, hist_values['bin_centres'])
     assert np.array_equal(bin_widths_test, hist_values['bin_widths'])
     assert np.array_equal(bin_content_normalised_test, hist_values['bin_content'])
+
 
 def test_get_hist_values_from_widths():
     bin_widths = np.array([3, 1, 2])

@@ -282,16 +282,12 @@ class RouteParams():
 
         return fuel
 
-
     def set_ship_params(self, ship_params):
         self.ship_params_per_step = ship_params
-
 
     def plot_power_vs_dist_with_weather(self, data_array, label_array, n_datasets):
         if n_datasets < 1:
             raise ValueError('You should at least provide 1 dataset!')
-
-
 
         fig = plt.figure(figsize=(25, 15))
         gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
@@ -406,4 +402,3 @@ class RouteParams():
             full_fuel = full_fuel + fuel_per_step
 
         return full_fuel
-

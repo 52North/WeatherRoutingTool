@@ -273,7 +273,7 @@ class IsoBased(RoutingAlg):
         bs = boat.boat_speed_function()
         bs = np.repeat(bs, (self.get_current_azimuth().shape[0]), axis=0)
 
-	# TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
+        # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
                                                     self.get_current_lons(), self.time, True)
         units.cut_angles(self.current_variant)
@@ -728,9 +728,9 @@ class IsoBased(RoutingAlg):
             ds_depth_coarsened = ds_depth.compute()
 
             self.depth = ds_depth_coarsened.where(
-                (ds_depth_coarsened.latitude > map_size.lat1) & (ds_depth_coarsened.latitude < map_size.lat2) & (
-                        ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) & (
-                        ds_depth_coarsened.depth < 0), drop=True)
+                (ds_depth_coarsened.latitude > map_size.lat1) & (ds_depth_coarsened.latitude < map_size.lat2) &
+                (ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) &
+                (ds_depth_coarsened.depth < 0), drop=True)
 
         self.generate_basemap()
 
