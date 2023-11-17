@@ -8,6 +8,7 @@ from skimage.graph import route_through_array
 from WeatherRoutingTool.algorithms.data_utils import calculate_course_for_route, time_diffs
 from WeatherRoutingTool.routeparams import *
 
+
 class GeneticUtils:
     wave_height: xr.Dataset
     boat: None
@@ -21,16 +22,16 @@ class GeneticUtils:
         self.departure_time = departure_time
 
     def getPower(self, route):
-        _,_,route = self.index_to_coords(route[0])
-        route_dict = RouteParams.get_per_waypoint_coords(route[:,0], route[:,1],
-                                                         self.departure_time, self.boat.boat_speed_function())
+        _, _, route = self.index_to_coords(route[0])
+        route_dict = RouteParams.get_per_waypoint_coords(route[:, 0], route[:, 1], self.departure_time,
+                                                         self.boat.boat_speed_function())
 
         shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
                                                         route_dict['start_lons'], route_dict['start_times'])
         fuel = shipparams.get_fuel()
-        fuel = (fuel/3600) * route_dict['travel_times']
+        fuel = (fuel / 3600) * route_dict['travel_times']
 
-        return np.sum(fuel),shipparams
+        return np.sum(fuel), shipparams
 
     def interpolate_grid(self, lat_int, lon_int):
         self.grid_points = self.grid_points[::lat_int, ::lon_int]
@@ -57,9 +58,9 @@ class GeneticUtils:
         cost = self.grid_points
         costs = []
         for route in routes:
-            costs.append(np.sum(
-                [self.is_neg_constraints(self.grid_points.coords['latitude'][i],
-                                         self.grid_points.coords['longitude'][j], cost[i, j]) for i, j in route[0]]))
+            costs.append(np.sum([
+                self.is_neg_constraints(self.grid_points.coords['latitude'][i], self.grid_points.coords['longitude'][j],
+                                        cost[i, j]) for i, j in route[0]]))
         # print(costs)
         return costs
 
@@ -91,9 +92,9 @@ class GeneticUtils:
             ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
             ax.add_feature(cf.LAND)
             ax.add_feature(cf.COASTLINE)
-            for i in range(0,size):
+            for i in range(0, size):
                 _, _, route = self.index_to_coords(routes[i][0])
-                ax.plot(route[:,1], route[:,0], color="firebrick")
+                ax.plot(route[:, 1], route[:, 0], color="firebrick")
 
             plt.show()
 
@@ -111,8 +112,7 @@ class GeneticUtils:
             idx1 = np.where((parent1 == cross_over_point).all(axis=1))[0][0]
             idx2 = np.where((parent2 == cross_over_point).all(axis=1))[0][0]
             child1 = np.concatenate((parent1[:idx1], parent2[idx2:]), axis=0)
-            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)
-            # print(child1, child2)
+            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)  # print(child1, child2)
         return child1, child2
 
     def route_cost(self, routes):
@@ -132,13 +132,13 @@ class GeneticUtils:
         # path = route.copy()
         size = len(route)
 
-        start = random.randint(1, size-2)
-        end = random.randint(start, size-2)
+        start = random.randint(1, size - 2)
+        end = random.randint(start, size - 2)
 
         shuffled_cost = np.ones(cost.shape, dtype=np.float)
         shuffled_cost[nan_mask] = 1e20
 
         subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
-        newPath = np.concatenate((route[:start], np.array(subpath), route[end+1:]), axis=0)
+        newPath = np.concatenate((route[:start], np.array(subpath), route[end + 1:]), axis=0)
 
         return newPath
