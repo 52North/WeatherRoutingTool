@@ -21,7 +21,7 @@ class GeneticUtils:
         self.departure_time = departure_time
 
     def getPower(self, route):
-        _,_,route = self.index_to_coords(route[0])
+        _, _, route = self.index_to_coords(route[0])
         courses, lats, lons = calculate_course_for_route(route)
         time = np.array([self.departure_time]*len(courses))
         time_dif = time_diffs(self.boat.boat_speed_function(), route)
@@ -66,7 +66,7 @@ class GeneticUtils:
     def index_to_coords(self, route):
         lats = self.grid_points.coords['latitude'][route[:, 0]]
         lons = self.grid_points.coords['longitude'][route[:, 1]]
-        route = [[x,y] for x,y in zip(lats, lons)]
+        route = [[x, y] for x,y in zip(lats, lons)]
         # print(type(lats))
         return lats, lons,np.array(route)
 
@@ -75,7 +75,7 @@ class GeneticUtils:
         cost = self.grid_points.data
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
-        routes = np.zeros((size,1), dtype=object)
+        routes = np.zeros((size, 1), dtype=object)
         for i in range(size):
             shuffled_cost = cost.copy()
             shuffled_cost[nan_mask] = 1
@@ -83,7 +83,7 @@ class GeneticUtils:
             shuffled_cost = shuffled_cost[shuffled_indices]
             shuffled_cost[nan_mask] = 1e20
 
-            route, _ = route_through_array(shuffled_cost,src, dest, fully_connected=True, geometric=False)
+            route, _ = route_through_array(shuffled_cost, src, dest, fully_connected=True, geometric=False)
             routes[i][0] = np.array(route)
         return routes
 
@@ -107,8 +107,8 @@ class GeneticUtils:
         cost = self.grid_points.data
         costs = []
         for route in routes:
-            costs.append(np.sum([cost[i,j] for i,j in route[0]]))
-        return costs       
+            costs.append(np.sum([cost[i,j] for i, j in route[0]]))
+        return costs
 
     def mutate(self, route):
         cost = self.grid_points.data
@@ -127,6 +127,6 @@ class GeneticUtils:
         shuffled_cost[nan_mask] = 1e20
     
         subpath, _ = route_through_array(shuffled_cost,route[start], route[end], fully_connected=True, geometric=False)
-        newPath = np.concatenate((route[:start],np.array(subpath),route[end+1:]), axis=0)
+        newPath = np.concatenate((route[:start],np.array(subpath), route[end+1:]), axis=0)
 
         return newPath

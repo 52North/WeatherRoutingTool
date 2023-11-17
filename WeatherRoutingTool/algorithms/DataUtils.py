@@ -28,11 +28,11 @@ def get_closest(array, value):
     return np.abs(array - value).argmin()
 
 
-def getBBox(lon1, lat1,lon2,lat2, data):
-    lon_min = get_closest(data.longitude.data,lon1)
-    lon_max = get_closest(data.longitude.data,lon2)
-    lat_min = get_closest(data.latitude.data,lat1)
-    lat_max = get_closest(data.latitude.data,lat2)
+def getBBox(lon1, lat1, lon2, lat2, data):
+    lon_min = get_closest(data.longitude.data, lon1)
+    lon_max = get_closest(data.longitude.data, lon2)
+    lat_min = get_closest(data.latitude.data, lat1)
+    lat_max = get_closest(data.latitude.data, lat2)
 
     lon_min = lon_min if lon_min < lon_max else lon_max 
     lon_max = lon_max if lon_min < lon_max else lon_min
@@ -54,8 +54,8 @@ def findStartAndEnd(lat1, lon1, lat2, lon2, grid_points):
     # Define start and end points
     start_lon = get_closest(grid_points.longitude.data, lon1)
     start_lat = get_closest(grid_points.latitude.data, lat1)
-    end_lon = get_closest(grid_points.longitude.data,lon2)
-    end_lat = get_closest(grid_points.latitude.data,lat2)
+    end_lon = get_closest(grid_points.longitude.data, lon2)
+    end_lat = get_closest(grid_points.latitude.data, lat2)
 
     start = (start_lat, start_lon)
     end = (end_lat, end_lon)
