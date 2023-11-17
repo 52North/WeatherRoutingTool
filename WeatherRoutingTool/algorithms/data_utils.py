@@ -23,7 +23,7 @@ def load_data(path):
 
 
 # create a bounding box from the coordinates
-# NY to Lisbon 
+# NY to Lisbon
 def get_closest(array, value):
     return np.abs(array - value).argmin()
 
@@ -34,9 +34,9 @@ def get_bbox(lon1, lat1, lon2, lat2, data):
     lat_min = get_closest(data.latitude.data, lat1)
     lat_max = get_closest(data.latitude.data, lat2)
 
-    lon_min = lon_min if lon_min < lon_max else lon_max 
+    lon_min = lon_min if lon_min < lon_max else lon_max
     lon_max = lon_max if lon_min < lon_max else lon_min
-    lat_min = lat_min if lat_min < lat_max else lat_max 
+    lat_min = lat_min if lat_min < lat_max else lat_max
     lat_max = lat_max if lat_min < lat_max else lat_min
     # print(lon_min, lon_max, lat_min, lat_max)
     return lon_min, lon_max, lat_min, lat_max
@@ -45,8 +45,7 @@ def get_bbox(lon1, lat1, lon2, lat2, data):
 def clean_data(data):
     cost = data.copy()
     nan_mask = np.isnan(cost)
-    cost[nan_mask] = 1e100* np.nanmax(cost) if np.nanmax(cost) else 0
-
+    cost[nan_mask] = 1e100 * np.nanmax(cost) if np.nanmax(cost) else 0
     return cost
 
 
@@ -119,6 +118,6 @@ def calculate_course_for_route(route):
         lat2, lon2 = route[i+1]
         course = geod.Inverse(lat1, lon1, lat2, lon2)['azi1']
         courses[i] = course
-    
+
     # print(courses, lats, lons)
     return courses, lats, lons

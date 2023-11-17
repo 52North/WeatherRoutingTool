@@ -57,7 +57,7 @@ class RunGenetic(RoutingAlg):
         # get the best solution
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
-        best_f = res.F[best_idx]
+        # best_f = res.F[best_idx]
         route = best_x[0]
         self.route = route
         _, self.ship_params = genetic_util.get_power([route], wave_height, self.departure_time)

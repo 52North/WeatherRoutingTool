@@ -22,7 +22,7 @@ class Population(Sampling):
         self.X = routes
         # print(self.X.shape)
         return self.X
-    
+
 
 class GeneticCrossover(Crossover):
     def __init__(self, util, prob=1):
@@ -42,35 +42,32 @@ class GeneticCrossover(Crossover):
             Y[0, k, 0], Y[1, k, 0] = self.util.cross_over(a, b)
         # print("Y:",Y)
         return Y
-    
+
 
 class GeneticMutation(Mutation):
-    def __init__(self, util, prob =0.4):
+    def __init__(self, util, prob=0.4):
         super().__init__()
         self.prob = prob
-        self.util = util 
+        self.util = util
 
     def _do(self, problem, X, **kwargs):
-        offsprings = np.zeros((len(X),1), dtype=object)
+        offsprings = np.zeros((len(X), 1), dtype=object)
         # loop over individuals in population
         for idx, i in enumerate(X):
             # perform mutation with certain probability
             if np.random.uniform(0, 1) < self.prob:
                 mutated_individual = self.util.mutate(i[0])
                 # print("mutated_individual", mutated_individual, "###")
-                offsprings[idx][0]=mutated_individual
+                offsprings[idx][0] = mutated_individual
         # if no mutation
             else:
-                offsprings[idx][0] =i[0]
+                offsprings[idx][0] = i[0]
         return offsprings
 
 
 class RoutingProblem(Problem):
     def __init__(self, util):
-        super().__init__(
-            n_var=1, 
-            n_obj=1, 
-            n_constr=1)
+        super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.util = util
 
     def _evaluate(self, X, out, *args, **kwargs):

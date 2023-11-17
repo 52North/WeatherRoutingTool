@@ -29,15 +29,14 @@ class GeneticUtils:
         shipparams = self.boat.get_fuel_per_time_netCDF(courses, lats, lons, time)
         fuel = shipparams.get_fuel()
         fuel = (fuel/3600) * time_dif[:-1]
-        
-        return np.sum(fuel),shipparams
+        return np.sum(fuel), shipparams
 
     def interpolate_grid(self, lat_int, lon_int):
         self.grid_points = self.grid_points[::lat_int, ::lon_int]
 
     def get_grid(self):
         return self.grid_points
-    
+
     def power_cost(self, routes):
         costs = []
         for route in routes:
@@ -45,7 +44,7 @@ class GeneticUtils:
             costs.append(fuel)
         return costs
 
-    def is_neg_constraints(self, lat, lon, time):  
+    def is_neg_constraints(self, lat, lon, time):
         lat = np.array([lat])
         lon = np.array([lon])
         is_constrained = [False for i in range(0, lat.shape[0])]
@@ -66,9 +65,9 @@ class GeneticUtils:
     def index_to_coords(self, route):
         lats = self.grid_points.coords['latitude'][route[:, 0]]
         lons = self.grid_points.coords['longitude'][route[:, 1]]
-        route = [[x, y] for x,y in zip(lats, lons)]
+        route = [[x, y] for x, y in zip(lats, lons)]
         # print(type(lats))
-        return lats, lons,np.array(route)
+        return lats, lons, np.array(route)
 
     # make initial population for genetic algorithm
     def population(self, size, src, dest):
@@ -88,8 +87,8 @@ class GeneticUtils:
         return routes
 
     def cross_over(self, parent1, parent2):
-        src = parent1[0]
-        dest = parent1[-1]    
+        # src = parent1[0]
+        # dest = parent1[-1]
         intersect = np.array([x for x in parent1 if any((x == y).all() for y in parent2)])
 
         if len(intersect) == 0:
@@ -107,25 +106,25 @@ class GeneticUtils:
         cost = self.grid_points.data
         costs = []
         for route in routes:
-            costs.append(np.sum([cost[i,j] for i, j in route[0]]))
+            costs.append(np.sum([cost[i, j] for i, j in route[0]]))
         return costs
 
     def mutate(self, route):
         cost = self.grid_points.data
-        source = route[0]
-        destination = route[-1]
+        # source = route[0]
+        # destination = route[-1]
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
 
-        path = route.copy()
+        # path = route.copy()
         size = len(route)
 
         start = random.randint(1, size-2)
         end = random.randint(start, size-2)
-        
+
         shuffled_cost = np.ones(cost.shape, dtype=np.float)
         shuffled_cost[nan_mask] = 1e20
-    
+
         subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
         newPath = np.concatenate((route[:start], np.array(subpath), route[end+1:]), axis=0)
 
