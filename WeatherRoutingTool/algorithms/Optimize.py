@@ -1,6 +1,5 @@
 from pymoo.factory import get_termination
 from pymoo.optimize import minimize
-from pymoo.operators.crossover.sbx import SBX
 
 pop_size = 30
 n_gen = 50

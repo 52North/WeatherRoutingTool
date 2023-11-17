@@ -1,14 +1,11 @@
-from pymoo.core.sampling import Sampling
+import numpy as np
+from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
-from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
-# from pymoo.model.callback import Callback
-import numpy as np
+from pymoo.core.sampling import Sampling
 from pymoo.factory import get_termination
 from pymoo.optimize import minimize
-from pymoo.operators.crossover.sbx import SBX
-from WeatherRoutingTool.algorithms.GeneticUtils import *
 
 
 class Population(Sampling):

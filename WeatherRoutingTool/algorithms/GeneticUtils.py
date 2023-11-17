@@ -1,20 +1,14 @@
-from datetime import timedelta
-import numpy as np
 import random
-from skimage.graph import route_through_array
-import sys
-import os
+from datetime import timedelta
+
+import numpy as np
 import xarray as xr
+from skimage.graph import route_through_array
 
-# FIXME
-current_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-sys.path.append(os.path.join(current_path, '..', ''))
-
-from WeatherRoutingTool.constraints.constraints import *
-from WeatherRoutingTool.algorithms.DataUtils import *
+from WeatherRoutingTool.algorithms.DataUtils import calculate_course_for_route, time_diffs
 
 
-class GeneticUtils():
+class GeneticUtils:
     wave_height: xr.Dataset
     boat: None
     constraint_list: None

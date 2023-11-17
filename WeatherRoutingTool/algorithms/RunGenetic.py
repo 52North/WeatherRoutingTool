@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import numpy as np
 import matplotlib
@@ -10,8 +10,8 @@ from WeatherRoutingTool.algorithms.GeneticUtils import *
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather import WeatherCond
 
 
 class RunGenetic(RoutingAlg):

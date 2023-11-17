@@ -1,12 +1,8 @@
-from skimage.graph import route_through_array
-import xarray as xr
-import numpy as np
-from matplotlib import pyplot as plt
 import os
+
+import numpy as np
+import xarray as xr
 from geographiclib.geodesic import Geodesic
-import math
-from WeatherRoutingTool.ship.ship import Tanker
-from datetime import datetime
 
 
 def loadData(path):
