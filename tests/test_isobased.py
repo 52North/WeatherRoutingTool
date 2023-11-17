@@ -312,7 +312,8 @@ def test_pruning_select_correct_idxs():
     speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2], speed_per_step[0, 5], speed_per_step[0, 6]])
     lat_test = np.array([[30, 30, 30, 30]])
     lon_test = np.array([[45, 45, 45, 45]])
-    time_test = np.array([datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()])
+    time_single = datetime.datetime(2023, 11, 11, 11, 11)
+    time_test = np.array([time_single, time_single, time_single, time_single])
 
     ra.print_current_status()
     form.print_line()

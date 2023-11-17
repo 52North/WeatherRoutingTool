@@ -6,6 +6,7 @@ import pytest
 
 from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
+from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import *
 
 
@@ -18,30 +19,21 @@ def generate_dummy_constraint_list():
 
 
 def create_dummy_IsoBased_object():
-    start = (30, 45)
-    finish = (0, 20)
-    date = datetime.date.today()
-    prune_sector_half = 90
-    nof_prune_segments = 5
-    nof_hdgs_segments = 4
-    hdgs_increments = 1
 
-    ra = IsoBased(start, finish, date)
-    ra.set_pruning_settings(prune_sector_half, nof_prune_segments)
-    ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
+    print('Reading correct IsoBased XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx')
+
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests.json')
+    config = Config(file_name=configpath)
+
+    ra = IsoBased(config)
     return ra
 
 
 def create_dummy_IsoFuel_object():
-    start = (30, 45)
-    finish = (0, 20)
-    date = datetime.date.today()
-    prune_sector_half = 90
-    nof_prune_segments = 5
-    nof_hdgs_segments = 4
-    hdgs_increments = 1
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests.json')
+    config = Config(file_name=configpath)
 
-    ra = IsoFuel(start, finish, date, 999, "")
-    ra.set_pruning_settings(prune_sector_half, nof_prune_segments)
-    ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
+    ra = IsoFuel(config)
     return ra
