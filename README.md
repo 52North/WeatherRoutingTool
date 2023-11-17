@@ -193,6 +193,29 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
+## Genetic Algorithm
+### Variable definitions: debug output
+ - n_gen: current generation
+ - n_nds: number of non-dominating solutions
+ - cv_min: minimum constraint violation
+ - cv_avg: average constraint violation
+ - eps: epsilon?
+ - indicator: indicator to monitor algorithm performance; can be Hypervolume, Running Metric ...
+
+### Useful links:
+ - documentation of results object: 
+ - monitoring convergence (e.g. using Running Matrix):
+    - https://pymoo.org/getting_started/part_4.html
+    - https://ieeexplore.ieee.org/document/9185546
+
+### General Notes:
+ - res.F = None: quick-and-dirty hack possible by passing 'return_least_infeasible = True' to init functino of NSGAII
+ - chain of function calls until RoutingProblem._evaluate() is called:
+    - core/algorithms.run -> core/algorithms.next -> core/evaluator.eval -> core/evaluator._eval
+ - chain of function calls until crossover/mutation/selection are called:
+    - core/algorithms.run -> core/algorithms.next -> core/algorithm.infill -> algorithms/base/genetic._infill
+
+
 ## Fuel estimation -- The communication between mariPower and the WRT
 
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
