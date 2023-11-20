@@ -1,12 +1,10 @@
 import random
-from datetime import timedelta
 
 import numpy as np
 import xarray as xr
 from skimage.graph import route_through_array
 
-from WeatherRoutingTool.algorithms.data_utils import calculate_course_for_route, time_diffs
-from WeatherRoutingTool.routeparams import *
+from WeatherRoutingTool.routeparams import RouteParams
 
 
 class GeneticUtils:

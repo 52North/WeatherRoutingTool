@@ -101,23 +101,3 @@ def time_diffs(speed, route):
     diffs = np.array(diffs) / speed
     # print(diffs)
     return diffs
-
-
-def calculate_course_for_route(route):
-    geod = Geodesic.WGS84
-    courses = np.zeros(len(route)-1)
-    lats = np.zeros(len(route)-1)
-    lons = np.zeros(len(route)-1)
-
-    # print(route)
-    for i in range(len(route) - 1):
-        # Get the coordinates of the current and next waypoints
-        lat1, lon1 = route[i]
-        lats[i] = lat1
-        lons[i] = lon1
-        lat2, lon2 = route[i+1]
-        course = geod.Inverse(lat1, lon1, lat2, lon2)['azi1']
-        courses[i] = course
-
-    # print(courses, lats, lons)
-    return courses, lats, lons
