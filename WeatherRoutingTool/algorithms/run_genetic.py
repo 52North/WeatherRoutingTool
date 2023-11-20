@@ -35,11 +35,11 @@ class RunGenetic(RoutingAlg):
         self.default_map = config.DEFAULT_MAP
         self.weather_path = config.WEATHER_DATA
 
-        self.ncount = 20  # config.N_GEN
+        self.ncount = config.GENETIC_NUMBER_GENERATIONS   # ToDo: use better name than ncount?
         self.count = 0
 
-        self.pop_size = 20  # config.POP_SIZE
-        self.n_offsprings = 2  # config.N_OFFSPRINGS
+        self.pop_size = config.GENETIC_POPULATION_SIZE
+        self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
 
         self.ship_params = None
 
