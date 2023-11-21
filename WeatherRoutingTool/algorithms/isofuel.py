@@ -23,7 +23,7 @@ class IsoFuel(IsoBased):
         logger.info(form.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel), 1))
 
     def check_isochrones(self, route: RouteParams):
-        print('To be implemented')
+        logger.info('To be implemented')
 
     def get_dist(self, bs, delta_time):
         dist = delta_time * bs
@@ -76,8 +76,8 @@ class IsoFuel(IsoBased):
     def determine_timespread(self, delta_time):
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
-        print('delta_time', delta_time / 3600)
-        print('spread of time: ' + str(mean / 3600) + '+-' + str(stddev / 3600))
+        logger.info('delta_time', delta_time / 3600)
+        logger.info('spread of time: ' + str(mean / 3600) + '+-' + str(stddev / 3600))
 
     def update_time(self, delta_time):
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
@@ -88,8 +88,9 @@ class IsoFuel(IsoBased):
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
 
     def final_pruning(self):
+        # ToDo: use logger.debug and args.debug
         debug = False
-        if (debug):
+        if debug:
             print('Final IsoFuel Pruning...')
             print('full_fuel_consumed:', self.full_fuel_consumed)
 

@@ -1,4 +1,8 @@
+import logging
+
 import numpy as np
+
+logger = logging.getLogger('WRT.ship')
 
 
 class ShipParams():
@@ -45,27 +49,27 @@ class ShipParams():
                    r_roughness=np.full(shape=ncoorinate_points, fill_value=0), )
 
     def print(self):
-        print('fuel: ', self.fuel)
-        print('rpm: ', self.rpm)
-        print('power: ', self.power)
-        print('speed: ', self.speed)
-        print('r_calm: ', self.r_calm)
-        print('r_wind: ', self.r_wind)
-        print('r_waves: ', self.r_waves)
-        print('r_shallow: ', self.r_shallow)
-        print('r_roughness: ', self.r_roughness)
-        print('fuel_type: ', self.fuel_type)
+        logger.info('fuel: ', self.fuel)
+        logger.info('rpm: ', self.rpm)
+        logger.info('power: ', self.power)
+        logger.info('speed: ', self.speed)
+        logger.info('r_calm: ', self.r_calm)
+        logger.info('r_wind: ', self.r_wind)
+        logger.info('r_waves: ', self.r_waves)
+        logger.info('r_shallow: ', self.r_shallow)
+        logger.info('r_roughness: ', self.r_roughness)
+        logger.info('fuel_type: ', self.fuel_type)
 
     def print_shape(self):
-        print('fuel: ', self.fuel.shape)
-        print('rpm: ', self.rpm.shape)
-        print('power: ', self.power.shape)
-        print('speed: ', self.speed.shape)
-        print('r_calm: ', self.r_calm.shape)
-        print('r_wind: ', self.r_wind.shape)
-        print('r_waves: ', self.r_waves.shape)
-        print('r_shallow: ', self.r_shallow.shape)
-        print('r_roughness: ', self.r_roughness.shape)
+        logger.info('fuel: ', self.fuel.shape)
+        logger.info('rpm: ', self.rpm.shape)
+        logger.info('power: ', self.power.shape)
+        logger.info('speed: ', self.speed.shape)
+        logger.info('r_calm: ', self.r_calm.shape)
+        logger.info('r_wind: ', self.r_wind.shape)
+        logger.info('r_waves: ', self.r_waves.shape)
+        logger.info('r_shallow: ', self.r_shallow.shape)
+        logger.info('r_roughness: ', self.r_roughness.shape)
 
     def define_variants(self, variant_segments):
         self.speed = np.repeat(self.speed, variant_segments + 1, axis=1)

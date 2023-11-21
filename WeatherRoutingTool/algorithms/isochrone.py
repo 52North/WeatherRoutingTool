@@ -1,8 +1,12 @@
+import logging
+
 import numpy as np
 from geovectorslib import geod  # TODO: change to geopy?
 
 from algorithms.isobased import IsoBased
 from routeparams import RouteParams
+
+logger = logging.getLogger('WRT.Isochrone')
 
 
 class IsoChrone(IsoBased):
@@ -13,8 +17,9 @@ class IsoChrone(IsoBased):
         self.delta_time = delta_time
 
     def check_isochrones(self, route: RouteParams):
+        # ToDo: use logger.debug and args.debug
         debug = False
-        if (debug):
+        if debug:
             print('Checking route for equal time intervals')
 
         route.print_route()
@@ -26,7 +31,8 @@ class IsoChrone(IsoBased):
             dist = geod.inverse(lat1, lon1, lat2, lon2)
             time = round(dist['s12'][0] / route.speed_per_step[step])
 
-            if (debug):
+            # ToDo: use logger.debug and args.debug
+            if debug:
                 print('Step', step)
                 print('lat1 ' + str(lat1) + ' lat2=' + str(lon1) + ' lat2=' + str(lat2) + 'lon2=' + str(lon2))
                 print('speed=', route.speed_per_step[step])
@@ -40,9 +46,9 @@ class IsoChrone(IsoBased):
 
     def get_dist(self, bs):
         dist = self.delta_time * bs
-        print('dist=', dist)
-        print('delta_time=', self.delta_time)
-        print('bs=', bs)
+        logger.info('dist=', dist)
+        logger.info('delta_time=', self.delta_time)
+        logger.info('bs=', bs)
         return dist
 
     def get_delta_variables(self, boat, wind, bs):

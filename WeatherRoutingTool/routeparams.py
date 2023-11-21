@@ -51,21 +51,21 @@ class RouteParams():
 
     def print_route(self):
         form.print_line()
-        print('Printing route:  ' + str(self.route_type))
-        print('Going from', self.start)
-        print('to', self.finish)
-        print('number of routing steps: ' + str(self.count))
-        print('latitude at start of each step: ' + str(self.lats_per_step))
-        print('longitude at start of each step: ' + str(self.lons_per_step))
-        print('azimuths for each step: ' + str(self.azimuths_per_step))
-        print('gcr traveled per step (m): ' + str(self.dists_per_step))
-        print('time at start of each step: ' + str(self.starttime_per_step))
+        logger.info('Printing route:  ' + str(self.route_type))
+        logger.info('Going from', self.start)
+        logger.info('to', self.finish)
+        logger.info('number of routing steps: ' + str(self.count))
+        logger.info('latitude at start of each step: ' + str(self.lats_per_step))
+        logger.info('longitude at start of each step: ' + str(self.lons_per_step))
+        logger.info('azimuths for each step: ' + str(self.azimuths_per_step))
+        logger.info('gcr traveled per step (m): ' + str(self.dists_per_step))
+        logger.info('time at start of each step: ' + str(self.starttime_per_step))
 
         self.ship_params_per_step.print()
 
-        print('full fuel consumed (kg): ' + str(self.get_full_fuel('kg')))
-        print('full travel time (h): ' + str(self.time))
-        print('travel distance on great circle (m): ' + str(self.gcr))
+        logger.info('full fuel consumed (kg): ' + str(self.get_full_fuel('kg')))
+        logger.info('full travel time (h): ' + str(self.time))
+        logger.info('travel distance on great circle (m): ' + str(self.gcr))
 
         form.print_line()
 
@@ -169,7 +169,7 @@ class RouteParams():
         point_list = rp_dict['features']
         count = len(point_list)
 
-        print('Reading ' + str(count) + ' coordinate pairs from file')
+        logger.info('Reading ' + str(count) + ' coordinate pairs from file')
 
         lats_per_step = np.full(count, -99.)
         lons_per_step = np.full(count, -99.)
@@ -342,6 +342,7 @@ class RouteParams():
             start_lons[ipoint] = route_lons[ipoint]
             end_lats[ipoint] = route_lats[ipoint + 1]
             end_lons[ipoint] = route_lons[ipoint + 1]
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('start_lats: ', start_lats)
             print('start_lons: ', start_lons)
@@ -359,6 +360,7 @@ class RouteParams():
                 start_times[ipoint] = start_time
             else:
                 start_times[ipoint] = start_times[ipoint - 1] + datetime.timedelta(seconds=travel_times[ipoint - 1])
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('dists: ', dist)
             print('courses: ', courses)

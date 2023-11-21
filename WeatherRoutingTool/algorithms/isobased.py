@@ -123,47 +123,47 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.variant_increments_deg), 2))
 
     def print_current_status(self):
-        print('PRINTING ALG SETTINGS')
-        print('step = ', self.count)
-        print('start', self.start)
-        print('finish', self.finish)
-        print('per-step variables:')
-        print(form.get_log_step('lats_per_step = ' + str(self.lats_per_step)))
-        print(form.get_log_step('lons_per_step = ' + str(self.lons_per_step)))
-        print(form.get_log_step('variants = ' + str(self.azimuth_per_step)))
-        print(form.get_log_step('dist_per_step = ' + str(self.dist_per_step)))
-        print(form.get_log_step('starttime_per_step = ' + str(self.starttime_per_step)))
+        logger.info('PRINTING ALG SETTINGS')
+        logger.info('step = ', self.count)
+        logger.info('start', self.start)
+        logger.info('finish', self.finish)
+        logger.info('per-step variables:')
+        logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step)))
+        logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step)))
+        logger.info(form.get_log_step('variants = ' + str(self.azimuth_per_step)))
+        logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step)))
+        logger.info(form.get_log_step('starttime_per_step = ' + str(self.starttime_per_step)))
 
         self.shipparams_per_step.print()
 
-        print('per-variant variables')
-        print(form.get_log_step('time =' + str(self.time)))
-        print(form.get_log_step('full_dist_traveled=' + str(self.full_dist_traveled)))
-        print(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled)))
-        print(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed)))
+        logger.info('per-variant variables')
+        logger.info(form.get_log_step('time =' + str(self.time)))
+        logger.info(form.get_log_step('full_dist_traveled=' + str(self.full_dist_traveled)))
+        logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled)))
+        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed)))
 
     def print_shape(self):
-        print('PRINTING SHAPE')
-        print('per-step variables:')
-        print(form.get_log_step('lats_per_step = ' + str(self.lats_per_step.shape)))
-        print(form.get_log_step('lons_per_step = ' + str(self.lons_per_step.shape)))
-        print(form.get_log_step('azimuths = ' + str(self.azimuth_per_step.shape)))
-        print(form.get_log_step('dist_per_step = ' + str(self.dist_per_step.shape)))
+        logger.info('PRINTING SHAPE')
+        logger.info('per-step variables:')
+        logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step.shape)))
+        logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step.shape)))
+        logger.info(form.get_log_step('azimuths = ' + str(self.azimuth_per_step.shape)))
+        logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step.shape)))
 
         self.shipparams_per_step.print_shape()
 
-        print('per-variant variables:')
-        print(form.get_log_step('time =' + str(self.time.shape)))
-        print(form.get_log_step('full_dist_traveled = ' + str(self.full_dist_traveled.shape)))
-        print(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled.shape)))
-        print(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed.shape)))
+        logger.info('per-variant variables:')
+        logger.info(form.get_log_step('time =' + str(self.time.shape)))
+        logger.info(form.get_log_step('full_dist_traveled = ' + str(self.full_dist_traveled.shape)))
+        logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled.shape)))
+        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed.shape)))
 
     def current_position(self):
-        print('CURRENT POSITION')
-        print('lats = ', self.current_lats)
-        print('lons = ', self.current_lons)
-        print('azimuth = ', self.current_azimuth)
-        print('full_time_traveled = ', self.full_time_traveled)
+        logger.info('CURRENT POSITION')
+        logger.info('lats = ', self.current_lats)
+        logger.info('lons = ', self.current_lons)
+        logger.info('azimuth = ', self.current_azimuth)
+        logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_variants(self):
         # branch out for multiple headings
@@ -281,16 +281,17 @@ class IsoBased(RoutingAlg):
         # ship_params.print()
 
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
-        if (debug):
-            print('delta_time: ', delta_time)
-            print('delta_fuel: ', delta_fuel)
-            print('dist: ', dist)
-            print('is_last_step:', self.is_last_step)
+        # ToDo: remove debug variable and use logger settings instead
+        if debug:
+            logger.info('delta_time: ', delta_time)
+            logger.info('delta_fuel: ', delta_fuel)
+            logger.info('dist: ', dist)
+            logger.info('is_last_step:', self.is_last_step)
 
         move = self.check_bearing(dist)
 
-        if (debug):
-            print('move:', move)
+        if debug:
+            logger.info('move:', move)
 
         if (self.is_last_step or self.is_pos_constraint_step):
             delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(ship_params, bs)
@@ -341,7 +342,8 @@ class IsoBased(RoutingAlg):
         debug = False
         valid_pruning_segments = -99
 
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('binning for pruning', bins)
             print('current courses', self.current_variant)
             print('full_dist_traveled', self.full_time_traveled)
@@ -372,7 +374,8 @@ class IsoBased(RoutingAlg):
                 idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0])
             idxs = list(set([item for subl in idxs for item in subl]))
 
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('full_dist_traveled', self.full_dist_traveled)
             print('Indexes that passed', idxs)
 
@@ -430,7 +433,7 @@ class IsoBased(RoutingAlg):
         based on the gcr
         of the current 'mean' position towards the (temporary) destination.
         '''
-
+        # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
             print('Pruning... Pruning symmetry axis defined by gcr')
@@ -449,7 +452,8 @@ class IsoBased(RoutingAlg):
 
         new_azi = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
 
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
             print('current temporary destination: ', self.finish_temp)
             print('mean azimuth', new_azi['azi1'])
@@ -476,7 +480,7 @@ class IsoBased(RoutingAlg):
         intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
         the median of all considered courses.
         '''
-
+        # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
             print('Pruning... Pruning symmetry axis defined by median of considered headings.')
@@ -492,6 +496,7 @@ class IsoBased(RoutingAlg):
         new_azi_sorted = np.sort(new_azi['azi1'])
         meadian_indx = int(np.round(new_azi_sorted.shape[0] / 2))
 
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('sorted azimuths: ', new_azi_sorted)
             print('median index: ', meadian_indx)
@@ -516,7 +521,7 @@ class IsoBased(RoutingAlg):
 
             if self.figure_path is not None:
                 final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
-                print('Saving updated figure to ', final_path)
+                logger.info('Saving updated figure to ', final_path)
                 plt.savefig(final_path)
 
         # define pruning area
@@ -525,6 +530,7 @@ class IsoBased(RoutingAlg):
 
         bins = np.sort(bins)
 
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('bins: ', bins)
 
@@ -567,7 +573,8 @@ class IsoBased(RoutingAlg):
     def get_wind_functions(self, wt):
         debug = False
         winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
             print('time', self.time[0])
             print('winds', winds)
@@ -619,19 +626,20 @@ class IsoBased(RoutingAlg):
         nvariants = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(nvariants, self.finish_temp[0]), np.full(nvariants, self.finish_temp[1]))
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
             print('dist traveled:', dist)
 
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
-        if (debug):
+        if debug:
             print('reaching dest:', reaching_dest)
 
-        if (reaching_dest):
+        if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
 
-            if (debug):
+            if debug:
                 print('reaching final:', reached_final)
 
             new_lat = np.full(nvariants, self.finish_temp[0])
@@ -669,7 +677,8 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
         self.azimuth_per_step = np.vstack((self.current_variant, self.azimuth_per_step))
 
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('path of this step' +  # str(move['lat1']) +
                   # str(move['lon1']) +
                   str(move['lat2']) + str(move['lon2']))
@@ -699,7 +708,8 @@ class IsoBased(RoutingAlg):
                 self.full_dist_traveled = travel_dist['s12']
         else:
             self.full_dist_traveled = travel_dist['s12']
-        if (debug):
+        # ToDo: use logger.debug and args.debug
+        if debug:
             print('full_dist_traveled:', self.full_dist_traveled)
 
     def update_fuel(self, delta_fuel):
@@ -816,10 +826,10 @@ class IsoBased(RoutingAlg):
         self.start_temp = constraint_list.get_current_start()
         self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
 
-        print('Currently going from')
-        print(self.start_temp)
-        print('to')
-        print(self.finish_temp)
+        logger.info('Currently going from')
+        logger.info(self.start_temp)
+        logger.info('to')
+        logger.info(self.finish_temp)
 
     def check_destination(self):
         destination_lats = self.lats_per_step[0]

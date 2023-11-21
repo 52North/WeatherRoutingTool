@@ -1,6 +1,10 @@
+import logging
+
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.algorithms.run_genetic import RunGenetic
+
+logger = logging.getLogger('WRT')
 
 
 class RoutingAlgFactory:
@@ -9,8 +13,8 @@ class RoutingAlgFactory:
     def get_routing_alg(cls, config):
         ra = None
 
-        print('Initialising and starting routing procedure. For log output check the files "info.log" and '
-              '"performance.log".')
+        logger.info("Initialising and starting routing procedure. For log output check the files 'info.log' and "
+                    "'performance.log'.")
         form.print_line()
 
         if config.ALGORITHM_TYPE == 'isofuel':

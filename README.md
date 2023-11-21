@@ -39,22 +39,22 @@ The configuration file has to be provided when calling the Weather Routing Tool 
 python WeatherRoutingTool/execute_routing.py -f <path>/config.json
 ```
 
-Additionally, it's possible to define files for logging (default is `/dev/stdout`).
+Additionally, it's possible to define files for logging (separately for info and warning level) and if debugging mode should be used.
 Check the help text to get an overview of all CLI arguments:
 ```shell
 $ python WeatherRoutingTool/execute_routing.py --help
-
-usage: execute_routing.py [-h] -f FILE [--performance-log-file PERFORMANCE_LOG_FILE] [--info-log-file INFO_LOG_FILE]
+usage: execute_routing.py [-h] -f FILE [--warnings-log-file WARNINGS_LOG_FILE] [--info-log-file INFO_LOG_FILE] [--debug DEBUG]
 
 Weather Routing Tool
 
 options:
   -h, --help            show this help message and exit
   -f FILE, --file FILE  Config file name (absolute path)
-  --performance-log-file PERFORMANCE_LOG_FILE
-                        Performance logging file name (absolute path). Default: '/dev/stdout'
+  --warnings-log-file WARNINGS_LOG_FILE
+                        Logging file name (absolute path) for warnings and above.
   --info-log-file INFO_LOG_FILE
-                        Info logging file name (absolute path). Default: '/dev/stdout'
+                        Logging file name (absolute path) for info and above.
+  --debug DEBUG         Enable debug mode. <True|False>. Defaults to 'False'.
 ```
 
 Some variables have to be set using environment variables (see below).
@@ -112,6 +112,14 @@ Configuration parameter for the database which stores OpenSeaMap data (used in t
 - `WRT_DB_PASSWORD`
 
 If not provided the 'land_crossing_polygons' and 'seamarks' options of `CONSTRAINTS_LIST` cannot be used.
+
+### Logging and Debugging
+
+All log messages are sent to stdout by default. In addition, info and warning logs can be saved separately to file.
+Debugging mode can be enabled (disabled by default) which sets the stream (stdout) logging level to debug and additionally saved some figures to disk if FIGURE_PATH is provided correctly.
+
+The top-level logger is named "WRT". Child loggers are following the scheme "WRT.<child-name>".
+They inherit the top-level loggers' logging level.
 
 ## Run the software
 

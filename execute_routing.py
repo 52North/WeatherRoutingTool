@@ -1,11 +1,9 @@
 import argparse
-import datetime as dt
-import logging
 import warnings
-import logging.handlers
+from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import *
@@ -21,28 +19,26 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
-    parser.add_argument('--performance-log-file',
-                        help="Performance logging file name (absolute path). Default: '/dev/stdout'", required=False,
-                        type=str, default='/dev/stdout')
-    parser.add_argument('--info-log-file', help="Info logging file name (absolute path). Default: '/dev/stdout'",
-                        required=False, type=str, default='/dev/stdout')
+    parser.add_argument('--warnings-log-file',
+                        help="Logging file name (absolute path) for warnings and above.", required=False, type=str)
+    parser.add_argument('--info-log-file',
+                        help="Logging file name (absolute path) for info and above.", required=False, type=str)
+    parser.add_argument('--debug', help="Enable debug mode. <True|False>. Defaults to 'False'.",
+                        required=False, type=str, default='False')
     args = parser.parse_args()
     if not args.file:
         raise RuntimeError("No config file name provided!")
+    debug_str = str(args.debug).lower()
+    if debug_str == 'true':
+        args.debug = True
+    elif debug_str == 'false':
+        args.debug = False
+    else:
+        raise ValueError("--debug does not have a valid value")
 
     ##
     # initialise logging
-    logger = logging.getLogger('WRT')
-    logger.setLevel(logging.INFO)
-    fh = logging.FileHandler(args.performance_log_file, mode='w')
-    fh.setLevel(logging.WARNING)
-    fhinfo = logging.FileHandler(args.info_log_file, mode='w')
-    fhinfo.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    fh.setFormatter(formatter)
-    fhinfo.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.addHandler(fhinfo)
+    set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
     ##
     # create config object
@@ -62,7 +58,7 @@ if __name__ == "__main__":
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    departure_time = dt.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
     # *******************************************

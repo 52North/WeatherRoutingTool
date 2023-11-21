@@ -67,24 +67,24 @@ class RunGenetic(RoutingAlg):
         return result
 
     def print_init(self):
-        print("Initializing Routing......")
-        print('route from ' + str(self.start) + ' to ' + str(self.finish))
-        # print('start time ' + str(self.time))
+        logger.info("Initializing Routing......")
+        logger.info('route from ' + str(self.start) + ' to ' + str(self.finish))
+        # logger.info('start time ' + str(self.time))
         logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish), 1))
         # logger.info(form.get_log_step('start time ' + str(self.time), 1))
 
     def print_current_status(self):
-        print("ALGORITHM SETTINGS:")
-        print('start : ' + str(self.start))
-        print('finish : ' + str(self.finish))
-        print('generations: ' + str(self.ncount))
-        print('pop_size: ' + str(self.pop_size))
-        print('offsprings: ' + str(self.n_offsprings))
+        logger.info("ALGORITHM SETTINGS:")
+        logger.info('start : ' + str(self.start))
+        logger.info('finish : ' + str(self.finish))
+        logger.info('generations: ' + str(self.ncount))
+        logger.info('pop_size: ' + str(self.pop_size))
+        logger.info('offsprings: ' + str(self.n_offsprings))
 
     # TODO: adjust terminate function to those of the base class
     def terminate(self, genetic_util):
         form.print_line()
-        print('Terminating...')
+        logger.info('Terminating...')
 
         lats, lons, route = genetic_util.index_to_coords(self.route)
         dists = distance(route)

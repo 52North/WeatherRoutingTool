@@ -236,7 +236,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
         # filename = str(time_str_start) + '_' + str(time_str_end) + '_' + str(self.map_size.lat1) + '_' + str(
         #    self.map_size.lon1) + '_' + str(self.map_size.lat2) + '_' + str(self.map_size.lon2) + '.nc'
         # full_path = filepath + '/' + filename
-        print('Writing weather data to file ' + str(filepath))
+        logger.info('Writing weather data to file ' + str(filepath))
         self.ds.to_netcdf(filepath)
         self.ds.close()
         return filepath
@@ -258,8 +258,8 @@ class WeatherCondFromFile(WeatherCond):
             v = self.ds['v-component_of_wind_height_above_ground'].sel(time=time_str, height_above_ground2=10)
         except KeyError:
             time = self.ds['time']
-            print('time: ', time.to_numpy())
-            print('time string: ', time_str)
+            logger.error('time: ', time.to_numpy())
+            logger.error('time string: ', time_str)
             raise Exception(
                 'Please make sure that time stamps of environmental data match full hours: time = ' + time_str)
 
@@ -429,6 +429,7 @@ class WeatherCondFromFile(WeatherCond):
         ds_depth_neg['longitude'] = ds_depth_neg['longitude'] - 360
         ds_depth = ds_depth_pos.merge(ds_depth_neg)
 
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('ds_depth_pos', ds_depth_pos)
             print('ds_depth_neg', ds_depth_neg)
@@ -457,8 +458,8 @@ class WeatherCondFromFile(WeatherCond):
 
         weather_int['depth'] = (['latitude', 'longitude'], depth)
         depth_test = weather_int['depth'].to_numpy()
-        if (np.isnan(depth_test).any()):
-            print('depth_test:', depth_test)
+        if np.isnan(depth_test).any():
+            logger.error('depth_test:', depth_test)
             raise Exception('element of depth is nan!')
         self.ds = weather_int
 
@@ -489,9 +490,9 @@ class WeatherCondFromFile(WeatherCond):
         ymin = lat - dim
         ymax = lat + dim
         ll = dict(longitude=slice(xmin, xmax), latitude=slice(ymin, ymax))
-        print('before: ', self.ds["VHM0"].loc[ll].to_numpy())
+        logger.info('before: ', self.ds["VHM0"].loc[ll].to_numpy())
         self.ds["VHM0"].loc[ll] = condition
-        print('after: ', self.ds["VHM0"].loc[ll].to_numpy())
+        logger.info('after: ', self.ds["VHM0"].loc[ll].to_numpy())
         self.ds.to_netcdf('/home/kdemmich/MariData/Simulationsstudie_April23/manipulated_data.nc')
 
         return self.ds
@@ -530,7 +531,7 @@ class WeatherCondFromFile(WeatherCond):
         try:
             wind_timestamp = self.wind_vectors[idx]['timestamp']
         except KeyError:
-            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(
+            logger.error('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(
                 self.time_steps) + ' available')
             raise
 
@@ -621,7 +622,7 @@ class WeatherCondODC(WeatherCond):
         form.print_current_time('end time', time.time())
 
     def write_data(self, filepath):
-        print('Writing weather data to file ' + str(filepath))
+        logger.info('Writing weather data to file ' + str(filepath))
         self.ds.to_netcdf(filepath)
         self.ds.close()
         return filepath

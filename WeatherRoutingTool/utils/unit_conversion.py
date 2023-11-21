@@ -67,7 +67,7 @@ def convert_nptd64_to_ints(time):
 
 def convert_npdt64_to_datetime(time):
     timestamp = ((time - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
-    print('timestampt', type(timestamp))
+    logger.info('timestampt', type(timestamp))
     TIME = datetime.datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
 
@@ -104,8 +104,8 @@ def compare_times(time1, time2):
             tzinfo=datetime.timezone.utc)
         time1[iTime] = time1[iTime].total_seconds()
         time2[iTime] = time2[iTime].total_seconds()
-        print('time1: ', time1)
-        print('time2: ', time2)
+        logger.info('time1: ', time1)
+        logger.info('time2: ', time2)
         assert np.abs(time1[iTime] - time2[iTime]) < 0.2
 
     return True

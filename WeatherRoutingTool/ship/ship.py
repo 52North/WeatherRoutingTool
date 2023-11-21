@@ -100,13 +100,13 @@ class Tanker(Boat):
 
         self.MaxIterations = 5
 
-        print('Setting environmental parameters of tanker:')
-        print('     water temp', self.hydro_model.TemperatureWater)
-        print('     wave significant height', self.hydro_model.WaveSignificantHeight)
-        print('     wave peak period', self.hydro_model.WavePeakPeriod)
-        print('     wave dir', self.hydro_model.WaveDirection)
-        print('     current dir', self.hydro_model.CurrentDirection)
-        print('     current speed', self.hydro_model.CurrentSpeed)
+        logger.info('Setting environmental parameters of tanker:')
+        logger.info('     water temp', self.hydro_model.TemperatureWater)
+        logger.info('     wave significant height', self.hydro_model.WaveSignificantHeight)
+        logger.info('     wave peak period', self.hydro_model.WavePeakPeriod)
+        logger.info('     wave dir', self.hydro_model.WaveDirection)
+        logger.info('     current dir', self.hydro_model.CurrentDirection)
+        logger.info('     current speed', self.hydro_model.CurrentSpeed)
 
     #  initialise mariPower.ship for communication of courses via arrays and passing of environmental data as netCDF
     # def init_hydro_model_NetCDF(self, netCDF_filepath):
@@ -191,8 +191,8 @@ class Tanker(Boat):
         self.simple_fuel_model = xr.open_dataset(
             "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/SimpleFuelModel/simple_fuel_model.nc")
         form.print_line()
-        print('Initialising simple fuel model')
-        print(self.simple_fuel_model)
+        logger.info('Initialising simple fuel model')
+        logger.info(self.simple_fuel_model)
 
     ##
     # function to write a simple fuel model to file which can be used as dummy for the power estimation with
@@ -223,8 +223,8 @@ class Tanker(Boat):
         ds = xr.Dataset(data_vars, coords, attrs)
         ds.to_netcdf('/home/kdemmich/MariData/Code/simple_fuel_model.nc')
 
-        print('Writing simple fuel model:')
-        print(ds)
+        logger.info('Writing simple fuel model:')
+        logger.info(ds)
 
     ##
     # Initialise power estimation for a tuple of courses in dependence on wind speed and direction. The information
@@ -232,6 +232,7 @@ class Tanker(Boat):
     def get_fuel_per_time(self, courses, wind):
         debug = False
 
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('Requesting power calculation')
             course_str = 'Courses:' + str(courses)
@@ -263,6 +264,7 @@ class Tanker(Boat):
         speed = np.repeat(self.speed, courses.shape, axis=0)
         courses = units.degree_to_pmpi(courses)
 
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('Requesting power calculation')
             time_str = 'Time:' + str(time)
@@ -305,6 +307,7 @@ class Tanker(Boat):
         df = pd.DataFrame({'it_pos': it_pos, 'it_course': it_course, 'courses': courses, 'speed': speed, })
 
         df = df.set_index(['it_pos', 'it_course'])
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('pandas DataFrame:', df)
 
@@ -312,7 +315,8 @@ class Tanker(Boat):
 
         time_reshape = time.reshape(ds['it_pos'].shape[0], ds['it_course'].shape[0])[:, 0]
 
-        print('Request power calculation for ' + str(n_courses) + ' courses and ' + str(n_coords) + ' coordinates')
+        logger.info('Request power calculation for ' + str(n_courses) + ' courses and ' + str(n_coords) +
+                    ' coordinates')
 
         ds["lon"] = (['it_pos'], lons)
         ds["lat"] = (['it_pos'], lats)
@@ -320,6 +324,7 @@ class Tanker(Boat):
         assert ds['lon'].shape == ds['lat'].shape
         assert ds['time'].shape == ds['lat'].shape
 
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('xarray DataSet', ds)
 
@@ -376,6 +381,7 @@ class Tanker(Boat):
 
         ds.to_netcdf(self.courses_path)
         ds_read = xr.open_dataset(self.courses_path)
+        # ToDo: use logger.debug and args.debug
         if (debug):
             print('read data set', ds_read)
 
