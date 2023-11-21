@@ -66,14 +66,17 @@ class GeneticMutation(Mutation):
 
 
 class RoutingProblem(Problem):
+    """
+    Class definition of the weather routing problem
+    """
     def __init__(self, util):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.util = util
 
-    def _evaluate(self, X, out, *args, **kwargs):
+    def _evaluate(self, x, out, *args, **kwargs):
         """
         Method defined by pymoo which has to be overriden
-        :param x: numpy matrix with shape (number of solutions, number of design variables)
+        :param x: numpy matrix with shape (rows: number of solutions/individuals, columns: number of design variables)
         :param out:
             out['F']: function values, vector of length of number of solutions
             out['G']: constraints
@@ -82,8 +85,8 @@ class RoutingProblem(Problem):
         :return:
         """
         # costs = route_cost(X)
-        costs = self.util.power_cost(X)
-        constraints = self.util.route_const(X)
+        costs = self.util.power_cost(x)
+        constraints = self.util.route_const(x)
         # print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
