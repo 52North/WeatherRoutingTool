@@ -60,7 +60,7 @@ class RunGenetic(RoutingAlg):
         # best_f = res.F[best_idx]
         route = best_x[0]
         self.route = route
-        _, self.ship_params = genetic_util.get_power([route], wave_height, self.departure_time)
+        _, self.ship_params = genetic_util.get_power([route])
         result = self.terminate(genetic_util)
         # print(route)
         # print(result)
