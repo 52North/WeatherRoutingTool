@@ -394,6 +394,8 @@ class Tanker(Boat):
         ship = mariPower.ship.CBT()
 
         # start_time = time.time()
+        # FIXME: add self.depth_path again after fixing related issues with memory allocation
+        # mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
         mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
         # form.print_current_time('time for mariPower request:', start_time)
 

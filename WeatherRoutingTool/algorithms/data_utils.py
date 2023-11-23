@@ -73,6 +73,7 @@ def distance(route):
     for coord in route:
         lat2 = coord[1]
         lon2 = coord[0]
+        # ToDo: replace with geovectorslib.geod.inverse for consistency (which can be applied to an array)
         d += geod.Inverse(lat1, lon1, lat2, lon2)['s12']
         dists.append(d)
         lat1 = lat2
@@ -93,6 +94,7 @@ def time_diffs(speed, route):
     for coord in route:
         lat2 = coord[0]
         lon2 = coord[1]
+        # ToDo: replace with geovectorslib.geod.inverse for consistency (which can be applied to an array)
         d = d + geod.Inverse(lat1, lon1, lat2, lon2)['s12']
         diffs.append(d)
         lat1 = lat2
