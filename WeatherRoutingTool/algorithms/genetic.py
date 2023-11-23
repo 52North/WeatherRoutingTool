@@ -100,7 +100,8 @@ def optimize(strt, end, pop_size, n_gen, n_offspring, util):
                       crossover=GeneticCrossover(util),
                       n_offsprings=n_offspring,
                       mutation=GeneticMutation(util),
-                      eliminate_duplicates=False)
+                      eliminate_duplicates=False,
+                      return_least_infeasible=False)
     termination = get_termination("n_gen", n_gen)
 
     res = minimize(problem,
