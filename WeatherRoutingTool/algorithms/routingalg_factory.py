@@ -1,8 +1,8 @@
 import logging
 
 import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.algorithms.genetic import Genetic
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
-from WeatherRoutingTool.algorithms.run_genetic import RunGenetic
 
 logger = logging.getLogger('WRT')
 
@@ -21,7 +21,7 @@ class RoutingAlgFactory:
             ra = IsoFuel(config)
 
         if config.ALGORITHM_TYPE == 'genetic':
-            ra = RunGenetic(config)
+            ra = Genetic(config)
 
         ra.print_init()
         return ra
