@@ -79,38 +79,6 @@ class GeneticUtils:
         # print(type(lats))
         return lats, lons, np.array(route)
 
-    # make initial population for genetic algorithm
-    def population(self, size, src, dest):
-        cost = self.grid_points.data
-        shuffled_cost = cost.copy()
-        nan_mask = np.isnan(shuffled_cost)
-        routes = np.zeros((size, 1), dtype=object)
-
-        debug = False
-
-        for i in range(size):
-            shuffled_cost = cost.copy()
-            shuffled_cost[nan_mask] = 1
-            shuffled_indices = np.random.permutation(len(shuffled_cost))
-            shuffled_cost = shuffled_cost[shuffled_indices]
-            shuffled_cost[nan_mask] = 1e20
-
-            route, _ = route_through_array(shuffled_cost, src, dest, fully_connected=True, geometric=False)
-            routes[i][0] = np.array(route)
-
-        if debug:
-            fig, ax = plt.subplots(figsize=(12, 10))
-            ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-            ax.add_feature(cf.LAND)
-            ax.add_feature(cf.COASTLINE)
-            for i in range(0, size):
-                _, _, route = self.index_to_coords(routes[i][0])
-                ax.plot(route[:, 1], route[:, 0], color="firebrick")
-
-            plt.show()
-
-        return routes
-
     def cross_over(self, parent1, parent2):
         # src = parent1[0]
         # dest = parent1[-1]
@@ -156,16 +124,51 @@ class GeneticUtils:
 
 
 class GridBasedPopulation(Sampling):
-
-    def __init__(self, src, dest, util, var_type=np.float64):
+    """
+    Make initial population for genetic algorithm based on a grid and associated cost values
+    """
+    def __init__(self, src, dest, grid_points, var_type=np.float64):
         super().__init__()
         self.var_type = var_type
         self.src = src
         self.dest = dest
-        self.util = util
+        self.grid_points = grid_points
+
+    def index_to_coords(self, route):
+        # ToDo: method is copied from GeneticUtils class and is duplicated -> clean up
+        lats = self.grid_points.coords['latitude'][route[:, 0]]
+        lons = self.grid_points.coords['longitude'][route[:, 1]]
+        route = [[x, y] for x, y in zip(lats, lons)]
+        return lats, lons, np.array(route)
 
     def _do(self, problem, n_samples, **kwargs):
-        routes = self.util.population(n_samples, self.src, self.dest)
+        cost = self.grid_points.data
+        shuffled_cost = cost.copy()
+        nan_mask = np.isnan(shuffled_cost)
+        routes = np.zeros((n_samples, 1), dtype=object)
+
+        debug = False
+
+        for i in range(n_samples):
+            shuffled_cost = cost.copy()
+            shuffled_cost[nan_mask] = 1
+            shuffled_indices = np.random.permutation(len(shuffled_cost))
+            shuffled_cost = shuffled_cost[shuffled_indices]
+            shuffled_cost[nan_mask] = 1e20
+
+            route, _ = route_through_array(shuffled_cost, self.src, self.dest, fully_connected=True, geometric=False)
+            routes[i][0] = np.array(route)
+
+        if debug:
+            fig, ax = plt.subplots(figsize=(12, 10))
+            ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+            ax.add_feature(cf.LAND)
+            ax.add_feature(cf.COASTLINE)
+            for i in range(0, n_samples):
+                _, _, route = self.index_to_coords(routes[i][0])  # FIXME
+                ax.plot(route[:, 1], route[:, 0], color="firebrick")
+            plt.show()
+
         # print(routes.shape)
         self.X = routes
         # print(self.X.shape)
@@ -177,9 +180,9 @@ class PopulationFactory:
         pass
 
     @staticmethod
-    def get_population(population_type, src, dest, util):
+    def get_population(population_type, src, dest, grid_points=None):
         if population_type == 'grid_based':
-            population = GridBasedPopulation(src, dest, util)
+            population = GridBasedPopulation(src, dest, grid_points)
         else:
             msg = f"Population type '{population_type}' is invalid!"
             logger.error(msg)

@@ -55,9 +55,15 @@ class Genetic(RoutingAlg):
         genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
                                     constraint_list=constraints_list)
         genetic_util.interpolate_grid(10, 10)
+        # ToDo: set start and end in __init__ and use self.start and self.end
         start, end = find_start_and_end(self.start[0], self.start[1], self.finish[0], self.finish[1],
                                         genetic_util.get_grid())
-        res = self.optimize(start, end, genetic_util)
+        # ToDo: add factories for GeneticCrossover, GeneticMutation and RoutingProblem
+        initial_population = PopulationFactory.get_population(self.population_type, start, end, grid_points=wave_height)
+        crossover = GeneticCrossover(genetic_util)
+        mutation = GeneticMutation(genetic_util)
+        problem = RoutingProblem(genetic_util)
+        res = self.optimize(problem, initial_population, crossover, mutation)
         # get the best solution
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
@@ -126,18 +132,13 @@ class Genetic(RoutingAlg):
     def check_positive_power(self):
         pass
 
-    def optimize(self, strt, end, util):
-        # ToDo: set strt and end in __init__ and use self.strt and self.end
+    def optimize(self, problem, initial_population, crossover, mutation):
         # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
-        problem = RoutingProblem(util)
-        initial_population = PopulationFactory.get_population(self.population_type, strt, end, util)
-        # ToDo: add factories for GeneticCrossover, GeneticMutation and RoutingProblem
-
         algorithm = NSGA2(pop_size=self.pop_size,
                           sampling=initial_population,
-                          crossover=GeneticCrossover(util),
+                          crossover=crossover,
                           n_offsprings=self.n_offsprings,
-                          mutation=GeneticMutation(util),
+                          mutation=mutation,
                           eliminate_duplicates=False,
                           return_least_infeasible=False)
         termination = get_termination("n_gen", self.ncount)
