@@ -1,3 +1,4 @@
+import logging
 import random
 
 import cartopy.crs as ccrs
@@ -5,16 +6,15 @@ import cartopy.feature as cf
 import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt
-from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
 from pymoo.core.problem import Problem
 from pymoo.core.sampling import Sampling
-from pymoo.factory import get_termination
-from pymoo.optimize import minimize
 from skimage.graph import route_through_array
 
 from WeatherRoutingTool.routeparams import RouteParams
+
+logger = logging.getLogger('WRT.Genetic')
 
 
 class GeneticUtils:
@@ -155,7 +155,8 @@ class GeneticUtils:
         return newPath
 
 
-class Population(Sampling):
+class GridBasedPopulation(Sampling):
+
     def __init__(self, src, dest, util, var_type=np.float64):
         super().__init__()
         self.var_type = var_type
@@ -169,6 +170,21 @@ class Population(Sampling):
         self.X = routes
         # print(self.X.shape)
         return self.X
+
+
+class PopulationFactory:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_population(population_type, src, dest, util):
+        if population_type == 'grid_based':
+            population = GridBasedPopulation(src, dest, util)
+        else:
+            msg = f"Population type '{population_type}' is invalid!"
+            logger.error(msg)
+            raise ValueError(msg)
+        return population
 
 
 class GeneticCrossover(Crossover):
@@ -237,25 +253,3 @@ class RoutingProblem(Problem):
         # print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
-
-
-def optimize(strt, end, pop_size, n_gen, n_offspring, util):
-    # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
-    problem = RoutingProblem(util)
-    algorithm = NSGA2(pop_size=pop_size,
-                      sampling=Population(strt, end, util),
-                      crossover=GeneticCrossover(util),
-                      n_offsprings=n_offspring,
-                      mutation=GeneticMutation(util),
-                      eliminate_duplicates=False,
-                      return_least_infeasible=False)
-    termination = get_termination("n_gen", n_gen)
-
-    res = minimize(problem,
-                   algorithm,
-                   termination,
-                   save_history=True,
-                   verbose=True)
-    # stop = timeit.default_timer()
-    # route_cost(res.X)
-    return res

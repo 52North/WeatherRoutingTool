@@ -24,6 +24,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'GENETIC_NUMBER_GENERATIONS': 20,
     'GENETIC_NUMBER_OFFSPRINGS': 2,
     'GENETIC_POPULATION_SIZE': 20,
+    'GENETIC_POPULATION_TYPE': 'grid_based',
     'INTERMEDIATE_WAYPOINTS': [],
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
     'ISOCHRONE_PRUNE_BEARING': False,
@@ -62,6 +63,7 @@ class Config:
         self.GENETIC_NUMBER_GENERATIONS = None  # number of generations for genetic algorithm
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
         self.GENETIC_POPULATION_SIZE = None  # population size for genetic algorithm
+        self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based')
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning

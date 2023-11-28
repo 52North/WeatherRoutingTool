@@ -3,11 +3,15 @@ from datetime import timedelta
 
 import numpy as np
 import matplotlib
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.factory import get_termination
+from pymoo.optimize import minimize
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.data_utils import distance, find_start_and_end, load_data, time_diffs
-from WeatherRoutingTool.algorithms.genetic_utils import GeneticUtils, optimize
+from WeatherRoutingTool.algorithms.genetic_utils import (GeneticCrossover, GeneticMutation, GeneticUtils,
+                                                         PopulationFactory, RoutingProblem)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -37,8 +41,9 @@ class Genetic(RoutingAlg):
         self.ncount = config.GENETIC_NUMBER_GENERATIONS   # ToDo: use better name than ncount?
         self.count = 0
 
-        self.pop_size = config.GENETIC_POPULATION_SIZE
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
+        self.pop_size = config.GENETIC_POPULATION_SIZE
+        self.population_type = config.GENETIC_POPULATION_TYPE
 
         self.ship_params = None
 
@@ -52,7 +57,7 @@ class Genetic(RoutingAlg):
         genetic_util.interpolate_grid(10, 10)
         start, end = find_start_and_end(self.start[0], self.start[1], self.finish[0], self.finish[1],
                                         genetic_util.get_grid())
-        res = optimize(start, end, self.pop_size, self.ncount, self.n_offsprings, genetic_util)
+        res = self.optimize(start, end, genetic_util)
         # get the best solution
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
@@ -120,3 +125,28 @@ class Genetic(RoutingAlg):
 
     def check_positive_power(self):
         pass
+
+    def optimize(self, strt, end, util):
+        # ToDo: set strt and end in __init__ and use self.strt and self.end
+        # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
+        problem = RoutingProblem(util)
+        initial_population = PopulationFactory.get_population(self.population_type, strt, end, util)
+        # ToDo: add factories for GeneticCrossover, GeneticMutation and RoutingProblem
+
+        algorithm = NSGA2(pop_size=self.pop_size,
+                          sampling=initial_population,
+                          crossover=GeneticCrossover(util),
+                          n_offsprings=self.n_offsprings,
+                          mutation=GeneticMutation(util),
+                          eliminate_duplicates=False,
+                          return_least_infeasible=False)
+        termination = get_termination("n_gen", self.ncount)
+
+        res = minimize(problem,
+                       algorithm,
+                       termination,
+                       save_history=True,
+                       verbose=True)
+        # stop = timeit.default_timer()
+        # route_cost(res.X)
+        return res
