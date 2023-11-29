@@ -17,112 +17,6 @@ from WeatherRoutingTool.routeparams import RouteParams
 logger = logging.getLogger('WRT.Genetic')
 
 
-class GeneticUtils:
-    wave_height: xr.Dataset
-    boat: None
-    constraint_list: None
-    departure_time: None
-
-    def __init__(self, departure_time, grid_points, boat, constraint_list):
-        self.grid_points = grid_points
-        self.boat = boat
-        self.constraint_list = constraint_list
-        self.departure_time = departure_time
-
-    def get_power(self, route):
-        _, _, route = self.index_to_coords(route[0])
-        route_dict = RouteParams.get_per_waypoint_coords(route[:, 0], route[:, 1], self.departure_time,
-                                                         self.boat.boat_speed_function())
-
-        shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
-                                                        route_dict['start_lons'], route_dict['start_times'])
-        fuel = shipparams.get_fuel()
-        fuel = (fuel / 3600) * route_dict['travel_times']
-
-        return np.sum(fuel), shipparams
-
-    def interpolate_grid(self, lat_int, lon_int):
-        self.grid_points = self.grid_points[::lat_int, ::lon_int]
-
-    def get_grid(self):
-        return self.grid_points
-
-    def power_cost(self, routes):
-        costs = []
-        for route in routes:
-            fuel, _ = self.get_power(route)
-            costs.append(fuel)
-        return costs
-
-    def is_neg_constraints(self, lat, lon, time):
-        lat = np.array([lat])
-        lon = np.array([lon])
-        is_constrained = [False for i in range(0, lat.shape[0])]
-        is_constrained = self.constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-        # print(is_constrained)
-        return 0 if not is_constrained else 1
-
-    def route_const(self, routes):
-        cost = self.grid_points
-        costs = []
-        for route in routes:
-            costs.append(np.sum([
-                self.is_neg_constraints(self.grid_points.coords['latitude'][i], self.grid_points.coords['longitude'][j],
-                                        cost[i, j]) for i, j in route[0]]))
-        # print(costs)
-        return costs
-
-    def index_to_coords(self, route):
-        lats = self.grid_points.coords['latitude'][route[:, 0]]
-        lons = self.grid_points.coords['longitude'][route[:, 1]]
-        route = [[x, y] for x, y in zip(lats, lons)]
-        # print(type(lats))
-        return lats, lons, np.array(route)
-
-    def cross_over(self, parent1, parent2):
-        # src = parent1[0]
-        # dest = parent1[-1]
-        intersect = np.array([x for x in parent1 if any((x == y).all() for y in parent2)])
-
-        if len(intersect) == 0:
-            return parent1, parent2
-        else:
-            cross_over_point = random.choice(intersect)
-            idx1 = np.where((parent1 == cross_over_point).all(axis=1))[0][0]
-            idx2 = np.where((parent2 == cross_over_point).all(axis=1))[0][0]
-            child1 = np.concatenate((parent1[:idx1], parent2[idx2:]), axis=0)
-            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)  # print(child1, child2)
-        return child1, child2
-
-    def route_cost(self, routes):
-        cost = self.grid_points.data
-        costs = []
-        for route in routes:
-            costs.append(np.sum([cost[i, j] for i, j in route[0]]))
-        return costs
-
-    def mutate(self, route):
-        cost = self.grid_points.data
-        # source = route[0]
-        # destination = route[-1]
-        shuffled_cost = cost.copy()
-        nan_mask = np.isnan(shuffled_cost)
-
-        # path = route.copy()
-        size = len(route)
-
-        start = random.randint(1, size - 2)
-        end = random.randint(start, size - 2)
-
-        shuffled_cost = np.ones(cost.shape, dtype=np.float)
-        shuffled_cost[nan_mask] = 1e20
-
-        subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
-        newPath = np.concatenate((route[:start], np.array(subpath), route[end + 1:]), axis=0)
-
-        return newPath
-
-
 class GridBasedPopulation(Sampling):
     """
     Make initial population for genetic algorithm based on a grid and associated cost values
@@ -135,7 +29,7 @@ class GridBasedPopulation(Sampling):
         self.grid_points = grid_points
 
     def index_to_coords(self, route):
-        # ToDo: method is copied from GeneticUtils class and is duplicated -> clean up
+        # ToDo: method is duplicated in RoutingProblem -> clean up
         lats = self.grid_points.coords['latitude'][route[:, 0]]
         lons = self.grid_points.coords['longitude'][route[:, 1]]
         route = [[x, y] for x, y in zip(lats, lons)]
@@ -191,12 +85,14 @@ class PopulationFactory:
 
 
 class GeneticCrossover(Crossover):
-    def __init__(self, util, prob=1):
+    """
+    Custom class to define genetic crossover for routes
+    """
+    def __init__(self, prob=1):
 
         # define the crossover: number of parents and number of offsprings
         super().__init__(2, 2)
         self.prob = prob
-        self.util = util
 
     def _do(self, problem, X, **kwargs):
         # The input of has the following shape (n_parents, n_matings, n_var)
@@ -205,16 +101,34 @@ class GeneticCrossover(Crossover):
         for k in range(n_matings):
             # get the first and the second parent
             a, b = X[0, k, 0], X[1, k, 0]
-            Y[0, k, 0], Y[1, k, 0] = self.util.cross_over(a, b)
+            Y[0, k, 0], Y[1, k, 0] = self.cross_over(a, b)
         # print("Y:",Y)
         return Y
 
+    def cross_over(self, parent1, parent2):
+        # src = parent1[0]
+        # dest = parent1[-1]
+        intersect = np.array([x for x in parent1 if any((x == y).all() for y in parent2)])
+
+        if len(intersect) == 0:
+            return parent1, parent2
+        else:
+            cross_over_point = random.choice(intersect)
+            idx1 = np.where((parent1 == cross_over_point).all(axis=1))[0][0]
+            idx2 = np.where((parent2 == cross_over_point).all(axis=1))[0][0]
+            child1 = np.concatenate((parent1[:idx1], parent2[idx2:]), axis=0)
+            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)  # print(child1, child2)
+        return child1, child2
+
 
 class GeneticMutation(Mutation):
-    def __init__(self, util, prob=0.4):
+    """
+    Custom class to define genetic mutation for routes
+    """
+    def __init__(self, grid_points, prob=0.4):
         super().__init__()
         self.prob = prob
-        self.util = util
+        self.grid_points = grid_points
 
     def _do(self, problem, X, **kwargs):
         offsprings = np.zeros((len(X), 1), dtype=object)
@@ -222,7 +136,7 @@ class GeneticMutation(Mutation):
         for idx, i in enumerate(X):
             # perform mutation with certain probability
             if np.random.uniform(0, 1) < self.prob:
-                mutated_individual = self.util.mutate(i[0])
+                mutated_individual = self.mutate(i[0])
                 # print("mutated_individual", mutated_individual, "###")
                 offsprings[idx][0] = mutated_individual
         # if no mutation
@@ -230,14 +144,43 @@ class GeneticMutation(Mutation):
                 offsprings[idx][0] = i[0]
         return offsprings
 
+    def mutate(self, route):
+        cost = self.grid_points.data
+        # source = route[0]
+        # destination = route[-1]
+        shuffled_cost = cost.copy()
+        nan_mask = np.isnan(shuffled_cost)
+
+        # path = route.copy()
+        size = len(route)
+
+        start = random.randint(1, size - 2)
+        end = random.randint(start, size - 2)
+
+        shuffled_cost = np.ones(cost.shape, dtype=np.float)
+        shuffled_cost[nan_mask] = 1e20
+
+        subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
+        newPath = np.concatenate((route[:start], np.array(subpath), route[end + 1:]), axis=0)
+
+        return newPath
+
 
 class RoutingProblem(Problem):
     """
     Class definition of the weather routing problem
     """
-    def __init__(self, util):
+    grid_points: xr.Dataset
+    boat: None
+    constraint_list: None
+    departure_time: None
+
+    def __init__(self, departure_time, boat, grid_points, constraint_list):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
-        self.util = util
+        self.boat = boat
+        self.constraint_list = constraint_list
+        self.departure_time = departure_time
+        self.grid_points = grid_points
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -251,8 +194,65 @@ class RoutingProblem(Problem):
         :return:
         """
         # costs = route_cost(X)
-        costs = self.util.power_cost(x)
-        constraints = self.util.route_const(x)
+        costs = self.power_cost(x)
+        constraints = self.route_const(x)
         # print(costs.shape)
         out['F'] = np.column_stack([costs])
         out['G'] = np.column_stack([constraints])
+
+    def interpolate_grid(self, lat_int, lon_int):
+        self.grid_points = self.grid_points[::lat_int, ::lon_int]
+
+    def get_grid(self):
+        return self.grid_points
+
+    def is_neg_constraints(self, lat, lon, time):
+        lat = np.array([lat])
+        lon = np.array([lon])
+        is_constrained = [False for i in range(0, lat.shape[0])]
+        is_constrained = self.constraint_list.safe_endpoint(lat, lon, time, is_constrained)
+        # print(is_constrained)
+        return 0 if not is_constrained else 1
+
+    def route_const(self, routes):
+        cost = self.grid_points
+        costs = []
+        for route in routes:
+            costs.append(np.sum([
+                self.is_neg_constraints(self.grid_points.coords['latitude'][i], self.grid_points.coords['longitude'][j],
+                                        cost[i, j]) for i, j in route[0]]))
+        # print(costs)
+        return costs
+
+    def index_to_coords(self, route):
+        lats = self.grid_points.coords['latitude'][route[:, 0]]
+        lons = self.grid_points.coords['longitude'][route[:, 1]]
+        route = [[x, y] for x, y in zip(lats, lons)]
+        # print(type(lats))
+        return lats, lons, np.array(route)
+
+    def route_cost(self, routes):
+        cost = self.grid_points.data
+        costs = []
+        for route in routes:
+            costs.append(np.sum([cost[i, j] for i, j in route[0]]))
+        return costs
+
+    def get_power(self, route):
+        _, _, route = self.index_to_coords(route[0])
+        route_dict = RouteParams.get_per_waypoint_coords(route[:, 0], route[:, 1], self.departure_time,
+                                                         self.boat.boat_speed_function())
+
+        shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
+                                                        route_dict['start_lons'], route_dict['start_times'])
+        fuel = shipparams.get_fuel()
+        fuel = (fuel / 3600) * route_dict['travel_times']
+
+        return np.sum(fuel), shipparams
+
+    def power_cost(self, routes):
+        costs = []
+        for route in routes:
+            fuel, _ = self.get_power(route)
+            costs.append(fuel)
+        return costs

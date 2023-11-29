@@ -10,8 +10,8 @@ from pymoo.optimize import minimize
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.data_utils import distance, find_start_and_end, load_data, time_diffs
-from WeatherRoutingTool.algorithms.genetic_utils import (GeneticCrossover, GeneticMutation, GeneticUtils,
-                                                         PopulationFactory, RoutingProblem)
+from WeatherRoutingTool.algorithms.genetic_utils import (GeneticCrossover, GeneticMutation, PopulationFactory,
+                                                         RoutingProblem)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -52,17 +52,16 @@ class Genetic(RoutingAlg):
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         data = load_data(self.weather_path)
         wave_height = data.VHM0.isel(time=0)
-        genetic_util = GeneticUtils(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
-                                    constraint_list=constraints_list)
-        genetic_util.interpolate_grid(10, 10)
+        problem = RoutingProblem(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
+                                 constraint_list=constraints_list)
+        problem.interpolate_grid(10, 10)
         # ToDo: set start and end in __init__ and use self.start and self.end
         start, end = find_start_and_end(self.start[0], self.start[1], self.finish[0], self.finish[1],
-                                        genetic_util.get_grid())
+                                        problem.get_grid())
         # ToDo: add factories for GeneticCrossover, GeneticMutation and RoutingProblem
         initial_population = PopulationFactory.get_population(self.population_type, start, end, grid_points=wave_height)
-        crossover = GeneticCrossover(genetic_util)
-        mutation = GeneticMutation(genetic_util)
-        problem = RoutingProblem(genetic_util)
+        crossover = GeneticCrossover()
+        mutation = GeneticMutation(wave_height)
         res = self.optimize(problem, initial_population, crossover, mutation)
         # get the best solution
         best_idx = res.F.argmin()
@@ -70,8 +69,8 @@ class Genetic(RoutingAlg):
         # best_f = res.F[best_idx]
         route = best_x[0]
         self.route = route
-        _, self.ship_params = genetic_util.get_power([route])
-        result = self.terminate(genetic_util)
+        _, self.ship_params = problem.get_power([route])
+        result = self.terminate(problem)
         # print(route)
         # print(result)
         return result
@@ -92,11 +91,11 @@ class Genetic(RoutingAlg):
         logger.info('offsprings: ' + str(self.n_offsprings))
 
     # TODO: adjust terminate function to those of the base class
-    def terminate(self, genetic_util):
+    def terminate(self, problem):
         form.print_line()
         logger.info('Terminating...')
 
-        lats, lons, route = genetic_util.index_to_coords(self.route)
+        lats, lons, route = problem.index_to_coords(self.route)
         dists = distance(route)
         speed = self.ship_params.get_speed()[0]
         diffs = time_diffs(speed, route)
