@@ -44,7 +44,7 @@ class RequiredConfigError(RuntimeError):
 
 class Config:
 
-    def __init__(self, init_mode='from_json', file_name=None):
+    def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
         self.ALGORITHM_TYPE = None  # options: 'isofuel'
         self.BOAT_DRAUGHT = None  # in m
@@ -80,6 +80,13 @@ class Config:
         if init_mode == 'from_json':
             assert file_name
             self.read_from_json(file_name)
+        elif init_mode == 'from_dict':
+            assert config_dict
+            self.read_from_dict(config_dict)
+        else:
+            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
+            logger.error(msg)
+            raise ValueError(msg)
 
         if os.getenv('CMEMS_USERNAME') is None or os.getenv('CMEMS_PASSWORD') is None:
             logger.warning("No CMEMS username and/or password provided! Note that these are necessary if "
@@ -94,13 +101,15 @@ class Config:
         # ToDo: prettify output
         logger.info(self.__dict__)
 
-    def read_from_json(self, json_file):
+    def read_from_dict(self, config_dict):
+        self._set_mandatory_config(config_dict)
+        self._set_recommended_config(config_dict)
+        self._set_optional_config(config_dict)
 
+    def read_from_json(self, json_file):
         with open(json_file) as f:
             config_dict = json.load(f)
-            self._set_mandatory_config(config_dict)
-            self._set_recommended_config(config_dict)
-            self._set_optional_config(config_dict)
+            self.read_from_dict(config_dict)
 
     def _set_mandatory_config(self, config_dict):
         for mandatory_var in MANDATORY_CONFIG_VARIABLES:
@@ -125,7 +134,7 @@ class Config:
                 setattr(self, optional_var, config_dict[optional_var])
 
 
-def set_up_logging(info_log_file, warnings_log_file, debug, stream=sys.stdout,
+def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
                    log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'):
     formatter = logging.Formatter(log_format)
     logging.basicConfig(stream=stream, format=log_format)
@@ -150,3 +159,4 @@ def set_up_logging(info_log_file, warnings_log_file, debug, stream=sys.stdout,
             logger.addHandler(fh_warnings)
         else:
             logger.warning(f"Logging file '{warnings_log_file}' doesn't exist and cannot be created.")
+    return logger
