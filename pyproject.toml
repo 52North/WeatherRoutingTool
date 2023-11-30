@@ -6,14 +6,39 @@ build-backend = "setuptools.build_meta"
 name = "WeatherRoutingTool"
 version = "0.1"
 authors = [
-  { name="52N authors" },
+  { name="52N authors", email="info@52north.org" },
 ]
-description = ""
+description = "Python package for weather routing"
 readme = "README.md"
-license = { file="LICENSE" }
+#license = { file="LICENSE" }
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3.8",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "bbox",
+    "cartopy",
+    "dask",
+    "datacube",
+    "geographiclib",
+    "geopandas",
+    "geovectorslib",
+    "global_land_mask",
+    "lxml",
+    "maridatadownloader @ git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader",
+    "matplotlib",
+    "netcdf4",
+    "numpy == 1.23.4",
+    "pandas",
+    "Pillow",
+    "pymoo",
+    "pytest",
+    "scipy>=1.10.0",
+    "shapely",
+    "sqlalchemy<2.0,>=1.4",
+    "xarray"
+]
 
+[tool.setuptools.packages.find]
+include = ["WeatherRoutingTool"]
