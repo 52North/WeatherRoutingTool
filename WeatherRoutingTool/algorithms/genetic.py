@@ -4,7 +4,7 @@ from datetime import timedelta
 import numpy as np
 import matplotlib
 from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.factory import get_termination
+from pymoo.termination import get_termination
 from pymoo.optimize import minimize
 
 import WeatherRoutingTool.utils.formatting as form

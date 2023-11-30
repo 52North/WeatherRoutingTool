@@ -32,7 +32,7 @@ dependencies = [
     "numpy == 1.23.4",
     "pandas",
     "Pillow",
-    "pymoo",
+    "pymoo>=0.6.1",
     "pytest",
     "scipy>=1.10.0",
     "shapely",
