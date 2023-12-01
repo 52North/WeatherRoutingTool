@@ -68,4 +68,3 @@ class GridMixin:
         lons = [get_closest(self.grid.longitude.data, lon) for lat, lon in points_as_coords]
         route = [[x, y] for x, y in zip(lats, lons)]
         return lats, lons, route
-
