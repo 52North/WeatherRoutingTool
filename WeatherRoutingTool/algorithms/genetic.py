@@ -3,14 +3,15 @@ from datetime import timedelta
 
 import numpy as np
 import matplotlib
+import xarray as xr
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
 from pymoo.optimize import minimize
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.algorithms.data_utils import distance, find_start_and_end, load_data, time_diffs
-from WeatherRoutingTool.algorithms.genetic_utils import (GeneticCrossover, GeneticMutation, PopulationFactory,
+from WeatherRoutingTool.algorithms.data_utils import distance, time_diffs
+from WeatherRoutingTool.algorithms.genetic_utils import (CrossoverFactory, MutationFactory, PopulationFactory,
                                                          RoutingProblem)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
@@ -40,8 +41,8 @@ class Genetic(RoutingAlg):
 
         self.ncount = config.GENETIC_NUMBER_GENERATIONS   # ToDo: use better name than ncount?
         self.count = 0
-
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
+        self.mutation_type = config.GENETIC_MUTATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
         self.population_type = config.GENETIC_POPULATION_TYPE
 
@@ -50,18 +51,15 @@ class Genetic(RoutingAlg):
         self.print_init()
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
-        data = load_data(self.weather_path)
+        data = xr.open_dataset(self.weather_path)
+        lat_int, lon_int = 10, 10
         wave_height = data.VHM0.isel(time=0)
-        problem = RoutingProblem(departure_time=self.departure_time, boat=boat, grid_points=wave_height,
-                                 constraint_list=constraints_list)
-        problem.interpolate_grid(10, 10)
-        # ToDo: set start and end in __init__ and use self.start and self.end
-        start, end = find_start_and_end(self.start[0], self.start[1], self.finish[0], self.finish[1],
-                                        problem.get_grid())
-        # ToDo: add factories for GeneticCrossover, GeneticMutation and RoutingProblem
-        initial_population = PopulationFactory.get_population(self.population_type, start, end, grid_points=wave_height)
-        crossover = GeneticCrossover()
-        mutation = GeneticMutation(wave_height)
+        wave_height = wave_height[::lat_int, ::lon_int]
+        problem = RoutingProblem(departure_time=self.departure_time, boat=boat, constraint_list=constraints_list)
+        initial_population = PopulationFactory.get_population(self.population_type, self.start, self.finish,
+                                                              grid=wave_height)
+        mutation = MutationFactory.get_mutation(self.mutation_type, grid=wave_height)
+        crossover = CrossoverFactory.get_crossover()
         res = self.optimize(problem, initial_population, crossover, mutation)
         # get the best solution
         best_idx = res.F.argmin()

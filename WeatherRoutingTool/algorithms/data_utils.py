@@ -1,65 +1,10 @@
-import os
-
 import numpy as np
 import xarray as xr
 from geographiclib.geodesic import Geodesic
 
 
-def load_data(path):
-    """
-    This function take a string as the path of the file and load the data from the file.
-    Parameters:
-    path: String, path of the file
-    Returns:
-    data: xarray, dataset
-    """
-    # Path of the data file
-    file = os.path.join(path)
-
-    # read the dataset
-    data = xr.open_dataset(file)
-    # data = data.VHM0.isel(time=0)
-    return data
-
-
-# create a bounding box from the coordinates
-# NY to Lisbon
 def get_closest(array, value):
     return np.abs(array - value).argmin()
-
-
-def get_bbox(lon1, lat1, lon2, lat2, data):
-    lon_min = get_closest(data.longitude.data, lon1)
-    lon_max = get_closest(data.longitude.data, lon2)
-    lat_min = get_closest(data.latitude.data, lat1)
-    lat_max = get_closest(data.latitude.data, lat2)
-
-    lon_min = lon_min if lon_min < lon_max else lon_max
-    lon_max = lon_max if lon_min < lon_max else lon_min
-    lat_min = lat_min if lat_min < lat_max else lat_max
-    lat_max = lat_max if lat_min < lat_max else lat_min
-    # print(lon_min, lon_max, lat_min, lat_max)
-    return lon_min, lon_max, lat_min, lat_max
-
-
-def clean_data(data):
-    cost = data.copy()
-    nan_mask = np.isnan(cost)
-    cost[nan_mask] = 1e100 * np.nanmax(cost) if np.nanmax(cost) else 0
-    return cost
-
-
-def find_start_and_end(lat1, lon1, lat2, lon2, grid_points):
-    # Define start and end points
-    start_lon = get_closest(grid_points.longitude.data, lon1)
-    start_lat = get_closest(grid_points.latitude.data, lat1)
-    end_lon = get_closest(grid_points.longitude.data, lon2)
-    end_lat = get_closest(grid_points.latitude.data, lat2)
-
-    start = (start_lat, start_lon)
-    end = (end_lat, end_lon)
-
-    return start, end
 
 
 def distance(route):
@@ -103,3 +48,24 @@ def time_diffs(speed, route):
     diffs = np.array(diffs) / speed
     # print(diffs)
     return diffs
+
+
+class GridMixin:
+    grid: xr.Dataset
+
+    def __init__(self, grid, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grid = grid
+
+    def index_to_coords(self, points_as_indices):
+        lats = self.grid.coords['latitude'][[lat_index for lat_index, lon_index in points_as_indices]].values.tolist()
+        lons = self.grid.coords['longitude'][[lon_index for lat_index, lon_index in points_as_indices]].values.tolist()
+        route = [[x, y] for x, y in zip(lats, lons)]
+        return lats, lons, route
+
+    def coords_to_index(self, points_as_coords):
+        lats = [get_closest(self.grid.latitude.data, lat) for lat, lon in points_as_coords]
+        lons = [get_closest(self.grid.longitude.data, lon) for lat, lon in points_as_coords]
+        route = [[x, y] for x, y in zip(lats, lons)]
+        return lats, lons, route
+

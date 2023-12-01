@@ -21,6 +21,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
     'FIGURE_PATH': None,
+    'GENETIC_MUTATION_TYPE': 'grid_based',
     'GENETIC_NUMBER_GENERATIONS': 20,
     'GENETIC_NUMBER_OFFSPRINGS': 2,
     'GENETIC_POPULATION_SIZE': 20,
@@ -60,6 +61,7 @@ class Config:
         self.DEPARTURE_TIME = None  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
         self.DEPTH_DATA = None  # path to depth data
         self.FIGURE_PATH = None  # path to figure repository
+        self.GENETIC_MUTATION_TYPE = None  # type for mutation (options: 'grid_based')
         self.GENETIC_NUMBER_GENERATIONS = None  # number of generations for genetic algorithm
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
         self.GENETIC_POPULATION_SIZE = None  # population size for genetic algorithm

@@ -8,41 +8,38 @@ import xarray as xr
 from matplotlib import pyplot as plt
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
-from pymoo.core.problem import Problem
+from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
 from skimage.graph import route_through_array
 
+from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger('WRT.Genetic')
 
 
-class GridBasedPopulation(Sampling):
+class GridBasedPopulation(GridMixin, Sampling):
     """
     Make initial population for genetic algorithm based on a grid and associated cost values
+
+    Notes on the inheritance:
+     - GridMixin has to be inherited first because Sampling isn't designed for multiple inheritance
+     - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
+     - call print(GridBasedPopulation.mro()) to see the method resolution order
     """
-    def __init__(self, src, dest, grid_points, var_type=np.float64):
-        super().__init__()
+    def __init__(self, src, dest, grid, var_type=np.float64):
+        super().__init__(grid=grid)
         self.var_type = var_type
         self.src = src
         self.dest = dest
-        self.grid_points = grid_points
-
-    def index_to_coords(self, route):
-        # ToDo: method is duplicated in RoutingProblem -> clean up
-        lats = self.grid_points.coords['latitude'][route[:, 0]]
-        lons = self.grid_points.coords['longitude'][route[:, 1]]
-        route = [[x, y] for x, y in zip(lats, lons)]
-        return lats, lons, np.array(route)
 
     def _do(self, problem, n_samples, **kwargs):
-        cost = self.grid_points.data
+        cost = self.grid.data
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
-        routes = np.zeros((n_samples, 1), dtype=object)
-
-        debug = False
-
+        routes = np.full((n_samples, 1), None, dtype=object)
+        _, _, start_indices = self.coords_to_index([(self.src[0], self.src[1])])
+        _, _, end_indices = self.coords_to_index([(self.dest[0], self.dest[1])])
         for i in range(n_samples):
             shuffled_cost = cost.copy()
             shuffled_cost[nan_mask] = 1
@@ -50,8 +47,13 @@ class GridBasedPopulation(Sampling):
             shuffled_cost = shuffled_cost[shuffled_indices]
             shuffled_cost[nan_mask] = 1e20
 
-            route, _ = route_through_array(shuffled_cost, self.src, self.dest, fully_connected=True, geometric=False)
+            route, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
+                                           fully_connected=True, geometric=False)
+            # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
+            _, _, route = self.index_to_coords(route)
             routes[i][0] = np.array(route)
+
+        debug = False
 
         if debug:
             fig, ax = plt.subplots(figsize=(12, 10))
@@ -59,13 +61,13 @@ class GridBasedPopulation(Sampling):
             ax.add_feature(cf.LAND)
             ax.add_feature(cf.COASTLINE)
             for i in range(0, n_samples):
-                _, _, route = self.index_to_coords(routes[i][0])  # FIXME
-                ax.plot(route[:, 1], route[:, 0], color="firebrick")
+                # logger.debug(routes[i, 0][:, 1])
+                ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
+            ax.set_xlim([-160, -115])
+            ax.set_ylim([30, 60])
             plt.show()
 
-        # print(routes.shape)
         self.X = routes
-        # print(self.X.shape)
         return self.X
 
 
@@ -74,9 +76,9 @@ class PopulationFactory:
         pass
 
     @staticmethod
-    def get_population(population_type, src, dest, grid_points=None):
+    def get_population(population_type, src, dest, grid=None):
         if population_type == 'grid_based':
-            population = GridBasedPopulation(src, dest, grid_points)
+            population = GridBasedPopulation(src, dest, grid)
         else:
             msg = f"Population type '{population_type}' is invalid!"
             logger.error(msg)
@@ -121,14 +123,23 @@ class GeneticCrossover(Crossover):
         return child1, child2
 
 
-class GeneticMutation(Mutation):
+class CrossoverFactory:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_crossover():
+        crossover = GeneticCrossover()
+        return crossover
+
+
+class GridBasedMutation(GridMixin, Mutation):
     """
     Custom class to define genetic mutation for routes
     """
-    def __init__(self, grid_points, prob=0.4):
-        super().__init__()
+    def __init__(self, grid, prob=0.4):
+        super().__init__(grid=grid)
         self.prob = prob
-        self.grid_points = grid_points
 
     def _do(self, problem, X, **kwargs):
         offsprings = np.zeros((len(X), 1), dtype=object)
@@ -145,42 +156,55 @@ class GeneticMutation(Mutation):
         return offsprings
 
     def mutate(self, route):
-        cost = self.grid_points.data
-        # source = route[0]
-        # destination = route[-1]
+        cost = self.grid.data
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)
 
-        # path = route.copy()
         size = len(route)
-
         start = random.randint(1, size - 2)
         end = random.randint(start, size - 2)
+
+        _, _, start_indices = self.coords_to_index([(route[start][0], route[start][1])])
+        _, _, end_indices = self.coords_to_index([(route[end][0], route[end][1])])
 
         shuffled_cost = np.ones(cost.shape, dtype=np.float)
         shuffled_cost[nan_mask] = 1e20
 
-        subpath, _ = route_through_array(shuffled_cost, route[start], route[end], fully_connected=True, geometric=False)
+        subpath, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
+                                         fully_connected=True, geometric=False)
+        _, _, subpath = self.index_to_coords(subpath)
         newPath = np.concatenate((route[:start], np.array(subpath), route[end + 1:]), axis=0)
-
         return newPath
 
 
-class RoutingProblem(Problem):
+class MutationFactory:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_mutation(mutation_type, grid=None):
+        if mutation_type == 'grid_based':
+            mutation = GridBasedMutation(grid)
+        else:
+            msg = f"Mutation type '{mutation_type}' is invalid!"
+            logger.error(msg)
+            raise ValueError(msg)
+        return mutation
+
+
+class RoutingProblem(ElementwiseProblem):
     """
     Class definition of the weather routing problem
     """
-    grid_points: xr.Dataset
     boat: None
     constraint_list: None
     departure_time: None
 
-    def __init__(self, departure_time, boat, grid_points, constraint_list):
+    def __init__(self, departure_time, boat, constraint_list):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
-        self.grid_points = grid_points
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -193,18 +217,12 @@ class RoutingProblem(Problem):
         :param kwargs:
         :return:
         """
-        # costs = route_cost(X)
-        costs = self.power_cost(x)
-        constraints = self.route_const(x)
+        # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
+        fuel, _ = self.get_power(x[0])
+        constraints = self.get_constraints(x[0])
         # print(costs.shape)
-        out['F'] = np.column_stack([costs])
+        out['F'] = np.column_stack([fuel])
         out['G'] = np.column_stack([constraints])
-
-    def interpolate_grid(self, lat_int, lon_int):
-        self.grid_points = self.grid_points[::lat_int, ::lon_int]
-
-    def get_grid(self):
-        return self.grid_points
 
     def is_neg_constraints(self, lat, lon, time):
         lat = np.array([lat])
@@ -214,45 +232,17 @@ class RoutingProblem(Problem):
         # print(is_constrained)
         return 0 if not is_constrained else 1
 
-    def route_const(self, routes):
-        cost = self.grid_points
-        costs = []
-        for route in routes:
-            costs.append(np.sum([
-                self.is_neg_constraints(self.grid_points.coords['latitude'][i], self.grid_points.coords['longitude'][j],
-                                        cost[i, j]) for i, j in route[0]]))
-        # print(costs)
-        return costs
-
-    def index_to_coords(self, route):
-        lats = self.grid_points.coords['latitude'][route[:, 0]]
-        lons = self.grid_points.coords['longitude'][route[:, 1]]
-        route = [[x, y] for x, y in zip(lats, lons)]
-        # print(type(lats))
-        return lats, lons, np.array(route)
-
-    def route_cost(self, routes):
-        cost = self.grid_points.data
-        costs = []
-        for route in routes:
-            costs.append(np.sum([cost[i, j] for i, j in route[0]]))
-        return costs
+    def get_constraints(self, route):
+        # ToDo: what about time?
+        constraints = np.sum([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
+        return constraints
 
     def get_power(self, route):
-        _, _, route = self.index_to_coords(route[0])
-        route_dict = RouteParams.get_per_waypoint_coords(route[:, 0], route[:, 1], self.departure_time,
+        route_dict = RouteParams.get_per_waypoint_coords(route[:, 1], route[:, 0], self.departure_time,
                                                          self.boat.boat_speed_function())
 
         shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
                                                         route_dict['start_lons'], route_dict['start_times'])
         fuel = shipparams.get_fuel()
         fuel = (fuel / 3600) * route_dict['travel_times']
-
         return np.sum(fuel), shipparams
-
-    def power_cost(self, routes):
-        costs = []
-        for route in routes:
-            fuel, _ = self.get_power(route)
-            costs.append(fuel)
-        return costs
