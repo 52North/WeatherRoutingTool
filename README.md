@@ -4,6 +4,8 @@
 
 The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages.
 
+Only Python < 3.11 supported!
+
 ### Installation via the requirements.txt
 
 - generate a virtual environment e.g. via `python -m venv "venv"`
@@ -82,7 +84,11 @@ Optional variables (default values provided and don't need to be changed normall
 - `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints'
 - `DELTA_FUEL`: amount of fuel per routing step (kg)
 - `DELTA_TIME_FORECAST`: time resolution of weather forecast (hours)
-- `FIGURE_PATH`: path to figure repository. If o path is provided, no figures will be saved
+- `GENETIC_MUTATION_TYPE`: type for mutation (options: 'grid_based')
+- `GENETIC_NUMBER_GENERATIONS`: number of generations for genetic algorithm
+- `GENETIC_NUMBER_OFFSPRINGS`: number of offsprings for genetic algorithm
+- `GENETIC_POPULATION_SIZE`: population size for genetic algorithm
+- `GENETIC_POPULATION_TYPE`: type for initial population (options: 'grid_based')
 - `INTERMEDIATE_WAYPOINTS`: [[lat_one,lon_one], [lat_two,lon_two] ... ]
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
 - `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
@@ -113,10 +119,16 @@ Configuration parameter for the database which stores OpenSeaMap data (used in t
 
 If not provided the 'land_crossing_polygons' and 'seamarks' options of `CONSTRAINTS_LIST` cannot be used.
 
+Path for storing figures (mainly for debugging purposes):
+
+- `WRT_FIGURE_PATH`
+
+If not set or the path doesn't exist or access rights are wrong, no figures will be saved.
+
 ### Logging and Debugging
 
 All log messages are sent to stdout by default. In addition, info and warning logs can be saved separately to file.
-Debugging mode can be enabled (disabled by default) which sets the stream (stdout) logging level to debug and additionally saved some figures to disk if FIGURE_PATH is provided correctly.
+Debugging mode can be enabled (disabled by default) which sets the stream (stdout) logging level to debug.
 
 The top-level logger is named "WRT". Child loggers are following the scheme "WRT.<child-name>".
 They inherit the top-level loggers' logging level.
@@ -202,6 +214,41 @@ lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
 ## Genetic Algorithm
+
+### General concept
+
+Five phases:
+1. Initial population
+   - Consists of candidate solutions (also called individuals) which have a set of properties (also called parameters, variables, genes)
+1. Fitness function (evaluation)
+1. Selection
+1. Crossover
+1. Mutation
+
+Abort criteria:
+- Maximum number of generations
+- Satisfactory fitness level has been reached
+
+### Routing Problem
+
+Phases:
+1. Initial population
+   - route_through_array
+. Fitness function (evaluation)
+   - mariPower
+1. Selection
+1. Crossover
+   - only routes which cross geometrically are used for crossover
+1. Mutation
+   - in principle random but can be restricted
+
+### Useful links:
+
+ - https://pymoo.org/index.html
+ - monitoring convergence (e.g. using Running Matrix):
+    - https://pymoo.org/getting_started/part_4.html
+    - https://ieeexplore.ieee.org/document/9185546
+
 ### Variable definitions: debug output
  - n_gen: current generation
  - n_nds: number of non-dominating solutions
@@ -210,23 +257,17 @@ lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1
  - eps: epsilon?
  - indicator: indicator to monitor algorithm performance; can be Hypervolume, Running Metric ...
 
-### Useful links:
- - documentation of results object: 
- - monitoring convergence (e.g. using Running Matrix):
-    - https://pymoo.org/getting_started/part_4.html
-    - https://ieeexplore.ieee.org/document/9185546
-
 ### General Notes:
- - res.F = None: quick-and-dirty hack possible by passing 'return_least_infeasible = True' to init functino of NSGAII
+ - res.F = None: quick-and-dirty hack possible by passing 'return_least_infeasible = True' to init function of NSGAII
  - chain of function calls until RoutingProblem._evaluate() is called:
-    - core/algorithms.run -> core/algorithms.next -> core/evaluator.eval -> core/evaluator._eval
+   - core/algorithms.run -> core/algorithms.next -> core/evaluator.eval -> core/evaluator._eval
  - chain of function calls until crossover/mutation/selection are called:
-    - core/algorithms.run -> core/algorithms.next -> core/algorithm.infill -> algorithms/base/genetic._infill
+   - core/algorithms.run -> core/algorithms.next -> core/algorithm.infill -> algorithms/base/genetic._infill
 
 
 ## Fuel estimation -- The communication between mariPower and the WRT
 
-Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
+Information is transferred via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
 Dimensions:                    (it_pos: 2, it_course: 3)

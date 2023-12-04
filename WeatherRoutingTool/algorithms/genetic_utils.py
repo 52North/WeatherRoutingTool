@@ -1,10 +1,10 @@
 import logging
+import os
 import random
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import numpy as np
-import xarray as xr
 from matplotlib import pyplot as plt
 from pymoo.core.crossover import Crossover
 from pymoo.core.mutation import Mutation
@@ -13,6 +13,7 @@ from pymoo.core.sampling import Sampling
 from skimage.graph import route_through_array
 
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
+from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger('WRT.Genetic')
@@ -53,19 +54,17 @@ class GridBasedPopulation(GridMixin, Sampling):
             _, _, route = self.index_to_coords(route)
             routes[i][0] = np.array(route)
 
-        debug = False
-
-        if debug:
+        figure_path = get_figure_path()
+        if figure_path is not None:
             fig, ax = plt.subplots(figsize=(12, 10))
             ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
             ax.add_feature(cf.LAND)
             ax.add_feature(cf.COASTLINE)
             for i in range(0, n_samples):
-                # logger.debug(routes[i, 0][:, 1])
                 ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
             ax.set_xlim([-160, -115])
             ax.set_ylim([30, 60])
-            plt.show()
+            plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
 
         self.X = routes
         return self.X

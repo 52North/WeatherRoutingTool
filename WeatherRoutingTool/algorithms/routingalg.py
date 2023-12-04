@@ -12,12 +12,13 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 
 
-class RoutingAlg():
+class RoutingAlg:
     """
         Isochrone data structure with typing.
                 Parameters:
@@ -50,7 +51,7 @@ class RoutingAlg():
         self.current_azimuth = gcr
         self.gcr_azi = gcr
 
-        self.figure_path = config.FIGURE_PATH
+        self.figure_path = get_figure_path()
 
     def init_fig(self, **kwargs):
         pass

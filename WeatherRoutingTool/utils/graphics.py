@@ -3,6 +3,7 @@ import cartopy.feature as cf
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import os
 from geovectorslib import geod
 from matplotlib.figure import Figure
 from PIL import Image
@@ -176,6 +177,15 @@ def merge_figs(path, ncounts):
 
     writergif = animation.PillowWriter(fps=1, bitrate=1000)
     ani.save(path + str(ani) + '.gif', writer=writergif)
+
+
+def get_figure_path():
+    figure_path = os.getenv('WRT_FIGURE_PATH')
+    if figure_path:
+        # Set figure path to None if the provided string is not a directory or not writable
+        if not os.path.isdir(figure_path) or not os.access(figure_path, os.W_OK):
+            figure_path = None
+    return figure_path
 
 
 def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
