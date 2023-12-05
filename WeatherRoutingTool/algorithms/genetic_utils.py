@@ -7,6 +7,7 @@ import cartopy.feature as cf
 import numpy as np
 from matplotlib import pyplot as plt
 from pymoo.core.crossover import Crossover
+from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.core.mutation import Mutation
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
@@ -28,6 +29,7 @@ class GridBasedPopulation(GridMixin, Sampling):
      - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
      - call print(GridBasedPopulation.mro()) to see the method resolution order
     """
+
     def __init__(self, src, dest, grid, var_type=np.float64):
         super().__init__(grid=grid)
         self.var_type = var_type
@@ -48,8 +50,8 @@ class GridBasedPopulation(GridMixin, Sampling):
             shuffled_cost = shuffled_cost[shuffled_indices]
             shuffled_cost[nan_mask] = 1e20
 
-            route, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
-                                           fully_connected=True, geometric=False)
+            route, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0], fully_connected=True,
+                                           geometric=False)
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
             routes[i][0] = np.array(route)
@@ -89,6 +91,7 @@ class GeneticCrossover(Crossover):
     """
     Custom class to define genetic crossover for routes
     """
+
     def __init__(self, prob=1):
 
         # define the crossover: number of parents and number of offsprings
@@ -136,6 +139,7 @@ class GridBasedMutation(GridMixin, Mutation):
     """
     Custom class to define genetic mutation for routes
     """
+
     def __init__(self, grid, prob=0.4):
         super().__init__(grid=grid)
         self.prob = prob
@@ -149,7 +153,7 @@ class GridBasedMutation(GridMixin, Mutation):
                 mutated_individual = self.mutate(i[0])
                 # print("mutated_individual", mutated_individual, "###")
                 offsprings[idx][0] = mutated_individual
-        # if no mutation
+            # if no mutation
             else:
                 offsprings[idx][0] = i[0]
         return offsprings
@@ -169,8 +173,8 @@ class GridBasedMutation(GridMixin, Mutation):
         shuffled_cost = np.ones(cost.shape, dtype=np.float)
         shuffled_cost[nan_mask] = 1e20
 
-        subpath, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
-                                         fully_connected=True, geometric=False)
+        subpath, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0], fully_connected=True,
+                                         geometric=False)
         _, _, subpath = self.index_to_coords(subpath)
         newPath = np.concatenate((route[:start], np.array(subpath), route[end + 1:]), axis=0)
         return newPath
@@ -245,3 +249,9 @@ class RoutingProblem(ElementwiseProblem):
         fuel = shipparams.get_fuel()
         fuel = (fuel / 3600) * route_dict['travel_times']
         return np.sum(fuel), shipparams
+
+
+class RouteDuplicateElimination(ElementwiseDuplicateElimination):
+
+    def is_equal(self, a, b):
+        return np.array_equal(a.X[0], b.X[0])

@@ -17,7 +17,7 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.data_utils import distance, time_diffs
 from WeatherRoutingTool.algorithms.genetic_utils import (CrossoverFactory, MutationFactory, PopulationFactory,
-                                                         RoutingProblem)
+                                                         RoutingProblem, RouteDuplicateElimination)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -45,7 +45,7 @@ class Genetic(RoutingAlg):
         self.default_map = config.DEFAULT_MAP
         self.weather_path = config.WEATHER_DATA
 
-        self.ncount = config.GENETIC_NUMBER_GENERATIONS   # ToDo: use better name than ncount?
+        self.ncount = config.GENETIC_NUMBER_GENERATIONS  # ToDo: use better name than ncount?
         self.count = 0
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
         self.mutation_type = config.GENETIC_MUTATION_TYPE
@@ -66,7 +66,8 @@ class Genetic(RoutingAlg):
                                                               grid=wave_height)
         mutation = MutationFactory.get_mutation(self.mutation_type, grid=wave_height)
         crossover = CrossoverFactory.get_crossover()
-        res = self.optimize(problem, initial_population, crossover, mutation)
+        duplicates = RouteDuplicateElimination()
+        res = self.optimize(problem, initial_population, crossover, mutation, duplicates)
         # get the best solution
 
         running = RunningMetricAnimation(delta_gen=1, n_plots=5, key_press=False, do_show=True)
@@ -75,7 +76,7 @@ class Genetic(RoutingAlg):
 
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
-        best_route = best_x[0]
+        best_route = best_x
         history = res.history
 
         figure_path = get_figure_path()
@@ -89,16 +90,17 @@ class Genetic(RoutingAlg):
                 ax.add_feature(cf.LAND)
                 ax.add_feature(cf.COASTLINE)
                 ax.gridlines(draw_labels=True)
-                figtitlestr = 'Population of Generation ' + str(igen+1)
+                figtitlestr = 'Population of Generation ' + str(igen + 1)
                 ax.set_title(figtitlestr)
 
                 for iroute in range(0, self.pop_size):
                     last_pop = history[igen].pop.get('X')
-                    if iroute==0:
-                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick", label='full population')
+                    if iroute == 0:
+                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick",
+                                label='full population')
                     else:
                         ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick")
-                if igen == (self.ncount-1):
+                if igen == (self.ncount - 1):
                     ax.plot(best_route[:, 1], best_route[:, 0], color="blue", label='best route')
                 ax.legend()
                 ax.set_xlim([-160, -115])
@@ -116,8 +118,8 @@ class Genetic(RoutingAlg):
         logger.info("Initializing Routing......")
         logger.info('route from ' + str(self.start) + ' to ' + str(self.finish))
         # logger.info('start time ' + str(self.time))
-        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish), 1))
-        # logger.info(form.get_log_step('start time ' + str(self.time), 1))
+        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),
+                                      1))  # logger.info(form.get_log_step('start time ' + str(self.time), 1))
 
     def print_current_status(self):
         logger.info("ALGORITHM SETTINGS:")
@@ -140,23 +142,16 @@ class Genetic(RoutingAlg):
         self.count = len(lats)
 
         dt = self.departure_time
-        time = np.array([dt]*len(lats))
+        time = np.array([dt] * len(lats))
         times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
 
-        route = RouteParams(
-            count=self.count-3,
-            start=self.start,
-            finish=self.finish,
-            gcr=np.sum(dists),
-            route_type='min_time_route',
-            time=diffs,  # time diffs
-            lats_per_step=lats.to_numpy(),
-            lons_per_step=lons.to_numpy(),
-            azimuths_per_step=np.zeros(778),
-            dists_per_step=dists,  # dist of waypoints
-            starttime_per_step=times,  # time for each point
-            ship_params_per_step=self.ship_params
-        )
+        route = RouteParams(count=self.count - 3, start=self.start, finish=self.finish, gcr=np.sum(dists),
+                            route_type='min_time_route', time=diffs,  # time diffs
+                            lats_per_step=lats.to_numpy(), lons_per_step=lons.to_numpy(),
+                            azimuths_per_step=np.zeros(778),
+                            dists_per_step=dists,  # dist of waypoints
+                            starttime_per_step=times,  # time for each point
+                            ship_params_per_step=self.ship_params)
 
         self.check_destination()
         self.check_positive_power()
@@ -168,22 +163,14 @@ class Genetic(RoutingAlg):
     def check_positive_power(self):
         pass
 
-    def optimize(self, problem, initial_population, crossover, mutation):
+    def optimize(self, problem, initial_population, crossover, mutation, duplicates):
         # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
-        algorithm = NSGA2(pop_size=self.pop_size,
-                          sampling=initial_population,
-                          crossover=crossover,
-                          n_offsprings=self.n_offsprings,
-                          mutation=mutation,
-                          eliminate_duplicates=False,
+        algorithm = NSGA2(pop_size=self.pop_size, sampling=initial_population, crossover=crossover,
+                          n_offsprings=self.n_offsprings, mutation=mutation, eliminate_duplicates=duplicates,
                           return_least_infeasible=False)
         termination = get_termination("n_gen", self.ncount)
 
-        res = minimize(problem,
-                       algorithm,
-                       termination,
-                       save_history=True,
-                       verbose=True)
+        res = minimize(problem, algorithm, termination, save_history=True, verbose=True)
         # stop = timeit.default_timer()
         # route_cost(res.X)
         return res
