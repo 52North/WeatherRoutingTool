@@ -75,8 +75,7 @@ class Genetic(RoutingAlg):
             running.update(algorithm)
 
         best_idx = res.F.argmin()
-        best_x = res.X[best_idx]
-        best_route = best_x
+        best_route = res.X[best_idx]
         history = res.history
 
         figure_path = get_figure_path()
@@ -109,7 +108,7 @@ class Genetic(RoutingAlg):
                 plt.savefig(os.path.join(figure_path, figname))
 
         _, self.ship_params = problem.get_power([best_route])
-        result = self.terminate(problem)
+        result = self.terminate(best_route)
         # print(route)
         # print(result)
         return result
@@ -130,14 +129,16 @@ class Genetic(RoutingAlg):
         logger.info('offsprings: ' + str(self.n_offsprings))
 
     # TODO: adjust terminate function to those of the base class
-    def terminate(self, problem):
+    def terminate(self, best_route):
         form.print_line()
         logger.info('Terminating...')
 
-        lats, lons, route = problem.index_to_coords(self.route)
-        dists = distance(route)
+        # ToDo: are formats/indices correct?
+        lats = best_route[:, 0]
+        lons = best_route[:, 1]
+        dists = distance(best_route)
         speed = self.ship_params.get_speed()[0]
-        diffs = time_diffs(speed, route)
+        diffs = time_diffs(speed, best_route)
         # ship_params = get_power()
         self.count = len(lats)
 
