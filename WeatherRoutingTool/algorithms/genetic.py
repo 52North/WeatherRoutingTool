@@ -1,12 +1,17 @@
 import logging
+import os
 from datetime import timedelta
 
+import cartopy.crs as ccrs
+import cartopy.feature as cf
 import numpy as np
 import matplotlib
 import xarray as xr
+from matplotlib import pyplot as plt
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
 from pymoo.optimize import minimize
+from pymoo.util.running_metric import RunningMetricAnimation
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
@@ -17,6 +22,7 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Genetic')
@@ -62,12 +68,45 @@ class Genetic(RoutingAlg):
         crossover = CrossoverFactory.get_crossover()
         res = self.optimize(problem, initial_population, crossover, mutation)
         # get the best solution
+
+        running = RunningMetricAnimation(delta_gen=1, n_plots=5, key_press=False, do_show=True)
+        for algorithm in res.history[:5]:
+            running.update(algorithm)
+
         best_idx = res.F.argmin()
         best_x = res.X[best_idx]
-        # best_f = res.F[best_idx]
-        route = best_x[0]
-        self.route = route
-        _, self.ship_params = problem.get_power([route])
+        best_route = best_x[0]
+        history = res.history
+
+        figure_path = get_figure_path()
+        if figure_path is not None:
+            for igen in range(0, self.ncount):
+                plt.rcParams['font.size'] = 20
+                fig, ax = plt.subplots(figsize=(12, 10))
+                ax.axis('off')
+                ax.xaxis.set_tick_params(labelsize='large')
+                ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+                ax.add_feature(cf.LAND)
+                ax.add_feature(cf.COASTLINE)
+                ax.gridlines(draw_labels=True)
+                figtitlestr = 'Population of Generation ' + str(igen+1)
+                ax.set_title(figtitlestr)
+
+                for iroute in range(0, self.pop_size):
+                    last_pop = history[igen].pop.get('X')
+                    if iroute==0:
+                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick", label='full population')
+                    else:
+                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick")
+                if igen == (self.ncount-1):
+                    ax.plot(best_route[:, 1], best_route[:, 0], color="blue", label='best route')
+                ax.legend()
+                ax.set_xlim([-160, -115])
+                ax.set_ylim([30, 60])
+                figname = 'genetic_algorithm_generation' + str(igen) + '.png'
+                plt.savefig(os.path.join(figure_path, figname))
+
+        _, self.ship_params = problem.get_power([best_route])
         result = self.terminate(problem)
         # print(route)
         # print(result)
