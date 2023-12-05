@@ -36,12 +36,11 @@ class GridBasedPopulation(GridMixin, Sampling):
         self.dest = dest
 
     def _do(self, problem, n_samples, **kwargs):
-        cost = self.grid.data
         routes = np.full((n_samples, 1), None, dtype=object)
         _, _, start_indices = self.coords_to_index([(self.src[0], self.src[1])])
         _, _, end_indices = self.coords_to_index([(self.dest[0], self.dest[1])])
         for i in range(n_samples):
-            shuffled_cost = GridMixin.shuffle_cost(cost)
+            shuffled_cost = self.get_shuffled_cost()
             route, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
                                            fully_connected=True, geometric=False)
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
@@ -149,10 +148,6 @@ class GridBasedMutation(GridMixin, Mutation):
         return offsprings
 
     def mutate(self, route):
-        cost = self.grid.data
-        shuffled_cost = cost.copy()
-        nan_mask = np.isnan(shuffled_cost)
-
         size = len(route)
         start = random.randint(1, size - 2)
         end = random.randint(start, size - 2)
@@ -160,7 +155,7 @@ class GridBasedMutation(GridMixin, Mutation):
         _, _, start_indices = self.coords_to_index([(route[start][0], route[start][1])])
         _, _, end_indices = self.coords_to_index([(route[end][0], route[end][1])])
 
-        shuffled_cost = GridMixin.shuffle_cost(cost)
+        shuffled_cost = self.get_shuffled_cost()
         subpath, _ = route_through_array(shuffled_cost, start_indices[0], end_indices[0],
                                          fully_connected=True, geometric=False)
         _, _, subpath = self.index_to_coords(subpath)

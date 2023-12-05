@@ -69,8 +69,8 @@ class GridMixin:
         route = [[x, y] for x, y in zip(lats, lons)]
         return lats, lons, route
 
-    @staticmethod
-    def shuffle_cost(cost):
+    def get_shuffled_cost(self):
+        cost = self.grid.data
         shuffled_cost = cost.copy()
         nan_mask = np.isnan(shuffled_cost)  # corresponds, e.g., to land pixels
         shuffled_cost[nan_mask] = np.nanmean(cost)
