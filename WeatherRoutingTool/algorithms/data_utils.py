@@ -68,3 +68,18 @@ class GridMixin:
         lons = [get_closest(self.grid.longitude.data, lon) for lat, lon in points_as_coords]
         route = [[x, y] for x, y in zip(lats, lons)]
         return lats, lons, route
+
+    @staticmethod
+    def shuffle_cost(cost):
+        shuffled_cost = cost.copy()
+        nan_mask = np.isnan(shuffled_cost)  # corresponds, e.g., to land pixels
+        shuffled_cost[nan_mask] = np.nanmean(cost)
+
+        # shuffle first along South-North (latitude), then along West-East (longitude) axis
+        rng = np.random.default_rng()
+        shuffled_cost = rng.permutation(shuffled_cost, axis=0)
+        shuffled_cost = rng.permutation(shuffled_cost, axis=1)
+
+        # assign very high weights to nan values (land pixels)
+        shuffled_cost[nan_mask] = 1e20
+        return shuffled_cost
