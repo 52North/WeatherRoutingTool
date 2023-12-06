@@ -13,8 +13,8 @@ from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
 from skimage.graph import route_through_array
 
+import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
-from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger('WRT.Genetic')
@@ -47,16 +47,14 @@ class GridBasedPopulation(GridMixin, Sampling):
             _, _, route = self.index_to_coords(route)
             routes[i][0] = np.array(route)
 
-        figure_path = get_figure_path()
+        figure_path = graphics.get_figure_path()
         if figure_path is not None:
-            fig, ax = plt.subplots(figsize=(12, 10))
-            ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-            ax.add_feature(cf.LAND)
-            ax.add_feature(cf.COASTLINE)
+            plt.rcParams['font.size'] = graphics.get_standard('font_size')
+            fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+            ax.remove()
+            fig, ax = graphics.generate_basemap(fig, None, self.src, self.dest,  '', False)
             for i in range(0, n_samples):
                 ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
-            ax.set_xlim([-160, -115])
-            ax.set_ylim([30, 60])
             plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
 
         self.X = routes

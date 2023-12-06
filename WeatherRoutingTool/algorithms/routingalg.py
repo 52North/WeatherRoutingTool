@@ -78,7 +78,7 @@ class RoutingAlg:
     def check_for_positive_constraints(self, constraint_list):
         pass
 
-    def terminate(self):
+    def terminate(self, **kwargs):
         logger.info(form.get_line_string())
         logger.info('Terminating...')
 

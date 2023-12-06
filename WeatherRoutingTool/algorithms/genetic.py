@@ -70,57 +70,7 @@ class Genetic(RoutingAlg):
         res = self.optimize(problem, initial_population, crossover, mutation, duplicates)
         # get the best solution
 
-        figure_path = get_figure_path()
-        running = RunningMetric()
-        igen = 0
-        fig, ax = plt.subplots(figsize=(12, 10))
-        for algorithm in res.history[:5]:
-            igen = igen + 1
-            running.update(algorithm)
-            delta_f = running.delta_f
-            x_f = (np.arange(len(delta_f)) + 1)
-            ax.plot(x_f, delta_f, label="t=%s (*)" % igen, alpha=0.9, linewidth=3)
-        ax.set_yscale("symlog")
-        ax.legend()
-
-        ax.set_xlabel("Generation")
-        ax.set_ylabel(r"$\Delta \, f$", rotation=0)
-        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
-
-        best_idx = res.F.argmin()
-        best_route = res.X[best_idx]
-        history = res.history
-
-        if figure_path is not None:
-            for igen in range(0, self.ncount):
-                plt.rcParams['font.size'] = 20
-                fig, ax = plt.subplots(figsize=(12, 10))
-                ax.axis('off')
-                ax.xaxis.set_tick_params(labelsize='large')
-                ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-                ax.add_feature(cf.LAND)
-                ax.add_feature(cf.COASTLINE)
-                ax.gridlines(draw_labels=True)
-                figtitlestr = 'Population of Generation ' + str(igen + 1)
-                ax.set_title(figtitlestr)
-
-                for iroute in range(0, self.pop_size):
-                    last_pop = history[igen].pop.get('X')
-                    if iroute == 0:
-                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick",
-                                label='full population')
-                    else:
-                        ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick")
-                if igen == (self.ncount - 1):
-                    ax.plot(best_route[:, 1], best_route[:, 0], color="blue", label='best route')
-                ax.legend()
-                ax.set_xlim([-160, -115])
-                ax.set_ylim([30, 60])
-                figname = 'genetic_algorithm_generation' + str(igen) + '.png'
-                plt.savefig(os.path.join(figure_path, figname))
-
-        _, self.ship_params = problem.get_power(best_route)
-        result = self.terminate(best_route)
+        result = self.terminate(result_object=res, problem=problem)
         # print(route)
         # print(result)
         return result
@@ -160,7 +110,7 @@ class Genetic(RoutingAlg):
 
         route = RouteParams(count=self.count - 3, start=self.start, finish=self.finish, gcr=np.sum(dists),
                             route_type='min_time_route', time=diffs,  # time diffs
-                            lats_per_step=lats, lons_per_step=lons,
+                            lats_per_step=lats.to_numpy(), lons_per_step=lons.to_numpy(),
                             azimuths_per_step=np.zeros(778),
                             dists_per_step=dists,  # dist of waypoints
                             starttime_per_step=times,  # time for each point

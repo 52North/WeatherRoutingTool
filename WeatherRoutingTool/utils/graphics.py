@@ -8,6 +8,12 @@ from geovectorslib import geod
 from matplotlib.figure import Figure
 from PIL import Image
 
+graphics_options = {'font_size': 20, 'fig_size': (12, 10)}
+
+
+def get_standard(var):
+    return graphics_options[var]
+
 
 def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
     """Discretize gcr between two scalar coordinate points."""
@@ -240,3 +246,31 @@ def set_graphics_standards(ax):
         label.set_fontsize(20)
     plt.rcParams['font.size'] = '20'
     return ax
+
+
+def generate_basemap(fig, depth, start, finish, title='', show_depth=True, show_gcr=False):
+    ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+
+    if show_depth:
+        level_diff = 10
+        cp = depth['depth'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
+        fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+
+        fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
+
+    ax.add_feature(cf.LAND)
+    ax.add_feature(cf.COASTLINE)
+    ax.gridlines(draw_labels=True)
+
+    ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
+    ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
+
+    if show_gcr:
+        gcr = get_gcr_points(start[0], start[1], finish[0], finish[1], n_points=10)
+        lats_gcr = [x[0] for x in gcr]
+        lons_gcr = [x[1] for x in gcr]
+        ax.plot(lons_gcr, lats_gcr, color="orange")
+
+    plt.title(title)
+
+    return fig, ax

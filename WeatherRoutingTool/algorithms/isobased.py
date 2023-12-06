@@ -597,7 +597,7 @@ class IsoBased(RoutingAlg):
         idx = np.argmax(self.full_dist_traveled)
         return idx
 
-    def terminate(self):
+    def terminate(self, **kwargs):
         super().terminate()
 
         self.lats_per_step = np.flip(self.lats_per_step, 0)
@@ -727,8 +727,8 @@ class IsoBased(RoutingAlg):
         if self.figure_path is None:
             return
         self.showDepth = showDepth
-        plt.rcParams['font.size'] = 20
-        self.fig, self.ax = plt.subplots(figsize=(12, 10))
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+        self.fig, self.ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         self.ax.axis('off')
         self.ax.xaxis.set_tick_params(labelsize='large')
 
@@ -742,37 +742,11 @@ class IsoBased(RoutingAlg):
                 (ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) &
                 (ds_depth_coarsened.depth < 0), drop=True)
 
-        self.generate_basemap()
+        self.fig, self.ax = graphics.generate_basemap(self.fig, self.depth, self.start, self.finish)
 
         final_path = self.figure_path + '/fig0.png'
         logger.info('Save start figure to ' + final_path)
         plt.savefig(final_path)
-
-    def generate_basemap(self):
-
-        self.ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
-        if (self.showDepth):
-            level_diff = 10
-            cp = self.depth['depth'].plot.contourf(ax=self.ax, levels=np.arange(-100, 0, level_diff),
-                                                   transform=ccrs.PlateCarree())
-            self.fig.colorbar(cp, ax=self.ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
-
-            self.fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
-
-        self.ax.add_feature(cf.LAND)
-        self.ax.add_feature(cf.COASTLINE)
-        self.ax.gridlines(draw_labels=True)
-
-        self.ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
-                     markersize=10)
-        self.ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
-                     markersize=10)
-
-        gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
-        lats_gcr = [x[0] for x in gcr]
-        lons_gcr = [x[1] for x in gcr]
-        self.ax.plot(lons_gcr, lats_gcr, color="orange")
-        plt.title('')
 
     def update_fig(self, status):
         if self.figure_path is None:
@@ -780,7 +754,7 @@ class IsoBased(RoutingAlg):
         fig = self.fig
         route_ensemble = []
         self.ax.remove()
-        self.generate_basemap()
+        fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
 
         count_routeseg = self.lats_per_step.shape[1]
 
