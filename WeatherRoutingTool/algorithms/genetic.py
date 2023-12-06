@@ -166,7 +166,7 @@ class Genetic(RoutingAlg):
         ax.legend()
 
         ax.set_xlabel("Generation")
-        ax.set_ylabel("$\Delta \, f$", rotation=0)
+        ax.set_ylabel("Δf", rotation=0)
         plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
 
     def plot_population_per_generation(self, res, best_route):
