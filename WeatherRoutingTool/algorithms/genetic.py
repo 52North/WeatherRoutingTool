@@ -14,6 +14,7 @@ from pymoo.optimize import minimize
 from pymoo.util.running_metric import RunningMetric
 
 import WeatherRoutingTool.utils.formatting as form
+import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.data_utils import distance, time_diffs
 from WeatherRoutingTool.algorithms.genetic_utils import (CrossoverFactory, MutationFactory, PopulationFactory,
@@ -68,11 +69,8 @@ class Genetic(RoutingAlg):
         crossover = CrossoverFactory.get_crossover()
         duplicates = RouteDuplicateElimination()
         res = self.optimize(problem, initial_population, crossover, mutation, duplicates)
-        # get the best solution
 
         result = self.terminate(result_object=res, problem=problem)
-        # print(route)
-        # print(result)
         return result
 
     def print_init(self):
@@ -90,10 +88,22 @@ class Genetic(RoutingAlg):
         logger.info('pop_size: ' + str(self.pop_size))
         logger.info('offsprings: ' + str(self.n_offsprings))
 
-    # TODO: adjust terminate function to those of the base class
-    def terminate(self, best_route):
-        form.print_line()
-        logger.info('Terminating...')
+    def terminate(self, **kwargs):
+        super().terminate()
+
+        res = kwargs.get('result_object')
+        problem = kwargs.get('problem')
+        figure_path = get_figure_path()
+
+        best_idx = res.F.argmin()
+        best_route = res.X[best_idx]
+        _, self.ship_params = problem.get_power(best_route)
+
+        if figure_path is not None:
+            self.plot_running_metric(res)
+            self.plot_population_per_generation(res, best_route)
+
+        _, self.ship_params = problem.get_power([best_route])
 
         # ToDo: are formats/indices correct?
         lats = best_route[:, 0]
@@ -110,7 +120,7 @@ class Genetic(RoutingAlg):
 
         route = RouteParams(count=self.count - 3, start=self.start, finish=self.finish, gcr=np.sum(dists),
                             route_type='min_time_route', time=diffs,  # time diffs
-                            lats_per_step=lats.to_numpy(), lons_per_step=lons.to_numpy(),
+                            lats_per_step=lats, lons_per_step=lons,
                             azimuths_per_step=np.zeros(778),
                             dists_per_step=dists,  # dist of waypoints
                             starttime_per_step=times,  # time for each point
@@ -137,3 +147,50 @@ class Genetic(RoutingAlg):
         # stop = timeit.default_timer()
         # route_cost(res.X)
         return res
+
+    def plot_running_metric(self, res):
+        figure_path = get_figure_path()
+        running = RunningMetric()
+
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+
+        igen = 0
+        for algorithm in res.history[:5]:
+            igen = igen + 1
+            running.update(algorithm)
+            delta_f = running.delta_f
+            x_f = (np.arange(len(delta_f)) + 1)
+            ax.plot(x_f, delta_f, label="t=%s (*)" % igen, alpha=0.9, linewidth=3)
+        ax.set_yscale("symlog")
+        ax.legend()
+
+        ax.set_xlabel("Generation")
+        ax.set_ylabel("$\Delta \, f$", rotation=0)
+        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
+
+    def plot_population_per_generation(self, res, best_route):
+        figure_path = get_figure_path()
+        history = res.history
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+
+        for igen in range(0, self.ncount):
+            plt.rcParams['font.size'] = graphics.get_standard('font_size')
+            figtitlestr = 'Population of Generation ' + str(igen + 1)
+
+            ax.remove()
+            fig, ax = graphics.generate_basemap(fig, None, self.start, self.finish, figtitlestr, False)
+
+            for iroute in range(0, self.pop_size):
+                last_pop = history[igen].pop.get('X')
+                if iroute == 0:
+                    ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick",
+                            label='full population')
+                else:
+                    ax.plot(last_pop[iroute, 0][:, 1], last_pop[iroute, 0][:, 0], color="firebrick")
+            if igen == (self.ncount - 1):
+                ax.plot(best_route[:, 1], best_route[:, 0], color="blue", label='best route')
+            ax.legend()
+
+            figname = 'genetic_algorithm_generation' + str(igen) + '.png'
+            plt.savefig(os.path.join(figure_path, figname))
