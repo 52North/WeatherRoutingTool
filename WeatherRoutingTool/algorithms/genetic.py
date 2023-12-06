@@ -75,16 +75,16 @@ class Genetic(RoutingAlg):
         igen = 0
         fig, ax = plt.subplots(figsize=(12, 10))
         for algorithm in res.history[:5]:
-            igen=igen+1
+            igen = igen + 1
             running.update(algorithm)
-            delta_f=running.delta_f
-            x_f=(np.arange(len(delta_f)) + 1)
+            delta_f = running.delta_f
+            x_f = (np.arange(len(delta_f)) + 1)
             ax.plot(x_f, delta_f, label="t=%s (*)" % igen, alpha=0.9, linewidth=3)
         ax.set_yscale("symlog")
         ax.legend()
 
         ax.set_xlabel("Generation")
-        ax.set_ylabel("$\Delta \, f$", rotation=0)
+        ax.set_ylabel(r"$\Delta \, f$", rotation=0)
         plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
 
         best_idx = res.F.argmin()
