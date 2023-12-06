@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
 from pymoo.optimize import minimize
-from pymoo.util.running_metric import RunningMetricAnimation
+from pymoo.util.running_metric import RunningMetric
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
@@ -70,15 +70,27 @@ class Genetic(RoutingAlg):
         res = self.optimize(problem, initial_population, crossover, mutation, duplicates)
         # get the best solution
 
-        running = RunningMetricAnimation(delta_gen=1, n_plots=5, key_press=False, do_show=True)
+        figure_path = get_figure_path()
+        running = RunningMetric()
+        igen = 0
+        fig, ax = plt.subplots(figsize=(12, 10))
         for algorithm in res.history[:5]:
+            igen=igen+1
             running.update(algorithm)
+            delta_f=running.delta_f
+            x_f=(np.arange(len(delta_f)) + 1)
+            ax.plot(x_f, delta_f, label="t=%s (*)" % igen, alpha=0.9, linewidth=3)
+        ax.set_yscale("symlog")
+        ax.legend()
+
+        ax.set_xlabel("Generation")
+        ax.set_ylabel("$\Delta \, f$", rotation=0)
+        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
 
         best_idx = res.F.argmin()
         best_route = res.X[best_idx]
         history = res.history
 
-        figure_path = get_figure_path()
         if figure_path is not None:
             for igen in range(0, self.ncount):
                 plt.rcParams['font.size'] = 20
