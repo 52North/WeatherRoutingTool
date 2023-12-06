@@ -119,7 +119,7 @@ class Genetic(RoutingAlg):
                 figname = 'genetic_algorithm_generation' + str(igen) + '.png'
                 plt.savefig(os.path.join(figure_path, figname))
 
-        _, self.ship_params = problem.get_power([best_route])
+        _, self.ship_params = problem.get_power(best_route)
         result = self.terminate(best_route)
         # print(route)
         # print(result)
@@ -160,7 +160,7 @@ class Genetic(RoutingAlg):
 
         route = RouteParams(count=self.count - 3, start=self.start, finish=self.finish, gcr=np.sum(dists),
                             route_type='min_time_route', time=diffs,  # time diffs
-                            lats_per_step=lats.to_numpy(), lons_per_step=lons.to_numpy(),
+                            lats_per_step=lats, lons_per_step=lons,
                             azimuths_per_step=np.zeros(778),
                             dists_per_step=dists,  # dist of waypoints
                             starttime_per_step=times,  # time for each point

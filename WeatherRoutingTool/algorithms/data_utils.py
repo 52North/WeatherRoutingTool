@@ -11,13 +11,13 @@ def distance(route):
     geod = Geodesic.WGS84
     dists = []
 
-    lat1 = route[0, 1]
-    lon1 = route[0, 0]
+    lat1 = route[0, 0]
+    lon1 = route[0, 1]
     d = 0
 
     for coord in route:
-        lat2 = coord[1]
-        lon2 = coord[0]
+        lat2 = coord[0]
+        lon2 = coord[1]
         # ToDo: replace with geovectorslib.geod.inverse for consistency (which can be applied to an array)
         d += geod.Inverse(lat1, lon1, lat2, lon2)['s12']
         dists.append(d)
