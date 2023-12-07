@@ -103,15 +103,11 @@ class Genetic(RoutingAlg):
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
 
-        _, self.ship_params = problem.get_power([best_route])
-
-        # ToDo: are formats/indices correct?
         lats = best_route[:, 0]
         lons = best_route[:, 1]
         dists = distance(best_route)
         speed = self.ship_params.get_speed()[0]
         diffs = time_diffs(speed, best_route)
-        # ship_params = get_power()
         self.count = len(lats)
 
         dt = self.departure_time
@@ -191,6 +187,8 @@ class Genetic(RoutingAlg):
             if igen == (self.ncount - 1):
                 ax.plot(best_route[:, 1], best_route[:, 0], color="blue", label='best route')
             ax.legend()
+            ax.set_xlim([self.default_map[1], self.default_map[3]])
+            ax.set_ylim([self.default_map[0], self.default_map[2]])
 
             figname = 'genetic_algorithm_generation' + str(igen) + '.png'
             plt.savefig(os.path.join(figure_path, figname))
