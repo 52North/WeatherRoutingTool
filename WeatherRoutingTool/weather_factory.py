@@ -40,4 +40,6 @@ class WeatherFactory():
             wt = WeatherCondFromFile(departure_time, time_forecast, time_resolution)
             wt.read_dataset(file_path)
 
+        wt.check_units()
+
         return wt

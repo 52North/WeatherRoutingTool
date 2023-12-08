@@ -18,8 +18,22 @@ from WeatherRoutingTool.utils.unit_conversion import *
 
 logger = logging.getLogger('WRT.weather')
 
+UNITS_DICT = {
+    'Pressure_reduced_to_MSL_msl': ['Pa'],
+    'so': ['1e-3'],
+    'Temperature_surface': ['K'],
+    'thetao': ['degrees_C', '°C'],
+    'u-component_of_wind_height_above_ground': ['m s-1', 'm/s'],
+    'v-component_of_wind_height_above_ground': ['m s-1', 'm/s'],
+    'utotal': ['m s-1', 'm/s'],
+    'vtotal': ['m s-1', 'm/s'],
+    'VHM0': ['m'],
+    'VMDR': ['degree'],
+    'VTPK': ['s']
+}
 
-class WeatherCond():
+
+class WeatherCond:
     time_steps: int
     time_res: dt.timedelta
     time_start: dt.datetime
@@ -72,6 +86,19 @@ class WeatherCond():
         rounded_time = value + self.time_res / 2
         rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
         self._time_end = rounded_time
+
+    def check_units(self):
+        for var_name, data_array in self.ds.data_vars.items():
+            if var_name in UNITS_DICT:
+                if 'units' not in data_array.attrs:
+                    logger.warning(f"Weather data variable '{var_name}' has no 'units' attribute.")
+                else:
+                    unit = data_array.attrs['units']
+                    if unit not in UNITS_DICT[var_name]:
+                        logger.warning(f"Weather data variable '{var_name}' has the wrong unit '{unit}', "
+                                       f"should be one of '{UNITS_DICT[var_name]}'.")
+            else:
+                logger.warning(f"Weather data variable '{var_name}' found, but not expected. Will be ignored.")
 
     def set_map_size(self, map):
         self.map_size = map
