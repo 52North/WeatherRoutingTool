@@ -105,21 +105,32 @@ class Genetic(RoutingAlg):
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
-        dists = distance(best_route)
+        npoints = lats.size - 1
         speed = self.ship_params.get_speed()[0]
-        diffs = time_diffs(speed, best_route)
-        self.count = len(lats)
 
-        dt = self.departure_time
-        time = np.array([dt] * len(lats))
-        times = np.array([t + timedelta(seconds=delta) for t, delta in zip(time, diffs)])
+        waypoint_coors = RouteParams.get_per_waypoint_coords(lons, lats, self.departure_time, speed)
+        dists = waypoint_coors['dist']
+        bearings = waypoint_coors['courses']
+        start_times = waypoint_coors['start_times']
+        travel_times = waypoint_coors['travel_times']
+        arrival_time = start_times[-1]+timedelta(seconds=dists[-1]/speed)
 
-        route = RouteParams(count=self.count - 3, start=self.start, finish=self.finish, gcr=np.sum(dists),
-                            route_type='min_time_route', time=diffs,  # time diffs
-                            lats_per_step=lats, lons_per_step=lons,
-                            azimuths_per_step=np.zeros(778),
-                            dists_per_step=dists,  # dist of waypoints
-                            starttime_per_step=times,  # time for each point
+        dists = np.append(dists,-99)
+        bearings = np.append(bearings,-99)
+        start_times = np.append(start_times,arrival_time)
+        travel_times = np.append(travel_times,-99)
+
+        route = RouteParams(count=npoints,
+                            start=self.start,
+                            finish=self.finish,
+                            gcr=None,
+                            route_type='min_fuel_route',
+                            time=travel_times,
+                            lats_per_step=lats,
+                            lons_per_step=lons,
+                            azimuths_per_step=bearings,
+                            dists_per_step=dists,
+                            starttime_per_step=start_times,
                             ship_params_per_step=self.ship_params)
 
         self.check_destination()
