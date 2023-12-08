@@ -152,18 +152,42 @@ class Genetic(RoutingAlg):
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
         igen = 0
-        for algorithm in res.history[:5]:
-            igen = igen + 1
+        delta_nadir = np.full(self.ncount, -99)
+        delta_ideal = np.full(self.ncount, -99)
+        for algorithm in res.history:
             running.update(algorithm)
             delta_f = running.delta_f
+            if igen > 0:
+                delta_nadir[igen] = running.delta_nadir[igen-1]
+                delta_ideal[igen] = running.delta_ideal[igen-1]
+            else:
+                delta_nadir[igen] = 0
+                delta_ideal[igen] = 0
+
             x_f = (np.arange(len(delta_f)) + 1)
-            ax.plot(x_f, delta_f, label="t=%s (*)" % igen, alpha=0.9, linewidth=3)
+            ax.plot(x_f, delta_f, label="t=%s (*)" % (igen + 1), alpha=0.9, linewidth=3)
+            igen = igen + 1
         ax.set_yscale("symlog")
         ax.legend()
 
         ax.set_xlabel("Generation")
         ax.set_ylabel("Δf", rotation=0)
         plt.savefig(os.path.join(figure_path, 'genetic_algorithm_running_metric.png'))
+        plt.cla()
+        plt.close()
+
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        x_ni = np.arange(self.ncount)
+        ax.plot(x_ni, delta_nadir)
+        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_delta_nadir.png'))
+        plt.cla()
+        plt.close()
+
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        ax.plot(x_ni, delta_ideal)
+        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_delta_ideal.png'))
+        plt.cla()
+        plt.close()
 
     def plot_population_per_generation(self, res, best_route):
         figure_path = get_figure_path()
