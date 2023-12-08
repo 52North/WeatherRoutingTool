@@ -152,8 +152,8 @@ class Genetic(RoutingAlg):
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
         igen = 0
-        delta_nadir = np.full(self.ncount, -99)
-        delta_ideal = np.full(self.ncount, -99)
+        delta_nadir = np.full(self.ncount, -99.)
+        delta_ideal = np.full(self.ncount, -99.)
         for algorithm in res.history:
             running.update(algorithm)
             delta_f = running.delta_f
