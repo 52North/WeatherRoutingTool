@@ -27,6 +27,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'GENETIC_POPULATION_TYPE': 'grid_based',
     'INTERMEDIATE_WAYPOINTS': [],
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
+    'ISOCHRONE_NUMBER_OF_ROUTES': 1,
     'ISOCHRONE_PRUNE_BEARING': False,
     'ISOCHRONE_PRUNE_GCR_CENTERED': True,
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
@@ -66,6 +67,7 @@ class Config:
         self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based')
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
+        self.ISOCHRONE_NUMBER_OF_ROUTES = None  # integer specifying how many routes should be searched
         self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
         self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
         self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning

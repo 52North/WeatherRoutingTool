@@ -105,7 +105,7 @@ class IsoBased(RoutingAlg):
         self.gcr_azi_temp = self.gcr_azi
 
         self.is_find_more_routes = False
-        self.number_of_routes = 2
+        self.number_of_routes = config.ISOCHRONE_NUMBER_OF_ROUTES
         self.current_number_of_routes = 0
 
         self.minimisation_criterion = 'squareddist_over_disttodest'

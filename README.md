@@ -91,6 +91,7 @@ Optional variables (default values provided and don't need to be changed normall
 - `GENETIC_POPULATION_TYPE`: type for initial population (options: 'grid_based')
 - `INTERMEDIATE_WAYPOINTS`: [[lat_one,lon_one], [lat_two,lon_two] ... ]
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
+- `ISOCHRONE_NUMBER_OF_ROUTES`: integer specifying how many routes should be searched (default: 1)
 - `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
 - `ISOCHRONE_PRUNE_GCR_CENTERED`: symmetry axis for pruning
 - `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning
