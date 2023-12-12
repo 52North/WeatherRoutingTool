@@ -113,12 +113,12 @@ class Genetic(RoutingAlg):
         bearings = waypoint_coors['courses']
         start_times = waypoint_coors['start_times']
         travel_times = waypoint_coors['travel_times']
-        arrival_time = start_times[-1]+timedelta(seconds=dists[-1]/speed)
+        arrival_time = start_times[-1] + timedelta(seconds=dists[-1]/speed)
 
-        dists = np.append(dists,-99)
-        bearings = np.append(bearings,-99)
-        start_times = np.append(start_times,arrival_time)
-        travel_times = np.append(travel_times,-99)
+        dists = np.append(dists, -99)
+        bearings = np.append(bearings, -99)
+        start_times = np.append(start_times, arrival_time)
+        travel_times = np.append(travel_times, -99)
 
         route = RouteParams(count=npoints,
                             start=self.start,
