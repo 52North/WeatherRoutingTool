@@ -1,19 +1,20 @@
 import datetime as dt
 import logging
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
 
-import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
+import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.unit_conversion as units
+from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
@@ -73,7 +74,7 @@ class IsoBased(RoutingAlg):
     prune_bearings: bool
     minimisation_criterion: str
 
-    is_find_more_routes: bool
+    find_more_routes: bool
     number_of_routes: int
     current_number_of_routes: int
 
@@ -104,7 +105,7 @@ class IsoBased(RoutingAlg):
         self.start_temp = self.start
         self.gcr_azi_temp = self.gcr_azi
 
-        self.is_find_more_routes = False
+        self.find_more_routes = False
         self.number_of_routes = config.ISOCHRONE_NUMBER_OF_ROUTES
         self.current_number_of_routes = 0
 
@@ -210,31 +211,30 @@ class IsoBased(RoutingAlg):
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         """
-            Progress one isochrone with pruning/optimising route for specific time segment
+        Progress one isochrone with pruning/optimising route for specific time segment
 
-                    Parameters:
-                        iso1 (Isochrone) - starting isochrone
-                        start_point (tuple) - starting point of the route
-                        end_point (tuple) - end point of the route
-                        x1_coords (tuple) - tuple of arrays (lats, lons)
-                        x2_coords (tuple) - tuple of arrays (lats, lons)
-                        boat (dict) - boat profile
-                        winds (dict) - wind functions
-                        start_time (datetime) - start time
-                        delta_time (float) - time to move in seconds
-                        params (dict) - isochrone calculation parameters
+            Parameters:
+                iso1 (Isochrone) - starting isochrone
+                start_point (tuple) - starting point of the route
+                end_point (tuple) - end point of the route
+                x1_coords (tuple) - tuple of arrays (lats, lons)
+                x2_coords (tuple) - tuple of arrays (lats, lons)
+                boat (dict) - boat profile
+                winds (dict) - wind functions
+                start_time (datetime) - start time
+                delta_time (float) - time to move in seconds
+                params (dict) - isochrone calculation parameters
 
-                    Returns:
-                        iso (Isochrone) - next isochrone
-            """
-
+            Returns:
+                iso (Isochrone) - next isochrone
+        """
         self.check_settings()
         self.check_for_positive_constraints(constraints_list)
         self.define_initial_variants()
         # start_time=time.time()
         # self.print_shape()
         if self.number_of_routes > 1:
-            self.is_find_more_routes = True
+            self.find_more_routes = True
         routing_steps = self.ncount
 
         for i in range(0, routing_steps):
@@ -247,7 +247,7 @@ class IsoBased(RoutingAlg):
             if self.is_last_step:
                 logger.info('Initiating last step at routing step ' + str(self.count))
 
-                if self.is_find_more_routes:
+                if self.find_more_routes:
                     self.find_every_route_reaching_destination()
                     number_of_current_step_routes = self.current_step_routes.shape[0]
 
@@ -293,7 +293,7 @@ class IsoBased(RoutingAlg):
                 True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
             self.update_fig('p')
 
-        if not self.is_find_more_routes:
+        if not self.find_more_routes:
             self.final_pruning()
             route = self.terminate()
             return route
@@ -376,8 +376,7 @@ class IsoBased(RoutingAlg):
 
         len_df = df_current_last_step.shape[0]
 
-        df_current_last_step.set_index(pd.RangeIndex(start=0, stop=len_df),
-                                       inplace=True)
+        df_current_last_step.set_index(pd.RangeIndex(start=0, stop=len_df), inplace=True)
         df_current_last_step.rename_axis('st_index', inplace=True)
         df_current_last_step = df_current_last_step.reset_index()
         df_current_last_step.set_index(['st_lat', 'st_lon'], inplace=True, drop=False)
