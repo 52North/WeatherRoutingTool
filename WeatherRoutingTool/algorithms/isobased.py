@@ -1,12 +1,9 @@
 import datetime as dt
 import logging
 
-import cartopy.crs as ccrs
-import cartopy.feature as cf
 import numpy as np
 import matplotlib.pyplot as plt
 from geovectorslib import geod
-from global_land_mask import globe
 from scipy.stats import binned_statistic
 
 import WeatherRoutingTool.utils.graphics as graphics
@@ -76,6 +73,10 @@ class IsoBased(RoutingAlg):
     prune_bearings: bool
     minimisation_criterion: str
 
+    is_find_more_routes: bool
+    number_of_routes: int
+    current_number_of_routes: int
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -103,6 +104,10 @@ class IsoBased(RoutingAlg):
         self.start_temp = self.start
         self.gcr_azi_temp = self.gcr_azi
 
+        self.is_find_more_routes = False
+        self.number_of_routes = 2
+        self.current_number_of_routes = 0
+
         self.minimisation_criterion = 'squareddist_over_disttodest'
 
         self.set_pruning_settings(sector_deg_half=config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF,
@@ -110,6 +115,8 @@ class IsoBased(RoutingAlg):
                                   prune_gcr_centered=config.ISOCHRONE_PRUNE_GCR_CENTERED)
         self.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
         self.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
+
+        self.path_to_route_folder = config.ROUTE_PATH
 
     def print_init(self):
         RoutingAlg.print_init(self)
@@ -226,15 +233,44 @@ class IsoBased(RoutingAlg):
         self.define_initial_variants()
         # start_time=time.time()
         # self.print_shape()
-        for i in range(self.ncount):
+        if self.number_of_routes > 1:
+            self.is_find_more_routes = True
+        routing_steps = self.ncount
+
+        for i in range(0, routing_steps):
             logger.info(form.get_line_string())
             logger.info('Step ' + str(i))
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
+
             if self.is_last_step:
                 logger.info('Initiating last step at routing step ' + str(self.count))
-                break
+
+                if self.is_find_more_routes:
+                    self.find_every_route_reaching_destination()
+                    number_of_current_step_routes = self.current_step_routes.shape[0]
+
+                    if self.number_of_routes <= number_of_current_step_routes:
+                        remaining_routes = self.number_of_routes
+                        self.find_routes_reaching_destination_in_current_step(remaining_routes)
+                        break
+                    else:
+                        self.find_routes_reaching_destination_in_current_step(number_of_current_step_routes)
+                        if self.next_step_routes.shape[0] == 0:
+                            logger.warning('No routes left for execution, terminating!')
+                            break
+                        else:
+                            self.number_of_routes = self.number_of_routes - number_of_current_step_routes
+
+                        self.set_next_step_routes()
+                        self.pruning_per_step(True)
+                        self.is_last_step = False
+                        if i == (routing_steps-1):
+                            routing_steps += routing_steps
+                        continue
+                else:
+                    break
 
             if self.is_pos_constraint_step:
                 logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
@@ -248,7 +284,7 @@ class IsoBased(RoutingAlg):
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
                     self.finish_temp))
-                # self.update_fig('p')
+                self.update_fig('p')
                 continue
 
             # if i>9:
@@ -257,15 +293,18 @@ class IsoBased(RoutingAlg):
                 True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
             self.update_fig('p')
 
-        self.final_pruning()
-        route = self.terminate()
-        return route
+        if not self.is_find_more_routes:
+            self.final_pruning()
+            route = self.terminate()
+            return route
+        else:
+            self.route_list.sort(key=lambda x: x.get_full_fuel())
+            return self.route_list[0]
 
     def move_boat_direct(self, wt: WeatherCond, boat: Boat, constraint_list: ConstraintsList):
         """
-                calculate new boat position for current time step based on wind and boat function
-            """
-
+        calculate new boat position for current time step based on wind and boat function
+        """
         # get wind speed (tws) and angle (twa)
         debug = False
 
@@ -293,9 +332,15 @@ class IsoBased(RoutingAlg):
         if debug:
             logger.info('move:', move)
 
-        if (self.is_last_step or self.is_pos_constraint_step):
-            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(ship_params, bs)
-
+        if self.is_last_step or self.is_pos_constraint_step:
+            delta_time_last_step, delta_fuel_last_step, dist_last_step = \
+                self.get_delta_variables_netCDF_last_step(ship_params, bs)
+            if self.is_last_step:
+                for i in range(len(self.bool_arr_reached_final)):
+                    if self.bool_arr_reached_final[i]:
+                        delta_time[i] = delta_time_last_step[i]
+                        delta_fuel[i] = delta_fuel_last_step[i]
+                        dist[i] = dist_last_step[i]
         is_constrained = self.check_constraints(move, constraint_list)
 
         self.update_position(move, is_constrained, dist)
@@ -303,6 +348,171 @@ class IsoBased(RoutingAlg):
         self.update_fuel(delta_fuel)
         self.update_shipparams(ship_params)
         self.count += 1
+
+    def find_every_route_reaching_destination(self):
+        """
+        This function finds routes reaching the destination in the current last step of routing.
+        First, it creates a dataframe with origin point of the current route segments.
+        The route segments are grouped according to the origin point.
+        'dist' is the distance that could be travelled with available amount of fuel.
+        'dist_dest' is the distance from origin point to the destination.
+        'st_index' is storing the same index order of other nd arrays such as self.lats_per_step
+         before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
+        (acts as a key from the dataframe to other arrays such as self.lats_per_step )
+
+        Routes from the current step reaching the destination are stored in 'current_step_routes' dataframe.
+        Only the one route segment per branch originating from the same origin
+        point that minimize the fuel is stored in current_step routes.
+        Routes which are not reaching the destination in the current step are stored in 'next_step_routes' dataframe.
+        In this case, all routes originating from the same origin point are stored in the dataframe.
+        """
+
+        df_current_last_step = pd.DataFrame()
+        df_current_last_step['st_lat'] = self.lats_per_step[1, :]
+        df_current_last_step['st_lon'] = self.lons_per_step[1, :]
+        df_current_last_step['dist'] = self.current_last_step_dist
+        df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest
+        df_current_last_step['fuel'] = self.shipparams_per_step.get_fuel()[0, :]
+
+        len_df = df_current_last_step.shape[0]
+
+        df_current_last_step.set_index(pd.RangeIndex(start=0, stop=len_df),
+                                       inplace=True)
+        df_current_last_step.rename_axis('st_index', inplace=True)
+        df_current_last_step = df_current_last_step.reset_index()
+        df_current_last_step.set_index(['st_lat', 'st_lon'], inplace=True, drop=False)
+        df_grouped_by_routes_has_same_origin = df_current_last_step.groupby(level=['st_lat', 'st_lon'])
+
+        unique_origins = df_grouped_by_routes_has_same_origin.groups.keys()
+
+        self.current_step_routes = pd.DataFrame()
+        self.next_step_routes = pd.DataFrame()
+
+        for unique_key in unique_origins:
+            specific_route_group = df_grouped_by_routes_has_same_origin.get_group(unique_key)
+
+            df_reaching_destination = specific_route_group[
+                specific_route_group['dist'] >= specific_route_group[
+                    'dist_dest']]
+            num_rows = df_reaching_destination.shape[0]
+
+            if num_rows > 0:
+                min_fuel = df_reaching_destination['fuel'].min()
+                row_min_fuel = df_reaching_destination[
+                    df_reaching_destination['fuel'] == min_fuel]
+                self.current_step_routes = pd.concat([self.current_step_routes, row_min_fuel], ignore_index=True)
+            else:
+                self.next_step_routes = pd.concat([self.next_step_routes, specific_route_group], ignore_index=True)
+
+    def find_routes_reaching_destination_in_current_step(self, remaining_routes=0):
+        """
+        In this function, different routes obtained from 'find_every_route_reaching_destination'
+        and stored in current_step_routes dataframe are sorted by minimum fuel.
+        The number of routes that are selected specified by the variable remaining_routes.
+        """
+        self.current_step_routes_sort_by_fuel = self.current_step_routes.drop_duplicates('fuel')
+        current_step_routes_sort_by_fuel = self.current_step_routes_sort_by_fuel.sort_values(by=['fuel'])
+        self.route_list = []
+        route_df = current_step_routes_sort_by_fuel['st_index'].head(remaining_routes)
+
+        for idxs in route_df:
+            self.current_number_of_routes = self.current_number_of_routes + 1
+            route_object = self.make_route_object(idxs)
+            route_object.return_route_to_API(self.path_to_route_folder + '/' +
+                                             'route_' + str(self.current_number_of_routes) + ".json")
+            self.route_list.append(self.make_route_object(idxs))
+            self.plot_routes(idxs)
+
+    def make_route_object(self, idxs):
+
+        try:
+            lats_per_step = self.lats_per_step[:, idxs]
+            lons_per_step = self.lons_per_step[:, idxs]
+            azimuth_per_step = self.azimuth_per_step[:, idxs]
+            dist_per_step = self.dist_per_step[:, idxs]
+            shipparams_per_step = self.shipparams_per_step.get_reduced_2D_object(idxs)
+
+            starttime_per_step = self.starttime_per_step[:, idxs]
+            time = self.time[idxs]
+
+            lats_per_step = np.flip(lats_per_step, 0)
+            lons_per_step = np.flip(lons_per_step, 0)
+            azimuth_per_step = np.flip(azimuth_per_step, 0)
+            dist_per_step = np.flip(dist_per_step, 0)
+            starttime_per_step = np.flip(starttime_per_step, 0)
+
+            shipparams_per_step.flip()
+
+        except IndexError:
+            raise Exception('Pruned indices running out of bounds.')
+
+        route = RouteParams(count=self.count, start=self.start,
+                            finish=self.finish, gcr=self.full_dist_traveled,
+                            route_type='min_time_route', time=time,
+                            lats_per_step=lats_per_step,
+                            lons_per_step=lons_per_step,
+                            azimuths_per_step=azimuth_per_step,
+                            dists_per_step=dist_per_step,
+                            starttime_per_step=starttime_per_step,
+                            ship_params_per_step=shipparams_per_step
+                            )
+        return route
+
+    def plot_routes(self, idxs):
+        """
+        Plot every complete individual route that is reaching the destination
+        """
+        fig = self.fig
+        fig, ax = graphics.generate_basemap(self.fig, self.depth, self.start,
+                                            self.finish)
+
+        lats_per_step = self.lats_per_step[:, idxs]
+        lons_per_step = self.lons_per_step[:, idxs]
+
+        route, = ax.plot(lons_per_step,
+                         lats_per_step, color="firebrick")
+
+        route_ensemble = []
+        route_ensemble.append(route)
+
+        route.set_xdata(lons_per_step)
+        route.set_ydata(lats_per_step)
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        final_path = self.figure_path + '/fig' + str(
+            self.count) + '_route_' + str(idxs) + '.png'
+        logger.info('Save updated figure to ' + final_path)
+        plt.savefig(final_path)
+
+    def set_next_step_routes(self):
+        """
+        Updating all arrays according to the indices of the routes that need to be further
+        processed in the next routing step
+        """
+        # sorting order matters here????
+        idxs = self.next_step_routes['st_index']
+        print('indices', idxs)
+        # Return a trimmed isochrone
+        try:
+            self.lats_per_step = self.lats_per_step[:, idxs]
+            print(self.lats_per_step)
+            self.lons_per_step = self.lons_per_step[:, idxs]
+            print(self.lons_per_step)
+            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.dist_per_step = self.dist_per_step[:, idxs]
+            self.shipparams_per_step.select(idxs)
+
+            self.starttime_per_step = self.starttime_per_step[:, idxs]
+
+            self.current_azimuth = self.current_variant[idxs]
+            self.current_variant = self.current_variant[idxs]
+            self.full_dist_traveled = self.full_dist_traveled[idxs]
+            self.full_time_traveled = self.full_time_traveled[idxs]
+            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
+            self.time = self.time[idxs]
+        except IndexError:
+            raise Exception('Pruned indices running out of bounds.')
 
     def update_shipparams(self, ship_params_single_step):
         new_rpm = np.vstack((ship_params_single_step.get_rpm(), self.shipparams_per_step.get_rpm()))
@@ -629,12 +839,12 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
-            print('dist traveled:', dist)
+            # print('dist traveled:', dist)
 
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
-        if debug:
-            print('reaching dest:', reaching_dest)
+        move = geod.direct(self.get_current_lats(), self.get_current_lons(),
+                           self.current_variant, dist)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -647,15 +857,18 @@ class IsoBased(RoutingAlg):
 
             if reached_final:
                 self.is_last_step = True
+                self.current_last_step_dist = dist.copy()
+                self.current_last_step_dist_to_dest = dist_to_dest['s12']
+
+                self.bool_arr_reached_final = dist_to_dest['s12'] < dist
+
+                for i in range(len(self.bool_arr_reached_final)):
+                    if self.bool_arr_reached_final[i]:
+                        move['azi2'][i] = dist_to_dest['azi1'][i]
+                        move['lat2'][i] = new_lat[i]
+                        move['lon2'][i] = new_lon[i]
             else:
                 self.is_pos_constraint_step = True
-
-            return {'azi2': dist_to_dest['azi1'], 'lat2': new_lat, 'lon2': new_lon,
-                    'iterations': -99}  # compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2,
-            # 'iterations':  # iterations}' by geod.direct
-
-        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)
-        # form.print_step('move=' + str(move),1)
         return move
 
     def check_constraints(self, move, constraint_list):
@@ -734,6 +947,7 @@ class IsoBased(RoutingAlg):
 
         if (self.showDepth):
             # decrease resolution and extend of depth data to prevent memory issues when plotting
+            # FIXME: double check boundary settings (set exact to trim for debugging)
             ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
             ds_depth_coarsened = ds_depth.compute()
 
