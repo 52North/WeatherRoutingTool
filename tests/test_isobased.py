@@ -366,3 +366,102 @@ def test_check_bearing():
     # print('lons_test[0]', lons_test[0])
     assert np.allclose(lats_test[0], move['lat2'], 0.01)
     assert np.allclose(lons_test[0], move['lon2'], 0.01)
+
+
+'''
+    For a test case with two branches each with 2 route segments, routes of both branches are reaching the 
+    destination (dist > dist_to_dest). Test whether the routes reaching the destination are found for every branch.
+'''
+
+
+def test_find_every_route_reaching_destination_testtwobranches():
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[37.67, 37.67, 37.66, 37.66], [37.42, 37.42, 37.43, 37.43]])
+    ra.lons_per_step = np.array([[-123.76, -123.50, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
+    ra.finish = (37.53, -123.24)
+    ra.current_last_step_dist = np.array([2, 2, 2, 0])
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.shipparams_per_step = ShipParams.set_default_array()
+    ra.shipparams_per_step.fuel = np.array([[1, 0, 1, 1], [1, 1, 1, 1]])
+    ra.print_init()
+
+    ra.find_every_route_reaching_destination()
+    assert ra.current_step_routes['st_index'][0] == 1
+    assert ra.current_step_routes['st_index'][1] == 2
+    assert ra.current_step_routes.shape[0] == 2
+    assert ra.next_step_routes.shape[0] == 0
+
+
+'''
+    For a test case with two branches each with 2 route segments, routes of only one branch are reaching the 
+    destination (dist > dist_to_dest). Test whether the routes reaching the destination are found and written to 
+    current_step_routes and the routes from the branch of which none reaches the destination are passed to 
+    next_step_routes.
+'''
+
+
+def test_find_every_route_reaching_destination_testonebranch():
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[37.67, 37.67, 37.66, 37.66], [37.42, 37.42, 37.43, 37.43]])
+    ra.lons_per_step = np.array([[-123.76, -123.50, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
+    ra.finish = (37.53, -123.24)
+    ra.current_last_step_dist = np.array([2, 2, 0, 0])
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.shipparams_per_step = ShipParams.set_default_array()
+    ra.shipparams_per_step.fuel = np.array([[1, 0, 1, 1], [1, 1, 1, 1]])
+    ra.print_init()
+
+    ra.find_every_route_reaching_destination()
+    assert ra.current_step_routes['st_index'][0] == 1
+    assert ra.current_step_routes.shape[0] == 1
+    assert ra.next_step_routes.shape[0] == 2
+    assert ra.next_step_routes['st_index'][0] == 2
+    assert ra.next_step_routes['st_index'][1] == 3
+
+
+'''
+    For a test case with two branches each with 2 route segments, routes of both branches are reaching the 
+    destination (dist > dist_to_dest). As the routes of the first branch split only in the last routing step and
+    have been propagated to the destination, they constitute duplicates. Test whether only one of the duplicates is
+    selected for the final route_list. Test also, whether the remaining routes are sorted correctly according to fuel. 
+'''
+
+
+def test_find_routes_testduplicates():
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[37.67, 37.67, 37.66, 37.66], [37.42, 37.42, 37.43, 37.43]])
+    ra.lons_per_step = np.array([[-123.76, -123.76, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
+
+    ra.finish = (37.53, -123.24)
+    ra.current_last_step_dist = np.array([2, 2, 2, 0])
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.shipparams_per_step = ShipParams.set_default_array()
+    ra.shipparams_per_step.fuel = np.array([[2, 2, 1, 1], [1, 1, 1, 1]])
+
+    # definitions necessary only for completness
+    ra.shipparams_per_step.speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.power = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.rpm = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.r_wind = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.r_calm = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.r_waves = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.r_shallow = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.r_roughness = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.azimuth_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.dist_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.starttime_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.time = np.array([0, 0, 0, 0])
+    ra.path_to_route_folder = None
+    ra.figure_path = None
+
+    ra.print_init()
+
+    ra.find_every_route_reaching_destination()
+    ra.find_routes_reaching_destination_in_current_step(2)
+    assert ra.current_step_routes['st_index'][0] == 0
+    assert ra.current_step_routes['st_index'][1] == 1
+    assert ra.current_step_routes['st_index'][2] == 2
+    assert ra.current_step_routes.shape[0] == 3
+    assert ra.next_step_routes.shape[0] == 0
+    assert ra.route_list[0].lons_per_step[1] == -123.32
+    assert ra.route_list[1].lons_per_step[1] == -123.76

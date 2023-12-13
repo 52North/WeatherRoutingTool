@@ -417,10 +417,12 @@ class IsoBased(RoutingAlg):
         for idxs in route_df:
             self.current_number_of_routes = self.current_number_of_routes + 1
             route_object = self.make_route_object(idxs)
-            route_object.return_route_to_API(self.path_to_route_folder + '/' +
-                                             'route_' + str(self.current_number_of_routes) + ".json")
             self.route_list.append(self.make_route_object(idxs))
-            self.plot_routes(idxs)
+            if self.path_to_route_folder is not None:
+                route_object.return_route_to_API(self.path_to_route_folder + '/' +
+                                                 'route_' + str(self.current_number_of_routes) + ".json")
+            if self.figure_path is not None:
+                self.plot_routes(idxs)
 
     def make_route_object(self, idxs):
 
