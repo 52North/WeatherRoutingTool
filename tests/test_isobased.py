@@ -369,7 +369,7 @@ def test_check_bearing():
 
 
 '''
-    For a test case with two branches each with 2 route segments, routes of both branches are reaching the 
+    For a test case with two branches each with 2 route segments, routes of both branches are reaching the
     destination (dist > dist_to_dest). Test whether the routes reaching the destination are found for every branch.
 '''
 
@@ -393,9 +393,9 @@ def test_find_every_route_reaching_destination_testtwobranches():
 
 
 '''
-    For a test case with two branches each with 2 route segments, routes of only one branch are reaching the 
-    destination (dist > dist_to_dest). Test whether the routes reaching the destination are found and written to 
-    current_step_routes and the routes from the branch of which none reaches the destination are passed to 
+    For a test case with two branches each with 2 route segments, routes of only one branch are reaching the
+    destination (dist > dist_to_dest). Test whether the routes reaching the destination are found and written to
+    current_step_routes and the routes from the branch of which none reaches the destination are passed to
     next_step_routes.
 '''
 
@@ -420,7 +420,7 @@ def test_find_every_route_reaching_destination_testonebranch():
 
 
 '''
-    For a test case with two branches each with 2 route segments, routes of both branches are reaching the 
+    For a test case with two branches each with 2 route segments, routes of both branches are reaching the
     destination (dist > dist_to_dest). As the routes of the first branch split only in the last routing step and
     have been propagated to the destination, they constitute duplicates. Test whether only one of the duplicates is
     selected for the final route_list. Test also, whether the remaining routes are sorted correctly according to fuel. 
