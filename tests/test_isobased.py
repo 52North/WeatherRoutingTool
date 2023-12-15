@@ -105,7 +105,8 @@ def test_update_position_success():
 
 
 ##
-# test wheather IsoBased::checkbearing correcly sets route_reached_destination to True and whether the returned variables are correct
+# test wheather IsoBased::checkbearing correcly sets route_reached_destination to True and whether the returned
+# variables are correct
 def test_check_bearing_true():
 
     ra = basic_test_func.create_dummy_IsoBased_object()
@@ -139,7 +140,8 @@ def test_check_bearing_true():
 
 
 ##
-# test wheather IsoBased::checkbearing correcly leaves route_reached_destination untouched if travelled distance is small enough
+# test wheather IsoBased::checkbearing correcly leaves route_reached_destination untouched if travelled distance is
+# small enough
 def test_check_bearing_false():
     lat_start = 54.87
     lon_start = 13.33
@@ -423,7 +425,7 @@ def test_find_every_route_reaching_destination_testonebranch():
     For a test case with two branches each with 2 route segments, routes of both branches are reaching the
     destination (dist > dist_to_dest). As the routes of the first branch split only in the last routing step and
     have been propagated to the destination, they constitute duplicates. Test whether only one of the duplicates is
-    selected for the final route_list. Test also, whether the remaining routes are sorted correctly according to fuel. 
+    selected for the final route_list. Test also, whether the remaining routes are sorted correctly according to fuel.
 '''
 
 
