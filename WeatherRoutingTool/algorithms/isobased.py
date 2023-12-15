@@ -24,32 +24,32 @@ class IsoBased(RoutingAlg):
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
-    is_last_step: bool
-    is_pos_constraint_step: bool
+    route_reached_destination: bool  # True everytime one route (or more) reaches the destination in a routing step
+    route_reached_waypoint: bool
 
-    start_temp: tuple
-    finish_temp: tuple
+    start_temp: tuple  # changes if intermediate waypoints are used
+    finish_temp: tuple  # changes if intermediate waypoints are used
     gcr_azi_temp: tuple
 
     '''
-           All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
-           variants (plus 1) and
-           M corresponds to the number of routing steps.
+       All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
+       variants (plus 1) and
+       M corresponds to the number of routing steps.
 
-           At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
-           correspond to
-           properties of the point of departure of the respective routing step. This means that for 'count = 0' the
-           elements of
-           lats_per_step and lons_per_step correspond to the coordinates of the departure point of the whole route.
-           The first
-           elements of the attributes
-               - azimuth_per_step
-               - dist_per_step
-               - speed_per_step
-           are 0 to satisfy this definition.
-       '''
+       At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
+       correspond to
+       properties of the point of departure of the respective routing step. This means that for 'count = 0' the
+       elements of
+       lats_per_step and lons_per_step correspond to the coordinates of the departure point of the whole route.
+       The first
+       elements of the attributes
+           - azimuth_per_step
+           - dist_per_step
+           - speed_per_step
+       are 0 to satisfy this definition.
+   '''
 
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)    #
+    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
     azimuth_per_step: np.ndarray  # heading
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
@@ -74,14 +74,16 @@ class IsoBased(RoutingAlg):
     prune_bearings: bool
     minimisation_criterion: str
 
-    find_more_routes: bool
-    number_of_routes: int
+    desired_number_of_routes: int
     current_number_of_routes: int
+    current_step_routes: pd.DataFrame
+    next_step_routes: pd.DataFrame
+    route_list: list
 
     def __init__(self, config):
         super().__init__(config)
 
-        self.ncount = config.ROUTING_STEPS
+        self.ncount = config.ISOCHRONE_MAX_ROUTING_STEPS
         self.count = 0
 
         self.lats_per_step = np.array([[self.start[0]]])
@@ -98,16 +100,18 @@ class IsoBased(RoutingAlg):
         self.full_dist_traveled = np.array([0])
 
         self.current_variant = self.current_azimuth
-        self.is_last_step = False
-        self.is_pos_constraint_step = False
+        self.route_reached_destination = False
+        self.route_reached_waypoint = False
 
         self.finish_temp = self.finish
         self.start_temp = self.start
         self.gcr_azi_temp = self.gcr_azi
 
-        self.find_more_routes = False
-        self.number_of_routes = config.ISOCHRONE_NUMBER_OF_ROUTES
+        self.desired_number_of_routes = config.ISOCHRONE_NUMBER_OF_ROUTES
         self.current_number_of_routes = 0
+        self.current_step_routes = pd.DataFrame()
+        self.next_step_routes = pd.DataFrame()
+        self.route_list = []
 
         self.minimisation_criterion = 'squareddist_over_disttodest'
 
@@ -233,46 +237,40 @@ class IsoBased(RoutingAlg):
         self.define_initial_variants()
         # start_time=time.time()
         # self.print_shape()
-        if self.number_of_routes > 1:
-            self.find_more_routes = True
-        routing_steps = self.ncount
 
-        for i in range(0, routing_steps):
+        for routing_step in range(0, self.ncount):
             logger.info(form.get_line_string())
-            logger.info('Step ' + str(i))
+            logger.info('Step ' + str(routing_step))
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
 
-            if self.is_last_step:
+            # Distinguish situations where the ship reached the final destination and where it reached a waypoint
+            if self.route_reached_destination:
                 logger.info('Initiating last step at routing step ' + str(self.count))
 
-                if self.find_more_routes:
+                if self.desired_number_of_routes > 1 and self.current_number_of_routes < self.desired_number_of_routes:
                     self.find_every_route_reaching_destination()
-                    number_of_current_step_routes = self.current_step_routes.shape[0]
+                    number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
 
-                    if self.number_of_routes <= number_of_current_step_routes:
-                        remaining_routes = self.number_of_routes
+                    if self.desired_number_of_routes <= number_of_possible_routes:
+                        remaining_routes = self.desired_number_of_routes - self.current_number_of_route
                         self.find_routes_reaching_destination_in_current_step(remaining_routes)
                         break
                     else:
-                        self.find_routes_reaching_destination_in_current_step(number_of_current_step_routes)
+                        self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
                         if self.next_step_routes.shape[0] == 0:
                             logger.warning('No routes left for execution, terminating!')
                             break
-                        else:
-                            self.number_of_routes = self.number_of_routes - number_of_current_step_routes
 
                         self.set_next_step_routes()
                         self.pruning_per_step(True)
-                        self.is_last_step = False
-                        if i == (routing_steps-1):
-                            routing_steps += routing_steps
+                        self.route_reached_destination = False
                         continue
                 else:
                     break
 
-            if self.is_pos_constraint_step:
+            elif self.route_reached_waypoint:
                 logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
                 self.final_pruning()
                 self.expand_axis_for_intermediate()
@@ -280,20 +278,21 @@ class IsoBased(RoutingAlg):
                 self.finish_temp = constraints_list.get_current_destination()
                 self.start_temp = constraints_list.get_current_start()
                 self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
-                self.is_pos_constraint_step = False
+                self.route_reached_waypoint = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
                     self.finish_temp))
                 self.update_fig('p')
                 continue
 
-            # if i>9:
-            # self.update_fig('bp')
-            self.pruning_per_step(
-                True)  # form.print_current_time('move_boat: Step=' + str(i), start_time)  # if i>9:  #
+            # if routing_step>9:
+            #     self.update_fig('bp')
+            self.pruning_per_step(True)
+            # form.print_current_time('move_boat: Step=' + str(routing_step), start_time)  # if routing_step>9:
             self.update_fig('p')
 
-        if not self.find_more_routes:
+        # ToDo: harmonize with above/merge with loop over routing steps
+        if self.desired_number_of_routes == 1:
             self.final_pruning()
             route = self.terminate()
             return route
@@ -325,17 +324,17 @@ class IsoBased(RoutingAlg):
             logger.info('delta_time: ', delta_time)
             logger.info('delta_fuel: ', delta_fuel)
             logger.info('dist: ', dist)
-            logger.info('is_last_step:', self.is_last_step)
+            logger.info('route_reached_destination:', self.route_reached_destination)
 
         move = self.check_bearing(dist)
 
         if debug:
             logger.info('move:', move)
 
-        if self.is_last_step or self.is_pos_constraint_step:
+        if self.route_reached_destination or self.route_reached_waypoint:
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
-            if self.is_last_step:
+            if self.route_reached_destination:
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
                         delta_time[i] = delta_time_last_step[i]
@@ -361,12 +360,11 @@ class IsoBased(RoutingAlg):
         (acts as a key from the dataframe to other arrays such as self.lats_per_step )
 
         Routes from the current step reaching the destination are stored in 'current_step_routes' dataframe.
-        Only the one route segment per branch originating from the same origin
-        point that minimize the fuel is stored in current_step routes.
-        Routes which are not reaching the destination in the current step are stored in 'next_step_routes' dataframe.
-        In this case, all routes originating from the same origin point are stored in the dataframe.
+        Only the one route segment per branch originating from the same origin point that minimize the fuel is stored
+        in current_step_routes. Routes which are not reaching the destination in the current step are stored in
+        'next_step_routes' dataframe. In this case, all routes originating from the same origin point are stored in
+        the dataframe.
         """
-
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
@@ -391,14 +389,15 @@ class IsoBased(RoutingAlg):
             specific_route_group = df_grouped_by_routes_has_same_origin.get_group(unique_key)
 
             df_reaching_destination = specific_route_group[
-                specific_route_group['dist'] >= specific_route_group[
-                    'dist_dest']]
+                specific_route_group['dist'] >= specific_route_group['dist_dest']
+            ]
             num_rows = df_reaching_destination.shape[0]
 
             if num_rows > 0:
                 min_fuel = df_reaching_destination['fuel'].min()
-                row_min_fuel = df_reaching_destination[
-                    df_reaching_destination['fuel'] == min_fuel]
+                rows_min_fuel = df_reaching_destination[df_reaching_destination['fuel'] == min_fuel]
+                # Make sure we keep only one route (ToDo: which one do we want to keep?)
+                row_min_fuel = rows_min_fuel.drop_duplicates('fuel')
                 self.current_step_routes = pd.concat([self.current_step_routes, row_min_fuel], ignore_index=True)
             else:
                 self.next_step_routes = pd.concat([self.next_step_routes, specific_route_group], ignore_index=True)
@@ -407,17 +406,15 @@ class IsoBased(RoutingAlg):
         """
         In this function, different routes obtained from 'find_every_route_reaching_destination'
         and stored in current_step_routes dataframe are sorted by minimum fuel.
-        The number of routes that are selected specified by the variable remaining_routes.
+        The number of routes that are selected is specified by the variable remaining_routes.
         """
-        self.current_step_routes_sort_by_fuel = self.current_step_routes.drop_duplicates('fuel')
-        current_step_routes_sort_by_fuel = self.current_step_routes_sort_by_fuel.sort_values(by=['fuel'])
-        self.route_list = []
+        current_step_routes_sort_by_fuel = self.current_step_routes.sort_values(by=['fuel'])
         route_df = current_step_routes_sort_by_fuel['st_index'].head(remaining_routes)
 
         for idxs in route_df:
             self.current_number_of_routes = self.current_number_of_routes + 1
             route_object = self.make_route_object(idxs)
-            self.route_list.append(self.make_route_object(idxs))
+            self.route_list.append(route_object)
             if self.path_to_route_folder is not None:
                 route_object.return_route_to_API(self.path_to_route_folder + '/' +
                                                  'route_' + str(self.current_number_of_routes) + ".json")
@@ -425,6 +422,8 @@ class IsoBased(RoutingAlg):
                 self.plot_routes(idxs)
 
     def make_route_object(self, idxs):
+
+        # ToDo: very similar to IsoFuel.final_pruning -> harmonize
 
         try:
             lats_per_step = self.lats_per_step[:, idxs]
@@ -493,13 +492,10 @@ class IsoBased(RoutingAlg):
         """
         # sorting order matters here????
         idxs = self.next_step_routes['st_index']
-        print('indices', idxs)
         # Return a trimmed isochrone
         try:
             self.lats_per_step = self.lats_per_step[:, idxs]
-            print(self.lats_per_step)
             self.lons_per_step = self.lons_per_step[:, idxs]
-            print(self.lons_per_step)
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
@@ -832,6 +828,11 @@ class IsoBased(RoutingAlg):
         self.time += dt.timedelta(seconds=delta_time)
 
     def check_bearing(self, dist):
+        """
+        ToDo: add description
+        :param dist:
+        :return:
+        """
         debug = False
 
         nvariants = self.get_current_lons().shape[0]
@@ -857,7 +858,7 @@ class IsoBased(RoutingAlg):
             new_lon = np.full(nvariants, self.finish_temp[1])
 
             if reached_final:
-                self.is_last_step = True
+                self.route_reached_destination = True
                 self.current_last_step_dist = dist.copy()
                 self.current_last_step_dist_to_dest = dist_to_dest['s12']
 
@@ -869,7 +870,7 @@ class IsoBased(RoutingAlg):
                         move['lat2'][i] = new_lat[i]
                         move['lon2'][i] = new_lon[i]
             else:
-                self.is_pos_constraint_step = True
+                self.route_reached_waypoint = True
         return move
 
     def check_constraints(self, move, constraint_list):

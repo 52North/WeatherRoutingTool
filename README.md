@@ -90,6 +90,7 @@ Optional variables (default values provided and don't need to be changed normall
 - `GENETIC_POPULATION_SIZE`: population size for genetic algorithm
 - `GENETIC_POPULATION_TYPE`: type for initial population (options: 'grid_based')
 - `INTERMEDIATE_WAYPOINTS`: [[lat_one,lon_one], [lat_two,lon_two] ... ]
+- `ISOCHRONE_MAX_ROUTING_STEPS`: maximum number of routing steps. Applies also if more than one route is searched!
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
 - `ISOCHRONE_NUMBER_OF_ROUTES`: integer specifying how many routes should be searched (default: 1)
 - `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
@@ -98,7 +99,6 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
 - `ROUTER_HDGS_SEGMENTS`: otal number of headings : put even number!!
-- `ROUTING_STEPS`: number of routing steps
 - `TIME_FORECAST`: forecast hours weather
 
 ### Environment variables

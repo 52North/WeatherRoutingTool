@@ -105,7 +105,7 @@ def test_update_position_success():
 
 
 ##
-# test wheather IsoBased::checkbearing correcly sets is_last_step to True and whether the returned variables are correct
+# test wheather IsoBased::checkbearing correcly sets route_reached_destination to True and whether the returned variables are correct
 def test_check_bearing_true():
 
     ra = basic_test_func.create_dummy_IsoBased_object()
@@ -132,14 +132,14 @@ def test_check_bearing_true():
 
     move = ra.check_bearing(dist)
 
-    assert ra.is_last_step is True
+    assert ra.route_reached_destination is True
     assert np.allclose(move['azi2'], az_test, 0.1)
     assert np.array_equal(move['lon2'], lon_test)
     assert np.array_equal(move['lat2'], lat_test)
 
 
 ##
-# test wheather IsoBased::checkbearing correcly leaves is_last_step untouched if travelled distance is small enough
+# test wheather IsoBased::checkbearing correcly leaves route_reached_destination untouched if travelled distance is small enough
 def test_check_bearing_false():
     lat_start = 54.87
     lon_start = 13.33
@@ -160,7 +160,7 @@ def test_check_bearing_false():
 
     ra.check_bearing(dist)
 
-    assert ra.is_last_step is False
+    assert ra.route_reached_destination is False
 
 
 ##

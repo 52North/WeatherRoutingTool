@@ -34,7 +34,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
-    'ROUTING_STEPS': 60,
+    'ISOCHRONE_MAX_ROUTING_STEPS': 60,
     'TIME_FORECAST': 90
 }
 
@@ -66,6 +66,7 @@ class Config:
         self.GENETIC_POPULATION_SIZE = None  # population size for genetic algorithm
         self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based')
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
+        self.ISOCHRONE_MAX_ROUTING_STEPS = None  # maximum number of routing steps
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ISOCHRONE_NUMBER_OF_ROUTES = None  # integer specifying how many routes should be searched
         self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
@@ -75,7 +76,6 @@ class Config:
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
-        self.ROUTING_STEPS = None  # number of routing steps
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
