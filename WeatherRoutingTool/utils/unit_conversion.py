@@ -72,6 +72,7 @@ def convert_npdt64_to_datetime(time):
     TIME = datetime.datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
 
+
 def convert_pandatime_to_datetime(time):
     time_dt = pd.to_datetime(time)
     time_converted = np.full(time.shape[0], datetime.datetime.today())

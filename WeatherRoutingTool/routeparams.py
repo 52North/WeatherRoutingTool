@@ -425,5 +425,3 @@ class RouteParams():
         time_converted = time_converted[:-1]
 
         return lat, lon, time_converted, sog
-
-

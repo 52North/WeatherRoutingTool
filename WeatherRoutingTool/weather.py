@@ -350,10 +350,9 @@ class WeatherCondFromFile(WeatherCond):
         rebiny = 2
 
         if varname == 'wind':
+            # .sel(time=time, height_above_ground=10)
             u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time)
-                                                                                            #   height_above_ground=10)
             v = self.ds['v-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time)
-                                                                                            #   height_above_ground=10)
             unp = u.to_numpy()
             vnp = v.to_numpy()
             unp = graphics.rebin(unp, rebinx, rebiny)
@@ -374,7 +373,7 @@ class WeatherCondFromFile(WeatherCond):
                 label.set_fontsize(20)
             x = windspeed.coords['longitude'].values
             y = windspeed.coords['latitude'].values
-            #plt.quiver(x, y, u.values, v.values, clim=[0, 20])
+            # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
             plt.barbs(x, y, u.values, v.values, clim=[0, 20])
             plt.show()
 
@@ -665,22 +664,23 @@ class WeatherCondODC(WeatherCond):
         # FIXME: decode_cf also scales the nodata values, e.g. -32767 -> -327.67
         return xr.decode_cf(dataset)
 
+
 class FakeWeather(WeatherCond):
     def __init__(self, time, hours, time_res, var_dict):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
-            'vtotal' : 0, 'utotal' : 0,
-            'thetao' : 0,
-            'so' : 0,
-            'VMDR' : 0, 'VHM0' : 0, 'VTPK' : 0,
-            'Temperature_surface' : 0,
-            'u-component_of_wind_height_above_ground' : 0, 'v-component_of_wind_height_above_ground' : 0,
-            'Pressure_reduced_to_MSL_msl' : 0, 'Pressure_surface' : 0
+            'vtotal': 0, 'utotal': 0,
+            'thetao': 0,
+            'so': 0,
+            'VMDR': 0, 'VHM0': 0, 'VTPK': 0,
+            'Temperature_surface': 0,
+            'u-component_of_wind_height_above_ground': 0, 'v-component_of_wind_height_above_ground': 0,
+            'Pressure_reduced_to_MSL_msl': 0, 'Pressure_surface': 0
         }
         self.coord_res = 0.0833
 
-        self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero = var_list_zero)
+        self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero=var_list_zero)
 
     def combine_var_dicts(self, var_dict_manual, var_dict_zero):
         for entry in var_dict_manual:
@@ -704,15 +704,15 @@ class FakeWeather(WeatherCond):
         end_time_sec = start_time_sec + self.time_steps * 3600
         time_space = np.linspace(start_time_sec, end_time_sec, n_time_values)
         time = np.full(time_space.shape[0], datetime.datetime.today())
-        for i in range(0,self.time_steps):
+        for i in range(0, self.time_steps):
             time[i] = datetime.datetime.fromtimestamp(time_space[i])
 
         n_depth_values = 1
         depth = np.array([0.494])
 
         # initialise variables
-        vtotal = np.full((n_lat_values,n_lon_values, n_time_values, n_depth_values), self.var_dict['vtotal'])
-        utotal = np.full((n_lat_values,n_lon_values, n_time_values, n_depth_values), self.var_dict['utotal'])
+        vtotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['vtotal'])
+        utotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['utotal'])
         thetao = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['thetao'])
         so = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['so'])
 
@@ -721,11 +721,15 @@ class FakeWeather(WeatherCond):
         VTPK = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['VTPK'])
         Temperature_surface = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['Temperature_surface'])
 
-        uwind= np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['u-component_of_wind_height_above_ground'])
-        vwind = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['v-component_of_wind_height_above_ground'])
+        uwind = np.full((n_lat_values, n_lon_values, n_time_values),
+                        self.var_dict['u-component_of_wind_height_above_ground'])
+        vwind = np.full((n_lat_values, n_lon_values, n_time_values),
+                        self.var_dict['v-component_of_wind_height_above_ground'])
 
-        Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['Pressure_reduced_to_MSL_msl'])
-        Pressure_surface = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['Pressure_surface'])
+        Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values),
+                                              self.var_dict['Pressure_reduced_to_MSL_msl'])
+        Pressure_surface = np.full((n_lat_values, n_lon_values, n_time_values),
+                                   self.var_dict['Pressure_surface'])
 
         # create dataset
         data_vars = dict(vtotal=(["latitude", "longitude", "time", "depth"], vtotal),
@@ -763,8 +767,8 @@ class FakeWeather(WeatherCond):
         ds['Pressure_reduced_to_MSL_msl'] = ds['Pressure_reduced_to_MSL_msl'].assign_attrs(units='Pa')
         ds['Pressure_surface'] = ds['Pressure_surface'].assign_attrs(units='Pa')
 
-        ds = ds.rename({'uwind' : 'u-component_of_wind_height_above_ground',
-                   'vwind' : 'v-component_of_wind_height_above_ground'})
+        ds = ds.rename({'uwind': 'u-component_of_wind_height_above_ground',
+                        'vwind': 'v-component_of_wind_height_above_ground'})
 
         print('ds ', ds['v-component_of_wind_height_above_ground'])
         self.ds = ds
