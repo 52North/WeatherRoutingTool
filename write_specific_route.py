@@ -6,14 +6,10 @@ import matplotlib.pyplot as plt
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.constraints.constraints import WaterDepth
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
-from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.weather_factory import WeatherFactory
-
-
 
 
 if __name__ == "__main__":
@@ -43,14 +39,15 @@ if __name__ == "__main__":
     print('u_comp: ', u_comp)
     print('v_comp: ', v_comp)
 
-    var_dict = {'thetao' : 20,
-                'Temperature_surface': 10,
-                'Pressure_reduced_to_MSL_msl': 101325,
-                'Pressure_surface': 101325,
-                'u-component_of_wind_height_above_ground': u_comp,
-                'v-component_of_wind_height_above_ground': v_comp,
-                'VHM0': 1,
-                'VMDR': 315
+    var_dict = {
+        'thetao': 20,
+        'Temperature_surface': 10,
+        'Pressure_reduced_to_MSL_msl': 101325,
+        'Pressure_surface': 101325,
+        'u-component_of_wind_height_above_ground': u_comp,
+        'v-component_of_wind_height_above_ground': v_comp,
+        'VHM0': 1,
+        'VMDR': 315
     }
     wf = WeatherFactory()
     wt = wf.get_weather(data_mode=config.DATA_MODE,
@@ -59,7 +56,7 @@ if __name__ == "__main__":
                         time_forecast=time_forecast,
                         time_resolution=time_resolution,
                         default_map=default_map,
-                        var_dict = var_dict)
+                        var_dict=var_dict)
     fig, ax = plt.subplots(figsize=(12, 7))
     wt.plot_weather_map(fig, ax, departure_time, "wind")
 
@@ -67,7 +64,8 @@ if __name__ == "__main__":
     boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(6)
 
-    lat, lon, time, sog = RouteParams.from_gzip_file('/home/kdemmich/MariData/IMDC_paper/fixed_route_CB_pacific/HFData_voyage_16.gzip')
+    lat, lon, time, sog = RouteParams.from_gzip_file(
+        '/home/kdemmich/MariData/IMDC_paper/fixed_route_CB_pacific/HFData_voyage_16.gzip')
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog.mean())
 
@@ -78,18 +76,18 @@ if __name__ == "__main__":
     finish = (lat[-1], lon[-1])
 
     rp = RouteParams(
-        count = lat.shape[0],
-        start = start,
-        finish = finish,
-        gcr = None,
-        route_type = 'read_from_csv',
-        time = waypoint_dict['travel_times'],
-        lats_per_step = lat,
-        lons_per_step = lon,
-        azimuths_per_step = waypoint_dict['courses'],
-        dists_per_step = waypoint_dict['dist'],
-        starttime_per_step = time,
-        ship_params_per_step = ship_params
+        count=lat.shape[0],
+        start=start,
+        finish=finish,
+        gcr=None,
+        route_type='read_from_csv',
+        time=waypoint_dict['travel_times'],
+        lats_per_step=lat,
+        lons_per_step=lon,
+        azimuths_per_step=waypoint_dict['courses'],
+        dists_per_step=waypoint_dict['dist'],
+        starttime_per_step=time,
+        ship_params_per_step=ship_params
     )
 
     fig, ax = plt.subplots(figsize=(6, 4))
