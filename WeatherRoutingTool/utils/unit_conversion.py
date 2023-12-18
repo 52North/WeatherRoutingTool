@@ -6,6 +6,7 @@ from datetime import timezone
 import numpy as np
 
 import WeatherRoutingTool.utils.formatting as form
+import pandas as pd
 
 logger = logging.getLogger('WRT.weather')
 
@@ -70,6 +71,16 @@ def convert_npdt64_to_datetime(time):
     logger.info('timestampt', type(timestamp))
     TIME = datetime.datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
+
+def convert_pandatime_to_datetime(time):
+    time_dt = pd.to_datetime(time)
+    time_converted = np.full(time.shape[0], datetime.datetime.today())
+    for i in range(0, time.shape[0]):
+        dt_object = convert_npdt64_to_datetime(time_dt[i])
+        timestamp = dt_object.timestamp()
+        time_converted[i] = datetime.datetime.fromtimestamp(timestamp=timestamp)
+
+    return time_converted
 
 
 def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):

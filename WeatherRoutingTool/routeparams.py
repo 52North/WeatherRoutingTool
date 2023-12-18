@@ -5,9 +5,11 @@ import json
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas
 from geovectorslib import geod
 from matplotlib import gridspec
 
+import WeatherRoutingTool.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
@@ -405,3 +407,23 @@ class RouteParams():
             full_fuel = full_fuel + fuel_per_step
 
         return full_fuel
+
+    @classmethod
+    def from_gzip_file(cls, filename):
+        data = pandas.read_parquet(filename)
+        data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
+        data = data.resample('30min').mean()
+
+        # read coordinates, time and SOG & interpolate NAN values caused by occasional upsampling in the previous step
+        lat = data['Latitude'].interpolate().values
+        lon = data['Longitude'].interpolate().values
+        sog = data['SOG'].interpolate().values
+
+        # fix inconsistencies between pandas and numpy time formats
+        time = data.index
+        time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
+        time_converted = time_converted[:-1]
+
+        return lat, lon, time_converted, sog
+
+

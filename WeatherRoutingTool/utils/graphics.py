@@ -163,7 +163,6 @@ def rebin(a, rebinx, rebiny):
     sh = newshape_x, rebinx, newshape_y, rebiny
     return a.reshape(sh).mean(-1).mean(1)
 
-
 def merge_figs(path, ncounts):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
     ax.axis('off')
