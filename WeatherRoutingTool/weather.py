@@ -14,7 +14,8 @@ import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.utils.unit_conversion import *
+from WeatherRoutingTool.utils.unit_conversion import (check_dataset_spacetime_consistency, convert_nptd64_to_ints,
+                                                      round_time)
 
 logger = logging.getLogger('WRT.weather')
 

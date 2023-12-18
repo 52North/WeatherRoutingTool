@@ -1,7 +1,6 @@
 """Utility functions."""
-import datetime
 import logging
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
@@ -34,7 +33,7 @@ def round_time(dt=None, round_to=60):
         """
 
     if dt is None:
-        dt = datetime.datetime.now()
+        dt = datetime.now()
     seconds = (dt.replace(tzinfo=None) - dt.min).seconds
     rounding = (seconds + round_to / 2) // round_to * round_to
 
@@ -43,7 +42,7 @@ def round_time(dt=None, round_to=60):
     # print('rounging = ', rounding)
     # print('return = ', dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond))
 
-    return dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond)
+    return dt + timedelta(0, rounding - seconds, - dt.microsecond)
 
 
 def degree_to_pmpi(degrees):
@@ -69,17 +68,17 @@ def convert_nptd64_to_ints(time):
 def convert_npdt64_to_datetime(time):
     timestamp = ((time - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
     logger.info('timestampt', type(timestamp))
-    TIME = datetime.datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    TIME = datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
 
 
 def convert_pandatime_to_datetime(time):
     time_dt = pd.to_datetime(time)
-    time_converted = np.full(time.shape[0], datetime.datetime.today())
+    time_converted = np.full(time.shape[0], datetime.today())
     for i in range(0, time.shape[0]):
         dt_object = convert_npdt64_to_datetime(time_dt[i])
         timestamp = dt_object.timestamp()
-        time_converted[i] = datetime.datetime.fromtimestamp(timestamp=timestamp)
+        time_converted[i] = datetime.fromtimestamp(timestamp=timestamp)
 
     return time_converted
 
@@ -108,12 +107,12 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
 
 
 def compare_times(time1, time2):
-    utc_timeoffset = datetime.datetime(1970, 1, 1, 0, 0, 0)
+    utc_timeoffset = datetime(1970, 1, 1, 0, 0, 0)
     for iTime in range(0, time1.shape[0]):
-        time1[iTime] = time1[iTime].replace(tzinfo=datetime.timezone.utc) - utc_timeoffset.replace(
-            tzinfo=datetime.timezone.utc)
-        time2[iTime] = time2[iTime].replace(tzinfo=datetime.timezone.utc) - utc_timeoffset.replace(
-            tzinfo=datetime.timezone.utc)
+        time1[iTime] = time1[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(
+            tzinfo=timezone.utc)
+        time2[iTime] = time2[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(
+            tzinfo=timezone.utc)
         time1[iTime] = time1[iTime].total_seconds()
         time2[iTime] = time2[iTime].total_seconds()
         logger.info('time1: ', time1)
