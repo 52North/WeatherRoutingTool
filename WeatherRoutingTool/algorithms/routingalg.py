@@ -1,17 +1,13 @@
-import datetime as dt
 import logging
-import time
+from datetime import datetime
 
-import numpy as np
 import matplotlib
 from geovectorslib import geod
-from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.weather import WeatherCond
 
@@ -30,11 +26,11 @@ class RoutingAlg:
                     azi0, s0: (M, 1) vectors without history
                     time1: current datetime
                     elapsed: complete elapsed timedelta
-        """
+    """
 
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
-    departure_time: dt.datetime
+    departure_time: datetime
     gcr_azi: float  # azimut of great circle route
 
     fig: matplotlib.figure
@@ -45,7 +41,7 @@ class RoutingAlg:
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
         self.start = (lat_start, lon_start)
         self.finish = (lat_end, lon_end)
-        self.departure_time = dt.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+        self.departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
 
         gcr = self.calculate_gcr(self.start, self.finish)
         self.current_azimuth = gcr

@@ -1,8 +1,8 @@
 """Weather functions."""
-import datetime as dt
 import logging
 import os
 import time
+from datetime import datetime, timedelta
 
 import datacube
 import matplotlib.pyplot as plt
@@ -35,9 +35,9 @@ UNITS_DICT = {
 
 class WeatherCond:
     time_steps: int
-    time_res: dt.timedelta
-    time_start: dt.datetime
-    time_end: dt.timedelta
+    time_res: timedelta
+    time_start: datetime
+    time_end: timedelta
     map_size: Map
     ds: xr.Dataset
 
@@ -47,7 +47,7 @@ class WeatherCond:
 
         self.time_res = time_res
         self.time_start = time
-        self.time_end = time + dt.timedelta(hours=hours)
+        self.time_end = time + timedelta(hours=hours)
 
         time_passed = self.time_end - self.time_start
         self.time_steps = int(time_passed.total_seconds() / self.time_res.total_seconds())
@@ -64,7 +64,7 @@ class WeatherCond:
     def time_res(self, value):
         if (value < 3):
             raise ValueError('Resolution below 3h not possible')
-        self._time_res = dt.timedelta(hours=value)
+        self._time_res = timedelta(hours=value)
         logger.info(form.get_log_step('time resolution: ' + str(self._time_res) + ' hours', 1))
 
     @property
@@ -180,8 +180,8 @@ class WeatherCondEnvAutomatic(WeatherCond):
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
 
-        time_min_CMEMS_phys = (self.time_start - datetime.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
-        time_max_CMEMS_phys = (self.time_end + datetime.timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_min_CMEMS_phys = (self.time_start - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_max_CMEMS_phys = (self.time_end + timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
 
         lon_min = self.map_size.lon1
         lon_max = self.map_size.lon2
@@ -703,9 +703,9 @@ class FakeWeather(WeatherCond):
         start_time_sec = self.time_start.timestamp()
         end_time_sec = start_time_sec + self.time_steps * 3600
         time_space = np.linspace(start_time_sec, end_time_sec, n_time_values)
-        time = np.full(time_space.shape[0], datetime.datetime.today())
+        time = np.full(time_space.shape[0], datetime.today())
         for i in range(0, self.time_steps):
-            time[i] = datetime.datetime.fromtimestamp(time_space[i])
+            time[i] = datetime.fromtimestamp(time_space[i])
 
         n_depth_values = 1
         depth = np.array([0.494])

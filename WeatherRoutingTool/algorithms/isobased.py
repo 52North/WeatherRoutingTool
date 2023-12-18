@@ -1,5 +1,5 @@
-import datetime as dt
 import logging
+from datetime import timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -825,7 +825,7 @@ class IsoBased(RoutingAlg):
 
     def update_time(self, delta_time):
         self.full_time_traveled += delta_time
-        self.time += dt.timedelta(seconds=delta_time)
+        self.time += timedelta(seconds=delta_time)
 
     def check_bearing(self, dist):
         """

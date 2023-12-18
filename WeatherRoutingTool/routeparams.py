@@ -1,6 +1,5 @@
-import datetime
-import datetime as dt
 import json
+from datetime import datetime, timedelta
 
 import logging
 import numpy as np
@@ -27,7 +26,7 @@ class RouteParams():
     finish: tuple  # lat, lon of destination (0 - 360°)
     gcr: tuple  # distance from start to end on great circle
     route_type: str  # route name
-    time: dt.timedelta  # time needed for the route (h)
+    time: timedelta  # time needed for the route (h)
 
     ship_params_per_step: ShipParams  # ship parameters per routing step
     lats_per_step: tuple  # latitude at beginning of each step + latitude destination (0-360°)
@@ -175,7 +174,7 @@ class RouteParams():
 
         lats_per_step = np.full(count, -99.)
         lons_per_step = np.full(count, -99.)
-        start_time_per_step = np.full(count, datetime.datetime.now())
+        start_time_per_step = np.full(count, datetime.now())
         speed = np.full(count, -99.)
         power = np.full(count, -99.)
         fuel = np.full(count, -99.)
@@ -194,7 +193,7 @@ class RouteParams():
             lons_per_step[ipoint] = coord_pair[0]
 
             property = point_list[ipoint]['properties']
-            start_time_per_step[ipoint] = dt.datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
+            start_time_per_step[ipoint] = datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
             speed[ipoint] = property['speed']['value']
             power[ipoint] = property['engine_power']['value']
             fuel[ipoint] = property['fuel_consumption']['value']
@@ -274,7 +273,7 @@ class RouteParams():
 
     def get_fuel_per_dist(self):
         fuel_per_hour = self.ship_params_per_step.fuel
-        delta_time = np.full(self.count - 1, datetime.timedelta(seconds=0))
+        delta_time = np.full(self.count - 1, timedelta(seconds=0))
         fuel = np.full(self.count, -99.)
 
         for i in range(0, self.count - 1):
@@ -356,12 +355,12 @@ class RouteParams():
         courses = move["azi1"]
         travel_times = dist / bs
 
-        start_times = np.full(npoints - 1, datetime.datetime.strptime('1970-01-01T00:00Z', '%Y-%m-%dT%H:%MZ'))
+        start_times = np.full(npoints - 1, datetime.strptime('1970-01-01T00:00Z', '%Y-%m-%dT%H:%MZ'))
         for ipoint in range(0, npoints - 1):
             if ipoint == 0:
                 start_times[ipoint] = start_time
             else:
-                start_times[ipoint] = start_times[ipoint - 1] + datetime.timedelta(seconds=travel_times[ipoint - 1])
+                start_times[ipoint] = start_times[ipoint - 1] + timedelta(seconds=travel_times[ipoint - 1])
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dists: ', dist)

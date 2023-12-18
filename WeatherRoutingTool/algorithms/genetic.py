@@ -2,8 +2,6 @@ import logging
 import os
 from datetime import timedelta
 
-import cartopy.crs as ccrs
-import cartopy.feature as cf
 import numpy as np
 import matplotlib
 import xarray as xr
@@ -16,7 +14,6 @@ from pymoo.util.running_metric import RunningMetric
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.algorithms.data_utils import distance, time_diffs
 from WeatherRoutingTool.algorithms.genetic_utils import (CrossoverFactory, MutationFactory, PopulationFactory,
                                                          RoutingProblem, RouteDuplicateElimination)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
