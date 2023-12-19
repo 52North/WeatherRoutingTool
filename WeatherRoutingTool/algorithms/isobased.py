@@ -254,7 +254,7 @@ class IsoBased(RoutingAlg):
                     number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
 
                     if self.desired_number_of_routes <= number_of_possible_routes:
-                        remaining_routes = self.desired_number_of_routes - self.current_number_of_route
+                        remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
                         self.find_routes_reaching_destination_in_current_step(remaining_routes)
                         break
                     else:
