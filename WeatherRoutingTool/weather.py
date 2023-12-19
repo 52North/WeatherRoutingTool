@@ -196,7 +196,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
 
         # download GFS data
         par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground",
-                   "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl", "Pressure_surface"]
+                   "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl"]
         sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
                         'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min, lon_max),
                         'latitude': slice(lat_min, lat_max)}
@@ -667,7 +667,7 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
-    def __init__(self, time, hours, time_res, var_dict):
+    def __init__(self, time, hours, time_res, var_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
@@ -677,16 +677,17 @@ class FakeWeather(WeatherCond):
             'VMDR': 0, 'VHM0': 0, 'VTPK': 0,
             'Temperature_surface': 0,
             'u-component_of_wind_height_above_ground': 0, 'v-component_of_wind_height_above_ground': 0,
-            'Pressure_reduced_to_MSL_msl': 0, 'Pressure_surface': 0
+            'Pressure_reduced_to_MSL_msl': 0
         }
         self.coord_res = 0.0833
 
         self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero=var_list_zero)
 
     def combine_var_dicts(self, var_dict_manual, var_dict_zero):
-        for entry in var_dict_manual:
-            var_dict_zero.pop(entry, None)
-        self.var_dict = var_dict_zero | var_dict_manual
+        if var_dict_manual:
+            self.var_dict = var_dict_zero | var_dict_manual
+        else:
+            self.var_dict = var_dict_zero
 
     def read_dataset(self, filepath=None):
         # initialise coordinates
@@ -700,12 +701,12 @@ class FakeWeather(WeatherCond):
         lon_end = self.map_size.lon1 + self.coord_res * n_lon_values
         lon = np.linspace(lon_start, lon_end, n_lon_values)
 
-        n_time_values = self.time_steps
+        n_time_values = self.time_steps + 1
         start_time_sec = self.time_start.timestamp()
-        end_time_sec = start_time_sec + self.time_steps * 3600
+        end_time_sec = start_time_sec + self.time_steps * self.time_res.total_seconds()
         time_space = np.linspace(start_time_sec, end_time_sec, n_time_values)
         time = np.full(time_space.shape[0], datetime.today())
-        for i in range(0, self.time_steps):
+        for i in range(0, n_time_values):
             time[i] = datetime.fromtimestamp(time_space[i])
 
         n_depth_values = 1
@@ -720,7 +721,8 @@ class FakeWeather(WeatherCond):
         VMDR = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['VMDR'])
         VHM0 = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['VHM0'])
         VTPK = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['VTPK'])
-        Temperature_surface = np.full((n_lat_values, n_lon_values, n_time_values), self.var_dict['Temperature_surface'])
+        Temperature_surface = np.full((n_lat_values, n_lon_values, n_time_values),
+                                      self.var_dict['Temperature_surface'])
 
         uwind = np.full((n_lat_values, n_lon_values, n_time_values),
                         self.var_dict['u-component_of_wind_height_above_ground'])
@@ -729,8 +731,6 @@ class FakeWeather(WeatherCond):
 
         Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values),
                                               self.var_dict['Pressure_reduced_to_MSL_msl'])
-        Pressure_surface = np.full((n_lat_values, n_lon_values, n_time_values),
-                                   self.var_dict['Pressure_surface'])
 
         # create dataset
         data_vars = dict(vtotal=(["latitude", "longitude", "time", "depth"], vtotal),
@@ -747,7 +747,6 @@ class FakeWeather(WeatherCond):
                          vwind=(["latitude", "longitude", "time"], vwind),
 
                          Pressure_reduced_to_MSL_msl=(["latitude", "longitude", "time"], Pressure_reduced_to_MSL_msl),
-                         Pressure_surface=(["latitude", "longitude", "time"], Pressure_surface),
                          )
         coords = dict(latitude=(["latitude"], lat), longitude=(["longitude"], lon), time=(["time"], time),
                       depth=(["depth"], depth))
@@ -766,7 +765,6 @@ class FakeWeather(WeatherCond):
         ds['uwind'] = ds['uwind'].assign_attrs(units='m/s')
         ds['vwind'] = ds['vwind'].assign_attrs(units='m/s')
         ds['Pressure_reduced_to_MSL_msl'] = ds['Pressure_reduced_to_MSL_msl'].assign_attrs(units='Pa')
-        ds['Pressure_surface'] = ds['Pressure_surface'].assign_attrs(units='Pa')
 
         ds = ds.rename({'uwind': 'u-component_of_wind_height_above_ground',
                         'vwind': 'v-component_of_wind_height_above_ground'})

@@ -1,6 +1,6 @@
 import argparse
-import datetime
 import math
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 
@@ -15,6 +15,8 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
+    parser.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
+    parser.add_argument('-out', '--geojson-out', help="Geojson (absolute path)", required=False, type=str)
 
     args = parser.parse_args()
     if not args.file:
@@ -28,7 +30,7 @@ if __name__ == "__main__":
     coursesfile = config.COURSES_FILE
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
-    departure_time = datetime.datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
@@ -36,18 +38,25 @@ if __name__ == "__main__":
     u_comp = math.sin(45) * wind_speed
     v_comp = -math.cos(45) * wind_speed
 
+    # currents = 0.1
+    # utotal = math.sin(45) * currents
+    # vtotal = -math.cos(45) * currents
+
     print('u_comp: ', u_comp)
     print('v_comp: ', v_comp)
 
     var_dict = {
-        'thetao': 20,
-        'Temperature_surface': 10,
+        'thetao': 20,  # °C
+        'so': 33.5,
+        'Temperature_surface': 283,  # K
         'Pressure_reduced_to_MSL_msl': 101325,
-        'Pressure_surface': 101325,
         'u-component_of_wind_height_above_ground': u_comp,
         'v-component_of_wind_height_above_ground': v_comp,
+        # 'utotal': utotal,
+        # 'vtotal': vtotal,
         'VHM0': 1,
-        'VMDR': 315
+        'VMDR': 315,
+        'VTPK': 10
     }
     wf = WeatherFactory()
     wt = wf.get_weather(data_mode=config.DATA_MODE,
@@ -64,8 +73,7 @@ if __name__ == "__main__":
     boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(6)
 
-    lat, lon, time, sog = RouteParams.from_gzip_file(
-        '/home/kdemmich/MariData/IMDC_paper/fixed_route_CB_pacific/HFData_voyage_16.gzip')
+    lat, lon, time, sog = RouteParams.from_gzip_file(args.route)
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog.mean())
 
@@ -89,6 +97,9 @@ if __name__ == "__main__":
         starttime_per_step=time,
         ship_params_per_step=ship_params
     )
+
+    if args.geojson_out:
+        rp.return_route_to_API(args.geojson_out)
 
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.remove()
