@@ -1,11 +1,9 @@
-import datetime
+from datetime import datetime, timedelta
 import math
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import pytest
 import xarray as xr
 
 import WeatherRoutingTool.utils.unit_conversion as utils
@@ -33,7 +31,7 @@ def get_default_Tanker():
 
 def compare_times(time64, time):
     time64 = (time64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-    time = (time - datetime.datetime(1970, 1, 1, 0, 0))
+    time = (time - datetime(1970, 1, 1, 0, 0))
     for iTime in range(0, time.shape[0]):
         time[iTime] = time[iTime].total_seconds()
     assert np.array_equal(time64, time)
@@ -54,10 +52,10 @@ def test_get_netCDF_courses():
     # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
     pol = get_default_Tanker()
-    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
+    time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
+                     datetime(2022, 12, 19) + timedelta(days=360),
+                     datetime(2022, 12, 19) + timedelta(days=360),
+                     datetime(2022, 12, 19) + timedelta(days=360)])
 
     pol.write_netCDF_courses(courses, lat, lon, time)
     ds = xr.open_dataset(pol.courses_path)
@@ -158,7 +156,7 @@ def test_get_fuel_from_netCDF():
 
 def test_power_consumption_returned():
     # dummy weather file
-    time_single = datetime.datetime.strptime('2023-07-20', '%Y-%m-%d')
+    time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
 
     # courses test file
     courses_test = np.array([0, 180, 0, 180, 180, 0])
@@ -266,10 +264,10 @@ def test_get_netCDF_courses_isobased():
     # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
     pol = get_default_Tanker()
-    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
+    time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
+                     datetime(2022, 12, 19) + timedelta(days=360),
+                     datetime(2022, 12, 19) + timedelta(days=360),
+                     datetime(2022, 12, 19) + timedelta(days=360)])
 
     pol.write_netCDF_courses(courses, lat, lon, time, True)
     ds = xr.open_dataset(pol.courses_path)
@@ -312,8 +310,8 @@ def test_get_netCDF_courses_GA():
     courses = np.array([0.1, 0.2, 0.3])
 
     pol = get_default_Tanker()
-    time = np.array([datetime.datetime(2022, 12, 19), datetime.datetime(2022, 12, 19) + datetime.timedelta(days=180),
-                     datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360)])
+    time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=180),
+                     datetime(2022, 12, 19) + timedelta(days=360)])
 
     pol.write_netCDF_courses(courses, lat_short, lon_short, time)
     ds = xr.open_dataset(pol.courses_path)
@@ -345,7 +343,7 @@ def test_get_netCDF_courses_GA():
 
 def test_get_fuel_for_fixed_waypoints():
     bs = 6
-    start_time = datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
+    start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
     route_lats = np.array([54.9, 54.7, 54.5, 54.2])
     route_lons = np.array([13.2, 13.4, 13.7, 13.9])
 
@@ -364,7 +362,7 @@ def test_get_fuel_for_fixed_waypoints():
     test_courses = np.rad2deg(ds.courses.to_numpy()[:, 0])
     test_time = ds.time.to_numpy()
 
-    test_time_dt = np.full(3, datetime.datetime(1970, 1, 1, 0, 0))
+    test_time_dt = np.full(3, datetime(1970, 1, 1, 0, 0))
     for t in range(0, 3):
         test_time_dt[t] = utils.convert_npdt64_to_datetime(test_time[t])
 
@@ -372,8 +370,8 @@ def test_get_fuel_for_fixed_waypoints():
     ref_lon_start = np.array([13.2, 13.4, 13.7])
     ref_courses = np.array([149.958, 138.89, 158.685])
     ref_dist = np.array([25712., 29522., 35836.])
-    ref_time = np.array([start_time, start_time + datetime.timedelta(seconds=ref_dist[0] / bs),
-                         start_time + datetime.timedelta(seconds=ref_dist[0] / bs) + datetime.timedelta(
+    ref_time = np.array([start_time, start_time + timedelta(seconds=ref_dist[0] / bs),
+                         start_time + timedelta(seconds=ref_dist[0] / bs) + timedelta(
                              seconds=ref_dist[1] / bs)])
 
     assert test_lon_start.any() == ref_lon_start.any()
@@ -395,7 +393,7 @@ def test_wind_force():
     courses = np.linspace(0, 360, 10)
     courses_rad = utils.degree_to_pmpi(courses)
 
-    time = np.full(10, datetime.datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
+    time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
     bs = 6
 
     pol = get_default_Tanker()

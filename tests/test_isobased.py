@@ -1,13 +1,12 @@
-import datetime
 import os
+from datetime import datetime
 
 import numpy as np
-import pytest
-import xarray as xr
 from geovectorslib import geod
 
 import tests.basic_test_func as basic_test_func
-from WeatherRoutingTool.constraints.constraints import *
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.constraints.constraints import LandCrossing, WaveHeight
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
@@ -188,7 +187,7 @@ def test_get_delta_variables_last_step():
     ra.azimuth_per_step = np.array([[0, 0, 0, 0]])
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
     ra.time = np.array(
-        [datetime.datetime.now(), datetime.datetime.now(), datetime.datetime.now(), datetime.datetime.now()])
+        [datetime.now(), datetime.now(), datetime.now(), datetime.now()])
     ra.current_variant = np.array([az, az, az, az])
     ra.finish = (lat_end, lon_end)
     ra.finish_temp = (lat_end, lon_end)
@@ -314,7 +313,7 @@ def test_pruning_select_correct_idxs():
     speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2], speed_per_step[0, 5], speed_per_step[0, 6]])
     lat_test = np.array([[30, 30, 30, 30]])
     lon_test = np.array([[45, 45, 45, 45]])
-    time_single = datetime.datetime(2023, 11, 11, 11, 11)
+    time_single = datetime(2023, 11, 11, 11, 11)
     time_test = np.array([time_single, time_single, time_single, time_single])
 
     ra.print_current_status()

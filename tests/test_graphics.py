@@ -1,12 +1,10 @@
 import datetime
 
-import pytest
-import xarray
+import numpy as np
 
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.weather import *
 
 
 def test_plot_power_vs_dist():

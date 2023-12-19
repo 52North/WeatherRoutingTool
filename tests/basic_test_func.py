@@ -1,13 +1,9 @@
-import datetime
 import os
-
-import xarray
-import pytest
 
 from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars
 
 
 def generate_dummy_constraint_list():

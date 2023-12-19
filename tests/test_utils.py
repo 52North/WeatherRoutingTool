@@ -1,5 +1,3 @@
-import pytest
-
 import WeatherRoutingTool.utils.unit_conversion as unit
 
 

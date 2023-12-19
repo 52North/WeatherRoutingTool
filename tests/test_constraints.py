@@ -1,16 +1,11 @@
-import datetime
 import os
 
 import numpy as np
-import xarray
-import pytest
 
 import tests.basic_test_func as basic_test_func
-from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
+                                                        RunTestContinuousChecks, WaterDepth, WaveHeight)
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.weather import *
-
-from WeatherRoutingTool.constraints import constraints
 
 
 def generate_dummy_constraint_list():

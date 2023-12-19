@@ -1,11 +1,12 @@
-import numpy
-import sqlalchemy as db
-import pandas as pd
 import geopandas as gpd
+import numpy
+import pandas as pd
+import pytest
+import sqlalchemy as db
 from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
+
 from WeatherRoutingTool.constraints.constraints import ContinuousCheck, SeamarkCrossing, LandPolygonsCrossing
 from WeatherRoutingTool.utils.maps import Map
-import pytest
 
 # Create engine using SQLite
 engine = db.create_engine("sqlite:///gdfDB.sqlite")
