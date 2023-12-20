@@ -297,8 +297,13 @@ class IsoBased(RoutingAlg):
             route = self.terminate()
             return route
         else:
-            self.route_list.sort(key=lambda x: x.get_full_fuel())
-            return self.route_list[0]
+            if not self.route_list:
+                self.final_pruning()
+                route = self.terminate()
+                return route
+            else:
+                self.route_list.sort(key=lambda x: x.get_full_fuel())
+                return self.route_list[0]
 
     def move_boat_direct(self, wt: WeatherCond, boat: Boat, constraint_list: ConstraintsList):
         """
