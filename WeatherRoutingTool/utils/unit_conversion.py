@@ -136,3 +136,14 @@ def cut_angles(angles):
     angles[angles > 360] = angles[angles > 360] - 360
     angles[angles < 0] = 360 + angles[angles < 0]
     return angles
+
+def downsample_dataframe(data, interval):
+    n_old_points = len(data)
+    n_new_points = int(np.ceil(n_old_points / interval))
+    indices = np.linspace(0, n_new_points - 1, n_new_points)
+    indices = np.repeat(indices, interval)
+    indices_to_cut = indices.shape[0] - n_old_points
+    if indices_to_cut != 0:
+        indices = indices[:-indices_to_cut]
+    resampled_data = data.groupby('clustered_index').mean()
+    return resampled_data

@@ -411,16 +411,16 @@ class RouteParams():
     def from_gzip_file(cls, filename):
         data = pandas.read_parquet(filename)
         data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
-        data = data.resample('30min').mean()
 
-        # read coordinates, time and SOG & interpolate NAN values caused by occasional upsampling in the previous step
-        lat = data['Latitude'].interpolate().values
-        lon = data['Longitude'].interpolate().values
-        sog = data['SOG'].interpolate().values
+        # select every interval's element from dataset
+        interval = 10
+        sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
+        sog= sog_data['SOG'].values
+        lat = data['Latitude'][::interval].values
+        lon = data['Longitude'][::interval].values
 
         # fix inconsistencies between pandas and numpy time formats
-        time = data.index
+        time = data.index[::interval].values
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
-        time_converted = time_converted[:-1]
 
         return lat, lon, time_converted, sog
