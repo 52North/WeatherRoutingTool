@@ -221,7 +221,7 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised):
     for i in range(0, bin_widths.shape[0]):
         cont_temp = 0
         cent_temp = cent_temp + bin_widths[i] / 2
-        if (bin_widths[i] > 0):
+        if (bin_widths[i] > 0) and (contend_unnormalised[i] != -99):
             cont_temp = contend_unnormalised[i] / bin_widths[i]
         centres = np.append(centres, cent_temp)
         contents = np.append(contents, cont_temp)
