@@ -769,7 +769,6 @@ class FakeWeather(WeatherCond):
         ds = ds.rename({'uwind': 'u-component_of_wind_height_above_ground',
                         'vwind': 'v-component_of_wind_height_above_ground'})
 
-        print('ds ', ds['v-component_of_wind_height_above_ground'])
         self.ds = ds
 
     def write_data(self, filepath):

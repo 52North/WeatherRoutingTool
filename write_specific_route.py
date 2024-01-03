@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
@@ -28,22 +29,21 @@ if __name__ == "__main__":
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
+    figurefile = get_figure_path()
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
     departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    wind_speed = 10
-    u_comp = math.sin(45) * wind_speed
-    v_comp = -math.cos(45) * wind_speed
+
+    wind_speed = 20
+    u_comp = - math.sin(45) * wind_speed
+    v_comp = - math.cos(45) * wind_speed
 
     # currents = 0.1
     # utotal = math.sin(45) * currents
     # vtotal = -math.cos(45) * currents
-
-    print('u_comp: ', u_comp)
-    print('v_comp: ', v_comp)
 
     var_dict = {
         'thetao': 20,  # °C
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                         default_map=default_map,
                         var_dict=var_dict)
     fig, ax = plt.subplots(figsize=(12, 7))
-    wt.plot_weather_map(fig, ax, departure_time, "wind")
+    # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
     boat = Tanker(-99)
     boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
@@ -78,13 +78,13 @@ if __name__ == "__main__":
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog.mean())
 
     ship_params = boat.get_fuel_per_time_netCDF(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                                waypoint_dict['start_lons'], time)
+                                                waypoint_dict['start_lons'], time[:-1])
 
     start = (lat[0], lon[0])
     finish = (lat[-1], lon[-1])
 
     rp = RouteParams(
-        count=lat.shape[0],
+        count=lat.shape[0] - 1,
         start=start,
         finish=finish,
         gcr=None,
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     ax.remove()
     fig, ax = graphics.generate_basemap(fig=fig, depth=None,  start=start, finish=finish, show_depth=False)
     ax = rp.plot_route(ax, graphics.get_colour(0), rp)
-    plt.show()
+    plt.savefig(figurefile + '/route.png')
 
     ##
     # plotting power vs. distance
@@ -114,4 +114,4 @@ if __name__ == "__main__":
     # rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
     # rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
     rp.plot_power_vs_dist(graphics.get_colour(3), '')
-    plt.show()
+    plt.savefig(figurefile + '/route_powervs_dist.png')
