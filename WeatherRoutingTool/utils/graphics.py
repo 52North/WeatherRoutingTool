@@ -221,12 +221,21 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised):
     for i in range(0, bin_widths.shape[0]):
         cont_temp = 0
         cent_temp = cent_temp + bin_widths[i] / 2
-        if (bin_widths[i] > 0) and (contend_unnormalised[i] != -99):
+        if (bin_widths[i] > 0) or (contend_unnormalised[i] != -99):
             cont_temp = contend_unnormalised[i] / bin_widths[i]
-        centres = np.append(centres, cent_temp)
-        contents = np.append(contents, cont_temp)
-        cent_temp = cent_temp + bin_widths[i] / 2
-    return {"bin_content": contents, "bin_centres": centres}
+            centres = np.append(centres, cent_temp)
+            contents = np.append(contents, cont_temp)
+            cent_temp = cent_temp + bin_widths[i] / 2
+        else:
+            if not i == (bin_widths.shape[0]-1):
+                raise ValueError('Unexpected behaviour!')
+            bin_widths = bin_widths[:-1]
+
+    if debug:
+        print('shape bin_contents: ', contents.shape)
+        print('shape bin_centres: ', centres.shape)
+        print('shape bin_widths: ', bin_widths.shape)
+    return {"bin_contents": contents, "bin_centres": centres, "bin_widths": bin_widths}
 
 
 def get_accumulated_dist(dist_arr):

@@ -26,13 +26,13 @@ if __name__ == "__main__":
     #    "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Manipulated_Routes/Alexandria_Marseille/original
     #    /min_time_route.json")
 
-    filename1 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestFOC/min_time_route.json")
+    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_original_resistances_calm_weather.json")
     filename2 = (
-        "/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/bestWeather/min_time_route.json")
-    filename3 = ("/home/kdemmich/MariData/Simulationsstudien_NovDez23/Columbo_Singapore/fastest/min_time_route.json")
+        "/home/kdemmich/MariData/IMDC_paper/Routes/route_original_resistances_calm_weather_95perc_calm_water.json")
+    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_original_resistances_calm_weather_105perc_calm_water.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/Code/Figures"
+    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes"
 
     depth_data = ""
 
@@ -41,14 +41,14 @@ if __name__ == "__main__":
     rp_read3 = RouteParams.from_file(filename3)
     rp_read4 = RouteParams.from_file(filename4)
 
-    rp_1_str = 'best FOC'
-    rp_2_str = 'best weather'
-    rp_3_str = 'fastest'
+    rp_1_str = 'Standardeinstellung'
+    rp_2_str = '95% Flachwasserwiderstand'
+    rp_3_str = '105% Flachwasserwiderstand'
     rp_4_str = 'original'
 
     ##
     # init wheather
-    windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
+    #windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
     # British Channel
     # departure_time = "2023-06-21T12:00Z"
     # time_for_plotting = "2023-06-21T12:00Z"
@@ -64,34 +64,34 @@ if __name__ == "__main__":
     plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    wf = WeatherFactory()
-    wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
+    #wf = WeatherFactory()
+    #wt = wf.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
-    fig, ax = plt.subplots(figsize=(12, 7))
+    #fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, plot_time, "wind")
 
     ##
     # init Constraints
-    water_depth = WaterDepth('from_file', 20, default_map, depth_data)
+    # water_depth = WaterDepth('from_file', 20, default_map, depth_data)
 
     ##
     # plotting routes in depth profile
     fig, ax = plt.subplots(figsize=(12, 7))
-    ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
+    # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
     ax = rp_read1.plot_route(ax, graphics.get_colour(0), rp_1_str)
     ax = rp_read2.plot_route(ax, graphics.get_colour(1), rp_2_str)
     ax = rp_read3.plot_route(ax, graphics.get_colour(2), rp_3_str)
-    ax = rp_read4.plot_route(ax, graphics.get_colour(3), rp_4_str)
+    #ax = rp_read4.plot_route(ax, graphics.get_colour(3), rp_4_str)
     ax.legend()
     plt.savefig(figurefile + '/route_waterdepth.png')
 
     ##
     # plotting power vs. distance
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    # rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
-    # rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
-    # rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
-    rp_read4.plot_power_vs_dist(graphics.get_colour(3), rp_4_str)
+    rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
+    rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
+    rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
+    #rp_read4.plot_power_vs_dist(graphics.get_colour(3), rp_4_str)
 
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     rp_read1.plot_power_vs_coord(ax, graphics.get_colour(0), rp_1_str, coordstring)
     rp_read2.plot_power_vs_coord(ax, graphics.get_colour(1), rp_2_str, coordstring)
     rp_read3.plot_power_vs_coord(ax, graphics.get_colour(2), rp_3_str, coordstring)
-    rp_read4.plot_power_vs_coord(ax, graphics.get_colour(3), rp_4_str, coordstring)
+    #rp_read4.plot_power_vs_coord(ax, graphics.get_colour(3), rp_4_str, coordstring)
 
     ax.legend(loc='lower left')
     # ax.set_ylim(0, 0.016)
@@ -117,6 +117,20 @@ if __name__ == "__main__":
     rp_read1.plot_power_vs_dist_with_weather(data_array, label_array, 1)
 
     plt.savefig(figurefile + '/route_power_vs_dist_weather.png')
+
+    ##
+    # plotting power vs dist ratios
+    variable = 'Leistung'
+    windspeed = '2.5'
+
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    ax.set_ylim(0.8, 1.2)
+    rp_read2.plot_power_vs_dist_ratios(rp_read1, graphics.get_colour(0), rp_2_str + '/' + rp_1_str, variable)
+    rp_read3.plot_power_vs_dist_ratios(rp_read1, graphics.get_colour(1), rp_3_str + '/' + rp_1_str, variable)
+
+    ax.legend(loc='lower left')
+    ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
+    plt.savefig(figurefile + '/route_power_vs_dist_ratio.png')
 
     ##
     # write full fuel

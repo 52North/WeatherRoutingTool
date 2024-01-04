@@ -248,11 +248,36 @@ class RouteParams():
         dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power)
 
-        plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill=False, color=color, edgecolor=color,
+        plt.bar(hist_values["bin_centres"], hist_values["bin_contents"], hist_values["bin_widths"], fill=False, color=color, edgecolor=color,
                 label=label)
         plt.xlabel('Weglänge (km)')
         # plt.ylabel('Energie (kWh/km)')
         plt.ylabel('Treibstoffverbrauch (t/km)')
+        plt.xticks()
+
+    def plot_power_vs_dist_ratios(self, denominator, color, label, variable):
+        power_nom = self.ship_params_per_step.get_power()  # self.get_fuel_per_dist()
+        dist_nom = self.dists_per_step
+        dist_nom = dist_nom / 1000  # [m] -> [km]
+        hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom)
+
+        power_denom = denominator.ship_params_per_step.get_power()  # denominator.get_fuel_per_dist()
+        dist_denom = denominator.dists_per_step
+        dist_denom = dist_denom / 1000  # [m] -> [km]
+        hist_values_denom = graphics.get_hist_values_from_widths(dist_denom, power_denom)
+
+        if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
+            raise ValueError("Ratios are only possible for same binning!")
+
+        hist_values_ratios = hist_values_nom["bin_contents"]/hist_values_denom["bin_contents"]
+
+        plt.plot(hist_values_denom["bin_centres"], hist_values_ratios, marker='o', color=color, linewidth=0,
+                 label=label)
+        plt.errorbar(x=hist_values_denom["bin_centres"], y=hist_values_ratios, yerr=None,
+                     xerr=hist_values_denom["bin_widths"], fmt=' ', color=color, linestyle=None)
+
+        plt.xlabel('Weglänge (km)')
+        plt.ylabel(variable + ' Modifiziert/Standardwert')
         plt.xticks()
 
     def plot_power_vs_coord(self, ax, color, label, coordstring):
@@ -304,6 +329,8 @@ class RouteParams():
             dist = dist / 1000  # [m] -> [km]
             normalised_power = graphics.get_hist_values_from_widths(dist, power)
             r_wind = data_array[idata].ship_params_per_step.get_rwind()
+            if r_wind[-1] == -99:
+                r_wind = r_wind[:-1]
             r_wind = r_wind / 1000
 
             if idata == 0:
@@ -315,11 +342,11 @@ class RouteParams():
                 ax_power = graphics.set_graphics_standards(ax_power)
                 ax_rwind = graphics.set_graphics_standards(ax_rwind)
 
-            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_content"], dist,
+            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_contents"], normalised_power["bin_widths"],
                                       fill=False, color=color, edgecolor=color, label=label, linewidth=2)
             list_lines.append(line_power)
 
-            ax_rwind.bar(normalised_power["bin_centres"], r_wind, dist, fill=False, color=color, edgecolor=color,
+            ax_rwind.bar(normalised_power["bin_centres"], r_wind, normalised_power["bin_widths"], fill=False, color=color, edgecolor=color,
                          linewidth=2)
 
         # ax_power.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
