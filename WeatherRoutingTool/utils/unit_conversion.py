@@ -145,5 +145,7 @@ def downsample_dataframe(data, interval):
     indices_to_cut = indices.shape[0] - n_old_points
     if indices_to_cut != 0:
         indices = indices[:-indices_to_cut]
+
+    data['clustered_index'] = indices.tolist()
     resampled_data = data.groupby('clustered_index').mean()
     return resampled_data
