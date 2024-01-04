@@ -26,6 +26,7 @@ if __name__ == "__main__":
     config = Config(file_name=args.file)
     config.print()
 
+    routename = 'original_resistances'
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     default_map = Map(lat1, lon1, lat2, lon2)
 
 
-    wind_speed = 20
+    wind_speed = 12.5
     u_comp = - math.sin(45) * wind_speed
     v_comp = - math.cos(45) * wind_speed
 
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     ax.remove()
     fig, ax = graphics.generate_basemap(fig=fig, depth=None,  start=start, finish=finish, show_depth=False)
     ax = rp.plot_route(ax, graphics.get_colour(0), rp)
-    plt.savefig(figurefile + '/route.png')
+    plt.savefig(figurefile + '/route_' + str(routename) + '.png')
 
     ##
     # plotting power vs. distance
@@ -114,4 +115,4 @@ if __name__ == "__main__":
     # rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
     # rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
     rp.plot_power_vs_dist(graphics.get_colour(3), '')
-    plt.savefig(figurefile + '/route_powervs_dist.png')
+    plt.savefig(figurefile + '/route_' + str(routename) + '_powervs_dist.png')
