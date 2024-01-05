@@ -241,30 +241,38 @@ class RouteParams():
                 markersize=10)
         return ax
 
-    def plot_power_vs_dist(self, color, label):
-        power = self.get_fuel_per_dist()
+    def get_power_type(self, power_type):
+        if power_type == 'power':
+            return {"value" : self.ship_params_per_step.get_power(), "label" : 'Leistung', "unit": 'kW'}
+        if power_type == 'fuel':
+            return {"value" : self.get_fuel_per_dist(), "label" : "Treibstoffverbrauch", "unit": 't'}
+
+    def plot_power_vs_dist(self, color, label, power_type):
+        power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
         dist = dist / 1000  # [m] -> [km]
-        hist_values = graphics.get_hist_values_from_widths(dist, power)
+        hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
 
         plt.bar(hist_values["bin_centres"], hist_values["bin_contents"], hist_values["bin_widths"], fill=False, color=color, edgecolor=color,
                 label=label)
         plt.xlabel('Weglänge (km)')
-        # plt.ylabel('Energie (kWh/km)')
-        plt.ylabel('Treibstoffverbrauch (t/km)')
+        if power_type == 'power':
+            plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
+        else:
+            plt.ylabel(power["label"] + ' (' + power["unit"] + '/km)')
         plt.xticks()
 
-    def plot_power_vs_dist_ratios(self, denominator, color, label, variable):
-        power_nom = self.ship_params_per_step.get_power()  # self.get_fuel_per_dist()
+    def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
+        power_nom = self.get_power_type(power_type)
         dist_nom = self.dists_per_step
         dist_nom = dist_nom / 1000  # [m] -> [km]
-        hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom)
+        hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom["value"], power_type)
 
-        power_denom = denominator.ship_params_per_step.get_power()  # denominator.get_fuel_per_dist()
+        power_denom = denominator.get_power_type(power_type)
         dist_denom = denominator.dists_per_step
         dist_denom = dist_denom / 1000  # [m] -> [km]
-        hist_values_denom = graphics.get_hist_values_from_widths(dist_denom, power_denom)
+        hist_values_denom = graphics.get_hist_values_from_widths(dist_denom, power_denom["value"], power_type)
 
         if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
             raise ValueError("Ratios are only possible for same binning!")
@@ -277,22 +285,23 @@ class RouteParams():
                      xerr=hist_values_denom["bin_widths"], fmt=' ', color=color, linestyle=None)
 
         plt.xlabel('Weglänge (km)')
-        plt.ylabel(variable + ' Modifiziert/Standardwert')
+        plt.ylabel(power_nom["label"] + ' Modifiziert/Standardwert')
         plt.xticks()
 
-    def plot_power_vs_coord(self, ax, color, label, coordstring):
-        power = self.ship_params_per_step.get_fuel()
+    def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
+        power = self.get_power_type(power_type)
         if coordstring == 'lat':
             coord = self.lats_per_step
+            label = 'latitude (°W)'
         else:
             coord = self.lons_per_step
-        power = np.delete(power, power.shape[0] - 1)
+            label = 'longitude (°W)'
+        power["value"] = np.delete(power["value"], power["value"].shape[0] - 1)
         coord = np.delete(coord, coord.shape[0] - 1)
 
-        ax.plot(coord, power, color=color, label=label)
-        plt.xlabel('longitude (°W)')
-        # plt.ylabel('Energie (kWh/km)')
-        plt.ylabel('Treibstoffverbrauch (t/h)')
+        ax.plot(coord, power["value"], color=color, label=label)
+        plt.xlabel(label)
+        plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
         # plt.ylim(1.8,2.2)
         plt.xticks()
 
@@ -327,7 +336,7 @@ class RouteParams():
             power = data_array[idata].get_fuel_per_dist()
             dist = data_array[idata].dists_per_step
             dist = dist / 1000  # [m] -> [km]
-            normalised_power = graphics.get_hist_values_from_widths(dist, power)
+            normalised_power = graphics.get_hist_values_from_widths(dist, power, 'fuel')
             r_wind = data_array[idata].ship_params_per_step.get_rwind()
             if r_wind[-1] == -99:
                 r_wind = r_wind[:-1]

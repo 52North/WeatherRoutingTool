@@ -208,7 +208,7 @@ def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
     return {"bin_content": contents, "bin_centres": centres, "bin_widths": widths}
 
 
-def get_hist_values_from_widths(bin_widths, contend_unnormalised):
+def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
     centres = np.array([])
     contents = np.array([])
     cent_temp = 0
@@ -222,7 +222,9 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised):
         cont_temp = 0
         cent_temp = cent_temp + bin_widths[i] / 2
         if (bin_widths[i] > 0) or (contend_unnormalised[i] != -99):
-            cont_temp = contend_unnormalised[i] / bin_widths[i]
+            cont_temp = contend_unnormalised[i]
+            if power_type == 'fuel':
+                cont_temp = cont_temp / bin_widths[i]
             centres = np.append(centres, cent_temp)
             contents = np.append(contents, cont_temp)
             cent_temp = cent_temp + bin_widths[i] / 2
@@ -270,6 +272,7 @@ def generate_basemap(fig, depth, start, finish, title='', show_depth=True, show_
     ax.add_feature(cf.LAND)
     ax.add_feature(cf.COASTLINE)
     ax.gridlines(draw_labels=True)
+    # ax.set_extent((-1500000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
 
     ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
     ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
