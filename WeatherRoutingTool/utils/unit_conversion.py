@@ -109,10 +109,8 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
 def compare_times(time1, time2):
     utc_timeoffset = datetime(1970, 1, 1, 0, 0, 0)
     for iTime in range(0, time1.shape[0]):
-        time1[iTime] = time1[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(
-            tzinfo=timezone.utc)
-        time2[iTime] = time2[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(
-            tzinfo=timezone.utc)
+        time1[iTime] = time1[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(tzinfo=timezone.utc)
+        time2[iTime] = time2[iTime].replace(tzinfo=timezone.utc) - utc_timeoffset.replace(tzinfo=timezone.utc)
         time1[iTime] = time1[iTime].total_seconds()
         time2[iTime] = time2[iTime].total_seconds()
         logger.info('time1: ', time1)
@@ -136,6 +134,7 @@ def cut_angles(angles):
     angles[angles > 360] = angles[angles > 360] - 360
     angles[angles < 0] = 360 + angles[angles < 0]
     return angles
+
 
 def downsample_dataframe(data, interval):
     n_old_points = len(data)

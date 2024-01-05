@@ -33,7 +33,7 @@ def test_plot_power_vs_dist():
                         starttime_per_step=time_per_step,  # fuel_per_step= fuel_consumed,
                         # full_dist_traveled = dummy_list,
                         ship_params_per_step=sp, gcr=dummy_list)
-    route.plot_power_vs_dist("orange", "Route X")
+    route.plot_power_vs_dist("orange", "Route X", "fuel")
 
 
 def test_get_accumulated_dist():
@@ -64,7 +64,7 @@ def test_get_hist_values_from_widths():
     bin_content_normalised_test = np.array([1 / 3, 3, 5 / 2])
     bin_centres_test = np.array([1.5, 3.5, 5])
 
-    hist_values = graphics.get_hist_values_from_widths(bin_widths, bin_content_unnormalised)
+    hist_values = graphics.get_hist_values_from_widths(bin_widths, bin_content_unnormalised, "fuel")
 
     assert np.array_equal(bin_centres_test, hist_values['bin_centres'])
-    assert np.array_equal(bin_content_normalised_test, hist_values['bin_content'])
+    assert np.array_equal(bin_content_normalised_test, hist_values['bin_contents'])

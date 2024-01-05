@@ -56,21 +56,16 @@ def test_get_angle_bins_minsmaller0():
 
 
 def test_downsample_dataframe():
-    time = np.array([datetime(2022, 12, 19),
-                     datetime(2022, 12, 19) + timedelta(days=1),
-                     datetime(2022, 12, 19) + timedelta(days=2),
-                     datetime(2022, 12, 19) + timedelta(days=3),
-                     datetime(2022, 12, 19) + timedelta(days=4),
-                     datetime(2022, 12, 19) + timedelta(days=5),
-                     datetime(2022, 12, 19) + timedelta(days=6)])
+    time = np.array(
+        [datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=1), datetime(2022, 12, 19) + timedelta(days=2),
+         datetime(2022, 12, 19) + timedelta(days=3), datetime(2022, 12, 19) + timedelta(days=4),
+         datetime(2022, 12, 19) + timedelta(days=5), datetime(2022, 12, 19) + timedelta(days=6)])
     var_1 = np.array([0, 0.5, 1, 1.5, 2, 2.5, 3])
     var_2 = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     var_1_test = np.array([0.5, 2., 3.])
     var_2_test = np.array([0.1, 0.4, 0.6])
 
-    data = {'time' : time,
-            'var_1': var_1,
-            'var_2': var_2}
+    data = {'time': time, 'var_1': var_1, 'var_2': var_2}
     df = pd.DataFrame(data)
 
     df_resampled = unit.downsample_dataframe(df, 3)

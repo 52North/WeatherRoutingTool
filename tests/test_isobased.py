@@ -460,9 +460,8 @@ def test_find_routes_testduplicates():
     ra.find_every_route_reaching_destination()
     ra.find_routes_reaching_destination_in_current_step(2)
     assert ra.current_step_routes['st_index'][0] == 0
-    assert ra.current_step_routes['st_index'][1] == 1
-    assert ra.current_step_routes['st_index'][2] == 2
-    assert ra.current_step_routes.shape[0] == 3
+    assert ra.current_step_routes['st_index'][1] == 2
+    assert ra.current_step_routes.shape[0] == 2
     assert ra.next_step_routes.shape[0] == 0
     assert ra.route_list[0].lons_per_step[1] == -123.32
     assert ra.route_list[1].lons_per_step[1] == -123.76

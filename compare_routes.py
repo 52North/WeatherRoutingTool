@@ -8,7 +8,8 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
-def plot_power_vs_dist(rp_list, rp_str_list, power_type = 'fuel'):
+
+def plot_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type)
@@ -17,7 +18,8 @@ def plot_power_vs_dist(rp_list, rp_str_list, power_type = 'fuel'):
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
-def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type = 'fuel'):
+
+def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_coord(ax, graphics.get_colour(irp), rp_str_list[irp], coordstring, power_type)
@@ -25,8 +27,9 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type = 'fuel'):
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + '_vs_' + coordstring + '.png')
 
-def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type = 'fuel'):
-    windspeed = '12.5'
+
+def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
+    # windspeed = '12.5'
 
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     ax.set_ylim(0.9, 1.1)
@@ -36,14 +39,13 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type = 'fuel'):
                                                rp_str_list[irp] + '/' + rp_str_list[0], power_type)
 
     ax.legend(loc='lower left')
-    #ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
+    # ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
 
 
 if __name__ == "__main__":
     filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_original_resistances_rough_weather.json")
-    filename2 = (
-        "/home/kdemmich/MariData/IMDC_paper/Routes/route_rough_weather_80perc_windresistance.json")
+    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_rough_weather_80perc_windresistance.json")
     filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_rough_weather_120perc_windresistance.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
@@ -69,7 +71,7 @@ if __name__ == "__main__":
     do_plot_weather = False
     do_plot_route = True
     do_plot_power_vs_dist = True
-    do_plot_fuel_vs_dist  = True
+    do_plot_fuel_vs_dist = True
 
     do_plot_power_vs_lon = True
     do_plot_fuel_vs_lon = True
@@ -111,7 +113,7 @@ if __name__ == "__main__":
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_read1.start, rp_read1.finish, '' , False)
+        fig, ax = graphics.generate_basemap(fig, None, rp_read1.start, rp_read1.finish, '', False)
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):

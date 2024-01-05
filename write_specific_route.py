@@ -12,7 +12,6 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
@@ -36,7 +35,6 @@ if __name__ == "__main__":
     departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
-
 
     wind_speed = 12.5
     u_comp = - math.sin(45) * wind_speed
@@ -104,7 +102,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.remove()
-    fig, ax = graphics.generate_basemap(fig=fig, depth=None,  start=start, finish=finish, show_depth=False)
+    fig, ax = graphics.generate_basemap(fig=fig, depth=None, start=start, finish=finish, show_depth=False)
     ax = rp.plot_route(ax, graphics.get_colour(0), rp)
     plt.savefig(figurefile + '/route_' + str(routename) + '.png')
 

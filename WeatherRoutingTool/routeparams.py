@@ -243,9 +243,9 @@ class RouteParams():
 
     def get_power_type(self, power_type):
         if power_type == 'power':
-            return {"value" : self.ship_params_per_step.get_power(), "label" : 'Leistung', "unit": 'kW'}
+            return {"value": self.ship_params_per_step.get_power(), "label": 'Leistung', "unit": 'kW'}
         if power_type == 'fuel':
-            return {"value" : self.get_fuel_per_dist(), "label" : "Treibstoffverbrauch", "unit": 't'}
+            return {"value": self.get_fuel_per_dist(), "label": "Treibstoffverbrauch", "unit": 't'}
 
     def plot_power_vs_dist(self, color, label, power_type):
         power = self.get_power_type(power_type)
@@ -254,8 +254,8 @@ class RouteParams():
         dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
 
-        plt.bar(hist_values["bin_centres"], hist_values["bin_contents"], hist_values["bin_widths"], fill=False, color=color, edgecolor=color,
-                label=label)
+        plt.bar(hist_values["bin_centres"], hist_values["bin_contents"], hist_values["bin_widths"], fill=False,
+                color=color, edgecolor=color, label=label)
         plt.xlabel('Weglänge (km)')
         if power_type == 'power':
             plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
@@ -277,7 +277,7 @@ class RouteParams():
         if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
             raise ValueError("Ratios are only possible for same binning!")
 
-        hist_values_ratios = hist_values_nom["bin_contents"]/hist_values_denom["bin_contents"]
+        hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
 
         plt.plot(hist_values_denom["bin_centres"], hist_values_ratios, marker='o', color=color, linewidth=0,
                  label=label)
@@ -351,12 +351,13 @@ class RouteParams():
                 ax_power = graphics.set_graphics_standards(ax_power)
                 ax_rwind = graphics.set_graphics_standards(ax_rwind)
 
-            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_contents"], normalised_power["bin_widths"],
-                                      fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_contents"],
+                                      normalised_power["bin_widths"], fill=False, color=color, edgecolor=color,
+                                      label=label, linewidth=2)
             list_lines.append(line_power)
 
-            ax_rwind.bar(normalised_power["bin_centres"], r_wind, normalised_power["bin_widths"], fill=False, color=color, edgecolor=color,
-                         linewidth=2)
+            ax_rwind.bar(normalised_power["bin_centres"], r_wind, normalised_power["bin_widths"], fill=False,
+                         color=color, edgecolor=color, linewidth=2)
 
         # ax_power.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
         ax_rwind.axhline(y=0., color='gray', linestyle='dashed', linewidth=2)
@@ -451,7 +452,7 @@ class RouteParams():
         # select every interval's element from dataset
         interval = 10
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
-        sog= sog_data['SOG'].values
+        sog = sog_data['SOG'].values
         lat = data['Latitude'][::interval].values
         lon = data['Longitude'][::interval].values
 
