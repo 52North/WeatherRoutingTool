@@ -34,6 +34,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
+    'SHIP_TYPE': 'CBT',
     'ISOCHRONE_MAX_ROUTING_STEPS': 60,
     'TIME_FORECAST': 90
 }
@@ -47,7 +48,7 @@ class Config:
 
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
-        self.ALGORITHM_TYPE = None  # options: 'isofuel'
+        self.ALGORITHM_TYPE = None  # options: 'isofuel', 'genetic', 'speedy_isobased'
         self.BOAT_DRAUGHT = None  # in m
         self.BOAT_SPEED = None  # in m/s
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
@@ -76,6 +77,7 @@ class Config:
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
+        self.SHIP_TYPE = None  # options: 'CBT', 'SML'
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
