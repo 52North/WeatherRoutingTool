@@ -17,6 +17,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
+    'CONSTANT_FUEL_RATE': None,
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth'],
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
@@ -53,6 +54,7 @@ class Config:
         self.BOAT_SPEED = None  # in m/s
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints'
+        self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step
         self.DATA_MODE = None  # options: 'automatic', 'from_file', 'odc'
         self.DEFAULT_MAP = None  # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
@@ -100,6 +102,9 @@ class Config:
                 is None or os.getenv('WRT_DB_USERNAME') is None or os.getenv('WRT_DB_PASSWORD') is None):
             logger.warning("No complete database configuration provided! Note that it is needed for some "
                            "constraint modules.")
+
+        if (self.ALGORITHM_TYPE == 'speedy_isobased') and (self.CONSTANT_FUEL_RATE is None):
+            raise ValueError('Need to initialise CONSTANT_FUEL_RATE when running with algorithm type speedy_isobased')
 
     def print(self):
         # ToDo: prettify output
