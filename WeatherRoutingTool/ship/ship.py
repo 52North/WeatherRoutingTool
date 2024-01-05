@@ -42,7 +42,7 @@ class Boat:
         pass
 
 
-class ConstantFuelBoat:
+class ConstantFuelBoat(Boat):
     fuel: float  # dummy value for fuel_rate that is returned
     speed: float    # boat speed
 
@@ -55,7 +55,7 @@ class ConstantFuelBoat:
         logger.info(form.get_log_step('boat fuel rate' + str(self.fuel), 1))
 
     def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
-        debug = True
+        debug = False
         n_requests = len(courses)
 
         dummy_array = np.full(n_requests, -99)
@@ -75,7 +75,7 @@ class ConstantFuelBoat:
         )
 
         if (debug):
-            form.print_step('flattened shape power' + str(ship_params.get_power.shape), 1)
+            ship_params.print()
             form.print_step('fuel result' + str(ship_params.get_fuel()))
 
         return ship_params
