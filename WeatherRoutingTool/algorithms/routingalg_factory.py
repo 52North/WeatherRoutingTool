@@ -17,7 +17,7 @@ class RoutingAlgFactory:
                     "'performance.log'.")
         form.print_line()
 
-        if config.ALGORITHM_TYPE == 'isofuel':
+        if (config.ALGORITHM_TYPE == 'isofuel') or (config.ALGORITHM_TYPE == 'speedy_isobased'):
             ra = IsoFuel(config)
 
         if config.ALGORITHM_TYPE == 'genetic':
