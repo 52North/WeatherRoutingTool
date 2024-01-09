@@ -538,7 +538,11 @@ class WaterDepth(NegativeContraint):
     def load_data_from_file(self, depth_path):
         # FIXME: if this loads the whole file into memory, apply subsetting already here
         logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
-        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        ds_depth = None
+        if graphics.get_figure_path():
+            ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        else:
+            ds_depth = xr.open_dataset(depth_path)
         return ds_depth
 
     def set_draught(self, depth):
