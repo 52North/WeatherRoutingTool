@@ -7,26 +7,12 @@ import numpy as np
 import xarray as xr
 
 import WeatherRoutingTool.utils.unit_conversion as utils
+import tests.basic_test_func as basic_test_func
 
+from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
-
-
-# def test_inc():
-#    pol = Tanker(2)
-#    assert pol.inc(3) == 5
-
-def get_default_Tanker():
-    dirname = os.path.dirname(__file__)
-    DEFAULT_GFS_FILE = os.path.join(dirname, 'data/reduced_testdata_weather.nc')  # CMEMS needs lat: 30 to 45,
-    # lon: 0 to 20
-    COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    DEPTH_FILE = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-
-    pol = Tanker(2)
-    pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE, DEPTH_FILE)
-    return pol
 
 
 def compare_times(time64, time):
@@ -115,7 +101,7 @@ def test_get_fuel_from_netCDF():
     ds = xr.Dataset(data_vars, coords, attrs)
     print(ds)
 
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     ship_params = pol.extract_params_from_netCDF(ds)
     power_test = ship_params.get_power()
     rpm_test = ship_params.get_rpm()
@@ -164,7 +150,7 @@ def test_power_consumption_returned():
     lon_test = np.array([13.3, 13.3, 13.6, 13.6, 13.9, 13.9])
 
     # dummy course netCDF
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     pol.set_boat_speed(np.array([8]))
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
@@ -263,7 +249,7 @@ def test_get_netCDF_courses_isobased():
     courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
                      datetime(2022, 12, 19) + timedelta(days=360),
                      datetime(2022, 12, 19) + timedelta(days=360),
@@ -309,7 +295,7 @@ def test_get_netCDF_courses_GA():
     lon_short = np.array([4, 4, 1.5])
     courses = np.array([0.1, 0.2, 0.3])
 
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=180),
                      datetime(2022, 12, 19) + timedelta(days=360)])
 
@@ -347,13 +333,13 @@ def test_get_fuel_for_fixed_waypoints():
     route_lats = np.array([54.9, 54.7, 54.5, 54.2])
     route_lons = np.array([13.2, 13.4, 13.7, 13.9])
 
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     pol.set_boat_speed(bs)
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
 
-    ship_params = pol.get_fuel_per_time_netCDF(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                               waypoint_dict['start_lons'], waypoint_dict['start_times'])
+    ship_params = pol.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
+                                          waypoint_dict['start_lons'], waypoint_dict['start_times'])
     ship_params.print()
 
     ds = xr.open_dataset(pol.courses_path)
@@ -396,10 +382,10 @@ def test_wind_force():
     time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
     bs = 6
 
-    pol = get_default_Tanker()
+    pol = basic_test_func.create_dummy_Tanker_object()
     pol.set_boat_speed(bs)
 
-    ship_params = pol.get_fuel_per_time_netCDF(courses, lats, lons, time, True)
+    ship_params = pol.get_ship_parameters(courses, lats, lons, time, True)
     power = ship_params.get_power()
     rwind = ship_params.get_rwind()
 

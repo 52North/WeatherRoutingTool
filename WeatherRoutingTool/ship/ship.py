@@ -1,3 +1,4 @@
+import copy
 import logging
 import math
 import sys
@@ -23,23 +24,61 @@ logger = logging.getLogger('WRT.ship')
 
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.
-# SailingBoat: implements sailing boat as originally done in wind-router package. Deprecated. ToDo: can be deleted?
 
 class Boat:
     speed: float  # boat speed in m/s
-    simple_fuel_model: xr.Dataset  # xarray dataset containing
 
-    def __init__(self):
-        self.speed = -99
-
-    def get_rpm(self):
+    def __init__(self, config):
+        self.speed = config.BOAT_SPEED
         pass
 
-    def get_fuel_per_time(self):
+    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
         pass
 
-    def boat_speed_function(self, wind=None):
+    def get_boat_speed(self):
+        return self.speed
+
+    def print_init(self):
         pass
+
+
+class ConstantFuelBoat(Boat):
+    fuel: float  # dummy value for fuel_rate that is returned
+    speed: float    # boat speed
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.fuel = config.CONSTANT_FUEL_RATE
+
+    def print_init(self):
+        logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
+        logger.info(form.get_log_step('boat fuel rate' + str(self.fuel), 1))
+
+    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
+        debug = False
+        n_requests = len(courses)
+
+        dummy_array = np.full(n_requests, -99)
+        fuel_array = np.full(n_requests, self.fuel)
+        speed_array = np.full(n_requests, self.speed)
+
+        ship_params = ShipParams(
+            fuel=fuel_array,
+            power=dummy_array,
+            rpm=dummy_array,
+            speed=speed_array,
+            r_wind=dummy_array,
+            r_calm=dummy_array,
+            r_waves=dummy_array,
+            r_shallow=dummy_array,
+            r_roughness=dummy_array
+        )
+
+        if (debug):
+            ship_params.print()
+            form.print_step('fuel result' + str(ship_params.get_fuel()))
+
+        return ship_params
 
 
 ##
@@ -67,22 +106,30 @@ class Boat:
 # testing purposes.
 
 class Tanker(Boat):
-    # Boat properties
-    rpm: int  # propeller revolutions per minute
-
     # Connection to hydrodynamic modeling
-    hydro_model: mariPower.ship
+    # hydro_model: mariPower.ship
+    draught: float
 
     # additional information
     environment_path: str  # path to netCDF for environmental data
     courses_path: str  # path to netCDF which contains the power estimation per course
+    depth_path: str
 
-    def __init__(self, rpm):
-        Boat.__init__(self)
-        self.rpm = rpm
+    def __init__(self, config):
+        super().__init__(config)
+        self.environment_path = config.WEATHER_DATA
+        self.courses_path = config.COURSES_FILE
+        self.depth_path = config.DEPTH_DATA
+        self.draught = config.BOAT_DRAUGHT
+
+        # self.hydro_model = mariPower.ship.CBT()
+        # self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
 
     def print_init(self):
-        logger.info(form.get_log_step('Boat speed' + str(self.speed), 1))
+        logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
+        logger.info(form.get_log_step('path to weather data' + self.environment_path, 1))
+        logger.info(form.get_log_step('path to CoursesRoute.nc' + self.courses_path, 1))
+        logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
 
     def init_hydro_model_single_pars(self):
         self.hydro_model = mariPower.ship.CBT()
@@ -114,14 +161,6 @@ class Tanker(Boat):
     #    self.environment_path = netCDF_filepath
     #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
-    #  initialise mariPower.ship for communication of courses via netCDF and passing of environmental data as netCDF
-    # (current standard)
-    def init_hydro_model_Route(self, filepath_env, filepath_courses, filepath_depth):
-        self.hydro_model = mariPower.ship.CBT()
-        self.environment_path = filepath_env
-        self.courses_path = filepath_courses
-        self.depth_path = filepath_depth
-
     def set_boat_speed(self, speed):
         self.speed = speed
 
@@ -130,12 +169,6 @@ class Tanker(Boat):
 
     def set_courses_path(self, path):
         self.courses_path = path
-
-    def set_rpm(self, rpm):
-        self.rpm = rpm
-
-    def get_rpm(self):
-        return self.rpm
 
     ##
     # function that implements a dummy model for the estimation of the fuel consumption. Only to be used for code
@@ -267,10 +300,10 @@ class Tanker(Boat):
         # ToDo: use logger.debug and args.debug
         if (debug):
             print('Requesting power calculation')
-            time_str = 'Time:' + str(time)
-            lats_str = 'Latitude:' + str(lats)
-            lons_str = 'Longitude:' + str(lons)
-            course_str = 'Courses:' + str(courses)
+            time_str = 'Time:' + str(time.shape)
+            lats_str = 'Latitude:' + str(lats.shape)
+            lons_str = 'Longitude:' + str(lons.shape)
+            course_str = 'Courses:' + str(courses.shape)
             speed_str = 'Boat speed:' + str(speed.shape)
             form.print_step(time_str, 1)
             form.print_step(lats_str, 1)
@@ -391,12 +424,15 @@ class Tanker(Boat):
     # Is not yet working as explained for Tanker.get_fuel_netCDF_loop
     #
     def get_fuel_netCDF(self):
-        ship = mariPower.ship.CBT()
-
-        # start_time = time.time()
         # FIXME: add self.depth_path again after fixing related issues with memory allocation
         # mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
-        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
+
+        # FIXME: ask Martin S. to provide copy constructur s.t. ship does not need to be initialised
+        #  in every routing step
+        mariPower_ship = mariPower.ship.CBT()
+        mariPower_ship.Draught = np.array([self.draught])
+
+        mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path)
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
@@ -460,7 +496,7 @@ class Tanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_fuel_per_time_netCDF(self, courses, lats, lons, time, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
         self.write_netCDF_courses(courses, lats, lons, time, unique_coords)
 
         # ds = self.get_fuel_netCDF_loop()
@@ -470,13 +506,6 @@ class Tanker(Boat):
         ds.close()
 
         return ship_params
-
-    ##
-    # ToDo: deprecated?
-    def boat_speed_function(self, wind=None):
-        speed = np.array([self.speed])
-        # speed = np.repeat(speed, wind['twa'].shape, axis=0)
-        return speed
 
     ##
     # Function to test/plot power consumption in dependence of wind speed and direction. Works only with old versions

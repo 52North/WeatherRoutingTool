@@ -32,7 +32,7 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
     # windspeed = '12.5'
 
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.9, 1.1)
+    ax.set_ylim(0.8, 1.2)
 
     for irp in range(1, len(rp_list)):
         rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(irp),
@@ -44,12 +44,12 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
 
 
 if __name__ == "__main__":
-    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_original_resistances_rough_weather.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_rough_weather_80perc_windresistance.json")
-    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_rough_weather_120perc_windresistance.json")
+    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_original_resistances.json")
+    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_95_calmwaterres.json")
+    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_105_calmwaterres.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes/Test"
+    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes/"
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     rp_read4 = RouteParams.from_file(filename4)
 
     rp_1_str = 'Standardeinstellung'
-    rp_2_str = '80% Windwiderstand'
-    rp_3_str = '120% Windwiderstand'
+    rp_2_str = '95% Glattwasserwiderstand'
+    rp_3_str = '105% Glattwasserwiderstand'
     rp_4_str = 'original'
 
     rp_list = [rp_read1, rp_read2, rp_read3]
@@ -70,18 +70,18 @@ if __name__ == "__main__":
 
     do_plot_weather = False
     do_plot_route = True
-    do_plot_power_vs_dist = True
-    do_plot_fuel_vs_dist = True
+    do_plot_power_vs_dist = False
+    do_plot_fuel_vs_dist = False
 
-    do_plot_power_vs_lon = True
-    do_plot_fuel_vs_lon = True
-    do_plot_power_vs_lat = True
-    do_plot_fuel_vs_lat = True
+    do_plot_power_vs_lon = False
+    do_plot_fuel_vs_lon = False
+    do_plot_power_vs_lat = False
+    do_plot_fuel_vs_lat = False
 
-    do_plot_power_vs_dist_showing_weather = True
+    do_plot_power_vs_dist_showing_weather = False
     do_plot_power_vs_dist_ratios = True
     do_plot_fuel_vs_dist_ratios = True
-    do_write_fuel = True
+    do_write_fuel = False
 
     ##
     # init wheather
@@ -91,6 +91,7 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = (44, -15, 53, 3)
 
     #############################################################################
+    plt.rcParams['font.size'] = graphics.get_standard('font_size')
 
     departure_time_dt = dt.datetime.strptime(departure_time, '%Y-%m-%dT%H:%MZ')
     plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')

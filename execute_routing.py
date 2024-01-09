@@ -4,7 +4,7 @@ from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config, set_up_logging
-from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.algorithms.routingalg_factory import *
@@ -77,9 +77,8 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise boat
-    boat = Tanker(-99)
-    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
-    boat.set_boat_speed(config.BOAT_SPEED)
+    bf = ShipFactory()
+    boat = bf.get_ship(config)
 
     # *******************************************
     # initialise constraints

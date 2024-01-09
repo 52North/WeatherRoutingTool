@@ -25,7 +25,7 @@ if __name__ == "__main__":
     config = Config(file_name=args.file)
     config.print()
 
-    routename = 'original_resistances'
+    routename = 'original_resistances_calm_weather'
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
@@ -36,7 +36,20 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    wind_speed = 12.5
+    weather_type = 'calm_weather'  # rought_weather, calm_weather
+    wind_speed = -99
+    VHMO = -99
+
+    if weather_type == 'rough_weather':
+        wind_speed = 12.5
+        VHMO = 2
+    if weather_type == 'calm_weather':
+        wind_speed = 2.5
+        VHMO = 1
+
+    if wind_speed == -99 or VHMO == -99:
+        raise ValueError('windspeed or VHM0 not set!')
+
     u_comp = - math.sin(45) * wind_speed
     v_comp = - math.cos(45) * wind_speed
 
@@ -53,8 +66,8 @@ if __name__ == "__main__":
         'v-component_of_wind_height_above_ground': v_comp,
         # 'utotal': utotal,
         # 'vtotal': vtotal,
-        'VHM0': 1,
-        'VMDR': 315,
+        'VHM0': VHMO,
+        'VMDR': 45,
         'VTPK': 10
     }
     wf = WeatherFactory()
@@ -99,18 +112,3 @@ if __name__ == "__main__":
 
     if args.geojson_out:
         rp.return_route_to_API(args.geojson_out)
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.remove()
-    fig, ax = graphics.generate_basemap(fig=fig, depth=None, start=start, finish=finish, show_depth=False)
-    ax = rp.plot_route(ax, graphics.get_colour(0), rp)
-    plt.savefig(figurefile + '/route_' + str(routename) + '.png')
-
-    ##
-    # plotting power vs. distance
-    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    # rp_read1.plot_power_vs_dist(graphics.get_colour(0), rp_1_str)
-    # rp_read2.plot_power_vs_dist(graphics.get_colour(1), rp_2_str)
-    # rp_read3.plot_power_vs_dist(graphics.get_colour(2), rp_3_str)
-    rp.plot_power_vs_dist(graphics.get_colour(3), '')
-    plt.savefig(figurefile + '/route_' + str(routename) + '_powervs_dist.png')

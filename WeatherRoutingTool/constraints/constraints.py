@@ -527,8 +527,11 @@ class WaterDepth(NegativeContraint):
 
         downloader = DownloaderFactory.get_downloader(downloader_type='opendap', platform='etoponcei')
         depth_data = downloader.download()
-        depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
-        depth_data_chunked = depth_data_chunked.rename(z="depth")
+        depth_data_chunked = depth_data.rename(z="depth")
+        depth_data_chunked = depth_data_chunked.rename(lat="latitude")
+        depth_data_chunked = depth_data_chunked.rename(lon="longitude")
+        depth_data_chunked = depth_data_chunked.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
+
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),
                                                     longitude=slice(self.map_size.lon1, self.map_size.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
@@ -538,7 +541,11 @@ class WaterDepth(NegativeContraint):
     def load_data_from_file(self, depth_path):
         # FIXME: if this loads the whole file into memory, apply subsetting already here
         logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
-        ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        ds_depth = None
+        if graphics.get_figure_path():
+            ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        else:
+            ds_depth = xr.open_dataset(depth_path)
         return ds_depth
 
     def set_draught(self, depth):

@@ -17,6 +17,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
+    'CONSTANT_FUEL_RATE': None,
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth'],
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
@@ -34,6 +35,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
+    'SHIP_TYPE': 'CBT',
     'ISOCHRONE_MAX_ROUTING_STEPS': 60,
     'TIME_FORECAST': 90
 }
@@ -47,11 +49,12 @@ class Config:
 
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
-        self.ALGORITHM_TYPE = None  # options: 'isofuel'
+        self.ALGORITHM_TYPE = None  # options: 'isofuel', 'genetic', 'speedy_isobased'
         self.BOAT_DRAUGHT = None  # in m
         self.BOAT_SPEED = None  # in m/s
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints'
+        self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step
         self.DATA_MODE = None  # options: 'automatic', 'from_file', 'odc'
         self.DEFAULT_MAP = None  # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
@@ -76,6 +79,7 @@ class Config:
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
+        self.SHIP_TYPE = None  # options: 'CBT', 'SML'
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
@@ -98,6 +102,13 @@ class Config:
                 is None or os.getenv('WRT_DB_USERNAME') is None or os.getenv('WRT_DB_PASSWORD') is None):
             logger.warning("No complete database configuration provided! Note that it is needed for some "
                            "constraint modules.")
+
+        if (self.ALGORITHM_TYPE == 'speedy_isobased') and (self.CONSTANT_FUEL_RATE is None):
+            raise ValueError('Need to initialise CONSTANT_FUEL_RATE when running with algorithm type speedy_isobased')
+
+        figurepath = os.getenv('WRT_FIGURE_PATH')
+        if (self.ALGORITHM_TYPE == 'speedy_isobased') and os.path.isdir(figurepath) and os.access(figurepath, os.W_OK):
+            logger.warning("For speedy execution of isobased algorithms, figures should be deactivated")
 
     def print(self):
         # ToDo: prettify output
