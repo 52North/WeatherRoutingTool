@@ -427,7 +427,8 @@ class Tanker(Boat):
         # FIXME: add self.depth_path again after fixing related issues with memory allocation
         # mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
 
-        # FIXME: ask Martin S. to provide copy constructur s.t. ship does not need to be initialised in every routing step
+        # FIXME: ask Martin S. to provide copy constructur s.t. ship does not need to be initialised
+        #  in every routing step
         mariPower_ship = mariPower.ship.CBT()
         mariPower_ship.Draught = np.array([self.draught])
 
