@@ -194,23 +194,14 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    dirname = os.path.dirname(__file__)
-    weatherpath = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    routepath = os.path.join(dirname, 'data/CoursesRoute.nc')
-    depthpath = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-    tk = Tanker(-99)
-    tk.set_boat_speed(boat_speed)
-    tk.init_hydro_model_Route(weatherpath, routepath, depthpath)
+    tk = basic_test_func.create_dummy_Tanker_object()
+    tk.speed = boat_speed
 
-    ##
-    # initialise wind
-    wind = {'tws': np.array([5, 5, 5, 5]), 'twa': np.array([0, 0, 0, 0])}
-
-    ship_params = tk.get_fuel_per_time_netCDF(ra.get_current_azimuth(), ra.get_current_lats(), ra.get_current_lons(),
-                                              ra.time)
+    ship_params = tk.get_ship_parameters(ra.get_current_azimuth(), ra.get_current_lats(), ra.get_current_lons(),
+                                         ra.time)
     ship_params.print()
 
-    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.boat_speed_function(wind))
+    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.get_boat_speed())
 
     assert np.allclose(dist, dist_test, 0.1)
     assert np.allclose(delta_time, time_test, 0.1)

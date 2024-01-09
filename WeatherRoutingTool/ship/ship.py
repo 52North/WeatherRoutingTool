@@ -35,7 +35,7 @@ class Boat:
     def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
         pass
 
-    def get_boat_speed(self, wind=None):
+    def get_boat_speed(self):
         return self.speed
 
     def print_init(self):
