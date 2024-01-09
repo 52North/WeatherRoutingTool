@@ -79,6 +79,7 @@ class IsoBased(RoutingAlg):
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
     route_list: list
+    pruning_error: bool
 
     def __init__(self, config):
         super().__init__(config)
@@ -102,6 +103,7 @@ class IsoBased(RoutingAlg):
         self.current_variant = self.current_azimuth
         self.route_reached_destination = False
         self.route_reached_waypoint = False
+        self.pruning_error = False
 
         self.finish_temp = self.finish
         self.start_temp = self.start
@@ -265,6 +267,8 @@ class IsoBased(RoutingAlg):
 
                         self.set_next_step_routes()
                         self.pruning_per_step(True)
+                        if self.pruning_error:
+                            break
                         self.route_reached_destination = False
                         continue
                 else:
@@ -289,7 +293,15 @@ class IsoBased(RoutingAlg):
             #     self.update_fig('bp')
             self.pruning_per_step(True)
             # form.print_current_time('move_boat: Step=' + str(routing_step), start_time)  # if routing_step>9:
-            self.update_fig('p')
+
+            if self.pruning_error:
+                break
+            else:
+                self.update_fig('p')
+
+        if self.pruning_error:
+            self.count = self.count - 1
+            self.revert_to_previous_step()
 
         # ToDo: harmonize with above/merge with loop over routing steps
         if self.desired_number_of_routes == 1:
@@ -298,6 +310,8 @@ class IsoBased(RoutingAlg):
             return route
         else:
             if not self.route_list:
+                if self.pruning_error:
+                    self.routes_from_previous_step()
                 self.final_pruning()
                 route = self.terminate()
                 return route
@@ -435,7 +449,7 @@ class IsoBased(RoutingAlg):
             lons_per_step = self.lons_per_step[:, idxs]
             azimuth_per_step = self.azimuth_per_step[:, idxs]
             dist_per_step = self.dist_per_step[:, idxs]
-            shipparams_per_step = self.shipparams_per_step.get_reduced_2D_object(idxs)
+            shipparams_per_step = self.shipparams_per_step.get_reduced_2D_object(idxs=idxs)
 
             starttime_per_step = self.starttime_per_step[:, idxs]
             time = self.time[idxs]
@@ -516,6 +530,79 @@ class IsoBased(RoutingAlg):
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
+    def revert_to_previous_step(self):
+        """
+        In this function, when all routes are constrained, the arrays are set
+        back to previous step to provide meaningful error message.
+        """
+        last_idx = len(self.lats_per_step)
+        col = len(self.lats_per_step[0])
+        self.update_fig('p')
+        try:
+            self.lats_per_step = self.lats_per_step[1:last_idx, :]
+            self.lons_per_step = self.lons_per_step[1:last_idx, :]
+            self.azimuth_per_step = self.azimuth_per_step[1:last_idx, :]
+            self.dist_per_step = self.dist_per_step[1:last_idx, :]
+            self.starttime_per_step = self.starttime_per_step[1:last_idx, :]
+            self.shipparams_per_step.get_reduced_2D_object(row_start=1,
+                                                           row_end=last_idx,
+                                                           col_start=0, col_end=col,
+                                                           idxs=None)
+            col_len = len(self.lats_per_step[0])
+            self.current_azimuth = np.full(col_len, -99)
+            self.current_variant = np.full(col_len, -99)
+            self.full_dist_traveled = np.full(col_len, -99)
+            self.full_time_traveled = np.full(col_len, -99)
+            self.full_fuel_consumed = np.full(col_len, -99)
+            self.time = np.full(col_len, -99)
+
+        except IndexError:
+            raise Exception('Pruned indices running out of bounds.')
+
+    def routes_from_previous_step(self):
+        '''
+        When all routes are constrained, unique routes until the current constrained
+        routing step are found here. Then, the unique routes are written into json files
+        and plotted.
+        '''
+        df_current_last_step = pd.DataFrame()
+        df_current_last_step['st_lat'] = self.lats_per_step[1, :]
+        df_current_last_step['st_lon'] = self.lons_per_step[1, :]
+        df_current_last_step['fuel'] = self.shipparams_per_step.get_fuel()[0, :]
+
+        len_df = df_current_last_step.shape[0]
+
+        df_current_last_step.set_index(pd.RangeIndex(start=0, stop=len_df),
+                                       inplace=True)
+        df_current_last_step.rename_axis('st_index', inplace=True)
+        df_current_last_step = df_current_last_step.reset_index()
+        df_current_last_step.set_index(['st_lat', 'st_lon'], inplace=True,
+                                       drop=False)
+        df_grouped_by_routes_has_same_origin = df_current_last_step.groupby(
+            level=['st_lat', 'st_lon'])
+
+        unique_origins = df_grouped_by_routes_has_same_origin.groups.keys()
+
+        current_step_routes = pd.DataFrame()
+
+        for unique_key in unique_origins:
+            specific_route_group = df_grouped_by_routes_has_same_origin.get_group(
+                unique_key)
+            row_min_fuel = specific_route_group.drop_duplicates(subset=['fuel'])
+            current_step_routes = pd.concat(
+                    [current_step_routes, row_min_fuel],
+                    ignore_index=True)
+        current_step_routes_sort_by_fuel = current_step_routes.sort_values(by=['fuel'])
+        route_df = current_step_routes_sort_by_fuel['st_index']
+
+        for idx in route_df:
+            route_object = self.make_route_object(idx)
+            self.route_list.append(route_object)
+            if self.path_to_route_folder is not None:
+                route_object.return_route_to_API(self.path_to_route_folder + '/' + 'route_' + str(idx) + ".json")
+            if self.figure_path is not None:
+                self.plot_routes(idx)
+
     def update_shipparams(self, ship_params_single_step):
         new_rpm = np.vstack((ship_params_single_step.get_rpm(), self.shipparams_per_step.get_rpm()))
         new_power = np.vstack((ship_params_single_step.get_power(), self.shipparams_per_step.get_power()))
@@ -594,6 +681,8 @@ class IsoBased(RoutingAlg):
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
             logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
+            self.pruning_error = True
+            return
         elif (valid_pruning_segments < self.prune_segments * 0.1):
             logger.warning(' More than 90% of pruning segments constrained for step ' + str(self.count) + '!')
         elif (valid_pruning_segments < self.prune_segments * 0.5):
@@ -988,8 +1077,10 @@ class IsoBased(RoutingAlg):
             route_ensemble[iRoute].set_ydata(self.lats_per_step[:, iRoute])
             fig.canvas.draw()
             fig.canvas.flush_events()
-
-        final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
+        if self.pruning_error:
+            final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
+        else:
+            final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
         logger.info('Save updated figure to ' + final_path)
         plt.savefig(final_path)
 

@@ -228,20 +228,32 @@ class ShipParams():
                         r_shallow=r_shallow, r_roughness=r_roughness)
         return sp
 
-    def get_reduced_2D_object(self, idx):
+    def get_reduced_2D_object(self, row_start=None, row_end=None, col_start=None, col_end=None, idxs=None):
+
         try:
-            speed = self.speed[:, idx]
-            fuel = self.fuel[:, idx]
-            power = self.power[:, idx]
-            rpm = self.rpm[:, idx]
-            r_wind = self.r_wind[:, idx]
-            r_calm = self.r_calm[:, idx]
-            r_waves = self.r_waves[:, idx]
-            r_shallow = self.r_shallow[:, idx]
-            r_roughness = self.r_roughness[:, idx]
+            if idxs is None:
+                speed = self.speed[row_start:row_end, col_start:col_end]
+                fuel = self.fuel[row_start:row_end, col_start:col_end]
+                power = self.power[row_start:row_end, col_start:col_end]
+                rpm = self.rpm[row_start:row_end, col_start:col_end]
+                r_wind = self.r_wind[row_start:row_end, col_start:col_end]
+                r_calm = self.r_calm[row_start:row_end, col_start:col_end]
+                r_waves = self.r_waves[row_start:row_end, col_start:col_end]
+                r_shallow = self.r_shallow[row_start:row_end, col_start:col_end]
+                r_roughness = self.r_roughness[row_start:row_end, col_start:col_end]
+            else:
+                speed = self.speed[:, idxs]
+                fuel = self.fuel[:, idxs]
+                power = self.power[:, idxs]
+                rpm = self.rpm[:, idxs]
+                r_wind = self.r_wind[:, idxs]
+                r_calm = self.r_calm[:, idxs]
+                r_waves = self.r_waves[:, idxs]
+                r_shallow = self.r_shallow[:, idxs]
+                r_roughness = self.r_roughness[:, idxs]
         except ValueError:
             raise ValueError(
-                'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
+                'Index ' + str(col_start) + ' is not available for array with length ' + str(self.speed.shape[0]))
 
         sp = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves,
                         r_shallow=r_shallow, r_roughness=r_roughness)
