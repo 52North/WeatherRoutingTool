@@ -50,7 +50,6 @@ if __name__ == "__main__":
     if wind_speed == -99 or VHMO == -99:
         raise ValueError('windspeed or VHM0 not set!')
 
-
     u_comp = - math.sin(45) * wind_speed
     v_comp = - math.cos(45) * wind_speed
 
@@ -113,5 +112,3 @@ if __name__ == "__main__":
 
     if args.geojson_out:
         rp.return_route_to_API(args.geojson_out)
-
-
