@@ -106,6 +106,10 @@ class Config:
         if (self.ALGORITHM_TYPE == 'speedy_isobased') and (self.CONSTANT_FUEL_RATE is None):
             raise ValueError('Need to initialise CONSTANT_FUEL_RATE when running with algorithm type speedy_isobased')
 
+        figurepath = os.getenv('WRT_FIGURE_PATH')
+        if (self.ALGORITHM_TYPE == 'speedy_isobased') and os.path.isdir(figurepath) and os.access(figurepath, os.W_OK):
+            logger.warning("For speedy execution of isobased algorithms, figures should be deactivated")
+
     def print(self):
         # ToDo: prettify output
         logger.info(self.__dict__)
