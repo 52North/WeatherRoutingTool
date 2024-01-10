@@ -242,7 +242,7 @@ class IsoBased(RoutingAlg):
 
         for routing_step in range(0, self.ncount):
             logger.info(form.get_line_string())
-            logger.info('Step ' + str(routing_step))
+            logger.info('Step ' + str(self.count))
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
@@ -270,6 +270,7 @@ class IsoBased(RoutingAlg):
                         if self.pruning_error:
                             break
                         self.route_reached_destination = False
+                        self.count += 1
                         continue
                 else:
                     break
@@ -287,6 +288,7 @@ class IsoBased(RoutingAlg):
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
                     self.finish_temp))
                 self.update_fig('p')
+                self.count += 1
                 continue
 
             # if routing_step>9:
@@ -298,6 +300,7 @@ class IsoBased(RoutingAlg):
                 break
             else:
                 self.update_fig('p')
+                self.count += 1
 
         if self.pruning_error:
             self.count = self.count - 1
@@ -365,7 +368,6 @@ class IsoBased(RoutingAlg):
         self.update_time(delta_time)
         self.update_fuel(delta_fuel)
         self.update_shipparams(ship_params)
-        self.count += 1
 
     def find_every_route_reaching_destination(self):
         """
