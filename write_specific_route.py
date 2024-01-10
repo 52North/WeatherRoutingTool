@@ -71,12 +71,12 @@ if __name__ == "__main__":
         'VTPK': 10
     }
     wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE,
-                        file_path=windfile,
-                        departure_time=departure_time,
-                        time_forecast=time_forecast,
-                        time_resolution=time_resolution,
-                        default_map=default_map,
-                        var_dict=var_dict)
+                                    file_path=windfile,
+                                    departure_time=departure_time,
+                                    time_forecast=time_forecast,
+                                    time_resolution=time_resolution,
+                                    default_map=default_map,
+                                    var_dict=var_dict)
     fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 

@@ -72,7 +72,8 @@ if __name__ == "__main__":
     # wt_read = WeatherCondFromFile(departure_time, time_forecast, 3)
     # wt_read.read_dataset(weather_path)
     # wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
-    wt = WeatherFactory.get_weather(config.DATA_MODE, windfile, departure_time, time_forecast, time_resolution, default_map)
+    wt = WeatherFactory.get_weather(config.DATA_MODE, windfile, departure_time, time_forecast, time_resolution,
+                                    default_map)
 
     # *******************************************
     # initialise boat
