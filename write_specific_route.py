@@ -87,7 +87,7 @@ if __name__ == "__main__":
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog.mean())
 
     ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                                waypoint_dict['start_lons'], time[:-1])
+                                           waypoint_dict['start_lons'], time[:-1])
 
     start = (lat[0], lon[0])
     finish = (lat[-1], lon[-1])

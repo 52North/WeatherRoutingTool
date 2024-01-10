@@ -1044,7 +1044,7 @@ class IsoBased(RoutingAlg):
         if (self.showDepth):
             # decrease resolution and extend of depth data to prevent memory issues when plotting
             # FIXME: double check boundary settings (set exact to trim for debugging)
-            ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
+            ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='trim').mean()
             ds_depth_coarsened = ds_depth.compute()
 
             self.depth = ds_depth_coarsened.where(
