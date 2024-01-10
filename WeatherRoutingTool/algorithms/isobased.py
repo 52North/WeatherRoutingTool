@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
+from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.graphics as graphics
@@ -90,17 +91,17 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.array([[self.start[0]]])
         self.lons_per_step = np.array([[self.start[1]]])
         self.azimuth_per_step = np.array([[None]])
-        self.dist_per_step = np.array([[0]])
+        self.dist_per_step = np.array([[0]]) * u.meter
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
         self.starttime_per_step = np.array([[self.departure_time]])
 
         self.time = np.array([self.departure_time])
-        self.full_time_traveled = np.array([0])
-        self.full_fuel_consumed = np.array([0])
+        self.full_time_traveled = np.array([0]) * u.s
+        self.full_fuel_consumed = np.array([0]) * u.kg
         self.full_dist_traveled = np.array([0])
 
-        self.current_variant = self.current_azimuth
+        self.current_variant = self.current_azimuth * u.degree
         self.route_reached_destination = False
         self.route_reached_waypoint = False
         self.pruning_error = False
@@ -354,8 +355,11 @@ class IsoBased(RoutingAlg):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
             if self.route_reached_destination:
+                print('delta_time: ', delta_time)
+                print('delta_time_last_step: ', delta_time_last_step)
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
+
                         delta_time[i] = delta_time_last_step[i]
                         delta_fuel[i] = delta_fuel_last_step[i]
                         dist[i] = dist_last_step[i]
@@ -908,7 +912,7 @@ class IsoBased(RoutingAlg):
         self.starttime_per_step = np.flip(self.starttime_per_step, 0)
         self.shipparams_per_step.flip()
 
-        time = round(self.full_time_traveled / 3600, 2)
+        time = round(self.full_time_traveled.to(u.hour).value, 2)
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
                             route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
                             lons_per_step=self.lons_per_step[:], azimuths_per_step=self.azimuth_per_step[:],
@@ -927,20 +931,22 @@ class IsoBased(RoutingAlg):
         :param dist:
         :return:
         """
-        debug = False
+        debug = True
 
         nvariants = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(nvariants, self.finish_temp[0]), np.full(nvariants, self.finish_temp[1]))
+        dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
+        dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
-            # print('dist traveled:', dist)
+            print('dist traveled:', dist)
 
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_variant, dist)
+                           self.current_variant, dist.value)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -960,7 +966,7 @@ class IsoBased(RoutingAlg):
 
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
-                        move['azi2'][i] = dist_to_dest['azi1'][i]
+                        move['azi2'][i] = dist_to_dest['azi1'][i].value
                         move['lat2'][i] = new_lat[i]
                         move['lon2'][i] = new_lon[i]
             else:
