@@ -383,11 +383,11 @@ class Tanker(Boat):
         r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
         r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
-        speed = self.speed * u.meter/u.second
+        speed = np.repeat(self.speed, power.shape)
 
         # fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(speed, power.shape, axis=0),
+        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed,
                                  r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
                                  r_roughness=r_roughness)
         ship_params.print()
