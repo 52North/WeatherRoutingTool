@@ -49,16 +49,16 @@ class ShipParams():
                    r_roughness=np.full(shape=ncoorinate_points, fill_value=0), )
 
     def print(self):
-        logger.info('fuel: ', self.fuel)
-        logger.info('rpm: ', self.rpm)
-        logger.info('power: ', self.power)
-        logger.info('speed: ', self.speed)
-        logger.info('r_calm: ', self.r_calm)
-        logger.info('r_wind: ', self.r_wind)
-        logger.info('r_waves: ', self.r_waves)
-        logger.info('r_shallow: ', self.r_shallow)
-        logger.info('r_roughness: ', self.r_roughness)
-        logger.info('fuel_type: ', self.fuel_type)
+        logger.info('fuel: ' + str(self.fuel.value) + ' ' + self.fuel.unit.to_string())
+        logger.info('rpm: ' + str(self.rpm.value) + ' ' + self.rpm.unit.to_string())
+        logger.info('power: ' + str(self.power.value) + ' ' + self.power.unit.to_string())
+        logger.info('speed: ' + str(self.speed.value) + ' ' + self.speed.unit.to_string())
+        logger.info('r_calm: ' + str(self.r_calm.value) + ' ' + self.r_calm.unit.to_string())
+        logger.info('r_wind: ' + str(self.r_wind.value) + ' ' + self.r_wind.unit.to_string())
+        logger.info('r_waves: ' + str(self.r_waves.value) + ' ' + self.r_waves.unit.to_string())
+        logger.info('r_shallow: ' + str(self.r_shallow.value) + ' ' + self.r_shallow.unit.to_string())
+        logger.info('r_roughness: ' + str(self.r_roughness.value) + ' ' + self.r_roughness.unit.to_string())
+        logger.info('fuel_type: ' + str(self.fuel_type))
 
     def print_shape(self):
         logger.info('fuel: ', self.fuel.shape)
