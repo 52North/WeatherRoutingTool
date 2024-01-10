@@ -20,8 +20,8 @@ class ShipFactory:
         else:
             if config.SHIP_TYPE == 'CBT':
                 ship = Tanker(config)
-            if config.SHIP_TYPE == 'SML':
-                raise NotImplementedError('Ship type SML is not yet supported!')
+            if config.SHIP_TYPE == 'SAL':
+                raise NotImplementedError('Ship type SAL is not yet supported!')
 
         ship.print_init()
         return ship

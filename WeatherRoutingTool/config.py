@@ -79,7 +79,7 @@ class Config:
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
         self.ROUTE_PATH = None  # path to json file to which the route will be written
-        self.SHIP_TYPE = None  # options: 'CBT', 'SML'
+        self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
