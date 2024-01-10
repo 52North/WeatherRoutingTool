@@ -8,8 +8,8 @@ logger = logging.getLogger('WRT')
 
 class ShipFactory:
 
-    @classmethod
-    def get_ship(cls, config):
+    @staticmethod
+    def get_ship(config):
         ship = None
 
         logger.info("Initialising of ship type")

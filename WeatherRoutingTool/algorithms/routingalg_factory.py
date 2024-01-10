@@ -9,8 +9,8 @@ logger = logging.getLogger('WRT')
 
 class RoutingAlgFactory:
 
-    @classmethod
-    def get_routing_alg(cls, config):
+    @staticmethod
+    def get_routing_alg(config):
         ra = None
 
         logger.info("Initialising and starting routing procedure. For log output check the files 'info.log' and "

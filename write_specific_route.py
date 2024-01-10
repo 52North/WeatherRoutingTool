@@ -70,8 +70,7 @@ if __name__ == "__main__":
         'VMDR': 45,
         'VTPK': 10
     }
-    wf = WeatherFactory()
-    wt = wf.get_weather(data_mode=config.DATA_MODE,
+    wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE,
                         file_path=windfile,
                         departure_time=departure_time,
                         time_forecast=time_forecast,
