@@ -80,14 +80,16 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
+
+    lat, lon, time, sog, draught = RouteParams.from_gzip_file(args.route)
+
     boat = Tanker(config)
+    # boat.set_ship_property('Draught', [draught.mean()])
 
-    lat, lon, time, sog = RouteParams.from_gzip_file(args.route)
-
-    waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog.mean())
+    waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                           waypoint_dict['start_lons'], time[:-1])
+                                           waypoint_dict['start_lons'], time[:-1], sog)
 
     start = (lat[0], lon[0])
     finish = (lat[-1], lon[-1])
