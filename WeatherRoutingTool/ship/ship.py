@@ -295,10 +295,12 @@ class Tanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, speed = None, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed=-99, unique_coords=False):
         debug = False
-        if speed is None:
+
+        if speed == -99:
             speed = np.repeat(self.speed, courses.shape, axis=0)
+
         courses = units.degree_to_pmpi(courses)
 
         # ToDo: use logger.debug and args.debug
@@ -431,11 +433,9 @@ class Tanker(Boat):
         # FIXME: add self.depth_path again after fixing related issues with memory allocation
         # mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
 
-        # FIXME: ask Martin S. to provide copy constructur s.t. ship does not need to be initialised
-        #  in every routing step
         mariPower_ship = copy.deepcopy(self.hydro_model)
-
-        mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path, self.depth_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path,
+                                                    self.depth_path)
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
@@ -499,8 +499,8 @@ class Tanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
-        self.write_netCDF_courses(courses, lats, lons, time, unique_coords)
+    def get_ship_parameters(self, courses, lats, lons, time, speed=-99, unique_coords=False):
+        self.write_netCDF_courses(courses, lats, lons, time, speed, unique_coords)
 
         # ds = self.get_fuel_netCDF_loop()
         # ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
