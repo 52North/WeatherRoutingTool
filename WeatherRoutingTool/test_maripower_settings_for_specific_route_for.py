@@ -12,7 +12,7 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
-def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, filedir, maripower_scenario, weather_scenario):
+def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, filedir, maripower_scenario, weather_scenario):
     boat = Tanker(config)
     # boat.set_ship_property('Draught', [draught.mean()])
     boat.set_ship_property('WindForcesFactor', windfactor)
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     for key in maripower_test_scenarios_wind:
-        run_maripower_test_scenario(maripower_test_scenarios_calm[key], maripower_test_scenarios_wind[key], maripower_test_scenarios_wave[key], args.geojson_out, key, weather_type)
+        run_maripower_test_scenario(maripower_test_scenarios_calm[key], maripower_test_scenarios_wind[key], maripower_test_scenarios_wave[key], waypoint_dict, args.geojson_out, key, weather_type)
 
 
 
