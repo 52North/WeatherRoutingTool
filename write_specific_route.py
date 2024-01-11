@@ -12,6 +12,32 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
+def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, filedir, maripower_scenario, weather_scenario):
+    boat = Tanker(config)
+    # boat.set_ship_property('Draught', [draught.mean()])
+    boat.set_ship_property('WindForcesFactor', windfactor)
+    boat.set_ship_property('WaveForcesFactor', wavefactor)
+    boat.set_ship_property('CalmWaterFactor', calmfactor)
+
+    print('Running scenario for ' + weather_scenario + ' with maripower setting ' + maripower_scenario)
+
+    ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
+                                           waypoint_dict['start_lons'], time[:-1], sog)
+
+    start = (lat[0], lon[0])
+    finish = (lat[-1], lon[-1])
+
+    rp = RouteParams(count=lat.shape[0] - 1, start=start, finish=finish, gcr=None, route_type='read_from_csv',
+        time=waypoint_dict['travel_times'], lats_per_step=lat, lons_per_step=lon,
+        azimuths_per_step=waypoint_dict['courses'], dists_per_step=waypoint_dict['dist'], starttime_per_step=time,
+        ship_params_per_step=ship_params)
+
+    if args.geojson_out:
+        filename = filedir + 'route_' + weather_scenario + '_' + maripower_scenario + '.json'
+        print('Writing file: ', filename)
+        rp.return_route_to_API(filename)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
@@ -36,7 +62,7 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    weather_type = 'calm_weather'  # rought_weather, calm_weather
+    weather_type = 'rough_weather'  # rought_weather, calm_weather
     wind_speed = -99
     VHMO = -99
 
@@ -70,6 +96,11 @@ if __name__ == "__main__":
         'VMDR': 45,
         'VTPK': 10
     }
+
+    maripower_test_scenarios_calm = {'original': 1., '95perc_calm': 0.95, '105perc_calm': 1.05, '80perc_wind': 1., '120perc_wind': 1., '80perc_wave': 1., '120perc_wave': 1.}
+    maripower_test_scenarios_wind = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 0.8, '120perc_wind': 1.2, '80perc_wave': 1., '120perc_wave': 1.}
+    maripower_test_scenarios_wave = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 1., '120perc_wind': 1., '80perc_wave': 0.8, '120perc_wave': 1.2}
+
     wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE,
                                     file_path=windfile,
                                     departure_time=departure_time,
@@ -82,32 +113,11 @@ if __name__ == "__main__":
 
 
     lat, lon, time, sog, draught = RouteParams.from_gzip_file(args.route)
-
-    boat = Tanker(config)
-    # boat.set_ship_property('Draught', [draught.mean()])
-
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
-    ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                           waypoint_dict['start_lons'], time[:-1], sog)
+    for key in maripower_test_scenarios_wind:
+        run_maripower_test_scenario(maripower_test_scenarios_calm[key], maripower_test_scenarios_wind[key], maripower_test_scenarios_wave[key], args.geojson_out, key, weather_type)
 
-    start = (lat[0], lon[0])
-    finish = (lat[-1], lon[-1])
 
-    rp = RouteParams(
-        count=lat.shape[0] - 1,
-        start=start,
-        finish=finish,
-        gcr=None,
-        route_type='read_from_csv',
-        time=waypoint_dict['travel_times'],
-        lats_per_step=lat,
-        lons_per_step=lon,
-        azimuths_per_step=waypoint_dict['courses'],
-        dists_per_step=waypoint_dict['dist'],
-        starttime_per_step=time,
-        ship_params_per_step=ship_params
-    )
 
-    if args.geojson_out:
-        rp.return_route_to_API(args.geojson_out)
+
