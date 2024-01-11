@@ -127,7 +127,6 @@ class Tanker(Boat):
 
     def set_ship_property(self, variable, value):
         setattr(self.hydro_model, variable, value)
-        print('Set variable ' + variable + ' to ' + str(self.hydro_model.Draught))
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
