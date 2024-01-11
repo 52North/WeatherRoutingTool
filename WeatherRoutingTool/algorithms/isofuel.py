@@ -96,7 +96,8 @@ class IsoFuel(IsoBased):
             print('Final IsoFuel Pruning...')
             print('full_fuel_consumed:', self.full_fuel_consumed)
 
-        idxs = np.argmin(self.full_fuel_consumed)
+        full_fuel_array = np.sum(self.absolute_fuel_per_step, axis=0)
+        idxs = np.argmin(full_fuel_array)
 
         if debug:
             print('idxs', idxs)

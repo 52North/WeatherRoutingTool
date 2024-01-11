@@ -387,7 +387,7 @@ class Tanker(Boat):
 
         # fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed,
+        ship_params = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
                                  r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
                                  r_roughness=r_roughness)
         ship_params.print()

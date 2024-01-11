@@ -56,6 +56,7 @@ class IsoBased(RoutingAlg):
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
+    absolutefuel_per_step: np.ndarray
 
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
@@ -63,7 +64,6 @@ class IsoBased(RoutingAlg):
     # the lenght of the following arrays depends on the number of variants (variant segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
     full_time_traveled: np.ndarray  # time elapsed since start for all variants
-    full_fuel_consumed: np.ndarray
     time: np.ndarray  # current datetime for all variants
 
     variant_segments: int  # number of variant segments in the range of -180° to 180°
@@ -95,10 +95,10 @@ class IsoBased(RoutingAlg):
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
         self.starttime_per_step = np.array([[self.departure_time]])
+        self.absolutefuel_per_step = np.array([[0]]) * u.kg
 
         self.time = np.array([self.departure_time])
         self.full_time_traveled = np.array([0]) * u.s
-        self.full_fuel_consumed = np.array([0]) * u.kg
         self.full_dist_traveled = np.array([0])
 
         self.current_variant = self.current_azimuth * u.degree
@@ -148,6 +148,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('variants = ' + str(self.azimuth_per_step)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step)))
         logger.info(form.get_log_step('starttime_per_step = ' + str(self.starttime_per_step)))
+        logger.info(form.get_log_step('absolut_fuel_per_step = ' + str(self.absolutefuel_per_step)))
 
         self.shipparams_per_step.print()
 
@@ -155,7 +156,6 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('time =' + str(self.time)))
         logger.info(form.get_log_step('full_dist_traveled=' + str(self.full_dist_traveled)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled)))
-        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed)))
 
     def print_shape(self):
         logger.info('PRINTING SHAPE')
@@ -164,6 +164,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step.shape)))
         logger.info(form.get_log_step('azimuths = ' + str(self.azimuth_per_step.shape)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step.shape)))
+        logger.info(form.get_log_step('absolute_fuel_per_step = ' + str(self.absolutefuel_per_step.shape)))
 
         self.shipparams_per_step.print_shape()
 
@@ -171,7 +172,6 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('time =' + str(self.time.shape)))
         logger.info(form.get_log_step('full_dist_traveled = ' + str(self.full_dist_traveled.shape)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled.shape)))
-        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed.shape)))
 
     def current_position(self):
         logger.info('CURRENT POSITION')
@@ -194,11 +194,11 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.variant_segments + 1, axis=1)
+        self.absolutefuel_per_step = np.repeat(self.absolutefuel_per_step, self.variant_segments + 1, axis=1)
 
         self.shipparams_per_step.define_variants(self.variant_segments)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
-        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.variant_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
         self.time = np.repeat(self.time, self.variant_segments + 1, axis=0)
         self.check_variant_def()
@@ -367,7 +367,7 @@ class IsoBased(RoutingAlg):
 
         self.update_position(move, is_constrained, dist)
         self.update_time(delta_time)
-        self.update_fuel(delta_fuel)
+        self.update_fuel(delta_fuel, ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
         self.count += 1
 
@@ -521,6 +521,7 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
@@ -529,7 +530,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
-            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
@@ -548,6 +548,7 @@ class IsoBased(RoutingAlg):
             self.azimuth_per_step = self.azimuth_per_step[1:last_idx, :]
             self.dist_per_step = self.dist_per_step[1:last_idx, :]
             self.starttime_per_step = self.starttime_per_step[1:last_idx, :]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[1:last_idx, :]
             self.shipparams_per_step.get_reduced_2D_object(row_start=1,
                                                            row_end=last_idx,
                                                            col_start=0, col_end=col,
@@ -557,7 +558,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
-            self.full_fuel_consumed = np.full(col_len, -99)
             self.time = np.full(col_len, -99)
 
         except IndexError:
@@ -698,6 +698,7 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
@@ -706,7 +707,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
-            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
@@ -1027,10 +1027,10 @@ class IsoBased(RoutingAlg):
         if debug:
             print('full_dist_traveled:', self.full_dist_traveled)
 
-    def update_fuel(self, delta_fuel):
-        self.shipparams_per_step.set_fuel(np.vstack((delta_fuel, self.shipparams_per_step.get_fuel())))
-        for i in range(0, self.full_fuel_consumed.shape[0]):
-            self.full_fuel_consumed[i] += delta_fuel[i]
+    def update_fuel(self, delta_fuel, fuel_rate):
+        self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
+        self.absolutefuel_per_step = np.vstack(delta_fuel, self.absolutefuel_per_step)
+
 
     def get_delta_variables(self, boat, wind, bs):
         pass
@@ -1132,6 +1132,6 @@ class IsoBased(RoutingAlg):
             logger.error('Did not arrive at destination! Need further routing steps or lower resolution.')
 
     def check_positive_power(self):
-        negative_power = self.full_fuel_consumed < 0
+        negative_power = self.absolutefuel_per_step.sum() < 0
         if negative_power.any():
             logging.error('Have negative values for power consumption. Needs to be checked!')
