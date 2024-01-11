@@ -32,7 +32,7 @@ class Boat:
         self.speed = config.BOAT_SPEED
         pass
 
-    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed = None, unique_coords=False):
         pass
 
     def get_boat_speed(self):
@@ -122,8 +122,12 @@ class Tanker(Boat):
         self.depth_path = config.DEPTH_DATA
         self.draught = config.BOAT_DRAUGHT
 
-        # self.hydro_model = mariPower.ship.CBT()
-        # self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
+        self.hydro_model = mariPower.ship.CBT()
+        self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
+
+    def set_ship_property(self, variable, value):
+        setattr(self.hydro_model, variable, value)
+        print('Set variable ' + variable + ' to ' + str(self.hydro_model.Draught))
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
@@ -292,9 +296,10 @@ class Tanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed = None, unique_coords=False):
         debug = False
-        speed = np.repeat(self.speed, courses.shape, axis=0)
+        if speed is None:
+            speed = np.repeat(self.speed, courses.shape, axis=0)
         courses = units.degree_to_pmpi(courses)
 
         # ToDo: use logger.debug and args.debug
@@ -429,10 +434,9 @@ class Tanker(Boat):
 
         # FIXME: ask Martin S. to provide copy constructur s.t. ship does not need to be initialised
         #  in every routing step
-        mariPower_ship = mariPower.ship.CBT()
-        mariPower_ship.Draught = np.array([self.draught])
+        mariPower_ship = copy.deepcopy(self.hydro_model)
 
-        mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path, self.depth_path)
         # form.print_current_time('time for mariPower request:', start_time)
 
         ds_read = xr.open_dataset(self.courses_path)
