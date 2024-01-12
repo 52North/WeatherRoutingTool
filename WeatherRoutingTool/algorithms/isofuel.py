@@ -3,6 +3,7 @@ import logging
 
 from geovectorslib import geod
 import numpy as np
+from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isobased import IsoBased
@@ -15,7 +16,7 @@ class IsoFuel(IsoBased):
     delta_fuel: float
 
     def __init__(self, config):
-        self.delta_fuel = config.DELTA_FUEL
+        self.delta_fuel = config.DELTA_FUEL * u.kg
         super().__init__(config)
 
     def print_init(self):
@@ -68,6 +69,7 @@ class IsoFuel(IsoBased):
         dist = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                             np.full(self.get_current_lats().shape, self.finish_temp[0]),
                             np.full(self.get_current_lons().shape, self.finish_temp[1]))
+        dist['s12'] = dist['s12'] * u.meter
         delta_time = self.get_time(bs, dist['s12'])
         delta_fuel = fuel * delta_time
 
@@ -84,7 +86,7 @@ class IsoFuel(IsoBased):
             raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
         for i in range(0, self.full_time_traveled.shape[0]):
             self.full_time_traveled[i] += delta_time[i]
-            self.time[i] += dt.timedelta(seconds=delta_time[i])
+            self.time[i] += dt.timedelta(seconds=delta_time[i].value)
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
 
     def final_pruning(self):
@@ -94,7 +96,8 @@ class IsoFuel(IsoBased):
             print('Final IsoFuel Pruning...')
             print('full_fuel_consumed:', self.full_fuel_consumed)
 
-        idxs = np.argmin(self.full_fuel_consumed)
+        full_fuel_array = np.sum(self.absolute_fuel_per_step, axis=0)
+        idxs = np.argmin(full_fuel_array)
 
         if debug:
             print('idxs', idxs)

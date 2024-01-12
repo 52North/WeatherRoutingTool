@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
+from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.graphics as graphics
@@ -55,6 +56,7 @@ class IsoBased(RoutingAlg):
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
+    absolutefuel_per_step: np.ndarray
 
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
@@ -62,7 +64,6 @@ class IsoBased(RoutingAlg):
     # the lenght of the following arrays depends on the number of variants (variant segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
     full_time_traveled: np.ndarray  # time elapsed since start for all variants
-    full_fuel_consumed: np.ndarray
     time: np.ndarray  # current datetime for all variants
 
     variant_segments: int  # number of variant segments in the range of -180° to 180°
@@ -90,17 +91,17 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.array([[self.start[0]]])
         self.lons_per_step = np.array([[self.start[1]]])
         self.azimuth_per_step = np.array([[None]])
-        self.dist_per_step = np.array([[0]])
+        self.dist_per_step = np.array([[0]]) * u.meter
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
         self.starttime_per_step = np.array([[self.departure_time]])
+        self.absolutefuel_per_step = np.array([[0]]) * u.kg
 
         self.time = np.array([self.departure_time])
-        self.full_time_traveled = np.array([0])
-        self.full_fuel_consumed = np.array([0])
+        self.full_time_traveled = np.array([0]) * u.s
         self.full_dist_traveled = np.array([0])
 
-        self.current_variant = self.current_azimuth
+        self.current_variant = self.current_azimuth * u.degree
         self.route_reached_destination = False
         self.route_reached_waypoint = False
         self.pruning_error = False
@@ -147,6 +148,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('variants = ' + str(self.azimuth_per_step)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step)))
         logger.info(form.get_log_step('starttime_per_step = ' + str(self.starttime_per_step)))
+        logger.info(form.get_log_step('absolut_fuel_per_step = ' + str(self.absolutefuel_per_step)))
 
         self.shipparams_per_step.print()
 
@@ -154,7 +156,6 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('time =' + str(self.time)))
         logger.info(form.get_log_step('full_dist_traveled=' + str(self.full_dist_traveled)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled)))
-        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed)))
 
     def print_shape(self):
         logger.info('PRINTING SHAPE')
@@ -163,6 +164,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step.shape)))
         logger.info(form.get_log_step('azimuths = ' + str(self.azimuth_per_step.shape)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step.shape)))
+        logger.info(form.get_log_step('absolute_fuel_per_step = ' + str(self.absolutefuel_per_step.shape)))
 
         self.shipparams_per_step.print_shape()
 
@@ -170,7 +172,6 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('time =' + str(self.time.shape)))
         logger.info(form.get_log_step('full_dist_traveled = ' + str(self.full_dist_traveled.shape)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled.shape)))
-        logger.info(form.get_log_step('full_fuel_consumed = ' + str(self.full_fuel_consumed.shape)))
 
     def current_position(self):
         logger.info('CURRENT POSITION')
@@ -193,11 +194,11 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.variant_segments + 1, axis=1)
+        self.absolutefuel_per_step = np.repeat(self.absolutefuel_per_step, self.variant_segments + 1, axis=1)
 
         self.shipparams_per_step.define_variants(self.variant_segments)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
-        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.variant_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
         self.time = np.repeat(self.time, self.variant_segments + 1, axis=0)
         self.check_variant_def()
@@ -355,8 +356,11 @@ class IsoBased(RoutingAlg):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
             if self.route_reached_destination:
+                print('delta_time: ', delta_time)
+                print('delta_time_last_step: ', delta_time_last_step)
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
+
                         delta_time[i] = delta_time_last_step[i]
                         delta_fuel[i] = delta_fuel_last_step[i]
                         dist[i] = dist_last_step[i]
@@ -364,7 +368,7 @@ class IsoBased(RoutingAlg):
 
         self.update_position(move, is_constrained, dist)
         self.update_time(delta_time)
-        self.update_fuel(delta_fuel)
+        self.update_fuel(delta_fuel, ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
 
     def find_every_route_reaching_destination(self):
@@ -517,6 +521,7 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
@@ -525,7 +530,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
-            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
@@ -544,6 +548,7 @@ class IsoBased(RoutingAlg):
             self.azimuth_per_step = self.azimuth_per_step[1:last_idx, :]
             self.dist_per_step = self.dist_per_step[1:last_idx, :]
             self.starttime_per_step = self.starttime_per_step[1:last_idx, :]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[1:last_idx, :]
             self.shipparams_per_step.get_reduced_2D_object(row_start=1,
                                                            row_end=last_idx,
                                                            col_start=0, col_end=col,
@@ -553,7 +558,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
-            self.full_fuel_consumed = np.full(col_len, -99)
             self.time = np.full(col_len, -99)
 
         except IndexError:
@@ -694,6 +698,7 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
@@ -702,7 +707,6 @@ class IsoBased(RoutingAlg):
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
-            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
@@ -908,7 +912,7 @@ class IsoBased(RoutingAlg):
         self.starttime_per_step = np.flip(self.starttime_per_step, 0)
         self.shipparams_per_step.flip()
 
-        time = round(self.full_time_traveled / 3600, 2)
+        time = round(self.full_time_traveled.to(u.hour).value, 2)
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
                             route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
                             lons_per_step=self.lons_per_step[:], azimuths_per_step=self.azimuth_per_step[:],
@@ -927,20 +931,22 @@ class IsoBased(RoutingAlg):
         :param dist:
         :return:
         """
-        debug = False
+        debug = True
 
         nvariants = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(nvariants, self.finish_temp[0]), np.full(nvariants, self.finish_temp[1]))
+        dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
+        dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
-            # print('dist traveled:', dist)
+            print('dist traveled:', dist)
 
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_variant, dist)
+                           self.current_variant, dist.value)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -960,7 +966,7 @@ class IsoBased(RoutingAlg):
 
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
-                        move['azi2'][i] = dist_to_dest['azi1'][i]
+                        move['azi2'][i] = dist_to_dest['azi1'][i].value
                         move['lat2'][i] = new_lat[i]
                         move['lon2'][i] = new_lon[i]
             else:
@@ -1021,10 +1027,10 @@ class IsoBased(RoutingAlg):
         if debug:
             print('full_dist_traveled:', self.full_dist_traveled)
 
-    def update_fuel(self, delta_fuel):
-        self.shipparams_per_step.set_fuel(np.vstack((delta_fuel, self.shipparams_per_step.get_fuel())))
-        for i in range(0, self.full_fuel_consumed.shape[0]):
-            self.full_fuel_consumed[i] += delta_fuel[i]
+    def update_fuel(self, delta_fuel, fuel_rate):
+        self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
+        self.absolutefuel_per_step = np.vstack(delta_fuel, self.absolutefuel_per_step)
+
 
     def get_delta_variables(self, boat, wind, bs):
         pass
@@ -1126,6 +1132,6 @@ class IsoBased(RoutingAlg):
             logger.error('Did not arrive at destination! Need further routing steps or lower resolution.')
 
     def check_positive_power(self):
-        negative_power = self.full_fuel_consumed < 0
+        negative_power = self.absolutefuel_per_step.sum() < 0
         if negative_power.any():
             logging.error('Have negative values for power consumption. Needs to be checked!')

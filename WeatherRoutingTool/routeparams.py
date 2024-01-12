@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pandas
 from geovectorslib import geod
 from matplotlib import gridspec
+from astropy import units as u
 
 import WeatherRoutingTool.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
@@ -137,17 +138,17 @@ class RouteParams():
                 properties['hull_roughness_resistance'] = {'value': -99, 'unit': 'N'}
             else:
                 time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
-                properties['speed'] = {'value': self.ship_params_per_step.speed[i], 'unit': 'm/s'}
-                properties['engine_power'] = {'value': self.ship_params_per_step.power[i] / 1000, 'unit': 'kW'}
-                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i] / (time_passed * 1000),
+                properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': self.ship_params_per_step.speed[i].unit.to_string()}
+                properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
+                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i].to(u.tonne).value / (time_passed),
                                                   'unit': 'mt/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i], 'unit': 'Hz'}
-                properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i], 'unit': 'N'}
-                properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i], 'unit': 'N'}
-                properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i], 'unit': 'N'}
-                properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i], 'unit': 'N'}
-                properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i],
+                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i].value, 'unit': 'Hz'}
+                properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i].value, 'unit': 'N'}
+                properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i].value, 'unit': 'N'}
+                properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i].value, 'unit': 'N'}
+                properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i].value, 'unit': 'N'}
+                properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i].value,
                                                            'unit': 'N'}
 
             feature['type'] = 'Feature'

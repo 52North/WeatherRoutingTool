@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-from scipy.interpolate import RegularGridInterpolator
-from geovectorslib import geod
+from astropy import units as u
 
 import mariPower
 import WeatherRoutingTool.utils.formatting as form
@@ -29,7 +28,7 @@ class Boat:
     speed: float  # boat speed in m/s
 
     def __init__(self, config):
-        self.speed = config.BOAT_SPEED
+        self.speed = config.BOAT_SPEED * u.meter/u.second
         pass
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
@@ -384,20 +383,24 @@ class Tanker(Boat):
         if (debug):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
-        power = ds['Power_brake'].to_numpy().flatten()
-        rpm = ds['RotationRate'].to_numpy().flatten()
-        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
-        r_wind = ds['Wind_resistance'].to_numpy().flatten()
-        r_calm = ds['Calm_resistance'].to_numpy().flatten()
-        r_waves = ds['Wave_resistance'].to_numpy().flatten()
-        r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten()
-        r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten()
+        power = ds['Power_brake'].to_numpy().flatten() * u.Watt
+        rpm = ds['RotationRate'].to_numpy().flatten() * u.Hz
+        # fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
+        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne/u.hour
+        fuel = fuel.to(u.kg/u.second)
+        r_wind = ds['Wind_resistance'].to_numpy().flatten() * u.newton
+        r_calm = ds['Calm_resistance'].to_numpy().flatten() * u.newton
+        r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
+        r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
+        r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
+        speed = np.repeat(self.speed, power.shape)
 
         # fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=np.repeat(self.speed, power.shape, axis=0),
+        ship_params = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
                                  r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
                                  r_roughness=r_roughness)
+        ship_params.print()
 
         if (debug):
             form.print_step('Dataset with fuel' + str(ds), 1)
