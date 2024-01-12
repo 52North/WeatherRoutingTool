@@ -12,7 +12,9 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
-def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, filedir, maripower_scenario, weather_scenario):
+
+def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, filedir, maripower_scenario,
+                                weather_scenario):
     boat = Tanker(config)
     # boat.set_ship_property('Draught', [draught.mean()])
     boat.set_ship_property('WindForcesFactor', windfactor)
@@ -27,9 +29,18 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
     start = (lat[0], lon[0])
     finish = (lat[-1], lon[-1])
 
-    rp = RouteParams(count=lat.shape[0] - 1, start=start, finish=finish, gcr=None, route_type='read_from_csv',
-        time=waypoint_dict['travel_times'], lats_per_step=lat, lons_per_step=lon,
-        azimuths_per_step=waypoint_dict['courses'], dists_per_step=waypoint_dict['dist'], starttime_per_step=time,
+    rp = RouteParams(
+        count=lat.shape[0] - 1,
+        start=start,
+        finish=finish,
+        gcr=None,
+        route_type='read_from_csv',
+        time=waypoint_dict['travel_times'],
+        lats_per_step=lat,
+        lons_per_step=lon,
+        azimuths_per_step=waypoint_dict['courses'],
+        dists_per_step=waypoint_dict['dist'],
+        starttime_per_step=time,
         ship_params_per_step=ship_params)
 
     if args.geojson_out:
@@ -97,9 +108,12 @@ if __name__ == "__main__":
         'VTPK': 10
     }
 
-    maripower_test_scenarios_calm = {'original': 1., '95perc_calm': 0.95, '105perc_calm': 1.05, '80perc_wind': 1., '120perc_wind': 1., '80perc_wave': 1., '120perc_wave': 1.}
-    maripower_test_scenarios_wind = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 0.8, '120perc_wind': 1.2, '80perc_wave': 1., '120perc_wave': 1.}
-    maripower_test_scenarios_wave = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 1., '120perc_wind': 1., '80perc_wave': 0.8, '120perc_wave': 1.2}
+    maripower_test_scenarios_calm = {'original': 1., '95perc_calm': 0.95, '105perc_calm': 1.05, '80perc_wind': 1.,
+                                     '120perc_wind': 1., '80perc_wave': 1., '120perc_wave': 1.}
+    maripower_test_scenarios_wind = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 0.8,
+                                     '120perc_wind': 1.2, '80perc_wave': 1., '120perc_wave': 1.}
+    maripower_test_scenarios_wave = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 1.,
+                                     '120perc_wind': 1., '80perc_wave': 0.8, '120perc_wave': 1.2}
 
     wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE,
                                     file_path=windfile,
@@ -111,13 +125,15 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
-
     lat, lon, time, sog, draught = RouteParams.from_gzip_file(args.route)
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     for key in maripower_test_scenarios_wind:
-        run_maripower_test_scenario(maripower_test_scenarios_calm[key], maripower_test_scenarios_wind[key], maripower_test_scenarios_wave[key], waypoint_dict, args.geojson_out, key, weather_type)
-
-
-
-
+        run_maripower_test_scenario(
+            maripower_test_scenarios_calm[key],
+            maripower_test_scenarios_wind[key],
+            maripower_test_scenarios_wave[key],
+            waypoint_dict,
+            args.geojson_out,
+            key,
+            weather_type)
