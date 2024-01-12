@@ -52,9 +52,38 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, 
     plt.ylabel(ylabel + ' Modifiziert/Standardwert')
     plt.xticks()
 
-    ax.legend(loc='lower left')
-    # ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
+    ax.legend()
+
     plt.savefig(figuredir + name + '.png')
+
+    plt.cla()
+    plt.close()
+
+def plot_polar_power(curve_list, label_list, courses, figuredir, name, fuel_type):
+
+    fig, axes = plt.subplots(1,1, dpi=200, subplot_kw={'projection': 'polar'}, figsize=(12,15))
+    courses_rad = np.radians(courses)
+
+    for irp in range(0, len(curve_list)):
+        curve = None
+        if fuel_type == 'power':
+            curve = curve_list[irp].get_power()
+            ylabel = 'Leistung'
+        else:
+            curve = curve_list[irp].get_fuel()
+            ylabel = 'Treibstoffverbrauch'
+        plt.plot(courses_rad, curve, label=label_list[irp], color=graphics.get_colour(irp))
+
+    axes.set_theta_direction(-1)
+    axes.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    axes.set_ylim([2.5*1000000,4.*1000000])
+    axes.set_theta_zero_location("N")
+    axes.grid(True)
+
+    axes.set_title(ylabel, va='bottom')
+    plt.legend(bbox_to_anchor =(0.5,-0.27), loc='lower center')
+    # plt.tight_layout()
+    plt.savefig(figuredir + name + '_polar.png')
 
 
 if __name__ == "__main__":
@@ -94,19 +123,20 @@ if __name__ == "__main__":
     if wind_speed == -99 or VHMO == -99:
         raise ValueError('windspeed or VHM0 not set!')
 
-    u_comp = 0            # -math.sin(45) * wind_speed
-    v_comp = - wind_speed  # -math.cos(45) * wind_speed
+    u_comp = 0
+    v_comp = - wind_speed
 
-    # currents = 0.1
-    # utotal = math.sin(45) * currents
-    # vtotal = -math.cos(45) * currents
 
-    var_dict = {'thetao': 20,  # °C
-        'so': 33.5, 'Temperature_surface': 283,  # K
-        'Pressure_reduced_to_MSL_msl': 101325, 'u-component_of_wind_height_above_ground': u_comp,
-        'v-component_of_wind_height_above_ground': v_comp, # 'utotal': utotal,
-        # 'vtotal': vtotal,
-        'VHM0': VHMO, 'VMDR': 0, 'VTPK': 10}
+    var_dict = {
+        'thetao': 20,
+        'so': 33.5,
+        'Temperature_surface': 283,
+        'Pressure_reduced_to_MSL_msl': 101325,
+        'u-component_of_wind_height_above_ground': u_comp,
+        'v-component_of_wind_height_above_ground': v_comp,
+        'VHM0': VHMO,
+        'VMDR': 0,
+        'VTPK': 10}
 
     maripower_test_scenarios_calm = {'original': 1., '95perc_calm': 0.95, '105perc_calm': 1.05, '80perc_wind': 1.,
                                      '120perc_wind': 1., '80perc_wave': 1., '120perc_wave': 1.}
@@ -118,12 +148,12 @@ if __name__ == "__main__":
     wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE, file_path=windfile, departure_time=departure_time,
                                     time_forecast=time_forecast, time_resolution=time_resolution,
                                     default_map=default_map, var_dict=var_dict)
-    fig, ax = plt.subplots(figsize=(12, 7))
+    # fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
-    courses = np.linspace(0, 360, 37)
+    courses = np.linspace(0, 360, 37)       # scan courses from 0 to 360° in steps of 10°
     courses_plot = copy.deepcopy(courses)
-    start_lats = np.repeat(49.05, courses.shape)
+    start_lats = np.repeat(49.05, courses.shape)         # dummy times, distances
     start_lons = np.repeat(30.89, courses.shape)
     time = np.repeat(datetime.now(), courses.shape)
     dist = np.repeat(0, courses.shape)
@@ -147,17 +177,19 @@ if __name__ == "__main__":
 
     shipparams_vec = {}
     for key in maripower_test_scenarios_wind:
-    #for i in range(0,3):
-        #key = list(maripower_test_scenarios_wind.keys())[i]
-        shipparams_vec[key] = run_maripower_test_scenario(maripower_test_scenarios_calm[key], maripower_test_scenarios_wind[key],
-                                                          maripower_test_scenarios_wave[key], waypoint_dict, args.geojson_out, key,
-                                                          weather_type)
+        shipparams_vec[key] = run_maripower_test_scenario(
+            maripower_test_scenarios_calm[key],
+            maripower_test_scenarios_wind[key],
+            maripower_test_scenarios_wave[key],
+            waypoint_dict, args.geojson_out,
+            key, weather_type)
 
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
 
     nominator_list = [shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
     label_list = ['95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
-    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out, 'calmwaterres_' + weather_type, 'power')
+    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out,
+                          'calmwaterres_' + weather_type, 'power')
 
     nominator_list = [shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
     label_list = ['80% Windwiderstand', '120% Windwiderstand']
@@ -169,6 +201,17 @@ if __name__ == "__main__":
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out,
                           'waveres_' + weather_type, 'power')
 
+    curve_list = [shipparams_vec['original'], shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
+    label_list = ['original', '95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'calmwaterres_' + weather_type, 'power')
+
+    curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
+    label_list = ['original', '80% Windwiderstand', '120% Windwiderstand']
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'windres_' + weather_type, 'power')
+
+    curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
+    label_list = ['original', '80% Wellenwiderstand', '120% Wellenwiderstand']
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'waveres_' + weather_type, 'power')
 
 
 
