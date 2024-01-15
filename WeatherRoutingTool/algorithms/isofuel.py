@@ -50,9 +50,9 @@ class IsoFuel(IsoBased):
     ##
     # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables_netCDF(self, ship_params, bs):
-        fuel = ship_params.get_fuel()
+        fuel_rate = ship_params.get_fuel_rate()
 
-        delta_time = self.delta_fuel / fuel
+        delta_time = self.delta_fuel / fuel_rate
         dist = self.get_dist(bs, delta_time)
 
         # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
@@ -65,13 +65,13 @@ class IsoFuel(IsoBased):
     ##
     # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables_netCDF_last_step(self, ship_params, bs):
-        fuel = ship_params.get_fuel()
+        fuel_rate = ship_params.get_fuel_rate()
         dist = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                             np.full(self.get_current_lats().shape, self.finish_temp[0]),
                             np.full(self.get_current_lons().shape, self.finish_temp[1]))
         dist['s12'] = dist['s12'] * u.meter
         delta_time = self.get_time(bs, dist['s12'])
-        delta_fuel = fuel * delta_time
+        delta_fuel = fuel_rate * delta_time
 
         return delta_time, delta_fuel, dist['s12']
 
@@ -94,9 +94,14 @@ class IsoFuel(IsoBased):
         debug = False
         if debug:
             print('Final IsoFuel Pruning...')
-            print('full_fuel_consumed:', self.full_fuel_consumed)
 
-        full_fuel_array = np.sum(self.absolute_fuel_per_step, axis=0)
+        self.print_shape()
+
+        print('absolutefuel_per_step: ', self.absolutefuel_per_step)
+        print('shape: ', self.absolutefuel_per_step.shape)
+        full_fuel_array = np.sum(self.absolutefuel_per_step, axis=0)
+        print('full_fuel_array: ', full_fuel_array)
+        print('shape: ', full_fuel_array)
         idxs = np.argmin(full_fuel_array)
 
         if debug:
@@ -109,13 +114,13 @@ class IsoFuel(IsoBased):
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.starttime_per_step = self.starttime_per_step[:, idxs]
+            self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
-            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
             self.time = self.time[idxs]
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')

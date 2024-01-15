@@ -1029,7 +1029,7 @@ class IsoBased(RoutingAlg):
 
     def update_fuel(self, delta_fuel, fuel_rate):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
-        self.absolutefuel_per_step = np.vstack(delta_fuel, self.absolutefuel_per_step)
+        self.absolutefuel_per_step = np.vstack((delta_fuel, self.absolutefuel_per_step))
 
 
     def get_delta_variables(self, boat, wind, bs):

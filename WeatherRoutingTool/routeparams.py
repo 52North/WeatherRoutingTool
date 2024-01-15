@@ -140,8 +140,10 @@ class RouteParams():
                 time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': self.ship_params_per_step.speed[i].unit.to_string()}
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
-                properties['fuel_consumption'] = {'value': self.ship_params_per_step.fuel[i].to(u.tonne).value / (time_passed),
-                                                  'unit': 'mt/h'}
+                properties['fuel_consumption'] = {
+                    'value': self.ship_params_per_step.fuel_rate[i].to(u.tonne/u.hour).value,
+                    'unit': 'mt/h'
+                }
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
                 properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i].value, 'unit': 'Hz'}
                 properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i].value, 'unit': 'N'}
