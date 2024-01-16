@@ -759,6 +759,9 @@ class IsoBased(RoutingAlg):
             specific_route_group = df_grouped_by_routes_has_same_origin.get_group(unique_key)
 
             max_dist = specific_route_group['dist'].max()
+            if max_dist == 0.:
+                continue
+
             max_dist_indxs = specific_route_group[specific_route_group['dist'] == max_dist]['st_index']
             max_dist_indxs = max_dist_indxs.values
             max_dist_indxs = max_dist_indxs.astype('int32')
