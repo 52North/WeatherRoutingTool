@@ -29,7 +29,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'INTERMEDIATE_WAYPOINTS': [],
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
     'ISOCHRONE_NUMBER_OF_ROUTES': 1,
-    'ISOCHRONE_PRUNE_BEARING': False,
+    'ISOCHRONE_PRUNED_OBJECT': 'larger_direction',
     'ISOCHRONE_PRUNE_GCR_CENTERED': True,
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
@@ -72,7 +72,7 @@ class Config:
         self.ISOCHRONE_MAX_ROUTING_STEPS = None  # maximum number of routing steps
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ISOCHRONE_NUMBER_OF_ROUTES = None  # integer specifying how many routes should be searched
-        self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
+        self.ISOCHRONE_PRUNED_OBJECT = None  # can be 'courses', 'larger_direction', 'branch'
         self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
         self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning
         self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector

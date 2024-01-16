@@ -310,7 +310,8 @@ def test_pruning_select_correct_idxs():
     ra.print_current_status()
     form.print_line()
 
-    ra.pruning(True, pruning_bins, False)
+    ra.pruned_object = 'courses'
+    ra.pruning(True, pruning_bins)
 
     assert np.array_equal(cur_var_test, ra.current_variant)
     assert np.array_equal(cur_azi_test, ra.current_azimuth)
@@ -456,3 +457,18 @@ def test_find_routes_testduplicates():
     assert ra.next_step_routes.shape[0] == 0
     assert ra.route_list[0].lons_per_step[1] == -123.32
     assert ra.route_list[1].lons_per_step[1] == -123.76
+
+
+def test_branch_based_pruning():
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[37.68, 37.67, 37.66, 37.65, 37.64, 37.63], [37.42, 37.42, 37.42, 37.43, 37.43, 37.43]])
+    ra.lons_per_step = np.array([[-123.10, -123.76, -123.32, -123.09, -123.07, -123.06], [-123.61, -123.61, -123.61, -123.23, -123.23, -123.23]])
+    ra.full_dist_traveled = np.array([1,2,3, 2,3,1])
+
+    ra.pruned_object='branch'
+
+    idxs = ra.branch_based_pruning()
+    idxs_test = [2, 4]
+
+    assert np.array_equal(np.array(idxs),np.array(idxs_test))
+

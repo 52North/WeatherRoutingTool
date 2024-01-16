@@ -71,7 +71,7 @@ class IsoBased(RoutingAlg):
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
     prune_gcr_centered: bool
-    prune_bearings: bool
+    pruned_object: bool
     minimisation_criterion: str
 
     desired_number_of_routes: int
@@ -118,7 +118,7 @@ class IsoBased(RoutingAlg):
         self.minimisation_criterion = 'squareddist_over_disttodest'
 
         self.set_pruning_settings(sector_deg_half=config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF,
-                                  seg=config.ISOCHRONE_PRUNE_SEGMENTS, prune_bearings=config.ISOCHRONE_PRUNE_BEARING,
+                                  seg=config.ISOCHRONE_PRUNE_SEGMENTS, pruned_object=config.ISOCHRONE_PRUNED_OBJECT,
                                   prune_gcr_centered=config.ISOCHRONE_PRUNE_GCR_CENTERED)
         self.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
         self.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
@@ -131,7 +131,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_SECTOR_DEG_HALF: ' + str(self.prune_sector_deg_half), 2))
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_SEGMENTS: ' + str(self.prune_segments), 2))
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_GCR_CENTERED: ' + str(self.prune_gcr_centered), 2))
-        logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: ' + str(self.prune_bearings), 2))
+        logger.info(form.get_log_step('ISOCHRONE_PRUNED_OBJECT: ' + str(self.pruned_object), 2))
         logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: ' + str(self.minimisation_criterion), 2))
         logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: ' + str(self.variant_segments), 2))
         logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.variant_increments_deg), 2))
@@ -270,6 +270,7 @@ class IsoBased(RoutingAlg):
                         if self.pruning_error:
                             break
                         self.route_reached_destination = False
+                        self.update_fig('p')
                         self.count += 1
                         continue
                 else:
@@ -477,6 +478,7 @@ class IsoBased(RoutingAlg):
                             starttime_per_step=starttime_per_step,
                             ship_params_per_step=shipparams_per_step
                             )
+        self.pruned_object = 'branch'
         return route
 
     def plot_routes(self, idxs):
@@ -639,7 +641,29 @@ class IsoBased(RoutingAlg):
                 'define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-    def pruning(self, trim, bins, larger_direction_based=True):
+    def get_pruned_indices_statistics(self, bin_stat, bin_edges, bin_number, trim):
+        idxs = []
+
+        if trim:
+            for i in range(len(bin_edges) - 1):
+                try:
+                    if (bin_stat[i] == 0):
+                        # form.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) +
+                        # 'full_dist_traveled=' + str(self.full_dist_traveled))
+                          continue
+                    idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0][0])
+                except IndexError:
+                    pass
+            idxs = list(set(idxs))
+        else:
+            for i in range(len(bin_edges) - 1):
+                idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0])
+            idxs = list(set([item for subl in idxs for item in subl]))
+
+        return idxs
+
+
+    def pruning(self, trim, bins):
         debug = False
         valid_pruning_segments = -99
 
@@ -649,31 +673,24 @@ class IsoBased(RoutingAlg):
             print('current courses', self.current_variant)
             print('full_dist_traveled', self.full_time_traveled)
 
-        idxs = []
-
-        bin_stat = None
-        bin_edges = None
-        bin_number = None
-        if larger_direction_based:
+        is_pruned = False
+        if self.pruned_object == 'larger_direction':
+            logger.info('Executing larger-direction-based pruning.')
             bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
-        else:
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            is_pruned = True
+        if self.pruned_object == 'courses':
+            logger.info('Executing courses-based pruning.')
             bin_stat, bin_edges, bin_number = self.courses_based_pruning(bins)
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            is_pruned = True
+        if self.pruned_object == 'branch':
+            logger.info('Executing branch-based pruning.')
+            idxs = self.branch_based_pruning()
+            is_pruned = True
 
-        if trim:
-            for i in range(len(bin_edges) - 1):
-                try:
-                    if (bin_stat[i] == 0):
-                        # form.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) +
-                        # 'full_dist_traveled=' + str(self.full_dist_traveled))
-                        continue
-                    idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0][0])
-                except IndexError:
-                    pass
-            idxs = list(set(idxs))
-        else:
-            for i in range(len(bin_edges) - 1):
-                idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0])
-            idxs = list(set([item for subl in idxs for item in subl]))
+        if not is_pruned:
+            raise ValueError('The selected pruning option is not available!')
 
         # ToDo: use logger.debug and args.debug
         if debug:
@@ -723,6 +740,35 @@ class IsoBased(RoutingAlg):
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
+    def branch_based_pruning(self):
+        df_current_last_step = pd.DataFrame()
+        df_current_last_step['st_lat'] = self.lats_per_step[1, :]
+        df_current_last_step['st_lon'] = self.lons_per_step[1, :]
+        df_current_last_step['dist'] = self.full_dist_traveled
+
+        len_df = df_current_last_step.shape[0]
+
+        df_current_last_step.set_index(pd.RangeIndex(start=0, stop=len_df), inplace=True)
+        df_current_last_step.rename_axis('st_index', inplace=True)
+        df_current_last_step = df_current_last_step.reset_index()
+        df_current_last_step.set_index(['st_lat', 'st_lon'], inplace=True, drop=False)
+        df_grouped_by_routes_has_same_origin = df_current_last_step.groupby(level=['st_lat', 'st_lon'])
+
+        unique_origins = df_grouped_by_routes_has_same_origin.groups.keys()
+        idxs = []
+
+        for unique_key in unique_origins:
+            specific_route_group = df_grouped_by_routes_has_same_origin.get_group(unique_key)
+
+            max_dist = specific_route_group['dist'].max()
+            max_dist_indxs = specific_route_group[specific_route_group['dist'] == max_dist]['st_index']
+            max_dist_indxs = max_dist_indxs.values
+            max_dist_indxs = max_dist_indxs.astype('int32')
+
+            idxs.append(max_dist_indxs[0])
+        return idxs
+
+
     def pruning_per_step(self, trim=True):
         if self.prune_gcr_centered:
             self.pruning_gcr_centered(trim)
@@ -758,8 +804,32 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         if debug:
             print('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
+            print('current temporary start: ', self.start )
             print('current temporary destination: ', self.finish_temp)
             print('mean azimuth', new_azi['azi1'])
+
+            fig = self.fig
+            self.ax.remove()
+            fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
+
+            # plot symmetry axis and boundaries of pruning area
+            symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]],new_azi['azi1'], 1000000)
+            lower_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
+                                      new_azi['azi1'] - self.prune_sector_deg_half, 1000000)
+            upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
+                                      new_azi['azi1'] + self.prune_sector_deg_half, 1000000)
+
+            self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
+                         [self.start_temp[0], symmetry_axis["lat2"]], color="blue")
+            self.ax.plot([self.start_temp[1], lower_bound["lon2"]],
+                         [self.start_temp[0], lower_bound["lat2"]], color="blue")
+            self.ax.plot([self.start_temp[1], upper_bound["lon2"]],
+                         [self.start_temp[0], upper_bound["lat2"]], color="blue")
+
+            if self.figure_path is not None:
+                final_path = self.figure_path + '/fig' + str(self.count) + '_gcr_symmetry_axis.png'
+                logger.info('Saving updated figure to '+ str(final_path))
+                plt.savefig(final_path)
 
         # define pruning area
         azi0s = np.repeat(new_azi['azi1'], self.prune_segments + 1)
@@ -769,13 +839,7 @@ class IsoBased(RoutingAlg):
         bins = units.cut_angles(azi0s - delta_hdgs)
         bins = np.sort(bins)
 
-        if self.prune_bearings:
-            self.pruning(trim, bins, False)
-        else:
-            if ((self.ncount % 10) < 3) and (self.ncount > 10):
-                self.pruning(trim, bins, True)
-            else:
-                self.pruning(trim, bins, False)
+        self.pruning(trim, bins)
 
     def pruning_headings_centered(self, trim=True):
         '''
@@ -790,41 +854,36 @@ class IsoBased(RoutingAlg):
 
         # propagate current end points towards temporary destination
         nof_input_routes = self.lats_per_step.shape[1]
-        new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
-        new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
 
-        new_azi = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
+        non_zero_idxs = np.where(self.full_dist_traveled != 0)[0]
+        cat_lats = self.lats_per_step[0][non_zero_idxs]
+        cat_lons = self.lons_per_step[0][non_zero_idxs]
+        new_finish_one = np.repeat(self.finish_temp[0], cat_lats.shape[0])
+        new_finish_two = np.repeat(self.finish_temp[1], cat_lats.shape[0])
 
-        # sort azimuths and select (approximate) median
-        new_azi_sorted = np.sort(new_azi['azi1'])
-        meadian_indx = int(np.round(new_azi_sorted.shape[0] / 2))
-
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('sorted azimuths: ', new_azi_sorted)
-            print('median index: ', meadian_indx)
-
-        mean_azimuth = new_azi_sorted[meadian_indx]
+        new_azi = geod.inverse(cat_lats, cat_lons, new_finish_one, new_finish_two)
+        mean_azimuth = np.median(new_azi['azi1'])
 
         if debug:
+            print('mean azimuth: ', mean_azimuth)
             # plot symmetry axis and boundaries of pruning area
-            symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+            symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]],
                                         mean_azimuth, 1000000)
-            lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+            lower_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
                                       mean_azimuth - self.prune_sector_deg_half, 1000000)
-            upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
+            upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
                                       mean_azimuth + self.prune_sector_deg_half, 1000000)
 
-            self.ax.plot([self.lons_per_step[1][meadian_indx], symmetry_axis["lon2"]],
-                         [self.lats_per_step[1][meadian_indx], symmetry_axis["lat2"]], color="blue")
-            self.ax.plot([self.lons_per_step[1][meadian_indx], lower_bound["lon2"]],
-                         [self.lats_per_step[1][meadian_indx], lower_bound["lat2"]], color="blue")
-            self.ax.plot([self.lons_per_step[1][meadian_indx], upper_bound["lon2"]],
-                         [self.lats_per_step[1][meadian_indx], upper_bound["lat2"]], color="blue")
+            self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
+                         [self.start_temp[0], symmetry_axis["lat2"]], color="blue")
+            self.ax.plot([self.start_temp[1], lower_bound["lon2"]],
+                         [self.start_temp[0], lower_bound["lat2"]], color="blue")
+            self.ax.plot([self.start_temp[1], upper_bound["lon2"]],
+                         [self.start_temp[0], upper_bound["lat2"]], color="blue")
 
             if self.figure_path is not None:
                 final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
-                logger.info('Saving updated figure to ', final_path)
+                logger.info('Saving updated figure to ' + final_path)
                 plt.savefig(final_path)
 
         # define pruning area
@@ -848,10 +907,10 @@ class IsoBased(RoutingAlg):
     def define_variants_per_step(self):
         self.define_variants()
 
-    def set_pruning_settings(self, sector_deg_half, seg, prune_bearings=False, prune_gcr_centered=True):
+    def set_pruning_settings(self, sector_deg_half, seg, pruned_object, prune_gcr_centered=True):
         self.prune_sector_deg_half = sector_deg_half
         self.prune_segments = seg
-        self.prune_bearings = prune_bearings
+        self.pruned_object = pruned_object
         self.prune_gcr_centered = prune_gcr_centered
 
     def set_minimisation_criterion(self, min_str):

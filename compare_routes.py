@@ -44,12 +44,12 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
 
 
 if __name__ == "__main__":
-    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_original_resistances.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_95_calmwaterres.json")
+    filename1 = ("/home/kdemmich/MariData/Debug_Multiple_Routes/Routes/route_1.json")
+    filename2 = ("/home/kdemmich/MariData/Debug_Multiple_Routes/Routes/route_2.json")
     filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_105_calmwaterres.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes/"
+    figurefile = "/home/kdemmich/MariData/Debug_Multiple_Routes/Figures"
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
@@ -57,16 +57,16 @@ if __name__ == "__main__":
 
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
-    rp_read3 = RouteParams.from_file(filename3)
-    rp_read4 = RouteParams.from_file(filename4)
+    # rp_read3 = RouteParams.from_file(filename3)
+    # rp_read4 = RouteParams.from_file(filename4)
 
     rp_1_str = 'Standardeinstellung'
     rp_2_str = '95% Glattwasserwiderstand'
     rp_3_str = '105% Glattwasserwiderstand'
     rp_4_str = 'original'
 
-    rp_list = [rp_read1, rp_read2, rp_read3]
-    rp_str_list = [rp_1_str, rp_2_str, rp_3_str]
+    rp_list = [rp_read1, rp_read2]
+    rp_str_list = [rp_1_str, rp_2_str]
 
     do_plot_weather = False
     do_plot_route = True
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     do_plot_fuel_vs_lat = False
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = True
-    do_plot_fuel_vs_dist_ratios = True
+    do_plot_power_vs_dist_ratios = False
+    do_plot_fuel_vs_dist_ratios = False
     do_write_fuel = False
 
     ##
