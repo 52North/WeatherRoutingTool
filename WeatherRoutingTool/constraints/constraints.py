@@ -153,8 +153,8 @@ class ConstraintsListFactory:
     def __init__(self):
         pass
 
-    @classmethod
-    def get_constraints_list(cls, constraints_string_list, **kwargs):
+    @staticmethod
+    def get_constraints_list(constraints_string_list, **kwargs):
         pars = ConstraintPars()
         constraints_list = ConstraintsList(pars)
 

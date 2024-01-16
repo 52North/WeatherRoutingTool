@@ -453,6 +453,10 @@ class RouteParams():
         interval = 10
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
         sog = sog_data['SOG'].values
+        sog = sog[:-1] * 0.5144         # delete last element and convert from knots to m/s
+
+        draught = sog_data['MIDDRAUGHT_LEVELP']
+
         lat = data['Latitude'][::interval].values
         lon = data['Longitude'][::interval].values
 
@@ -460,4 +464,4 @@ class RouteParams():
         time = data.index[::interval].values
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
 
-        return lat, lon, time_converted, sog
+        return lat, lon, time_converted, sog, draught

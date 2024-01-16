@@ -240,7 +240,8 @@ class IsoBased(RoutingAlg):
         # start_time=time.time()
         # self.print_shape()
 
-        for routing_step in range(0, self.ncount):
+        # Note: self.count starts at 0
+        while self.count < self.ncount:
             logger.info(form.get_line_string())
             logger.info('Step ' + str(self.count))
 
@@ -292,10 +293,7 @@ class IsoBased(RoutingAlg):
                 self.count += 1
                 continue
 
-            # if routing_step>9:
-            #     self.update_fig('bp')
             self.pruning_per_step(True)
-            # form.print_current_time('move_boat: Step=' + str(routing_step), start_time)  # if routing_step>9:
 
             if self.pruning_error:
                 break
@@ -303,7 +301,7 @@ class IsoBased(RoutingAlg):
                 self.update_fig('p')
                 self.count += 1
 
-        if self.pruning_error:
+        if self.pruning_error and self.count > 0:
             self.count = self.count - 1
             self.revert_to_previous_step()
 
@@ -336,7 +334,7 @@ class IsoBased(RoutingAlg):
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(self.get_current_azimuth(), self.get_current_lats(),
-                                               self.get_current_lons(), self.time, True)
+                                               self.get_current_lons(), self.time, -99, True)
         units.cut_angles(self.current_variant)
 
         # ship_params.print()
@@ -1105,7 +1103,7 @@ class IsoBased(RoutingAlg):
         if (self.showDepth):
             # decrease resolution and extend of depth data to prevent memory issues when plotting
             # FIXME: double check boundary settings (set exact to trim for debugging)
-            ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='exact').mean()
+            ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='trim').mean()
             ds_depth_coarsened = ds_depth.compute()
 
             self.depth = ds_depth_coarsened.where(

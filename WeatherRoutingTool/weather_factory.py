@@ -6,12 +6,13 @@ from WeatherRoutingTool.weather import WeatherCondFromFile, WeatherCondEnvAutoma
 logger = logging.getLogger('WRT.weather')
 
 
-class WeatherFactory():
+class WeatherFactory:
 
     def __init__(self):
         pass
 
-    def get_weather(self, data_mode, file_path, departure_time, time_forecast, time_resolution, default_map, **kwargs):
+    @staticmethod
+    def get_weather(data_mode, file_path, departure_time, time_forecast, time_resolution, default_map, **kwargs):
         wt = None
 
         if data_mode == 'from_file':

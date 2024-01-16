@@ -139,8 +139,8 @@ def plot_legend(fig):
 
 
 def get_colour(i):
-    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet']
-    if (i > 4):
+    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet', 'crimson', 'olive', 'skyblue']
+    if (i > 6):
         raise ValueError('currently only 5 colours available, asking for' + str(i))
     return colours[i]
 
@@ -259,7 +259,7 @@ def set_graphics_standards(ax):
     return ax
 
 
-def generate_basemap(fig, depth, start, finish, title='', show_depth=True, show_gcr=False):
+def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=True, show_gcr=False):
     ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
 
     if show_depth:
@@ -274,8 +274,9 @@ def generate_basemap(fig, depth, start, finish, title='', show_depth=True, show_
     ax.gridlines(draw_labels=True)
     # ax.set_extent((-1500000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
 
-    ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
-    ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
+    if start is not None:
+        ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
+        ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
 
     if show_gcr:
         gcr = get_gcr_points(start[0], start[1], finish[0], finish[1], n_points=10)

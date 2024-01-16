@@ -255,7 +255,7 @@ def test_get_netCDF_courses_isobased():
                      datetime(2022, 12, 19) + timedelta(days=360),
                      datetime(2022, 12, 19) + timedelta(days=360)])
 
-    pol.write_netCDF_courses(courses, lat, lon, time, True)
+    pol.write_netCDF_courses(courses, lat, lon, time, -99, True)
     ds = xr.open_dataset(pol.courses_path)
 
     lat_read = ds['lat'].to_numpy()
@@ -385,7 +385,7 @@ def test_wind_force():
     pol = basic_test_func.create_dummy_Tanker_object()
     pol.set_boat_speed(bs)
 
-    ship_params = pol.get_ship_parameters(courses, lats, lons, time, True)
+    ship_params = pol.get_ship_parameters(courses, lats, lons, time, -99, True)
     power = ship_params.get_power()
     rwind = ship_params.get_rwind()
 
