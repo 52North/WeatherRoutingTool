@@ -139,9 +139,12 @@ def plot_legend(fig):
 
 
 def get_colour(i):
-    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet', 'crimson', 'olive', 'skyblue']
-    if (i > 6):
-        raise ValueError('currently only 5 colours available, asking for' + str(i))
+    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet', 'crimson', 'olive', 'skyblue', 'moccasin', 'plum', 'firebrick']
+    if (i > 10):
+        i = i-10
+        print('Currently only 11 different colours available. Will use one that has already been used before: Colour=' + str(i))
+    if (i>20):
+        print('Are you sure that you want to have so many curves in one plot?!')
     return colours[i]
 
 
