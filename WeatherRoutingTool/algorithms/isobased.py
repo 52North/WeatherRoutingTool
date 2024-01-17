@@ -51,7 +51,7 @@ class IsoBased(RoutingAlg):
 
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    azimuth_per_step: np.ndarray  # heading
+    course_per_step: np.ndarray  # course
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
@@ -89,7 +89,7 @@ class IsoBased(RoutingAlg):
 
         self.lats_per_step = np.array([[self.start[0]]])
         self.lons_per_step = np.array([[self.start[1]]])
-        self.azimuth_per_step = np.array([[None]])
+        self.course_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
@@ -144,7 +144,7 @@ class IsoBased(RoutingAlg):
         logger.info('per-step variables:')
         logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step)))
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step)))
-        logger.info(form.get_log_step('variants = ' + str(self.azimuth_per_step)))
+        logger.info(form.get_log_step('courses = ' + str(self.course_per_step)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step)))
         logger.info(form.get_log_step('starttime_per_step = ' + str(self.starttime_per_step)))
 
@@ -161,7 +161,7 @@ class IsoBased(RoutingAlg):
         logger.info('per-step variables:')
         logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step.shape)))
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step.shape)))
-        logger.info(form.get_log_step('azimuths = ' + str(self.azimuth_per_step.shape)))
+        logger.info(form.get_log_step('courses = ' + str(self.course_per_step.shape)))
         logger.info(form.get_log_step('dist_per_step = ' + str(self.dist_per_step.shape)))
 
         self.shipparams_per_step.print_shape()
@@ -191,7 +191,7 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.repeat(self.lats_per_step, self.course_segments + 1, axis=1)
         self.lons_per_step = np.repeat(self.lons_per_step, self.course_segments + 1, axis=1)
         self.dist_per_step = np.repeat(self.dist_per_step, self.course_segments + 1, axis=1)
-        self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.course_segments + 1, axis=1)
+        self.course_per_step = np.repeat(self.course_per_step, self.course_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.course_segments + 1, axis=1)
 
         self.shipparams_per_step.define_variants(self.course_segments)
@@ -447,7 +447,7 @@ class IsoBased(RoutingAlg):
         try:
             lats_per_step = self.lats_per_step[:, idxs]
             lons_per_step = self.lons_per_step[:, idxs]
-            azimuth_per_step = self.azimuth_per_step[:, idxs]
+            course_per_step = self.course_per_step[:, idxs]
             dist_per_step = self.dist_per_step[:, idxs]
             shipparams_per_step = self.shipparams_per_step.get_reduced_2D_object(idxs=idxs)
 
@@ -456,7 +456,7 @@ class IsoBased(RoutingAlg):
 
             lats_per_step = np.flip(lats_per_step, 0)
             lons_per_step = np.flip(lons_per_step, 0)
-            azimuth_per_step = np.flip(azimuth_per_step, 0)
+            course_per_step = np.flip(course_per_step, 0)
             dist_per_step = np.flip(dist_per_step, 0)
             starttime_per_step = np.flip(starttime_per_step, 0)
 
@@ -470,7 +470,7 @@ class IsoBased(RoutingAlg):
                             route_type='min_time_route', time=time,
                             lats_per_step=lats_per_step,
                             lons_per_step=lons_per_step,
-                            azimuths_per_step=azimuth_per_step,
+                            azimuths_per_step=course_per_step,
                             dists_per_step=dist_per_step,
                             starttime_per_step=starttime_per_step,
                             ship_params_per_step=shipparams_per_step
@@ -515,7 +515,7 @@ class IsoBased(RoutingAlg):
         try:
             self.lats_per_step = self.lats_per_step[:, idxs]
             self.lons_per_step = self.lons_per_step[:, idxs]
-            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
@@ -541,7 +541,7 @@ class IsoBased(RoutingAlg):
         try:
             self.lats_per_step = self.lats_per_step[1:last_idx, :]
             self.lons_per_step = self.lons_per_step[1:last_idx, :]
-            self.azimuth_per_step = self.azimuth_per_step[1:last_idx, :]
+            self.course_per_step = self.course_per_step[1:last_idx, :]
             self.dist_per_step = self.dist_per_step[1:last_idx, :]
             self.starttime_per_step = self.starttime_per_step[1:last_idx, :]
             self.shipparams_per_step.get_reduced_2D_object(row_start=1,
@@ -625,12 +625,12 @@ class IsoBased(RoutingAlg):
 
     def check_variant_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (
-                self.lats_per_step.shape[1] == self.azimuth_per_step.shape[1]) and (
+                self.lats_per_step.shape[1] == self.course_per_step.shape[1]) and (
                          self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
             raise 'define_variants: number of columns not matching!'
 
         if (not ((self.lats_per_step.shape[0] == self.lons_per_step.shape[0]) and (
-                self.lats_per_step.shape[0] == self.azimuth_per_step.shape[0]) and (
+                self.lats_per_step.shape[0] == self.course_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == self.dist_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == (self.count + 1)))):
             raise ValueError(
@@ -692,7 +692,7 @@ class IsoBased(RoutingAlg):
         try:
             self.lats_per_step = self.lats_per_step[:, idxs]
             self.lons_per_step = self.lons_per_step[:, idxs]
-            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
@@ -903,7 +903,7 @@ class IsoBased(RoutingAlg):
 
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
-        self.azimuth_per_step = np.flip(self.azimuth_per_step, 0)
+        self.course_per_step = np.flip(self.course_per_step, 0)
         self.dist_per_step = np.flip(self.dist_per_step, 0)
         self.starttime_per_step = np.flip(self.starttime_per_step, 0)
         self.shipparams_per_step.flip()
@@ -911,7 +911,7 @@ class IsoBased(RoutingAlg):
         time = round(self.full_time_traveled / 3600, 2)
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
                             route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
-                            lons_per_step=self.lons_per_step[:], azimuths_per_step=self.azimuth_per_step[:],
+                            lons_per_step=self.lons_per_step[:], azimuths_per_step=self.course_per_step[:],
                             dists_per_step=self.dist_per_step[:], starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step)
 
@@ -984,7 +984,7 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
-        self.azimuth_per_step = np.vstack((self.current_variant, self.azimuth_per_step))
+        self.course_per_step = np.vstack((self.current_variant, self.course_per_step))
 
         # ToDo: use logger.debug and args.debug
         if debug:
@@ -1087,7 +1087,7 @@ class IsoBased(RoutingAlg):
     def expand_axis_for_intermediate(self):
         self.lats_per_step = np.expand_dims(self.lats_per_step, axis=1)
         self.lons_per_step = np.expand_dims(self.lons_per_step, axis=1)
-        self.azimuth_per_step = np.expand_dims(self.azimuth_per_step, axis=1)
+        self.course_per_step = np.expand_dims(self.course_per_step, axis=1)
         self.dist_per_step = np.expand_dims(self.dist_per_step, axis=1)
         self.starttime_per_step = np.expand_dims(self.starttime_per_step, axis=1)
 
