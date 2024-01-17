@@ -245,7 +245,7 @@ class IsoBased(RoutingAlg):
             logger.info(form.get_line_string())
             logger.info('Step ' + str(self.count))
 
-            self.define_variants_per_step()
+            self.define_courses_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
@@ -843,7 +843,7 @@ class IsoBased(RoutingAlg):
             else:
                 self.pruning(trim, bins, False)
 
-    def define_variants_per_step(self):
+    def define_courses_per_step(self):
         self.define_variants()
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_bearings=False, prune_gcr_centered=True):
