@@ -66,7 +66,7 @@ class IsoBased(RoutingAlg):
     time: np.ndarray  # current datetime for all variants
 
     course_segments: int  # number of variant segments in the range of -180° to 180°
-    variant_increments_deg: int
+    course_increments_deg: int
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
@@ -134,7 +134,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: ' + str(self.prune_bearings), 2))
         logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: ' + str(self.minimisation_criterion), 2))
         logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: ' + str(self.course_segments), 2))
-        logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.variant_increments_deg), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.course_increments_deg), 2))
 
     def print_current_status(self):
         logger.info('PRINTING ALG SETTINGS')
@@ -203,8 +203,8 @@ class IsoBased(RoutingAlg):
         self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
-        delta_hdgs = np.linspace(-self.course_segments / 2 * self.variant_increments_deg,
-                                 +self.course_segments / 2 * self.variant_increments_deg, self.course_segments + 1)
+        delta_hdgs = np.linspace(-self.course_segments / 2 * self.course_increments_deg,
+                                 +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
         self.current_variant = new_azi['azi1']  # center courses around gcr
@@ -857,7 +857,7 @@ class IsoBased(RoutingAlg):
 
     def set_variant_segments(self, seg, inc):
         self.course_segments = seg
-        self.variant_increments_deg = inc
+        self.course_increments_deg = inc
 
     def get_current_azimuth(self):
         return self.current_variant
@@ -882,11 +882,11 @@ class IsoBased(RoutingAlg):
         return winds
 
     def check_settings(self):
-        if (self.course_segments / 2 * self.variant_increments_deg >= self.prune_sector_deg_half):
+        if (self.course_segments / 2 * self.course_increments_deg >= self.prune_sector_deg_half):
             raise ValueError(
                 'Prune sector does not contain all courses. Please adjust settings. (course_segments=' + str(
-                    self.course_segments) + ', variant_increments_deg=' + str(
-                    self.variant_increments_deg) + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
+                    self.course_segments) + ', course_increments_deg=' + str(
+                    self.course_increments_deg) + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
         if ((self.course_segments % 2) != 0):
             raise ValueError(
                 'Please provide an even number of course segments, you chose: ' + str(self.course_segments))
