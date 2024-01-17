@@ -5,8 +5,8 @@ from WeatherRoutingTool.routeparams import RouteParams
 import WeatherRoutingTool.utils.graphics as graphics
 
 if __name__ == "__main__":
-    routeDirPath = "C:/Users/Maneesha/Documents/GitHub/ROUTE/Test_Routes/"
-    figureFilePath = "C:/Users/Maneesha/Documents/GitHub/ROUTE/Test_Routes/"
+    routeDirPath = "/home/kdemmich/MariData/Debug_Multiple_Routes/Speedy_Isobased/MedSea/Routes"
+    figureFilePath = "/home/kdemmich/MariData/Debug_Multiple_Routes/Speedy_Isobased/MedSea/Figures"
 
     plt.rcParams['font.size'] = 9
     fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
