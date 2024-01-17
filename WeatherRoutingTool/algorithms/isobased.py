@@ -65,7 +65,7 @@ class IsoBased(RoutingAlg):
     full_fuel_consumed: np.ndarray
     time: np.ndarray  # current datetime for all variants
 
-    course_segments: int  # number of variant segments in the range of -180° to 180°
+    course_segments: int  # number of course segments in the range of -180° to 180°
     course_increments_deg: int
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
