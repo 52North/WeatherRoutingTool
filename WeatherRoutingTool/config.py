@@ -110,6 +110,9 @@ class Config:
             figurepath = os.getenv('WRT_FIGURE_PATH')
             if figurepath and os.path.isdir(figurepath) and os.access(figurepath, os.W_OK):
                 logger.warning("For speedy execution of isobased algorithms, figures should be deactivated")
+            if self.ISOCHRONE_PRUNE_SEGMENTS < 100:
+                logger.warning("For speedy execution of isobased algorithms, it is more sensible to set a high"
+                               " number of prune segments (e.g. 200). ")
 
     def print(self):
         # ToDo: prettify output
