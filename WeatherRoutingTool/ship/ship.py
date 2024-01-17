@@ -54,7 +54,7 @@ class ConstantFuelBoat(Boat):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('boat fuel rate' + str(self.fuel), 1))
 
-    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False
         n_requests = len(courses)
 
