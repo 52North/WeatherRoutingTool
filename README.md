@@ -225,7 +225,26 @@ The pruning is the basis of the optimisation process for the isofuel algorithm. 
 Two methods for the definition of the symmetry axis can be selected:
 
 1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
-2. The symmetry axis is defined by the median of the courses of the routing segments from the current routing step.
+2. The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/gcr_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.3: The symmetry axis of the pruning is given by the grand circle distance between global start and end point.</figcaption>
+</figure>
+<br>
+<br>
+
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/headings_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.4: The symmetry axis of the pruning is given by the median of the angles of the connecting lines between the end of the route segments and the destination.</figcaption>
+</figure>
+<br>
+<br>
 
 ## Grouping Route Segments
 Three possibilities are available for the choice of the objects which are used for the pruning:
