@@ -179,7 +179,7 @@ class IsoBased(RoutingAlg):
         logger.info('azimuth = ', self.current_azimuth)
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
-    def define_variants(self):
+    def define_courses(self):
         # branch out for multiple headings
         nof_input_routes = self.lats_per_step.shape[1]
 
@@ -844,7 +844,7 @@ class IsoBased(RoutingAlg):
                 self.pruning(trim, bins, False)
 
     def define_courses_per_step(self):
-        self.define_variants()
+        self.define_courses()
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_bearings=False, prune_gcr_centered=True):
         self.prune_sector_deg_half = sector_deg_half
