@@ -217,7 +217,7 @@ lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1
 # Pruning methods
 The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:
 
-1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the course around which the pruning segments are centered -- in the following refered to as *symmetry axis*
+1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
 2. The choice of how route segments are grouped for the pruning.
 3. The minimisation criterion that is used as basis for the pruning.
 
@@ -247,11 +247,34 @@ Two methods for the definition of the symmetry axis can be selected:
 <br>
 
 ## Grouping Route Segments
-Three possibilities are available for the choice of the objects which are used for the pruning:
+Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:
 
 1. *courses-based*:  Route segments are grouped according to their courses.
+  <figure>
+  <p align="center">
+  <img src="figures_readme/bearings_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
 2. *larger-direction-based*: Route segments are grouped accoding to the angle of the connecting line between the global start point and the end of the route segment.
-3. *branch-based*: Route segments of one *branch* form a group. For a particular routing step, a branch is the entity of route segments that originate from one common point.
+<figure>
+  <p align="center">
+  <img src="figures_readme/larger_direction_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+4. *branch-based*: Route segments of one *branch* form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.
+<figure>
+  <p align="center">
+  <img src="figures_readme/branch_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
 
 ## The Minimisation Criterion
 *to be continued*
