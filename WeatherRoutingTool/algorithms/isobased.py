@@ -33,7 +33,7 @@ class IsoBased(RoutingAlg):
 
     '''
        All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
-       variants (plus 1) and
+       courses (plus 1) and
        M corresponds to the number of routing steps.
 
        At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
@@ -43,7 +43,7 @@ class IsoBased(RoutingAlg):
        lats_per_step and lons_per_step correspond to the coordinates of the departure point of the whole route.
        The first
        elements of the attributes
-           - azimuth_per_step
+           - course_per_step
            - dist_per_step
            - speed_per_step
        are 0 to satisfy this definition.
