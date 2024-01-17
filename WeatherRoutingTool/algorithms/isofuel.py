@@ -103,7 +103,7 @@ class IsoFuel(IsoBased):
         try:
             self.lats_per_step = self.lats_per_step[:, idxs]
             self.lons_per_step = self.lons_per_step[:, idxs]
-            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.starttime_per_step = self.starttime_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)

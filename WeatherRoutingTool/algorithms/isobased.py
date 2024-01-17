@@ -470,7 +470,7 @@ class IsoBased(RoutingAlg):
                             route_type='min_time_route', time=time,
                             lats_per_step=lats_per_step,
                             lons_per_step=lons_per_step,
-                            azimuths_per_step=course_per_step,
+                            course_per_step=course_per_step,
                             dists_per_step=dist_per_step,
                             starttime_per_step=starttime_per_step,
                             ship_params_per_step=shipparams_per_step
