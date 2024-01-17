@@ -120,7 +120,7 @@ class IsoBased(RoutingAlg):
         self.set_pruning_settings(sector_deg_half=config.ISOCHRONE_PRUNE_SECTOR_DEG_HALF,
                                   seg=config.ISOCHRONE_PRUNE_SEGMENTS, prune_bearings=config.ISOCHRONE_PRUNE_BEARING,
                                   prune_gcr_centered=config.ISOCHRONE_PRUNE_GCR_CENTERED)
-        self.set_variant_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
+        self.set_course_segments(config.ROUTER_HDGS_SEGMENTS, config.ROUTER_HDGS_INCREMENTS_DEG)
         self.set_minimisation_criterion(config.ISOCHRONE_MINIMISATION_CRITERION)
 
         self.path_to_route_folder = config.ROUTE_PATH
@@ -855,7 +855,7 @@ class IsoBased(RoutingAlg):
     def set_minimisation_criterion(self, min_str):
         self.minimisation_criterion = min_str
 
-    def set_variant_segments(self, seg, inc):
+    def set_course_segments(self, seg, inc):
         self.course_segments = seg
         self.course_increments_deg = inc
 
