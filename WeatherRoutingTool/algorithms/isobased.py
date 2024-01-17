@@ -65,7 +65,7 @@ class IsoBased(RoutingAlg):
     full_fuel_consumed: np.ndarray
     time: np.ndarray  # current datetime for all variants
 
-    variant_segments: int  # number of variant segments in the range of -180° to 180°
+    course_segments: int  # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
@@ -133,7 +133,7 @@ class IsoBased(RoutingAlg):
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_GCR_CENTERED: ' + str(self.prune_gcr_centered), 2))
         logger.info(form.get_log_step('ISOCHRONE_PRUNE_BEARING: ' + str(self.prune_bearings), 2))
         logger.info(form.get_log_step('ISOCHRONE_MINIMISATION_CRITERION: ' + str(self.minimisation_criterion), 2))
-        logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: ' + str(self.variant_segments), 2))
+        logger.info(form.get_log_step('ROUTER_HDGS_SEGMENTS: ' + str(self.course_segments), 2))
         logger.info(form.get_log_step('ROUTER_HDGS_INCREMENTS_DEG: ' + str(self.variant_increments_deg), 2))
 
     def print_current_status(self):
@@ -188,27 +188,27 @@ class IsoBased(RoutingAlg):
 
         new_azi = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
 
-        self.lats_per_step = np.repeat(self.lats_per_step, self.variant_segments + 1, axis=1)
-        self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
-        self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
-        self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
-        self.starttime_per_step = np.repeat(self.starttime_per_step, self.variant_segments + 1, axis=1)
+        self.lats_per_step = np.repeat(self.lats_per_step, self.course_segments + 1, axis=1)
+        self.lons_per_step = np.repeat(self.lons_per_step, self.course_segments + 1, axis=1)
+        self.dist_per_step = np.repeat(self.dist_per_step, self.course_segments + 1, axis=1)
+        self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.course_segments + 1, axis=1)
+        self.starttime_per_step = np.repeat(self.starttime_per_step, self.course_segments + 1, axis=1)
 
-        self.shipparams_per_step.define_variants(self.variant_segments)
+        self.shipparams_per_step.define_variants(self.course_segments)
 
-        self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
-        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.variant_segments + 1, axis=0)
-        self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
-        self.time = np.repeat(self.time, self.variant_segments + 1, axis=0)
+        self.full_time_traveled = np.repeat(self.full_time_traveled, self.course_segments + 1, axis=0)
+        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.course_segments + 1, axis=0)
+        self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.course_segments + 1, axis=0)
+        self.time = np.repeat(self.time, self.course_segments + 1, axis=0)
         self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
-        delta_hdgs = np.linspace(-self.variant_segments / 2 * self.variant_increments_deg,
-                                 +self.variant_segments / 2 * self.variant_increments_deg, self.variant_segments + 1)
+        delta_hdgs = np.linspace(-self.course_segments / 2 * self.variant_increments_deg,
+                                 +self.course_segments / 2 * self.variant_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
         self.current_variant = new_azi['azi1']  # center courses around gcr
-        self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
+        self.current_variant = np.repeat(self.current_variant, self.course_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
         self.current_variant = units.cut_angles(self.current_variant)
 
@@ -856,7 +856,7 @@ class IsoBased(RoutingAlg):
         self.minimisation_criterion = min_str
 
     def set_variant_segments(self, seg, inc):
-        self.variant_segments = seg
+        self.course_segments = seg
         self.variant_increments_deg = inc
 
     def get_current_azimuth(self):
@@ -882,14 +882,14 @@ class IsoBased(RoutingAlg):
         return winds
 
     def check_settings(self):
-        if (self.variant_segments / 2 * self.variant_increments_deg >= self.prune_sector_deg_half):
+        if (self.course_segments / 2 * self.variant_increments_deg >= self.prune_sector_deg_half):
             raise ValueError(
-                'Prune sector does not contain all variants. Please adjust settings. (variant_segments=' + str(
-                    self.variant_segments) + ', variant_increments_deg=' + str(
+                'Prune sector does not contain all courses. Please adjust settings. (course_segments=' + str(
+                    self.course_segments) + ', variant_increments_deg=' + str(
                     self.variant_increments_deg) + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
-        if ((self.variant_segments % 2) != 0):
+        if ((self.course_segments % 2) != 0):
             raise ValueError(
-                'Please provide an even number of variant segments, you chose: ' + str(self.variant_segments))
+                'Please provide an even number of course segments, you chose: ' + str(self.course_segments))
 
         if ((self.prune_segments % 2) != 0):
             raise ValueError('Please provide an even number of prune segments, you chose: ' + str(self.prune_segments))
