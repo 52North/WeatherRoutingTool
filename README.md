@@ -214,6 +214,71 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
+# Pruning methods
+The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:
+
+1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
+2. The choice of how route segments are grouped for the pruning.
+3. The minimisation criterion that is used as basis for the pruning.
+
+## The Definition of the Symmetry Axis
+Two methods for the definition of the symmetry axis can be selected:
+
+1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
+2. The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/gcr_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.3: The symmetry axis of the pruning is given by the grand circle distance between global start and end point.</figcaption>
+</figure>
+<br>
+<br>
+
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/headings_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.4: The symmetry axis of the pruning is given by the median of the angles of the connecting lines between the end of the route segments and the destination.</figcaption>
+</figure>
+<br>
+<br>
+
+## Grouping Route Segments
+Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:
+
+1. *courses-based*:  Route segments are grouped according to their courses.
+  <figure>
+  <p align="center">
+  <img src="figures_readme/bearings_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+2. *larger-direction-based*: Route segments are grouped accoding to the angle of the connecting line between the global start point and the end of the route segment.
+<figure>
+  <p align="center">
+  <img src="figures_readme/larger_direction_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+4. *branch-based*: Route segments of one *branch* form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.
+<figure>
+  <p align="center">
+  <img src="figures_readme/branch_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+## The Minimisation Criterion
+*to be continued*
+
 ## Genetic Algorithm
 
 ### General concept
