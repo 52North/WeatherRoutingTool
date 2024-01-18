@@ -200,7 +200,7 @@ class IsoBased(RoutingAlg):
         self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.course_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.course_segments + 1, axis=0)
         self.time = np.repeat(self.time, self.course_segments + 1, axis=0)
-        self.check_variant_def()
+        self.check_course_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
         delta_hdgs = np.linspace(-self.course_segments / 2 * self.course_increments_deg,
@@ -623,18 +623,18 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_rshallow(new_rshallow)
         self.shipparams_per_step.set_rroughness(new_rroughness)
 
-    def check_variant_def(self):
+    def check_course_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (
                 self.lats_per_step.shape[1] == self.course_per_step.shape[1]) and (
                          self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
-            raise 'define_variants: number of columns not matching!'
+            raise 'define_courses: number of columns not matching!'
 
         if (not ((self.lats_per_step.shape[0] == self.lons_per_step.shape[0]) and (
                 self.lats_per_step.shape[0] == self.course_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == self.dist_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == (self.count + 1)))):
             raise ValueError(
-                'define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
+                'define_courses: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
     def pruning(self, trim, bins, larger_direction_based=True):
