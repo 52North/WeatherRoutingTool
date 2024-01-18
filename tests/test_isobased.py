@@ -247,7 +247,7 @@ def test_define_variants_current_variant_filling():
     finish = (0, 20)
     ra = basic_test_func.create_dummy_IsoBased_object()
 
-    new_azi = geod.inverse([start[0]], [start[1]], [finish[0]], [finish[1]])
+    new_course = geod.inverse([start[0]], [start[1]], [finish[0]], [finish[1]])
 
     ra.define_courses()
     ra.print_shape()
@@ -257,7 +257,7 @@ def test_define_variants_current_variant_filling():
     assert ra.current_variant.shape[0] == ra.lats_per_step.shape[1]
 
     test_current_var = np.array(
-        [new_azi['azi1'] + 2, new_azi['azi1'] + 1, new_azi['azi1'], new_azi['azi1'] - 1, new_azi['azi1'] - 2])
+        [new_course['azi1'] + 2, new_course['azi1'] + 1, new_course['azi1'], new_course['azi1'] - 1, new_course['azi1'] - 2])
 
     for i in range(0, test_current_var.shape[0]):
         assert test_current_var[i] == ra.current_variant[i]
