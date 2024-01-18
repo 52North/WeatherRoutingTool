@@ -197,7 +197,7 @@ def test_get_delta_variables_last_step():
     tk = basic_test_func.create_dummy_Tanker_object()
     tk.speed = boat_speed
 
-    ship_params = tk.get_ship_parameters(ra.get_current_azimuth(), ra.get_current_lats(), ra.get_current_lons(),
+    ship_params = tk.get_ship_parameters(ra.get_current_course(), ra.get_current_lats(), ra.get_current_lons(),
                                          ra.time)
     ship_params.print()
 
