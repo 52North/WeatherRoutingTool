@@ -21,7 +21,7 @@ class RoutingAlg:
                     count: int  (routing step)
                     start: tuple    (lat,long at start)
                     finish: tuple   (lat,lon and end)
-                    gcr_azi: float (initial gcr heading)
+                    gcr_course: float (initial course)
                     lats1, lons1, azi1, s12: (M, N) arrays, N=headings+1, M=number of steps+1 (decreasing step number)
                     azi0, s0: (M, 1) vectors without history
                     time1: current datetime
@@ -31,7 +31,7 @@ class RoutingAlg:
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     departure_time: datetime
-    gcr_azi: float  # azimut of great circle route
+    gcr_course: float  # course of great circle route
 
     fig: matplotlib.figure
     route_ensemble: list
@@ -45,7 +45,7 @@ class RoutingAlg:
 
         gcr = self.calculate_gcr(self.start, self.finish)
         self.current_azimuth = gcr
-        self.gcr_azi = gcr
+        self.gcr_course = gcr
 
         self.figure_path = get_figure_path()
 

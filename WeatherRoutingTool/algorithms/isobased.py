@@ -29,7 +29,7 @@ class IsoBased(RoutingAlg):
 
     start_temp: tuple  # changes if intermediate waypoints are used
     finish_temp: tuple  # changes if intermediate waypoints are used
-    gcr_azi_temp: tuple
+    gcr_course_temp: tuple
 
     '''
        All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
@@ -107,7 +107,7 @@ class IsoBased(RoutingAlg):
 
         self.finish_temp = self.finish
         self.start_temp = self.start
-        self.gcr_azi_temp = self.gcr_azi
+        self.gcr_course_temp = self.gcr_course
 
         self.desired_number_of_routes = config.ISOCHRONE_NUMBER_OF_ROUTES
         self.current_number_of_routes = 0
@@ -283,7 +283,7 @@ class IsoBased(RoutingAlg):
                 constraints_list.reached_positive()
                 self.finish_temp = constraints_list.get_current_destination()
                 self.start_temp = constraints_list.get_current_start()
-                self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
                 self.route_reached_waypoint = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
@@ -749,18 +749,18 @@ class IsoBased(RoutingAlg):
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         full_travel_dist = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
         mean_dist = np.mean(full_travel_dist['s12'])
-        gcr_point = geod.direct([self.start_temp[0]], [self.start_temp[1]], self.gcr_azi_temp, mean_dist)
+        gcr_point = geod.direct([self.start_temp[0]], [self.start_temp[1]], self.gcr_course_temp, mean_dist)
 
-        new_azi = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
+        new_course = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
 
         # ToDo: use logger.debug and args.debug
         if debug:
             print('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
             print('current temporary destination: ', self.finish_temp)
-            print('mean azimuth', new_azi['azi1'])
+            print('mean course', new_course['azi1'])
 
         # define pruning area
-        azi0s = np.repeat(new_azi['azi1'], self.prune_segments + 1)
+        azi0s = np.repeat(new_course['azi1'], self.prune_segments + 1)
 
         delta_hdgs = np.linspace(-self.prune_sector_deg_half, +self.prune_sector_deg_half, self.prune_segments + 1)
 
@@ -791,27 +791,27 @@ class IsoBased(RoutingAlg):
         new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
         new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
 
-        new_azi = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
+        new_course = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
 
         # sort azimuths and select (approximate) median
-        new_azi_sorted = np.sort(new_azi['azi1'])
-        meadian_indx = int(np.round(new_azi_sorted.shape[0] / 2))
+        new_course_sorted = np.sort(new_course['azi1'])
+        meadian_indx = int(np.round(new_course_sorted.shape[0] / 2))
 
         # ToDo: use logger.debug and args.debug
         if debug:
-            print('sorted azimuths: ', new_azi_sorted)
+            print('sorted azimuths: ', new_course_sorted)
             print('median index: ', meadian_indx)
 
-        mean_azimuth = new_azi_sorted[meadian_indx]
+        mean_course = new_course_sorted[meadian_indx]
 
         if debug:
             # plot symmetry axis and boundaries of pruning area
             symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                        mean_azimuth, 1000000)
+                                        mean_course, 1000000)
             lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                      mean_azimuth - self.prune_sector_deg_half, 1000000)
+                                      mean_course - self.prune_sector_deg_half, 1000000)
             upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                      mean_azimuth + self.prune_sector_deg_half, 1000000)
+                                      mean_course + self.prune_sector_deg_half, 1000000)
 
             self.ax.plot([self.lons_per_step[1][meadian_indx], symmetry_axis["lon2"]],
                          [self.lats_per_step[1][meadian_indx], symmetry_axis["lat2"]], color="blue")
@@ -826,8 +826,8 @@ class IsoBased(RoutingAlg):
                 plt.savefig(final_path)
 
         # define pruning area
-        bins = units.get_angle_bins(mean_azimuth - self.prune_sector_deg_half,
-                                    mean_azimuth + self.prune_sector_deg_half, self.prune_segments + 1)
+        bins = units.get_angle_bins(mean_course - self.prune_sector_deg_half,
+                                    mean_course + self.prune_sector_deg_half, self.prune_segments + 1)
 
         bins = np.sort(bins)
 
@@ -1104,13 +1104,13 @@ class IsoBased(RoutingAlg):
         if not have_pos_points:
             self.finish_temp = self.finish
             self.start_temp = self.start
-            self.gcr_azi_temp = self.gcr_azi
+            self.gcr_course_temp = self.gcr_course
             return
 
         constraint_list.init_positive_lists(self.start, self.finish)
         self.finish_temp = constraint_list.get_current_destination()
         self.start_temp = constraint_list.get_current_start()
-        self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
 
         logger.info('Currently going from')
         logger.info(self.start_temp)
