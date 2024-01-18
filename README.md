@@ -70,9 +70,9 @@ Required variables (no default values provided):
 - `DEFAULT_MAP`: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
 - `DEFAULT_ROUTE`: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
 - `DEPARTURE_TIME`: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
-- `DEPTH_DATA`: path to depth data
+- `DEPTH_DATA`: path to depth data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 - `ROUTE_PATH`: path to json file to which the route will be written
-- `WEATHER_DATA`: path to weather data
+- `WEATHER_DATA`: path to weather data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 
 Recommended variables (default values provided but might be inaccurate/unsuitable):
 - `BOAT_DRAUGHT`: in m
@@ -93,12 +93,13 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_MAX_ROUTING_STEPS`: maximum number of routing steps. Applies also if more than one route is searched!
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
 - `ISOCHRONE_NUMBER_OF_ROUTES`: integer specifying how many routes should be searched (default: 1)
-- `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
-- `ISOCHRONE_PRUNE_GCR_CENTERED`: symmetry axis for pruning
+- `ISOCHRONE_PRUNE_GROUPS`: can be 'courses', 'larger_direction', 'branch'
 - `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning
 - `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector
+- `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
-- `ROUTER_HDGS_SEGMENTS`: otal number of headings : put even number!!
+- `ROUTER_HDGS_SEGMENTS`: total number of headings (put even number!!); headings are oriented around the great circle from current point to (temporary - i.e. next waypoint if used) destination
+- `SHIP_TYPE`: options: 'CBT', 'SAL'
 - `TIME_FORECAST`: forecast hours weather
 
 ### Environment variables
@@ -182,7 +183,7 @@ Further debug information are written to stdout.
 
 ### General concept
 
-The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*.
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is referred to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is referred to as *route segment*.
 
 The algorithm is the following:
 
