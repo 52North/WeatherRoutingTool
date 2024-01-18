@@ -911,7 +911,7 @@ class IsoBased(RoutingAlg):
         time = round(self.full_time_traveled / 3600, 2)
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
                             route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
-                            lons_per_step=self.lons_per_step[:], azimuths_per_step=self.course_per_step[:],
+                            lons_per_step=self.lons_per_step[:], course_per_step=self.course_per_step[:],
                             dists_per_step=self.dist_per_step[:], starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step)
 
