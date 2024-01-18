@@ -186,7 +186,7 @@ class IsoBased(RoutingAlg):
         new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
         new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
 
-        new_azi = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
+        new_course = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
 
         self.lats_per_step = np.repeat(self.lats_per_step, self.course_segments + 1, axis=1)
         self.lons_per_step = np.repeat(self.lons_per_step, self.course_segments + 1, axis=1)
@@ -207,7 +207,7 @@ class IsoBased(RoutingAlg):
                                  +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
-        self.current_variant = new_azi['azi1']  # center courses around gcr
+        self.current_variant = new_course['azi1']  # center courses around gcr
         self.current_variant = np.repeat(self.current_variant, self.course_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
         self.current_variant = units.cut_angles(self.current_variant)
