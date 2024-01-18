@@ -28,7 +28,7 @@ def test_plot_power_vs_dist():
                         # rpm = dummy_scalar,  # propeller [revolutions per minute]
                         route_type='min_time_route',  # route name
                         time=dummy_scalar,  # time needed for the route [h]
-                        lats_per_step=dummy_list, lons_per_step=dummy_list, azimuths_per_step=dummy_list,
+                        lats_per_step=dummy_list, lons_per_step=dummy_list, course_per_step=dummy_list,
                         dists_per_step=dist_per_step,  # speed_per_step = dummy_list,
                         starttime_per_step=time_per_step,  # fuel_per_step= fuel_consumed,
                         # full_dist_traveled = dummy_list,
