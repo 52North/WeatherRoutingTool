@@ -70,8 +70,8 @@ class IsoBased(RoutingAlg):
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
-    prune_symmetry_axis: bool
-    prune_groups: bool
+    prune_symmetry_axis: str
+    prune_groups: str
     minimisation_criterion: str
 
     desired_number_of_routes: int
