@@ -361,6 +361,11 @@ class IsoBased(RoutingAlg):
                         delta_time[i] = delta_time_last_step[i]
                         delta_fuel[i] = delta_fuel_last_step[i]
                         dist[i] = dist_last_step[i]
+            else:
+                delta_time = delta_time_last_step
+                delta_fuel = delta_fuel_last_step
+                dist = dist_last_step
+
         is_constrained = self.check_constraints(move, constraint_list)
 
         self.update_position(move, is_constrained, dist)
