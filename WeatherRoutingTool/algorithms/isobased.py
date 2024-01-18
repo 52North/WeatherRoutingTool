@@ -929,9 +929,9 @@ class IsoBased(RoutingAlg):
         """
         debug = False
 
-        nvariants = self.get_current_lons().shape[0]
+        ncourses = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
-                                    np.full(nvariants, self.finish_temp[0]), np.full(nvariants, self.finish_temp[1]))
+                                    np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
@@ -948,8 +948,8 @@ class IsoBased(RoutingAlg):
             if debug:
                 print('reaching final:', reached_final)
 
-            new_lat = np.full(nvariants, self.finish_temp[0])
-            new_lon = np.full(nvariants, self.finish_temp[1])
+            new_lat = np.full(ncourses, self.finish_temp[0])
+            new_lon = np.full(ncourses, self.finish_temp[1])
 
             if reached_final:
                 self.route_reached_destination = True
