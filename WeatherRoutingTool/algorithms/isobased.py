@@ -194,7 +194,7 @@ class IsoBased(RoutingAlg):
         self.course_per_step = np.repeat(self.course_per_step, self.course_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.course_segments + 1, axis=1)
 
-        self.shipparams_per_step.define_variants(self.course_segments)
+        self.shipparams_per_step.define_courses(self.course_segments)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.course_segments + 1, axis=0)
         self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.course_segments + 1, axis=0)

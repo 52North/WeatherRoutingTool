@@ -71,16 +71,16 @@ class ShipParams():
         logger.info('r_shallow: ', self.r_shallow.shape)
         logger.info('r_roughness: ', self.r_roughness.shape)
 
-    def define_variants(self, variant_segments):
-        self.speed = np.repeat(self.speed, variant_segments + 1, axis=1)
-        self.fuel = np.repeat(self.fuel, variant_segments + 1, axis=1)
-        self.power = np.repeat(self.power, variant_segments + 1, axis=1)
-        self.rpm = np.repeat(self.rpm, variant_segments + 1, axis=1)
-        self.r_calm = np.repeat(self.r_calm, variant_segments + 1, axis=1)
-        self.r_wind = np.repeat(self.r_wind, variant_segments + 1, axis=1)
-        self.r_waves = np.repeat(self.r_waves, variant_segments + 1, axis=1)
-        self.r_shallow = np.repeat(self.r_shallow, variant_segments + 1, axis=1)
-        self.r_roughness = np.repeat(self.r_roughness, variant_segments + 1, axis=1)
+    def define_courses(self, courses_segments):
+        self.speed = np.repeat(self.speed, courses_segments + 1, axis=1)
+        self.fuel = np.repeat(self.fuel, courses_segments + 1, axis=1)
+        self.power = np.repeat(self.power, courses_segments + 1, axis=1)
+        self.rpm = np.repeat(self.rpm, courses_segments + 1, axis=1)
+        self.r_calm = np.repeat(self.r_calm, courses_segments + 1, axis=1)
+        self.r_wind = np.repeat(self.r_wind, courses_segments + 1, axis=1)
+        self.r_waves = np.repeat(self.r_waves, courses_segments + 1, axis=1)
+        self.r_shallow = np.repeat(self.r_shallow, courses_segments + 1, axis=1)
+        self.r_roughness = np.repeat(self.r_roughness, courses_segments + 1, axis=1)
 
     def get_power(self):
         return self.power
