@@ -37,7 +37,7 @@ class IsoFuel(IsoBased):
     ##
     # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables(self, boat, wind, bs):
-        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
+        fuel = boat.get_fuel_per_time(self.get_current_courses(), wind)
         delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 

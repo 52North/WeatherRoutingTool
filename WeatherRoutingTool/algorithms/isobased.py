@@ -329,10 +329,10 @@ class IsoBased(RoutingAlg):
 
         # get boat speed
         bs = boat.get_boat_speed()
-        bs = np.repeat(bs, (self.get_current_azimuth().shape[0]), axis=0)
+        bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
-        ship_params = boat.get_ship_parameters(self.get_current_azimuth(), self.get_current_lats(),
+        ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
                                                self.get_current_lons(), self.time, -99, True)
         units.cut_angles(self.current_variant)
 
@@ -859,7 +859,7 @@ class IsoBased(RoutingAlg):
         self.course_segments = seg
         self.course_increments_deg = inc
 
-    def get_current_azimuth(self):
+    def get_current_course(self):
         return self.current_variant
 
     def get_current_lats(self):
