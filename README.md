@@ -11,12 +11,8 @@ Only Python < 3.11 supported!
 - generate a virtual environment e.g. via `python -m venv "venv"`
 - activate the virtual environment: `source venv/bin/activate`
 - install the routing tool: `pip install -r /path-to-WRT/requirements.txt`
-- install the python package for downloading the environmental data: `pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader`
 - install mariPower:
   - request access to the respective git repository and clone it
-  - open setup.py in maripower directory
-  - delete requirement pickle
-  - fix smt to version 1.3.0 (`smt==1.3.9`)
   - install maripower: `pip install -e maripower`
 
 ### Installation via the setup.py
@@ -27,9 +23,6 @@ Only Python < 3.11 supported!
 - install the WRT: `/path/to/WRT/setup.py install`
 - install mariPower:
   - request access to the respective git repository and clone it
-  - open setup.py in maripower directory
-  - delete the requirement pickle
-  - fix smt to version 1.3.0 (`smt==1.3.9`)
   - install maripower: `pip install -e maripower`
 
 ## Configuration
