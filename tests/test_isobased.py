@@ -30,7 +30,7 @@ def test_update_position_fail():
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]])
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
 
     dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel])
 
@@ -55,7 +55,7 @@ def test_update_position_fail():
 
     assert np.allclose(lats_test, ra.lats_per_step, 0.01)
     assert np.allclose(lons_test, ra.lons_per_step, 0.01)
-    assert np.allclose(ra.current_variant, np.array([az_till_start, az_till_start, az_till_start, az_till_start]), 0.1)
+    assert np.allclose(ra.current_course, np.array([az_till_start, az_till_start, az_till_start, az_till_start]), 0.1)
     assert np.array_equal(ra.dist_per_step, dist_test)
     assert np.array_equal(ra.course_per_step, az_test)
 
@@ -82,7 +82,7 @@ def test_update_position_success():
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]])
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
 
     dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel])
 
@@ -126,7 +126,7 @@ def test_check_bearing_true():
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]])
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
     ra.finish = (lat_end, lon_end)
     ra.finish_temp = ra.finish
 
@@ -155,7 +155,7 @@ def test_check_bearing_false():
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]])
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
 
     dist = np.array([10000, 10000, 10000, 10000])
 
@@ -188,7 +188,7 @@ def test_get_delta_variables_last_step():
     ra.dist_per_step = np.array([[0, 0, 0, 0]])
     ra.time = np.array(
         [datetime.now(), datetime.now(), datetime.now(), datetime.now()])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
     ra.finish = (lat_end, lon_end)
     ra.finish_temp = (lat_end, lon_end)
 
@@ -208,11 +208,11 @@ def test_get_delta_variables_last_step():
 
 
 '''
-    Test whether shapes of arrays are sensible after define_variants()
+    Test whether shapes of arrays are sensible after define_courses()
 '''
 
 
-def test_define_variants_array_shapes():
+def test_define_courses_array_shapes():
     nof_hdgs_segments = 4
     hdgs_increments = 1
 
@@ -238,11 +238,11 @@ def test_define_variants_array_shapes():
 
 
 '''
-    test whether current_variant is correctly filled in define_variants()
+    test whether current_course is correctly filled in define_courses()
 '''
 
 
-def test_define_variants_current_variant_filling():
+def test_define_courses_current_course_filling():
     start = (30, 45)
     finish = (0, 20)
     ra = basic_test_func.create_dummy_IsoBased_object()
@@ -253,14 +253,14 @@ def test_define_variants_current_variant_filling():
     ra.print_shape()
     ra.print_current_status()
 
-    # checking current_variant
-    assert ra.current_variant.shape[0] == ra.lats_per_step.shape[1]
+    # checking current_course
+    assert ra.current_course.shape[0] == ra.lats_per_step.shape[1]
 
-    test_current_var = np.array(
+    test_current_course = np.array(
         [new_course['azi1'] + 2, new_course['azi1'] + 1, new_course['azi1'], new_course['azi1'] - 1, new_course['azi1'] - 2])
 
-    for i in range(0, test_current_var.shape[0]):
-        assert test_current_var[i] == ra.current_variant[i]
+    for i in range(0, test_current_course.shape[0]):
+        assert test_current_course[i] == ra.current_course[i]
 
 
 '''
@@ -277,7 +277,7 @@ def test_pruning_select_correct_idxs():
     ra.define_courses()
 
     pruning_bins = np.array([10, 20, 40, 60, 80])
-    ra.current_variant = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74])
+    ra.current_course = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74])
     #**ra.current_azimuth = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74])
     ra.full_dist_traveled = np.array([1, 5, 6, 1, 2, 7, 10, 1, 8])
     ra.full_time_traveled = np.random.rand(9)
@@ -286,7 +286,7 @@ def test_pruning_select_correct_idxs():
 
     ra.dist_per_step = np.array([ra.full_dist_traveled])
     #**ra.course_per_step = np.array([ra.current_azimuth])
-    ra.course_per_step = np.array([ra.current_variant])
+    ra.course_per_step = np.array([ra.current_course])
 
     sp = ShipParams(full_fuel_consumed, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
                     speed_per_step, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
@@ -313,7 +313,7 @@ def test_pruning_select_correct_idxs():
 
     ra.pruning(True, pruning_bins, False)
 
-    assert np.array_equal(cur_var_test, ra.current_variant)
+    assert np.array_equal(cur_var_test, ra.current_course)
     #**assert np.array_equal(cur_azi_test, ra.current_azimuth)
     assert np.array_equal(full_time_test, ra.full_time_traveled)
     assert np.array_equal(full_dist_test, ra.full_dist_traveled)
@@ -346,7 +346,7 @@ def test_check_bearing():
     ra = basic_test_func.create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
-    ra.current_variant = np.array([az, az, az, az])
+    ra.current_course = np.array([az, az, az, az])
 
     dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel])
 

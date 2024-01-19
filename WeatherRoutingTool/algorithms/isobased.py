@@ -57,7 +57,7 @@ class IsoBased(RoutingAlg):
     starttime_per_step: np.ndarray
 
     #**current_azimuth: np.ndarray  # current azimuth
-    current_variant: np.ndarray  # current variant
+    current_course: np.ndarray  # current course
 
     # the lenght of the following arrays depends on the number of variants (variant segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
@@ -177,7 +177,7 @@ class IsoBased(RoutingAlg):
         logger.info('lats = ', self.current_lats)
         logger.info('lons = ', self.current_lons)
         #**logger.info('azimuth = ', self.current_azimuth)
-        logger.info('course = ', self.current_variant)
+        logger.info('course = ', self.current_course)
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
@@ -208,10 +208,10 @@ class IsoBased(RoutingAlg):
                                  +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
-        self.current_variant = new_course['azi1']  # center courses around gcr
-        self.current_variant = np.repeat(self.current_variant, self.course_segments + 1)
-        self.current_variant = self.current_variant - delta_hdgs
-        self.current_variant = units.cut_angles(self.current_variant)
+        self.current_course = new_course['azi1']  # center courses around gcr
+        self.current_course = np.repeat(self.current_course, self.course_segments + 1)
+        self.current_course = self.current_course - delta_hdgs
+        self.current_course = units.cut_angles(self.current_course)
 
     def define_initial_variants(self):
         pass
@@ -335,7 +335,7 @@ class IsoBased(RoutingAlg):
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
                                                self.get_current_lons(), self.time, -99, True)
-        units.cut_angles(self.current_variant)
+        units.cut_angles(self.current_course)
 
         # ship_params.print()
 
@@ -523,7 +523,7 @@ class IsoBased(RoutingAlg):
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
             #**self.current_azimuth = self.current_variant[idxs]
-            self.current_variant = self.current_variant[idxs]
+            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.full_fuel_consumed = self.full_fuel_consumed[idxs]
@@ -551,7 +551,7 @@ class IsoBased(RoutingAlg):
                                                            idxs=None)
             col_len = len(self.lats_per_step[0])
             #**self.current_azimuth = np.full(col_len, -99)
-            self.current_variant = np.full(col_len, -99)
+            self.current_course = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
             self.full_fuel_consumed = np.full(col_len, -99)
@@ -645,7 +645,7 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         if debug:
             print('binning for pruning', bins)
-            print('current courses', self.current_variant)
+            print('current courses', self.current_course)
             print('full_dist_traveled', self.full_time_traveled)
 
         idxs = []
@@ -700,7 +700,7 @@ class IsoBased(RoutingAlg):
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
             #**self.current_azimuth = self.current_variant[idxs]
-            self.current_variant = self.current_variant[idxs]
+            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.full_fuel_consumed = self.full_fuel_consumed[idxs]
@@ -709,7 +709,7 @@ class IsoBased(RoutingAlg):
             raise Exception('Pruned indices running out of bounds.')
 
     def courses_based_pruning(self, bins):
-        bin_stat, bin_edges, bin_number = binned_statistic(self.current_variant, self.full_dist_traveled,
+        bin_stat, bin_edges, bin_number = binned_statistic(self.current_course, self.full_dist_traveled,
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
@@ -861,7 +861,7 @@ class IsoBased(RoutingAlg):
         self.course_increments_deg = inc
 
     def get_current_course(self):
-        return self.current_variant
+        return self.current_course
 
     def get_current_lats(self):
         return self.lats_per_step[0, :]
@@ -941,7 +941,7 @@ class IsoBased(RoutingAlg):
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_variant, dist)
+                           self.current_course, dist)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -985,7 +985,7 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
-        self.course_per_step = np.vstack((self.current_variant, self.course_per_step))
+        self.course_per_step = np.vstack((self.current_course, self.course_per_step))
 
         # ToDo: use logger.debug and args.debug
         if debug:

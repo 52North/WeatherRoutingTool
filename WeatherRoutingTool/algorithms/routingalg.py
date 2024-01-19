@@ -45,7 +45,7 @@ class RoutingAlg:
 
         gcr = self.calculate_gcr(self.start, self.finish)
         #**self.current_azimuth = gcr
-        self.current_variant = gcr
+        self.current_course = gcr
         self.gcr_course = gcr
 
         self.figure_path = get_figure_path()
