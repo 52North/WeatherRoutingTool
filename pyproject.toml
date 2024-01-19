@@ -26,7 +26,7 @@ dependencies = [
     "geovectorslib",
     "global_land_mask",
     "lxml",
-    "maridatadownloader @ git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader",
+    "maridatadownloader @ git+https://github.com/52North/maridatadownloader",
     "matplotlib",
     "netcdf4",
     "numpy == 1.23.4",

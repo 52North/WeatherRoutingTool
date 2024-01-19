@@ -7,6 +7,7 @@ geopandas
 geovectorslib
 global_land_mask
 lxml
+git+https://github.com/52North/maridatadownloader
 matplotlib
 netcdf4 == 1.5.8
 numpy == 1.23.4
