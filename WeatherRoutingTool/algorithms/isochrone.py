@@ -53,6 +53,6 @@ class IsoChrone(IsoBased):
 
     def get_delta_variables(self, boat, wind, bs):
         dist = self.get_dist(bs)
-        delta_fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind) * self.delta_time
+        delta_fuel = boat.get_fuel_per_time(self.get_current_course(), wind) * self.delta_time
 
         return self.delta_time, delta_fuel, dist

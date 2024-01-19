@@ -56,7 +56,7 @@ class IsoBased(RoutingAlg):
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
 
-    current_azimuth: np.ndarray  # current azimuth
+    #**current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
 
     # the lenght of the following arrays depends on the number of variants (variant segments)
@@ -100,7 +100,7 @@ class IsoBased(RoutingAlg):
         self.full_fuel_consumed = np.array([0])
         self.full_dist_traveled = np.array([0])
 
-        self.current_variant = self.current_azimuth
+        #**self.current_variant = self.current_azimuth
         self.route_reached_destination = False
         self.route_reached_waypoint = False
         self.pruning_error = False
@@ -176,7 +176,8 @@ class IsoBased(RoutingAlg):
         logger.info('CURRENT POSITION')
         logger.info('lats = ', self.current_lats)
         logger.info('lons = ', self.current_lons)
-        logger.info('azimuth = ', self.current_azimuth)
+        #**logger.info('azimuth = ', self.current_azimuth)
+        logger.info('course = ', self.current_variant)
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
@@ -521,7 +522,7 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_azimuth = self.current_variant[idxs]
+            #**self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
@@ -549,7 +550,7 @@ class IsoBased(RoutingAlg):
                                                            col_start=0, col_end=col,
                                                            idxs=None)
             col_len = len(self.lats_per_step[0])
-            self.current_azimuth = np.full(col_len, -99)
+            #**self.current_azimuth = np.full(col_len, -99)
             self.current_variant = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
@@ -698,7 +699,7 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_azimuth = self.current_variant[idxs]
+            #**self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
