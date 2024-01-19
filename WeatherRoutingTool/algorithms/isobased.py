@@ -59,11 +59,11 @@ class IsoBased(RoutingAlg):
     #**current_azimuth: np.ndarray  # current azimuth
     current_course: np.ndarray  # current course
 
-    # the lenght of the following arrays depends on the number of variants (variant segments)
-    full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
-    full_time_traveled: np.ndarray  # time elapsed since start for all variants
+    # the lenght of the following arrays depends on the number of courses (course segments)
+    full_dist_traveled: np.ndarray  # full geodesic distance since start for all courses
+    full_time_traveled: np.ndarray  # time elapsed since start for all courses
     full_fuel_consumed: np.ndarray
-    time: np.ndarray  # current datetime for all variants
+    time: np.ndarray  # current datetime for all courses
 
     course_segments: int  # number of course segments in the range of -180° to 180°
     course_increments_deg: int
@@ -150,7 +150,7 @@ class IsoBased(RoutingAlg):
 
         self.shipparams_per_step.print()
 
-        logger.info('per-variant variables')
+        logger.info('per-course variables')
         logger.info(form.get_log_step('time =' + str(self.time)))
         logger.info(form.get_log_step('full_dist_traveled=' + str(self.full_dist_traveled)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled)))
@@ -166,7 +166,7 @@ class IsoBased(RoutingAlg):
 
         self.shipparams_per_step.print_shape()
 
-        logger.info('per-variant variables:')
+        logger.info('per-course variables:')
         logger.info(form.get_log_step('time =' + str(self.time.shape)))
         logger.info(form.get_log_step('full_dist_traveled = ' + str(self.full_dist_traveled.shape)))
         logger.info(form.get_log_step('full_time_traveled = ' + str(self.full_time_traveled.shape)))
