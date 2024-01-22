@@ -334,7 +334,7 @@ class IsoBased(RoutingAlg):
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(self.get_current_azimuth(), self.get_current_lats(),
-                                               self.get_current_lons(), self.time,[], True)
+                                               self.get_current_lons(), self.time, [], True)
         units.cut_angles(self.current_variant)
 
         # ship_params.print()

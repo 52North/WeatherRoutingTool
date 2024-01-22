@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     if weather_type == 'rough_weather':
         wind_speed = 12.5
-        VHMO =  3.5
+        VHMO = 3.5
         VTPK = 9.4
     if weather_type == 'calm_weather':
         wind_speed = 2.5
@@ -207,12 +207,15 @@ if __name__ == "__main__":
 
     curve_list = [shipparams_vec['original'], shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
     label_list = ['original', '95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
-    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'calmwaterres_' + weather_type, 'power', draught)
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out,
+                     'calmwaterres_' + weather_type, 'power', draught)
 
     curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
     label_list = ['original', '80% Zusatzwiderstand Wind', '120% Zusatzwiderstand Wind']
-    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'windres_' + weather_type, 'power', draught)
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out,
+                     'windres_' + weather_type, 'power', draught)
 
     curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
     label_list = ['original', '80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
-    plot_polar_power(curve_list, label_list, courses, args.geojson_out, 'waveres_' + weather_type, 'power', draught)
+    plot_polar_power(curve_list, label_list, courses, args.geojson_out,
+                     'waveres_' + weather_type, 'power', draught)

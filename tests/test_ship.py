@@ -255,7 +255,7 @@ def test_get_netCDF_courses_isobased():
                      datetime(2022, 12, 19) + timedelta(days=360),
                      datetime(2022, 12, 19) + timedelta(days=360)])
 
-    pol.write_netCDF_courses(courses, lat, lon, time, -99, True)
+    pol.write_netCDF_courses(courses, lat, lon, time, [], True)
     ds = xr.open_dataset(pol.courses_path)
 
     lat_read = ds['lat'].to_numpy()
@@ -339,7 +339,7 @@ def test_get_fuel_for_fixed_waypoints():
     waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
 
     ship_params = pol.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                          waypoint_dict['start_lons'], waypoint_dict['start_times'])
+                                          waypoint_dict['start_lons'], waypoint_dict['start_times'], [])
     ship_params.print()
 
     ds = xr.open_dataset(pol.courses_path)
@@ -385,7 +385,7 @@ def test_wind_force():
     pol = basic_test_func.create_dummy_Tanker_object()
     pol.set_boat_speed(bs)
 
-    ship_params = pol.get_ship_parameters(courses, lats, lons, time, -99, True)
+    ship_params = pol.get_ship_parameters(courses, lats, lons, time, [], True)
     power = ship_params.get_power()
     rwind = ship_params.get_rwind()
 

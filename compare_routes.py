@@ -18,6 +18,7 @@ def plot_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
+
 def plot_acc_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
