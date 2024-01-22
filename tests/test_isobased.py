@@ -198,7 +198,7 @@ def test_get_delta_variables_last_step():
     tk.speed = boat_speed
 
     ship_params = tk.get_ship_parameters(ra.get_current_course(), ra.get_current_lats(), ra.get_current_lons(),
-                                         ra.time)
+                                         ra.time, [])
     ship_params.print()
 
     delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.get_boat_speed())
@@ -311,7 +311,8 @@ def test_pruning_select_correct_idxs():
     ra.print_current_status()
     form.print_line()
 
-    ra.pruning(True, pruning_bins, False)
+    ra.prune_groups = 'courses'
+    ra.pruning(True, pruning_bins)
 
     assert np.array_equal(cur_var_test, ra.current_course)
     #**assert np.array_equal(cur_azi_test, ra.current_azimuth)
@@ -458,3 +459,19 @@ def test_find_routes_testduplicates():
     assert ra.next_step_routes.shape[0] == 0
     assert ra.route_list[0].lons_per_step[1] == -123.32
     assert ra.route_list[1].lons_per_step[1] == -123.76
+
+
+def test_branch_based_pruning():
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[37.68, 37.67, 37.66, 37.65, 37.64, 37.63],
+                                 [37.42, 37.42, 37.42, 37.43, 37.43, 37.43]])
+    ra.lons_per_step = np.array([[-123.10, -123.76, -123.32, -123.09, -123.07, -123.06],
+                                 [-123.61, -123.61, -123.61, -123.23, -123.23, -123.23]])
+    ra.full_dist_traveled = np.array([1, 2, 3, 2, 3, 1])
+
+    ra.prune_groups = 'branch'
+
+    idxs = ra.branch_based_pruning()
+    idxs_test = [2, 4]
+
+    assert np.array_equal(np.array(idxs), np.array(idxs_test))
