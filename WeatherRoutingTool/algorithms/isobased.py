@@ -56,7 +56,6 @@ class IsoBased(RoutingAlg):
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
 
-    #**current_azimuth: np.ndarray  # current azimuth
     current_course: np.ndarray  # current course
 
     # the lenght of the following arrays depends on the number of courses (course segments)
@@ -68,8 +67,8 @@ class IsoBased(RoutingAlg):
     course_segments: int  # number of course segments in the range of -180° to 180°
     course_increments_deg: int
     expected_speed_kts: int
-    prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
-    prune_segments: int  # number of azimuth bins that are used for pruning
+    prune_sector_deg_half: int  # angular range of course that is considered for pruning (only one half)
+    prune_segments: int  # number of course bins that are used for pruning
     prune_symmetry_axis: str
     prune_groups: str
     minimisation_criterion: str
@@ -100,7 +99,6 @@ class IsoBased(RoutingAlg):
         self.full_fuel_consumed = np.array([0])
         self.full_dist_traveled = np.array([0])
 
-        #**self.current_variant = self.current_azimuth
         self.route_reached_destination = False
         self.route_reached_waypoint = False
         self.pruning_error = False
@@ -176,7 +174,6 @@ class IsoBased(RoutingAlg):
         logger.info('CURRENT POSITION')
         logger.info('lats = ', self.current_lats)
         logger.info('lons = ', self.current_lons)
-        #**logger.info('azimuth = ', self.current_azimuth)
         logger.info('course = ', self.current_course)
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
@@ -529,7 +526,6 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            #**self.current_azimuth = self.current_variant[idxs]
             self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
@@ -557,7 +553,6 @@ class IsoBased(RoutingAlg):
                                                            col_start=0, col_end=col,
                                                            idxs=None)
             col_len = len(self.lats_per_step[0])
-            #**self.current_azimuth = np.full(col_len, -99)
             self.current_course = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
@@ -645,7 +640,6 @@ class IsoBased(RoutingAlg):
                 'define_courses: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-
     def get_pruned_indices_statistics(self, bin_stat, bin_edges, bin_number, trim):
         idxs = []
 
@@ -719,7 +713,6 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            #**self.current_azimuth = self.current_variant[idxs]
             self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
@@ -794,7 +787,7 @@ class IsoBased(RoutingAlg):
         # Calculate the auxiliary coordinate for the definition of pruning symmetry axis. The route is propagated
         # towards the coordinate
         # which is reached if one travels from the starting point (or last intermediate waypoint) in the direction
-        # of the azimuth defined by the distance between the start point and the destination for the mean distance
+        # of the course defined by the distance between the start point and the destination for the mean distance
         # travelled
         # during the current routing step.
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
@@ -817,11 +810,11 @@ class IsoBased(RoutingAlg):
             fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
 
             # plot symmetry axis and boundaries of pruning area
-            symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]], new_azi['azi1'], 1000000)
+            symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]], new_course['azi1'], 1000000)
             lower_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      new_azi['azi1'] - self.prune_sector_deg_half, 1000000)
+                                      new_course['azi1'] - self.prune_sector_deg_half, 1000000)
             upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      new_azi['azi1'] + self.prune_sector_deg_half, 1000000)
+                                      new_course['azi1'] + self.prune_sector_deg_half, 1000000)
 
             self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
                          [self.start_temp[0], symmetry_axis["lat2"]], color="blue")
@@ -863,42 +856,18 @@ class IsoBased(RoutingAlg):
         new_finish_one = np.repeat(self.finish_temp[0], cat_lats.shape[0])
         new_finish_two = np.repeat(self.finish_temp[1], cat_lats.shape[0])
 
-<<<<<<< HEAD
-        new_course = geod.inverse(self.lats_per_step[0], self.lons_per_step[0], new_finish_one, new_finish_two)
-
-        # sort azimuths and select (approximate) median
-        new_course_sorted = np.sort(new_course['azi1'])
-        meadian_indx = int(np.round(new_course_sorted.shape[0] / 2))
-
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('sorted azimuths: ', new_course_sorted)
-            print('median index: ', meadian_indx)
-
-        mean_course = new_course_sorted[meadian_indx]
-=======
-        new_azi = geod.inverse(cat_lats, cat_lons, new_finish_one, new_finish_two)
-        mean_azimuth = np.median(new_azi['azi1'])
->>>>>>> 0fdd7229f32b4ecac6b72a74dcba1f55d75d90ab
+        new_course = geod.inverse(cat_lats, cat_lons, new_finish_one, new_finish_two)
+        mean_course = np.median(new_course['azi1'])
 
         if debug:
-            print('mean azimuth: ', mean_azimuth)
+            print('mean course: ', mean_course)
             # plot symmetry axis and boundaries of pruning area
-<<<<<<< HEAD
-            symmetry_axis = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                        mean_course, 1000000)
-            lower_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                      mean_course - self.prune_sector_deg_half, 1000000)
-            upper_bound = geod.direct([self.lats_per_step[1][meadian_indx]], [self.lons_per_step[1][meadian_indx]],
-                                      mean_course + self.prune_sector_deg_half, 1000000)
-=======
             symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                        mean_azimuth, 1000000)
+                                        mean_course, 1000000)
             lower_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      mean_azimuth - self.prune_sector_deg_half, 1000000)
+                                      mean_course - self.prune_sector_deg_half, 1000000)
             upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      mean_azimuth + self.prune_sector_deg_half, 1000000)
->>>>>>> 0fdd7229f32b4ecac6b72a74dcba1f55d75d90ab
+                                      mean_course + self.prune_sector_deg_half, 1000000)
 
             self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
                          [self.start_temp[0], symmetry_axis["lat2"]], color="blue")

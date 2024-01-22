@@ -44,7 +44,6 @@ class RoutingAlg:
         self.departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
 
         gcr = self.calculate_gcr(self.start, self.finish)
-        #**self.current_azimuth = gcr
         self.current_course = gcr
         self.gcr_course = gcr
 

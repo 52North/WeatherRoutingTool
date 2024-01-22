@@ -108,7 +108,6 @@ class IsoFuel(IsoBased):
             self.starttime_per_step = self.starttime_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
-            #**self.current_azimuth = self.current_variant[idxs]
             self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]

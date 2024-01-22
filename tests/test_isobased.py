@@ -257,7 +257,8 @@ def test_define_courses_current_course_filling():
     assert ra.current_course.shape[0] == ra.lats_per_step.shape[1]
 
     test_current_course = np.array(
-        [new_course['azi1'] + 2, new_course['azi1'] + 1, new_course['azi1'], new_course['azi1'] - 1, new_course['azi1'] - 2])
+        [new_course['azi1'] + 2, new_course['azi1'] + 1, new_course['azi1'],
+         new_course['azi1'] - 1, new_course['azi1'] - 2])
 
     for i in range(0, test_current_course.shape[0]):
         assert test_current_course[i] == ra.current_course[i]
@@ -278,14 +279,12 @@ def test_pruning_select_correct_idxs():
 
     pruning_bins = np.array([10, 20, 40, 60, 80])
     ra.current_course = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74])
-    #**ra.current_azimuth = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74])
     ra.full_dist_traveled = np.array([1, 5, 6, 1, 2, 7, 10, 1, 8])
     ra.full_time_traveled = np.random.rand(9)
     full_fuel_consumed = np.random.rand(1, 9)
     speed_per_step = np.random.rand(1, 9)
 
     ra.dist_per_step = np.array([ra.full_dist_traveled])
-    #**ra.course_per_step = np.array([ra.current_azimuth])
     ra.course_per_step = np.array([ra.current_course])
 
     sp = ShipParams(full_fuel_consumed, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0),
@@ -294,8 +293,7 @@ def test_pruning_select_correct_idxs():
                     np.full(full_fuel_consumed.shape, 0), )
     ra.shipparams_per_step = sp
 
-    cur_var_test = np.array([16, 22, 45, 71])
-    #**cur_azi_test = np.array([16, 22, 45, 71])
+    cur_course_test = np.array([16, 22, 45, 71])
     full_dist_test = np.array([5, 6, 7, 10])
     full_time_test = np.array(
         [ra.full_time_traveled[1], ra.full_time_traveled[2], ra.full_time_traveled[5], ra.full_time_traveled[6]])
@@ -314,13 +312,11 @@ def test_pruning_select_correct_idxs():
     ra.prune_groups = 'courses'
     ra.pruning(True, pruning_bins)
 
-    assert np.array_equal(cur_var_test, ra.current_course)
-    #**assert np.array_equal(cur_azi_test, ra.current_azimuth)
+    assert np.array_equal(cur_course_test, ra.current_course)
     assert np.array_equal(full_time_test, ra.full_time_traveled)
     assert np.array_equal(full_dist_test, ra.full_dist_traveled)
 
-    #**assert np.array_equal(cur_azi_test, ra.course_per_step[0])
-    assert np.array_equal(cur_var_test, ra.course_per_step[0])
+    assert np.array_equal(cur_course_test, ra.course_per_step[0])
     assert np.array_equal(full_dist_test, ra.dist_per_step[0])
     assert np.array_equal(full_fuel_test, ra.shipparams_per_step.fuel[0])
     assert np.array_equal(speed_ps_test, ra.shipparams_per_step.speed[0])

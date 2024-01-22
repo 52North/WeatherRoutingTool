@@ -89,7 +89,7 @@ class RouteParams():
         if not (np.array_equal(self.lons_per_step, route2.lons_per_step)):
             raise ValueError('Route lons_per_step not matching')
         if not (np.array_equal(self.course_per_step, route2.course_per_step)):
-            raise ValueError('Route azimuths_per_step not matching')
+            raise ValueError('Route course_per_step not matching')
         if not (np.array_equal(self.dists_per_step, route2.dists_per_step)):
             raise ValueError('Route dists_per_step not matching')
 
@@ -184,7 +184,7 @@ class RouteParams():
         r_waves = np.full(count, -99.)
         r_shallow = np.full(count, -99.)
         r_roughness = np.full(count, -99.)
-        azimuths_per_step = np.full(count, -99.)
+        course_per_step = np.full(count, -99.)
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
@@ -218,7 +218,7 @@ class RouteParams():
                                           r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
-                   lats_per_step=lats_per_step, lons_per_step=lons_per_step, azimuths_per_step=azimuths_per_step,
+                   lats_per_step=lats_per_step, lons_per_step=lons_per_step, course_per_step=course_per_step,
                    dists_per_step=dists_per_step, starttime_per_step=start_time_per_step,
                    ship_params_per_step=ship_params_per_step)
 
