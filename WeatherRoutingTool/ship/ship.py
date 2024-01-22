@@ -299,10 +299,10 @@ class Tanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, speed=-99, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed=[], unique_coords=False):
         debug = False
 
-        if speed == -99:
+        if speed == []:
             speed = np.repeat(self.speed, courses.shape, axis=0)
 
         courses = units.degree_to_pmpi(courses)
