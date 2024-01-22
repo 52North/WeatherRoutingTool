@@ -528,8 +528,8 @@ class WaterDepth(NegativeContraint):
         downloader = DownloaderFactory.get_downloader(downloader_type='opendap', platform='etoponcei')
         depth_data = downloader.download()
         depth_data_chunked = depth_data.rename(z="depth")
-        depth_data_chunked = depth_data_chunked.rename(lat="latitude")
-        depth_data_chunked = depth_data_chunked.rename(lon="longitude")
+        # depth_data_chunked = depth_data_chunked.rename(lat="latitude")
+        # depth_data_chunked = depth_data_chunked.rename(lon="longitude")
         depth_data_chunked = depth_data_chunked.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
 
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),

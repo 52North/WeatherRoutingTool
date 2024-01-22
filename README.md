@@ -11,12 +11,8 @@ Only Python < 3.11 supported!
 - generate a virtual environment e.g. via `python -m venv "venv"`
 - activate the virtual environment: `source venv/bin/activate`
 - install the routing tool: `pip install -r /path-to-WRT/requirements.txt`
-- install the python package for downloading the environmental data: `pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader`
 - install mariPower:
   - request access to the respective git repository and clone it
-  - open setup.py in maripower directory
-  - delete requirement pickle
-  - fix smt to version 1.3.0 (`smt==1.3.9`)
   - install maripower: `pip install -e maripower`
 
 ### Installation via the setup.py
@@ -27,9 +23,6 @@ Only Python < 3.11 supported!
 - install the WRT: `/path/to/WRT/setup.py install`
 - install mariPower:
   - request access to the respective git repository and clone it
-  - open setup.py in maripower directory
-  - delete the requirement pickle
-  - fix smt to version 1.3.0 (`smt==1.3.9`)
   - install maripower: `pip install -e maripower`
 
 ## Configuration
@@ -70,9 +63,9 @@ Required variables (no default values provided):
 - `DEFAULT_MAP`: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
 - `DEFAULT_ROUTE`: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
 - `DEPARTURE_TIME`: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
-- `DEPTH_DATA`: path to depth data
+- `DEPTH_DATA`: path to depth data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 - `ROUTE_PATH`: path to json file to which the route will be written
-- `WEATHER_DATA`: path to weather data
+- `WEATHER_DATA`: path to weather data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 
 Recommended variables (default values provided but might be inaccurate/unsuitable):
 - `BOAT_DRAUGHT`: in m
@@ -93,12 +86,13 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_MAX_ROUTING_STEPS`: maximum number of routing steps. Applies also if more than one route is searched!
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
 - `ISOCHRONE_NUMBER_OF_ROUTES`: integer specifying how many routes should be searched (default: 1)
-- `ISOCHRONE_PRUNE_BEARING`: definitions of the angles for pruning
-- `ISOCHRONE_PRUNE_GCR_CENTERED`: symmetry axis for pruning
+- `ISOCHRONE_PRUNE_GROUPS`: can be 'courses', 'larger_direction', 'branch'
 - `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning
 - `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector
+- `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
-- `ROUTER_HDGS_SEGMENTS`: otal number of headings : put even number!!
+- `ROUTER_HDGS_SEGMENTS`: total number of headings (put even number!!); headings are oriented around the great circle from current point to (temporary - i.e. next waypoint if used) destination
+- `SHIP_TYPE`: options: 'CBT', 'SAL'
 - `TIME_FORECAST`: forecast hours weather
 
 ### Environment variables
@@ -182,7 +176,7 @@ Further debug information are written to stdout.
 
 ### General concept
 
-The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*.
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is referred to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is referred to as *route segment*.
 
 The algorithm is the following:
 
@@ -213,6 +207,71 @@ ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segme
 heading/course/azimuth/variants = the angular distance towards North on the grand circle route </br>
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
+
+# Pruning methods
+The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:
+
+1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
+2. The choice of how route segments are grouped for the pruning.
+3. The minimisation criterion that is used as basis for the pruning.
+
+## The Definition of the Symmetry Axis
+Two methods for the definition of the symmetry axis can be selected:
+
+1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
+2. The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/gcr_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.3: The symmetry axis of the pruning is given by the grand circle distance between global start and end point.</figcaption>
+</figure>
+<br>
+<br>
+
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/headings_centered_pruning.png" width="300" " />
+  </p>
+  <figcaption> Fig.4: The symmetry axis of the pruning is given by the median of the angles of the connecting lines between the end of the route segments and the destination.</figcaption>
+</figure>
+<br>
+<br>
+
+## Grouping Route Segments
+Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:
+
+1. *courses-based*:  Route segments are grouped according to their courses.
+  <figure>
+  <p align="center">
+  <img src="figures_readme/bearings_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+2. *larger-direction-based*: Route segments are grouped accoding to the angle of the connecting line between the global start point and the end of the route segment.
+<figure>
+  <p align="center">
+  <img src="figures_readme/larger_direction_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+4. *branch-based*: Route segments of one *branch* form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.
+<figure>
+  <p align="center">
+  <img src="figures_readme/branch_based_pruning.png" width="400" " />
+  </p>
+</figure>
+<br>
+<br>
+
+## The Minimisation Criterion
+*to be continued*
 
 ## Genetic Algorithm
 

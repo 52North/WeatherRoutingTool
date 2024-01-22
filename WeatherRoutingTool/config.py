@@ -29,14 +29,14 @@ OPTIONAL_CONFIG_VARIABLES = {
     'INTERMEDIATE_WAYPOINTS': [],
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
     'ISOCHRONE_NUMBER_OF_ROUTES': 1,
-    'ISOCHRONE_PRUNE_BEARING': False,
-    'ISOCHRONE_PRUNE_GCR_CENTERED': True,
+    'ISOCHRONE_PRUNE_GROUPS': 'larger_direction',
+    'ISOCHRONE_PRUNE_SYMMETRY_AXIS': 'gcr',
     'ISOCHRONE_PRUNE_SECTOR_DEG_HALF': 91,
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'SHIP_TYPE': 'CBT',
-    'ISOCHRONE_MAX_ROUTING_STEPS': 60,
+    'ISOCHRONE_MAX_ROUTING_STEPS': 100,
     'TIME_FORECAST': 90
 }
 
@@ -72,12 +72,12 @@ class Config:
         self.ISOCHRONE_MAX_ROUTING_STEPS = None  # maximum number of routing steps
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ISOCHRONE_NUMBER_OF_ROUTES = None  # integer specifying how many routes should be searched
-        self.ISOCHRONE_PRUNE_BEARING = None  # definitions of the angles for pruning
-        self.ISOCHRONE_PRUNE_GCR_CENTERED = None  # symmetry axis for pruning
+        self.ISOCHRONE_PRUNE_GROUPS = None  # can be 'courses', 'larger_direction', 'branch'
         self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning
         self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector
+        self.ISOCHRONE_PRUNE_SYMMETRY_AXIS = None  # symmetry axis for pruning. Can be 'gcr' or 'headings_based'
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
-        self.ROUTER_HDGS_SEGMENTS = None  # total number of headings : put even number!!
+        self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written
         self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
         self.TIME_FORECAST = None  # forecast hours weather
@@ -110,6 +110,9 @@ class Config:
             figurepath = os.getenv('WRT_FIGURE_PATH')
             if figurepath and os.path.isdir(figurepath) and os.access(figurepath, os.W_OK):
                 logger.warning("For speedy execution of isobased algorithms, figures should be deactivated")
+            if self.ISOCHRONE_PRUNE_SEGMENTS < 100:
+                logger.warning("For speedy execution of isobased algorithms, it is more sensible to set a high"
+                               " number of prune segments (e.g. 200). ")
 
     def print(self):
         # ToDo: prettify output

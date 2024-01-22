@@ -266,6 +266,29 @@ class RouteParams():
             plt.ylabel(power["label"] + ' (' + power["unit"] + '/km)')
         plt.xticks()
 
+    # TODO check whether correct: Why do we see steps and no smooth curve?
+    def plot_acc_power_vs_dist(self, color, label, power_type):
+        power = self.get_power_type(power_type)
+        dist = self.dists_per_step
+
+        dist = dist / 1000  # [m] -> [km]
+        hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
+
+        acc_bin_content = np.full(hist_values["bin_contents"].shape, -99)
+        fuel_sum = 0
+        for i in range(0, len(hist_values["bin_centres"])):
+            fuel_sum = fuel_sum + hist_values["bin_widths"][i] * hist_values["bin_contents"][i]
+            acc_bin_content[i] = fuel_sum
+
+        plt.bar(hist_values["bin_centres"], acc_bin_content, hist_values["bin_widths"], fill=False,
+                color=color, edgecolor=color, label=label, linewidth=1)
+        plt.xlabel('Weglänge (km)')
+        if power_type == 'power':
+            plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
+        else:
+            plt.ylabel('akkumulierter ' + power["label"] + ' (t)')
+        plt.xticks()
+
     def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
         power_nom = self.get_power_type(power_type)
         dist_nom = self.dists_per_step
@@ -466,5 +489,10 @@ class RouteParams():
         # fix inconsistencies between pandas and numpy time formats
         time = data.index[::interval].values
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
+
+        logger.info('start: (' + str(lat[0]) + ',' + str(lon[0]) + ')')
+        logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
+        logger.info('start time: ', time[0])
+        logger.info('end time: ', time[-1])
 
         return lat, lon, time_converted, sog, draught

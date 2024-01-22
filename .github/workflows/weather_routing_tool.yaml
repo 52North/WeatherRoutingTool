@@ -37,7 +37,6 @@ jobs:
           sudo apt-get update && sudo apt-get -y install libproj-dev proj-data proj-bin libgeos-dev
           python -m pip install --upgrade pip
           if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
-          pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader
           pip install git+https://git:${GL_TOKEN}@collaborating.tuhh.de/ces1314/maripower.git
       - name: Run flake8
         run: |

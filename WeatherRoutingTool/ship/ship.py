@@ -53,7 +53,7 @@ class ConstantFuelBoat(Boat):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('boat fuel rate' + str(self.fuel), 1))
 
-    def get_ship_parameters(self, courses, lats, lons, time, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False
         n_requests = len(courses)
 
@@ -298,10 +298,10 @@ class Tanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, speed=-99, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed=[], unique_coords=False):
         debug = False
 
-        if speed == -99:
+        if speed == []:
             speed = np.repeat(self.speed, courses.shape, axis=0)
 
         courses = units.degree_to_pmpi(courses)
