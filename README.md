@@ -160,11 +160,17 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
-## Utilised Conventions
+## Conventions
+
+### Coordinates
 
   - latitude: -90° - 90°
   - longitude: -180° - 180°
   - headings: 0° - 360°, angular difference between North and the ship's direction, angles are going in the negative mathematical direction (clockwise)
+
+### Units
+
+ToDo
 
 ## Logging
 
@@ -208,14 +214,14 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-# Pruning methods
+## Pruning methods
 The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:
 
 1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
 2. The choice of how route segments are grouped for the pruning.
 3. The minimisation criterion that is used as basis for the pruning.
 
-## The Definition of the Symmetry Axis
+### The Definition of the Symmetry Axis
 Two methods for the definition of the symmetry axis can be selected:
 
 1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
@@ -240,7 +246,7 @@ Two methods for the definition of the symmetry axis can be selected:
 <br>
 <br>
 
-## Grouping Route Segments
+### Grouping Route Segments
 Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:
 
 1. *courses-based*:  Route segments are grouped according to their courses.
@@ -270,7 +276,7 @@ Route segments are organised in groups before the pruning is performed. Segments
 <br>
 <br>
 
-## The Minimisation Criterion
+### The Minimisation Criterion
 *to be continued*
 
 ## Genetic Algorithm
@@ -408,6 +414,31 @@ The arguments that are passed for the second routing step are the start and end 
 - lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
+
+## Developing
+
+### Style guide
+
+#### Docstring
+
+ToDo: document chosen format, relevant PEPs, etc.
+
+reStructuredText: 
+* can be used by Sphinx to generate documentation automatically
+* default in PyCharm
+
+Example:
+
+```Python
+"""
+This is a reStructuredText style.
+
+:param param1: this is a first param
+:param param2: this is a second param
+:returns: this is a description of what is returned
+:raises keyError: raises an exception
+"""
+```
 
 ## References
 
