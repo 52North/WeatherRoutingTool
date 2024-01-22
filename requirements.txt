@@ -6,6 +6,7 @@ geographiclib < 2.0
 geopandas
 geovectorslib
 global_land_mask
+icecream
 lxml
 git+https://github.com/52North/maridatadownloader
 matplotlib

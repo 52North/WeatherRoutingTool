@@ -25,6 +25,7 @@ dependencies = [
     "geopandas",
     "geovectorslib",
     "global_land_mask",
+    "icecream",
     "lxml",
     "maridatadownloader @ git+https://github.com/52North/maridatadownloader",
     "matplotlib",
