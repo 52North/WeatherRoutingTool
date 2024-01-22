@@ -38,7 +38,7 @@ dependencies = [
     "scikit-image",
     "scipy>=1.10.0",
     "shapely",
-    "sqlalchemy<2.0,>=1.4",
+    "sqlalchemy",
     "xarray"
 ]
 
