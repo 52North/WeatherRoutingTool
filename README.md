@@ -19,7 +19,6 @@ Only Python < 3.11 supported!
 
 - generate a virtual environment e.g. via `python3.9 -m venv "venv"`
 - activate the virtual environment: `source venv/bin/activate`
-- export the path variable for the WRT: `export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/`
 - install the WRT: `/path/to/WRT/setup.py install`
 - install mariPower:
   - request access to the respective git repository and clone it
@@ -31,14 +30,14 @@ Configuration of the Weather Routing Tool can be done by providing a json file. 
 
 The configuration file has to be provided when calling the Weather Routing Tool from the command line:
 ```shell
-python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+python WeatherRoutingTool/cli.py -f <path>/config.json
 ```
 
 Additionally, it's possible to define files for logging (separately for info and warning level) and if debugging mode should be used.
 Check the help text to get an overview of all CLI arguments:
 ```shell
-$ python WeatherRoutingTool/execute_routing.py --help
-usage: execute_routing.py [-h] -f FILE [--warnings-log-file WARNINGS_LOG_FILE] [--info-log-file INFO_LOG_FILE] [--debug DEBUG]
+$ python WeatherRoutingTool/cli.py --help
+usage: cli.py [-h] -f FILE [--warnings-log-file WARNINGS_LOG_FILE] [--info-log-file INFO_LOG_FILE] [--debug DEBUG] [--filter-warnings FILTER_WARNINGS]
 
 Weather Routing Tool
 
@@ -50,6 +49,8 @@ options:
   --info-log-file INFO_LOG_FILE
                         Logging file name (absolute path) for info and above.
   --debug DEBUG         Enable debug mode. <True|False>. Defaults to 'False'.
+  --filter-warnings FILTER_WARNINGS
+                        Filter action. <default|error|ignore|always|module|once>.Defaults to 'default'.
 ```
 
 Some variables have to be set using environment variables (see below).
@@ -152,10 +153,10 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
    ```
 
 4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
-5. Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*:
+5. Initiate the routing procedure by executing the file 'cli.py' *out of the base directory*:
 
     ```sh
-    python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+    python WeatherRoutingTool/cli.py -f <path>/config.json
     ```
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
