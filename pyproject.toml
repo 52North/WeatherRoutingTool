@@ -18,10 +18,10 @@ classifiers = [
 ]
 dependencies = [
     "bbox",
-    "cartopy",
+    "cartopy>0.20.0",
     "dask",
     "datacube",
-    "geographiclib",
+    "geographiclib<2.0",
     "geopandas",
     "geovectorslib",
     "global_land_mask",
@@ -29,8 +29,8 @@ dependencies = [
     "lxml",
     "maridatadownloader @ git+https://github.com/52North/maridatadownloader",
     "matplotlib",
-    "netcdf4",
-    "numpy == 1.26",
+    "netcdf4==1.5.8",
+    "numpy==1.26",
     "pandas",
     "Pillow",
     "pymoo>=0.6.1",
@@ -38,7 +38,7 @@ dependencies = [
     "scikit-image",
     "scipy>=1.10.0",
     "shapely",
-    "sqlalchemy<2.0,>=1.4",
+    "sqlalchemy>1.4.51",
     "xarray"
 ]
 
