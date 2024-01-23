@@ -38,7 +38,7 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
         time=waypoint_dict['travel_times'],
         lats_per_step=lat,
         lons_per_step=lon,
-        azimuths_per_step=waypoint_dict['courses'],
+        course_per_step=waypoint_dict['courses'],
         dists_per_step=waypoint_dict['dist'],
         starttime_per_step=time,
         ship_params_per_step=ship_params)

@@ -38,7 +38,7 @@ class IsoFuel(IsoBased):
     ##
     # returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables(self, boat, wind, bs):
-        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
+        fuel = boat.get_fuel_per_time(self.get_current_courses(), wind)
         delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 
@@ -103,14 +103,13 @@ class IsoFuel(IsoBased):
         try:
             self.lats_per_step = self.lats_per_step[:, idxs]
             self.lons_per_step = self.lons_per_step[:, idxs]
-            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.starttime_per_step = self.starttime_per_step[:, idxs]
             self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
-            self.current_azimuth = self.current_variant[idxs]
-            self.current_variant = self.current_variant[idxs]
+            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]

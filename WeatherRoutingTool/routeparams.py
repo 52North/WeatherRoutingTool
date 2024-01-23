@@ -32,11 +32,11 @@ class RouteParams():
     ship_params_per_step: ShipParams  # ship parameters per routing step
     lats_per_step: tuple  # latitude at beginning of each step + latitude destination (0-360°)
     lons_per_step: tuple  # longitude at beginning of each step + longitude destination (0-360°)
-    azimuths_per_step: tuple  # azimuth per step (0-360°)
+    course_per_step: tuple  # course per step (0-360°)
     dists_per_step: tuple  # distance traveled on great circle for every step (m)
     starttime_per_step: tuple  # start time at beginning of each step + time when destination is reached
 
-    def __init__(self, count, start, finish, gcr, route_type, time, lats_per_step, lons_per_step, azimuths_per_step,
+    def __init__(self, count, start, finish, gcr, route_type, time, lats_per_step, lons_per_step, course_per_step,
                  dists_per_step, starttime_per_step, ship_params_per_step):
         self.count = count
         self.start = start
@@ -46,7 +46,7 @@ class RouteParams():
         self.time = time
         self.lats_per_step = lats_per_step
         self.lons_per_step = lons_per_step
-        self.azimuths_per_step = azimuths_per_step
+        self.course_per_step = course_per_step
         self.dists_per_step = dists_per_step
         self.starttime_per_step = starttime_per_step
         self.ship_params_per_step = ship_params_per_step
@@ -59,7 +59,7 @@ class RouteParams():
         logger.info('number of routing steps: ' + str(self.count))
         logger.info('latitude at start of each step: ' + str(self.lats_per_step))
         logger.info('longitude at start of each step: ' + str(self.lons_per_step))
-        logger.info('azimuths for each step: ' + str(self.azimuths_per_step))
+        logger.info('courses for each step: ' + str(self.course_per_step))
         logger.info('gcr traveled per step (m): ' + str(self.dists_per_step))
         logger.info('time at start of each step: ' + str(self.starttime_per_step))
 
@@ -89,8 +89,8 @@ class RouteParams():
             raise ValueError('Route lats_per_step not matching')
         if not (np.array_equal(self.lons_per_step, route2.lons_per_step)):
             raise ValueError('Route lons_per_step not matching')
-        if not (np.array_equal(self.azimuths_per_step, route2.azimuths_per_step)):
-            raise ValueError('Route azimuths_per_step not matching')
+        if not (np.array_equal(self.course_per_step, route2.course_per_step)):
+            raise ValueError('Route course_per_step not matching')
         if not (np.array_equal(self.dists_per_step, route2.dists_per_step)):
             raise ValueError('Route dists_per_step not matching')
 
@@ -99,7 +99,7 @@ class RouteParams():
     def convert_to_dict(self):
         rp_dict = {"count": self.count, "start": self.start, "finish": self.finish, "route type": self.route_type,
                    "gcr": self.gcr, "time": self.time, "lats_per_step": self.lats_per_step,
-                   "lons_per_step": self.lons_per_step, "azimuths_per_step": self.azimuths_per_step,
+                   "lons_per_step": self.lons_per_step, "course_per_step": self.course_per_step,
                    "dists_per_step": self.dists_per_step, "starttime_per_step": self.starttime_per_step}
         return rp_dict
 
@@ -186,7 +186,7 @@ class RouteParams():
         r_waves = np.full(count, -99.)
         r_shallow = np.full(count, -99.)
         r_roughness = np.full(count, -99.)
-        azimuths_per_step = np.full(count, -99.)
+        course_per_step = np.full(count, -99.)
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
@@ -220,7 +220,7 @@ class RouteParams():
                                           r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
-                   lats_per_step=lats_per_step, lons_per_step=lons_per_step, azimuths_per_step=azimuths_per_step,
+                   lats_per_step=lats_per_step, lons_per_step=lons_per_step, course_per_step=course_per_step,
                    dists_per_step=dists_per_step, starttime_per_step=start_time_per_step,
                    ship_params_per_step=ship_params_per_step)
 
