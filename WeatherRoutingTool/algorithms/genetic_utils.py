@@ -1,11 +1,11 @@
+import json
 import logging
 import os
 import random
+from math import ceil
 
-import cartopy.crs as ccrs
-import cartopy.feature as cf
 import numpy as np
-from matplotlib import pyplot as plt
+from geographiclib.geodesic import Geodesic
 from pymoo.core.crossover import Crossover
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.core.mutation import Mutation
@@ -13,9 +13,9 @@ from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
 from skimage.graph import route_through_array
 
-import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.graphics import plot_genetic_algorithm_initial_population
 
 logger = logging.getLogger('WRT.Genetic')
 
@@ -47,18 +47,67 @@ class GridBasedPopulation(GridMixin, Sampling):
             _, _, route = self.index_to_coords(route)
             routes[i][0] = np.array(route)
 
-        figure_path = graphics.get_figure_path()
-        if figure_path is not None:
-            plt.rcParams['font.size'] = graphics.get_standard('font_size')
-            fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-            ax.remove()
-            fig, ax = graphics.generate_basemap(fig, None, self.src, self.dest,  '', False)
-            for i in range(0, n_samples):
-                ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
-            plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
-
+        plot_genetic_algorithm_initial_population(self.src, self.dest, routes)
         self.X = routes
         return self.X
+
+
+class FromGeojsonPopulation(Sampling):
+    """
+    Make initial population for genetic algorithm based on the isofuel algorithm with a ConstantFuelBoat
+    """
+    def __init__(self, src, dest, path_to_route_folder, var_type=np.float64):
+        super().__init__()
+        self.var_type = var_type
+        self.src = src
+        self.dest = dest
+        self.path_to_route_folder = path_to_route_folder
+
+    def _do(self, problem, n_samples, **kwargs):
+        routes = np.full((n_samples, 1), None, dtype=object)
+        # Routes have to be named route_1.json, route_2.json, etc.
+        # See method find_routes_reaching_destination_in_current_step in isobased.py
+        for i in range(n_samples):
+            route_file = os.path.join(self.path_to_route_folder, f'route_{i+1}.json')
+            try:
+                route = self.read_route_from_file(route_file)
+                routes[i][0] = np.array(route)
+            except FileNotFoundError:
+                logger.warning(f"File '{route_file}' couldn't be found. Use great circle route instead.")
+                route = self.get_great_circle_route()
+                routes[i][0] = np.array(route)
+
+        plot_genetic_algorithm_initial_population(self.src, self.dest, routes)
+        self.X = routes
+        return self.X
+
+    def get_great_circle_route(self, distance=100000):
+        """
+        Get equidistant route along great circle in the form [[lat1, lon1], [lat12, lon2], ...]
+        :param distance: distance in m
+        :return: route as list of lat/lon points
+        """
+        geod = Geodesic.WGS84
+        line = geod.InverseLine(self.src[0], self.src[1], self.dest[0], self.dest[1])
+        n = int(ceil(line.s13 / distance))
+        route = []
+        for i in range(n+1):
+            s = min(distance * i, line.s13)
+            g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            route.append([g['lat2'], g['lon2']])
+        return route
+
+    def read_route_from_file(self, route_absolute_path):
+        """
+        Read route from geojson file and return the coordinates in the form [[lat1, lon1], [lat12, lon2], ...]
+        :param route_absolute_path: absolute path to geojson file
+        :return: route as list of lat/lon points
+        """
+        with open(route_absolute_path) as file:
+            rp_dict = json.load(file)
+        route = [[feature['geometry']['coordinates'][1], feature['geometry']['coordinates'][0]]
+                 for feature in rp_dict['features']]
+        return route
 
 
 class PopulationFactory:
@@ -66,9 +115,20 @@ class PopulationFactory:
         pass
 
     @staticmethod
-    def get_population(population_type, src, dest, grid=None):
+    def get_population(population_type, src, dest, path_to_route_folder=None, grid=None):
         if population_type == 'grid_based':
+            if grid is None:
+                msg = f"For population type '{population_type}', a grid has to be provided!"
+                logger.error(msg)
+                raise ValueError(msg)
             population = GridBasedPopulation(src, dest, grid)
+        elif population_type == 'from_geojson':
+            if (not path_to_route_folder or not os.path.isdir(path_to_route_folder) or
+                    not os.access(path_to_route_folder, os.R_OK)):
+                msg = f"For population type '{population_type}', a valid route path has to be provided!"
+                logger.error(msg)
+                raise ValueError(msg)
+            population = FromGeojsonPopulation(src, dest, path_to_route_folder)
         else:
             msg = f"Population type '{population_type}' is invalid!"
             logger.error(msg)
@@ -223,10 +283,10 @@ class RoutingProblem(ElementwiseProblem):
 
     def get_power(self, route):
         route_dict = RouteParams.get_per_waypoint_coords(route[:, 1], route[:, 0], self.departure_time,
-                                                         self.boat.boat_speed_function())
+                                                         self.boat.get_boat_speed())
 
-        shipparams = self.boat.get_fuel_per_time_netCDF(route_dict['courses'], route_dict['start_lats'],
-                                                        route_dict['start_lons'], route_dict['start_times'])
+        shipparams = self.boat.get_ship_parameters(route_dict['courses'], route_dict['start_lats'],
+                                                   route_dict['start_lons'], route_dict['start_times'], [])
         fuel = shipparams.get_fuel()
         fuel = (fuel / 3600) * route_dict['travel_times']
         return np.sum(fuel), shipparams

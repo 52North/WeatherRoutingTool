@@ -67,7 +67,7 @@ class Config:
         self.GENETIC_NUMBER_GENERATIONS = None  # number of generations for genetic algorithm
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
         self.GENETIC_POPULATION_SIZE = None  # population size for genetic algorithm
-        self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based')
+        self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based', 'from_geojson')
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
         self.ISOCHRONE_MAX_ROUTING_STEPS = None  # maximum number of routing steps
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'

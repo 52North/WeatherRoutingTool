@@ -28,20 +28,20 @@ logger = logging.getLogger('WRT.Genetic')
 
 class Genetic(RoutingAlg):
     fig: matplotlib.figure
-    route_ensemble: list
-    route: np.array  # temp
 
     pop_size: int
     n_offsprings: int
 
     default_map: Map
     weather_path: str
+    path_to_route_folder: str
 
     def __init__(self, config) -> None:
         super().__init__(config)
 
         self.default_map = config.DEFAULT_MAP
         self.weather_path = config.WEATHER_DATA
+        self.path_to_route_folder = config.ROUTE_PATH
 
         self.ncount = config.GENETIC_NUMBER_GENERATIONS  # ToDo: use better name than ncount?
         self.count = 0
@@ -61,6 +61,7 @@ class Genetic(RoutingAlg):
         wave_height = wave_height[::lat_int, ::lon_int]
         problem = RoutingProblem(departure_time=self.departure_time, boat=boat, constraint_list=constraints_list)
         initial_population = PopulationFactory.get_population(self.population_type, self.start, self.finish,
+                                                              path_to_route_folder=self.path_to_route_folder,
                                                               grid=wave_height)
         mutation = MutationFactory.get_mutation(self.mutation_type, grid=wave_height)
         crossover = CrossoverFactory.get_crossover()
@@ -107,13 +108,13 @@ class Genetic(RoutingAlg):
 
         waypoint_coors = RouteParams.get_per_waypoint_coords(lons, lats, self.departure_time, speed)
         dists = waypoint_coors['dist']
-        bearings = waypoint_coors['courses']
+        courses = waypoint_coors['courses']
         start_times = waypoint_coors['start_times']
         travel_times = waypoint_coors['travel_times']
         arrival_time = start_times[-1] + timedelta(seconds=dists[-1]/speed)
 
         dists = np.append(dists, -99)
-        bearings = np.append(bearings, -99)
+        courses = np.append(courses, -99)
         start_times = np.append(start_times, arrival_time)
         travel_times = np.append(travel_times, -99)
 
@@ -125,7 +126,7 @@ class Genetic(RoutingAlg):
                             time=travel_times,
                             lats_per_step=lats,
                             lons_per_step=lons,
-                            azimuths_per_step=bearings,
+                            course_per_step=courses,
                             dists_per_step=dists,
                             starttime_per_step=start_times,
                             ship_params_per_step=self.ship_params)
