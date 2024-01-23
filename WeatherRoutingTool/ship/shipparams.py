@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from astropy import units as u
 
 logger = logging.getLogger('WRT.ship')
 
@@ -32,9 +33,17 @@ class ShipParams():
 
     @classmethod
     def set_default_array(cls):
-        return cls(speed=np.array([[0]]), fuel_rate=np.array([[0]]), power=np.array([[0]]), rpm=np.array([[0]]),
-                   r_calm=np.array([[0]]), r_wind=np.array([[0]]), r_waves=np.array([[0]]), r_shallow=np.array([[0]]),
-                   r_roughness=np.array([[0]]))
+        return cls(
+            speed=np.array([[0]]) * u.meter/u.second,
+            fuel_rate=np.array([[0]]) * u.kg/u.second,
+            power=np.array([[0]]) * u.Watt,
+            rpm=np.array([[0]]) * u.Hz,
+            r_calm=np.array([[0]]) * u.newton,
+            r_wind=np.array([[0]]) * u.newton,
+            r_waves=np.array([[0]]) * u.newton,
+            r_shallow=np.array([[0]]) * u.newton,
+            r_roughness=np.array([[0]]) * u.newton
+        )
 
     @classmethod
     def set_default_array_1D(cls, ncoorinate_points):

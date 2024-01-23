@@ -25,16 +25,16 @@ class RouteParams():
     count: int  # routing step (starting from 0)
     start: tuple  # lat, lon at start point (0 - 360°)
     finish: tuple  # lat, lon of destination (0 - 360°)
-    gcr: tuple  # distance from start to end on great circle
+    gcr: tuple  # distance from start to end on great circle (0 - 360°)
     route_type: str  # route name
-    time: timedelta  # time needed for the route (h)
+    time: timedelta  # time needed for the route (s)
 
     ship_params_per_step: ShipParams  # ship parameters per routing step
     lats_per_step: tuple  # latitude at beginning of each step + latitude destination (0-360°)
     lons_per_step: tuple  # longitude at beginning of each step + longitude destination (0-360°)
     azimuths_per_step: tuple  # azimuth per step (0-360°)
     dists_per_step: tuple  # distance traveled on great circle for every step (m)
-    starttime_per_step: tuple  # start time at beginning of each step + time when destination is reached (h)
+    starttime_per_step: tuple  # start time at beginning of each step + time when destination is reached
 
     def __init__(self, count, start, finish, gcr, route_type, time, lats_per_step, lons_per_step, azimuths_per_step,
                  dists_per_step, starttime_per_step, ship_params_per_step):
@@ -137,8 +137,7 @@ class RouteParams():
                 properties['shallow_water_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['hull_roughness_resistance'] = {'value': -99, 'unit': 'N'}
             else:
-                time_passed = (self.starttime_per_step[i + 1] - self.starttime_per_step[i]).seconds / 3600
-                properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': self.ship_params_per_step.speed[i].unit.to_string()}
+                properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
                 properties['fuel_consumption'] = {
                     'value': self.ship_params_per_step.fuel_rate[i].to(u.tonne/u.hour).value,

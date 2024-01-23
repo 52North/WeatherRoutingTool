@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
+from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 import pandas as pd
@@ -45,12 +46,13 @@ def round_time(dt=None, round_to=60):
     return dt + timedelta(0, rounding - seconds, - dt.microsecond)
 
 
-def degree_to_pmpi(degrees):
+def degree_to_pmpi(degrees_unit):
+    degrees = degrees_unit.value
     degrees[degrees >= 360] = degrees[degrees >= 360] - 360
     degrees[degrees <= -360] = degrees[degrees <= -360] + 360
     degrees[degrees > 180] = degrees[degrees > 180] - 360
     degrees[degrees < -180] = degrees[degrees < -180] + 360
-    degrees = np.radians(degrees)
+    degrees = (degrees * u.degree).to('radian') 
     return degrees
 
 
@@ -130,10 +132,11 @@ def get_angle_bins(min_alpha, max_alpha, levels):
     return result
 
 
-def cut_angles(angles):
+def cut_angles(angle_quantity):
+    angles = angle_quantity.value
     angles[angles > 360] = angles[angles > 360] - 360
     angles[angles < 0] = 360 + angles[angles < 0]
-    return angles
+    return angles * u.degree
 
 
 def downsample_dataframe(data, interval):

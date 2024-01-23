@@ -50,32 +50,31 @@ class IsoBased(RoutingAlg):
        are 0 to satisfy this definition.
    '''
 
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    azimuth_per_step: np.ndarray  # heading
-    dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
-    shipparams_per_step: ShipParams
-    starttime_per_step: np.ndarray
-    absolutefuel_per_step: np.ndarray
+    lats_per_step: np.ndarray       # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
+    lons_per_step: np.ndarray       # longs: (M,N) array, N=headings+1, M=steps
+    azimuth_per_step: np.ndarray    # heading (0 - 360°)
+    dist_per_step: np.ndarray       # geodesic distance traveled per time stamp (m)
+    shipparams_per_step: ShipParams     # object storing ship parameters (fuel rate, power consumption ...)
+    starttime_per_step: np.ndarray      # start time for every routing step (datetime object)
+    absolutefuel_per_step: np.ndarray   # (kg)
 
-    current_azimuth: np.ndarray  # current azimuth
-    current_variant: np.ndarray  # current variant
+    current_azimuth: np.ndarray     # current azimuth (0-360°)
+    current_variant: np.ndarray     # current variant (0-360°)
 
     # the lenght of the following arrays depends on the number of variants (variant segments)
-    full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
-    full_time_traveled: np.ndarray  # time elapsed since start for all variants
-    time: np.ndarray  # current datetime for all variants
+    full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants (m)
+    full_time_traveled: np.ndarray  # time elapsed since start for all variants (s)
+    time: np.ndarray                # current datetime for all variants
 
-    variant_segments: int  # number of variant segments in the range of -180° to 180°
-    variant_increments_deg: int
-    expected_speed_kts: int
-    prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
-    prune_segments: int  # number of azimuth bins that are used for pruning
-    prune_symmetry_axis: str
-    prune_groups: str
-    minimisation_criterion: str
+    variant_segments: int           # number of variant segments in the range of -180° to 180°
+    variant_increments_deg: int     # increment between different variants
+    prune_sector_deg_half: int      # angular range of azimuth that is considered for pruning (only one half, 0 - 180°)
+    prune_segments: int             # number of azimuth bins that are used for pruning
+    prune_symmetry_axis: str        # method to define pruning symmetry axis
+    prune_groups: str               # method to define grouping of route segments before the pruning
+    minimisation_criterion: str     # minimisation criterion
 
-    desired_number_of_routes: int
+    desired_number_of_routes: int   #
     current_number_of_routes: int
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
@@ -90,16 +89,15 @@ class IsoBased(RoutingAlg):
 
         self.lats_per_step = np.array([[self.start[0]]])
         self.lons_per_step = np.array([[self.start[1]]])
-        self.azimuth_per_step = np.array([[None]])
+        self.azimuth_per_step = np.array([[0]]) * u.degree
         self.dist_per_step = np.array([[0]]) * u.meter
-        sp = ShipParams.set_default_array()
-        self.shipparams_per_step = sp
+        self.shipparams_per_step = ShipParams.set_default_array()
         self.starttime_per_step = np.array([[self.departure_time]])
         self.absolutefuel_per_step = np.array([[0]]) * u.kg
 
         self.time = np.array([self.departure_time])
         self.full_time_traveled = np.array([0]) * u.s
-        self.full_dist_traveled = np.array([0])
+        self.full_dist_traveled = np.array([0]) * u.m
 
         self.current_variant = self.current_azimuth * u.degree
         self.route_reached_destination = False
@@ -208,7 +206,7 @@ class IsoBased(RoutingAlg):
                                  +self.variant_segments / 2 * self.variant_increments_deg, self.variant_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
-        self.current_variant = new_azi['azi1']  # center courses around gcr
+        self.current_variant = new_azi['azi1'] * u.degree # center courses around gcr
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
         self.current_variant = units.cut_angles(self.current_variant)
@@ -803,9 +801,10 @@ class IsoBased(RoutingAlg):
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         full_travel_dist = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
         mean_dist = np.mean(full_travel_dist['s12'])
-        gcr_point = geod.direct([self.start_temp[0]], [self.start_temp[1]], self.gcr_azi_temp, mean_dist)
+        gcr_point = geod.direct([self.start_temp[0]], [self.start_temp[1]], self.gcr_azi_temp.value, mean_dist)
 
         new_azi = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
+        new_azi['azi1'] = new_azi['azi1'] * u.degree
 
         # ToDo: use logger.debug and args.debug
         if debug:
@@ -866,7 +865,7 @@ class IsoBased(RoutingAlg):
         new_finish_two = np.repeat(self.finish_temp[1], cat_lats.shape[0])
 
         new_azi = geod.inverse(cat_lats, cat_lons, new_finish_one, new_finish_two)
-        mean_azimuth = np.median(new_azi['azi1'])
+        mean_azimuth = np.median(new_azi['azi1']) * u.degree
 
         if debug:
             print('mean azimuth: ', mean_azimuth)
@@ -906,7 +905,7 @@ class IsoBased(RoutingAlg):
         self.define_variants()
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_groups, prune_symmetry_axis='gcr'):
-        self.prune_sector_deg_half = sector_deg_half
+        self.prune_sector_deg_half = sector_deg_half * u.degree
         self.prune_segments = seg
         self.prune_groups = prune_groups
         self.prune_symmetry_axis = prune_symmetry_axis
@@ -916,7 +915,7 @@ class IsoBased(RoutingAlg):
 
     def set_variant_segments(self, seg, inc):
         self.variant_segments = seg
-        self.variant_increments_deg = inc
+        self.variant_increments_deg = inc * u.degree
 
     def get_current_azimuth(self):
         return self.current_variant
@@ -967,9 +966,8 @@ class IsoBased(RoutingAlg):
         self.starttime_per_step = np.flip(self.starttime_per_step, 0)
         self.shipparams_per_step.flip()
 
-        time = round(self.full_time_traveled.to(u.hour).value, 2)
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
-                            route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
+                            route_type='min_time_route', time=self.full_time_traveled, lats_per_step=self.lats_per_step[:],
                             lons_per_step=self.lons_per_step[:], azimuths_per_step=self.azimuth_per_step[:],
                             dists_per_step=self.dist_per_step[:], starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step)
@@ -1001,7 +999,7 @@ class IsoBased(RoutingAlg):
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_variant, dist.value)
+                           self.current_variant.value, dist.value)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])

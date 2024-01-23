@@ -4,6 +4,7 @@ from datetime import datetime
 import matplotlib
 from geovectorslib import geod
 from matplotlib.figure import Figure
+from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import *
@@ -31,7 +32,7 @@ class RoutingAlg:
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     departure_time: datetime
-    gcr_azi: float  # azimut of great circle route
+    gcr_azi: float  # azimuth of great circle route (0 - 360°)
 
     fig: matplotlib.figure
     route_ensemble: list
@@ -44,8 +45,8 @@ class RoutingAlg:
         self.departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
 
         gcr = self.calculate_gcr(self.start, self.finish)
-        self.current_azimuth = gcr
-        self.gcr_azi = gcr
+        self.current_azimuth = gcr * u.degree
+        self.gcr_azi = gcr * u.degree
 
         self.figure_path = get_figure_path()
 

@@ -14,9 +14,7 @@ import mariPower
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
 from mariPower import __main__
-from WeatherRoutingTool.utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.ship')
 
@@ -47,7 +45,7 @@ class ConstantFuelBoat(Boat):
 
     def __init__(self, config):
         super().__init__(config)
-        self.fuel = config.CONSTANT_FUEL_RATE
+        self.fuel = config.CONSTANT_FUEL_RATE * u.kg/u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
@@ -75,7 +73,7 @@ class ConstantFuelBoat(Boat):
 
         if (debug):
             ship_params.print()
-            form.print_step('fuel result' + str(ship_params.get_fuel()))
+            form.print_step('fuel result' + str(ship_params.get_fuel_rate()))
 
         return ship_params
 
@@ -112,7 +110,7 @@ class Tanker(Boat):
     # additional information
     environment_path: str  # path to netCDF for environmental data
     courses_path: str  # path to netCDF which contains the power estimation per course
-    depth_path: str
+    depth_path: str  # path to netCDF for depth data
 
     use_depth_data: bool
 
@@ -121,7 +119,6 @@ class Tanker(Boat):
         self.environment_path = config.WEATHER_DATA
         self.courses_path = config.COURSES_FILE
         self.depth_path = config.DEPTH_DATA
-        self.draught = config.BOAT_DRAUGHT
 
         self.hydro_model = mariPower.ship.CBT()
         self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
@@ -305,6 +302,8 @@ class Tanker(Boat):
             speed = np.repeat(self.speed, courses.shape, axis=0)
 
         courses = units.degree_to_pmpi(courses)
+        if courses.value.any() > 180 or courses.value.any() < -180:
+            raise ValueError('Angle conversion not working!')
 
         # ToDo: use logger.debug and args.debug
         if (debug):
@@ -385,7 +384,6 @@ class Tanker(Boat):
 
         power = ds['Power_brake'].to_numpy().flatten() * u.Watt
         rpm = ds['RotationRate'].to_numpy().flatten() * u.Hz
-        # fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * 1000 * 1 / 3600  # mariPower provides
         fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne/u.hour
         fuel = fuel.to(u.kg/u.second)
         r_wind = ds['Wind_resistance'].to_numpy().flatten() * u.newton
@@ -395,12 +393,10 @@ class Tanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         speed = np.repeat(self.speed, power.shape)
 
-        # fuel_consumption_rate [t/h] -> convert to kg/s
 
         ship_params = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
                                  r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
                                  r_roughness=r_roughness)
-        ship_params.print()
 
         if (debug):
             form.print_step('Dataset with fuel' + str(ds), 1)

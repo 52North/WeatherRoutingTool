@@ -13,7 +13,7 @@ logger = logging.getLogger('WRT.routingalg')
 
 
 class IsoFuel(IsoBased):
-    delta_fuel: float
+    delta_fuel: float  # fuel available to the boat per routing step and segment (kg)
 
     def __init__(self, config):
         self.delta_fuel = config.DELTA_FUEL * u.kg
@@ -58,8 +58,6 @@ class IsoFuel(IsoBased):
         # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
         delta_fuel = np.repeat(self.delta_fuel, bs.shape)
 
-        # self.determine_timespread(delta_time)
-
         return delta_time, delta_fuel, dist
 
     ##
@@ -78,8 +76,8 @@ class IsoFuel(IsoBased):
     def determine_timespread(self, delta_time):
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
-        logger.info('delta_time', delta_time / 3600)
-        logger.info('spread of time: ' + str(mean / 3600) + '+-' + str(stddev / 3600))
+        logger.info('delta_time', delta_time.to('hour'))
+        logger.info('spread of time: ' + str(mean.to('hour')) + '+-' + str(stddev.to('hour')))
 
     def update_time(self, delta_time):
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
@@ -95,13 +93,7 @@ class IsoFuel(IsoBased):
         if debug:
             print('Final IsoFuel Pruning...')
 
-        self.print_shape()
-
-        print('absolutefuel_per_step: ', self.absolutefuel_per_step)
-        print('shape: ', self.absolutefuel_per_step.shape)
         full_fuel_array = np.sum(self.absolutefuel_per_step, axis=0)
-        print('full_fuel_array: ', full_fuel_array)
-        print('shape: ', full_fuel_array)
         idxs = np.argmin(full_fuel_array)
 
         if debug:
