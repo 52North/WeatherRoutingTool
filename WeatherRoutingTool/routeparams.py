@@ -51,21 +51,27 @@ class RouteParams():
         self.starttime_per_step = starttime_per_step
         self.ship_params_per_step = ship_params_per_step
 
+        assert self.lats_per_step.shape == self.lons_per_step.shape
+        assert self.lats_per_step.shape == self.course_per_step.shape
+        assert self.lats_per_step.shape == self.dists_per_step.shape
+        assert self.lats_per_step.shape == self.starttime_per_step.shape
+
     def print_route(self):
         form.print_line()
         logger.info('Printing route:  ' + str(self.route_type))
-        logger.info('Going from', self.start)
-        logger.info('to', self.finish)
+        logger.info('Going from ' + str(self.start))
+        logger.info('to ' + str(self.finish))
         logger.info('number of routing steps: ' + str(self.count))
         logger.info('latitude at start of each step: ' + str(self.lats_per_step))
         logger.info('longitude at start of each step: ' + str(self.lons_per_step))
+        logger.info('distance per step: ' + str(self.dists_per_step))
         logger.info('courses for each step: ' + str(self.course_per_step))
         logger.info('gcr traveled per step (m): ' + str(self.dists_per_step))
         logger.info('time at start of each step: ' + str(self.starttime_per_step))
 
         self.ship_params_per_step.print()
 
-        logger.info('full fuel consumed (kg): ' + str(self.get_full_fuel('kg')))
+        logger.info('full fuel consumed (kg): ' + str(self.get_full_fuel()))
         logger.info('full travel time (h): ' + str(self.time))
         logger.info('travel distance on great circle (m): ' + str(self.gcr))
 
@@ -179,7 +185,7 @@ class RouteParams():
         start_time_per_step = np.full(count, datetime.now())
         speed = np.full(count, -99.)
         power = np.full(count, -99.)
-        fuel = np.full(count, -99.)
+        fuel_rate = np.full(count, -99.)
         rpm = np.full(count, -99.)
         r_wind = np.full(count, -99.)
         r_calm = np.full(count, -99.)
@@ -198,7 +204,7 @@ class RouteParams():
             start_time_per_step[ipoint] = datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
             speed[ipoint] = property['speed']['value']
             power[ipoint] = property['engine_power']['value']
-            fuel[ipoint] = property['fuel_consumption']['value']
+            fuel_rate[ipoint] = property['fuel_consumption']['value']
             fuel_type[ipoint] = property['fuel_type']
             rpm[ipoint] = property['propeller_revolution']['value']
 
@@ -208,15 +214,24 @@ class RouteParams():
             r_shallow[ipoint] = property['shallow_water_resistance']['value']
             r_roughness[ipoint] = property['hull_roughness_resistance']['value']
 
+        speed = speed * u.meter/u.second
+        power = (power * u.kiloWatt).to(u.Watt)
+        fuel_rate = (fuel_rate * u.tonne/u.hour).to(u.kg/u.second)
+        rpm = rpm[:-1] * u.Hz
+        r_wind = r_wind * u.newton
+        r_calm = r_calm * u.newton
+        r_waves = r_waves * u.newton
+        r_shallow = r_shallow * u.newton
+        r_roughness = r_roughness * u.newton
+
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
         gcr = -99
         route_type = 'read_from_file'
         time = start_time_per_step[count - 1] - start_time_per_step[0]
+        dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step) * u.meter
 
-        dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
-
-        ship_params_per_step = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm,
+        ship_params_per_step = ShipParams(fuel_rate=fuel_rate, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm,
                                           r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
@@ -457,14 +472,11 @@ class RouteParams():
         if unit == 'datetime':
             return self.time
 
-    def get_full_fuel(self, unit='t'):
+    def get_full_fuel(self):
         full_fuel = 0
         for ipoint in range(0, self.count - 1):
-            time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds() / 3600
-            fuel_per_step = self.ship_params_per_step.fuel[ipoint] * time_passed
-
-            if unit == 'kg':
-                fuel_per_step = fuel_per_step * 1000
+            time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
+            fuel_per_step = self.ship_params_per_step.fuel_rate[ipoint] * time_passed * u.second
             full_fuel = full_fuel + fuel_per_step
 
         return full_fuel
