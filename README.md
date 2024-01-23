@@ -82,7 +82,7 @@ Optional variables (default values provided and don't need to be changed normall
 - `GENETIC_NUMBER_GENERATIONS`: number of generations for genetic algorithm
 - `GENETIC_NUMBER_OFFSPRINGS`: number of offsprings for genetic algorithm
 - `GENETIC_POPULATION_SIZE`: population size for genetic algorithm
-- `GENETIC_POPULATION_TYPE`: type for initial population (options: 'grid_based')
+- `GENETIC_POPULATION_TYPE`: type for initial population (options: 'grid_based', 'from_geojson')
 - `INTERMEDIATE_WAYPOINTS`: [[lat_one,lon_one], [lat_two,lon_two] ... ]
 - `ISOCHRONE_MAX_ROUTING_STEPS`: maximum number of routing steps. Applies also if more than one route is searched!
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'

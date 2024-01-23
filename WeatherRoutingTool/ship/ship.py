@@ -433,9 +433,6 @@ class Tanker(Boat):
     # Is not yet working as explained for Tanker.get_fuel_netCDF_loop
     #
     def get_fuel_netCDF(self):
-        # FIXME: add self.depth_path again after fixing related issues with memory allocation
-        # mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path, self.depth_path)
-
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
             mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path,

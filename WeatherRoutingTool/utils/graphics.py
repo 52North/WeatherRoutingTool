@@ -297,3 +297,15 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
     plt.title(title)
 
     return fig, ax
+
+
+def plot_genetic_algorithm_initial_population(src, dest, routes):
+    figure_path = get_figure_path()
+    if figure_path is not None:
+        plt.rcParams['font.size'] = get_standard('font_size')
+        fig, ax = plt.subplots(figsize=get_standard('fig_size'))
+        ax.remove()
+        fig, ax = generate_basemap(fig, None, src, dest, '', False)
+        for i in range(0, len(routes)):
+            ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
+        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
