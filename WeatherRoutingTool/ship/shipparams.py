@@ -82,7 +82,7 @@ class ShipParams():
 
     def define_courses(self, courses_segments):
         self.speed = np.repeat(self.speed, courses_segments + 1, axis=1)
-        self.fuel_rate = np.repeat(self.fuel, courses_segments + 1, axis=1)
+        self.fuel_rate = np.repeat(self.fuel_rate, courses_segments + 1, axis=1)
         self.power = np.repeat(self.power, courses_segments + 1, axis=1)
         self.rpm = np.repeat(self.rpm, courses_segments + 1, axis=1)
         self.r_calm = np.repeat(self.r_calm, courses_segments + 1, axis=1)

@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 import matplotlib
+from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 

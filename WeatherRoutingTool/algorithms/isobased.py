@@ -190,11 +190,11 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.repeat(self.dist_per_step, self.course_segments + 1, axis=1)
         self.course_per_step = np.repeat(self.course_per_step, self.course_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.course_segments + 1, axis=1)
+        self.absolutefuel_per_step = np.repeat(self.absolutefuel_per_step, self.course_segments + 1, axis=1)
 
         self.shipparams_per_step.define_courses(self.course_segments)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.course_segments + 1, axis=0)
-        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.course_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.course_segments + 1, axis=0)
         self.time = np.repeat(self.time, self.course_segments + 1, axis=0)
         self.check_course_def()
@@ -796,7 +796,7 @@ class IsoBased(RoutingAlg):
         gcr_point = geod.direct([self.start_temp[0]], [self.start_temp[1]], self.gcr_course_temp.value, mean_dist)
 
         new_course = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
-	new_course['azi1'] = new_course['azi1'] * u.degree
+        new_course['azi1'] = new_course['azi1'] * u.degree
 
         # ToDo: use logger.debug and args.debug
         if debug:
@@ -959,7 +959,7 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.flip()
 
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
-                            route_type='min_time_route', time=time, lats_per_step=self.lats_per_step[:],
+                            route_type='min_time_route', time=self.full_time_traveled, lats_per_step=self.lats_per_step[:],
                             lons_per_step=self.lons_per_step[:], course_per_step=self.course_per_step[:],
                             dists_per_step=self.dist_per_step[:], starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step)
@@ -981,8 +981,8 @@ class IsoBased(RoutingAlg):
         ncourses = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
- 	dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
-	dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree       
+        dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
+        dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
 	 # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
