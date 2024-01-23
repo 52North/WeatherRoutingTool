@@ -51,11 +51,6 @@ class RouteParams():
         self.starttime_per_step = starttime_per_step
         self.ship_params_per_step = ship_params_per_step
 
-        assert self.lats_per_step.shape == self.lons_per_step.shape
-        assert self.lats_per_step.shape[0] == self.course_per_step.shape[0] + 1
-        assert self.lats_per_step.shape[0] == self.dists_per_step.shape[0] + 1
-        assert self.lats_per_step.shape == self.starttime_per_step.shape
-
     def print_route(self):
         form.print_line()
         logger.info('Printing route:  ' + str(self.route_type))
@@ -443,7 +438,7 @@ class RouteParams():
             if ipoint == 0:
                 start_times[ipoint] = start_time
             else:
-                start_times[ipoint] = start_times[ipoint - 1] + timedelta(seconds=travel_times[ipoint - 1])
+                start_times[ipoint] = start_times[ipoint - 1] + timedelta(seconds=travel_times[ipoint - 1].to(u.second).value)
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dists: ', dist)

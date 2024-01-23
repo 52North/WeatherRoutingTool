@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as utils
 import tests.basic_test_func as basic_test_func
@@ -105,27 +106,28 @@ def test_get_fuel_from_netCDF():
     ship_params = pol.extract_params_from_netCDF(ds)
     power_test = ship_params.get_power()
     rpm_test = ship_params.get_rpm()
-    fuel_test = ship_params.get_fuel()
+    fuel_test = ship_params.get_fuel_rate()
     rcalm_test = ship_params.get_rcalm()
     rwind_test = ship_params.get_rwind()
     rshallow_test = ship_params.get_rshallow()
     rwaves_test = ship_params.get_rwaves()
     rroughness_test = ship_params.get_rroughness()
 
-    power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1])
-    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5])
-    fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9])
-    rcalm_ref = np.array([2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
-    rwind_ref = np.array([3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9])
-    rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9])
-    rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9])
-    rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9])
+    power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
+    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * u.Hz
+    fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg/u.second
+    rcalm_ref = np.array([2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9]) * u.newton
+    rwind_ref = np.array([3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]) * u.newton
+    rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
+    rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9]) * u.newton
+    rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]) * u.newton
 
-    fuel_test = fuel_test * 3.6
+    fuel_test = fuel_test.value * 3.6
+    fuel_ref = fuel_ref.value
 
     assert np.array_equal(power_test, power_ref)
     assert np.array_equal(rpm_test, rpm_ref)
-    assert np.array_equal(fuel_test, fuel_ref)
+    assert np.allclose(fuel_ref, fuel_test, 0.00001)
     assert np.array_equal(rcalm_test, rcalm_ref)
     assert np.array_equal(rwind_test, rwind_ref)
     assert np.array_equal(rshallow_test, rshallow_ref)
@@ -145,29 +147,29 @@ def test_power_consumption_returned():
     time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
 
     # courses test file
-    courses_test = np.array([0, 180, 0, 180, 180, 0])
+    courses_test = np.array([0, 180, 0, 180, 180, 0]) * u.degree
     lat_test = np.array([54.3, 54.3, 54.6, 54.6, 54.9, 54.9])
     lon_test = np.array([13.3, 13.3, 13.6, 13.6, 13.9, 13.9])
 
     # dummy course netCDF
     pol = basic_test_func.create_dummy_Tanker_object()
-    pol.set_boat_speed(np.array([8]))
+    pol.set_boat_speed(np.array([8]) * u.meter/u.second)
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
     ds = pol.get_fuel_netCDF()
 
-    power = ds['Power_brake']
-    rpm = ds['RotationRate']
-    fuel = ds['Fuel_consumption_rate']
+    power = ds['Power_brake'].to_numpy() * u.Watt
+    rpm = ds['RotationRate'].to_numpy() * u.Hz
+    fuel = ds['Fuel_consumption_rate'].to_numpy() * u.kg/u.s
 
-    assert np.all(power < 10000000)
-    assert np.all(rpm < 100)
+    assert np.all(power < 10000000 * u.Watt)
+    assert np.all(rpm < 100 * u.Hz)
 
-    assert np.all(fuel < 1.5)
-    assert np.all(power > 1000000)
-    assert np.all(rpm > 70)
-    assert np.all(fuel > 0.5)
+    assert np.all(fuel < 1.5 * u.kg/u.s)
+    assert np.all(power > 1000000 * u.Watt)
+    assert np.all(rpm > 70 * u.Hz)
+    assert np.all(fuel > 0.5 * u.kg/u.s)
 
 
 '''
@@ -186,7 +188,7 @@ def test_shipparams_get_element():
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
 
-    sp = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
+    sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
                     r_shallow=rshallow, r_roughness=rroughness)
     idx = 2
 
@@ -220,13 +222,13 @@ def test_shipparams_get_single():
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
 
-    sp = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
+    sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
                     r_shallow=rshallow, r_roughness=rroughness)
     idx = 2
 
     sp_test = sp.get_single_object(idx)
 
-    assert sp_test.fuel == fuel[idx]
+    assert sp_test.fuel_rate == fuel[idx]
     assert sp_test.power == power[idx]
     assert sp_test.rpm == rpm[idx]
     assert sp_test.speed == speed[idx]
@@ -246,7 +248,7 @@ def test_shipparams_get_single():
 def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
     lon = np.array([4., 4., 4, 3, 3, 3])
-    courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+    courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]) * u.degree
     # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
     pol = basic_test_func.create_dummy_Tanker_object()
@@ -279,7 +281,7 @@ def test_get_netCDF_courses_isobased():
     for ilat in range(0, courses_read.shape[0]):
         for iit in range(0, courses_read.shape[1]):
             iprev = ilat * courses_read.shape[1] + iit
-            assert courses[iprev] == np.rad2deg(courses_read[ilat][iit])
+            assert courses[iprev] == np.rad2deg(courses_read[ilat][iit]) * u.degree
 
     ds.close()
 
@@ -293,7 +295,7 @@ def test_get_netCDF_courses_isobased():
 def test_get_netCDF_courses_GA():
     lat_short = np.array([1, 2, 1])
     lon_short = np.array([4, 4, 1.5])
-    courses = np.array([0.1, 0.2, 0.3])
+    courses = np.array([0.1, 0.2, 0.3]) * u.degree
 
     pol = basic_test_func.create_dummy_Tanker_object()
     time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=180),
@@ -315,7 +317,7 @@ def test_get_netCDF_courses_GA():
     for ilat in range(0, courses_read.shape[0]):
         for iit in range(0, courses_read.shape[1]):
             iprev = ilat * courses_read.shape[1] + iit
-            assert np.radians(courses[iprev]) == courses_read[ilat][iit]
+            assert np.radians(courses[iprev]) == courses_read[ilat][iit] * u.radian
 
     ds.close()
 
@@ -328,7 +330,7 @@ def test_get_netCDF_courses_GA():
 
 
 def test_get_fuel_for_fixed_waypoints():
-    bs = 6
+    bs = 6 * u.meter/u.second
     start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
     route_lats = np.array([54.9, 54.7, 54.5, 54.2])
     route_lons = np.array([13.2, 13.4, 13.7, 13.9])
@@ -355,10 +357,10 @@ def test_get_fuel_for_fixed_waypoints():
     ref_lat_start = np.array([54.9, 54.7, 54.5])
     ref_lon_start = np.array([13.2, 13.4, 13.7])
     ref_courses = np.array([149.958, 138.89, 158.685])
-    ref_dist = np.array([25712., 29522., 35836.])
-    ref_time = np.array([start_time, start_time + timedelta(seconds=ref_dist[0] / bs),
-                         start_time + timedelta(seconds=ref_dist[0] / bs) + timedelta(
-                             seconds=ref_dist[1] / bs)])
+    ref_dist = np.array([25712., 29522., 35836.]) * u.meter
+    ref_time = np.array([start_time, start_time + timedelta(seconds=ref_dist[0].value / bs.value),
+                         start_time + timedelta(seconds=ref_dist[0].value / bs.value) + timedelta(
+                             seconds=ref_dist[1].value / bs.value)])
 
     assert test_lon_start.any() == ref_lon_start.any()
     assert test_lat_start.any() == ref_lat_start.any()
@@ -376,7 +378,7 @@ def test_get_fuel_for_fixed_waypoints():
 def test_wind_force():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
-    courses = np.linspace(0, 360, 10)
+    courses = np.linspace(0, 360, 10) * u.degree
     courses_rad = utils.degree_to_pmpi(courses)
 
     time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
@@ -390,9 +392,6 @@ def test_wind_force():
     rwind = ship_params.get_rwind()
 
     fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
-    for i in range(0, courses.shape[0]):
-        courses[i] = math.radians(courses[i])
-    # wind_dir = math.radians(wind_dir)
 
     axes[0].plot(courses_rad, power)
     axes[0].legend()

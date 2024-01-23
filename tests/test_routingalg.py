@@ -17,7 +17,7 @@ def test_update_ship_params():
     rshallow = np.array([[8.5, 9.5, 8.5], [8.15, 9.15, 8.15], [8.25, 9.25, 8.25]])
     rroughness = np.array([[8.6, 9.6, 8.6], [8.16, 9.16, 8.16], [8.26, 9.26, 8.26]])
     rwaves = np.array([[8.7, 9.7, 8.7], [8.17, 9.17, 8.17], [8.27, 9.27, 8.27]])
-    sp = ShipParams(fuel=fuel, power=power, rpm=rpm, speed=speed, r_calm=rcalm, r_wind=rwind, r_shallow=rshallow,
+    sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_calm=rcalm, r_wind=rwind, r_shallow=rshallow,
                     r_roughness=rroughness, r_waves=rwaves)
 
     fuel_single = np.array([0.01, 0.02, 0.03])
@@ -29,7 +29,7 @@ def test_update_ship_params():
     rshallow_single = np.array([6.01, 6.02, 6.03])
     rroughness_single = np.array([7.01, 7.02, 7.03])
     rwaves_single = np.array([8.01, 8.02, 8.03])
-    sp_single = ShipParams(fuel=fuel_single, power=power_single, rpm=rpm_single, speed=speed_single,
+    sp_single = ShipParams(fuel_rate=fuel_single, power=power_single, rpm=rpm_single, speed=speed_single,
                            r_calm=rcalm_single, r_wind=rwind_single, r_shallow=rshallow_single,
                            r_roughness=rroughness_single, r_waves=rwaves_single)
 
