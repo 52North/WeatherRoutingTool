@@ -19,7 +19,6 @@ Only Python < 3.11 supported!
 
 - generate a virtual environment e.g. via `python3.9 -m venv "venv"`
 - activate the virtual environment: `source venv/bin/activate`
-- export the path variable for the WRT: `export WRT_PATH=/home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/`
 - install the WRT: `/path/to/WRT/setup.py install`
 - install mariPower:
   - request access to the respective git repository and clone it
@@ -31,14 +30,14 @@ Configuration of the Weather Routing Tool can be done by providing a json file. 
 
 The configuration file has to be provided when calling the Weather Routing Tool from the command line:
 ```shell
-python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+python WeatherRoutingTool/cli.py -f <path>/config.json
 ```
 
 Additionally, it's possible to define files for logging (separately for info and warning level) and if debugging mode should be used.
 Check the help text to get an overview of all CLI arguments:
 ```shell
-$ python WeatherRoutingTool/execute_routing.py --help
-usage: execute_routing.py [-h] -f FILE [--warnings-log-file WARNINGS_LOG_FILE] [--info-log-file INFO_LOG_FILE] [--debug DEBUG]
+$ python WeatherRoutingTool/cli.py --help
+usage: cli.py [-h] -f FILE [--warnings-log-file WARNINGS_LOG_FILE] [--info-log-file INFO_LOG_FILE] [--debug DEBUG] [--filter-warnings FILTER_WARNINGS]
 
 Weather Routing Tool
 
@@ -50,6 +49,8 @@ options:
   --info-log-file INFO_LOG_FILE
                         Logging file name (absolute path) for info and above.
   --debug DEBUG         Enable debug mode. <True|False>. Defaults to 'False'.
+  --filter-warnings FILTER_WARNINGS
+                        Filter action. <default|error|ignore|always|module|once>.Defaults to 'default'.
 ```
 
 Some variables have to be set using environment variables (see below).
@@ -152,19 +153,25 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
    ```
 
 4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
-5. Initiate the routing procedure by executing the file 'execute_routing.py' *out of the base directory*:
+5. Initiate the routing procedure by executing the file 'cli.py' *out of the base directory*:
 
     ```sh
-    python WeatherRoutingTool/execute_routing.py -f <path>/config.json
+    python WeatherRoutingTool/cli.py -f <path>/config.json
     ```
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
-## Utilised Conventions
+## Conventions
+
+### Coordinates
 
   - latitude: -90° - 90°
   - longitude: -180° - 180°
   - headings: 0° - 360°, angular difference between North and the ship's direction, angles are going in the negative mathematical direction (clockwise)
+
+### Units
+
+ToDo
 
 ## Logging
 
@@ -208,14 +215,14 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-# Pruning methods
+## Pruning methods
 The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:
 
 1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
 2. The choice of how route segments are grouped for the pruning.
 3. The minimisation criterion that is used as basis for the pruning.
 
-## The Definition of the Symmetry Axis
+### The Definition of the Symmetry Axis
 Two methods for the definition of the symmetry axis can be selected:
 
 1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
@@ -240,7 +247,7 @@ Two methods for the definition of the symmetry axis can be selected:
 <br>
 <br>
 
-## Grouping Route Segments
+### Grouping Route Segments
 Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:
 
 1. *courses-based*:  Route segments are grouped according to their courses.
@@ -270,7 +277,7 @@ Route segments are organised in groups before the pruning is performed. Segments
 <br>
 <br>
 
-## The Minimisation Criterion
+### The Minimisation Criterion
 *to be continued*
 
 ## Genetic Algorithm
@@ -408,6 +415,31 @@ The arguments that are passed for the second routing step are the start and end 
 - lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
+
+## Developing
+
+### Style guide
+
+#### Docstring
+
+ToDo: document chosen format, relevant PEPs, etc.
+
+reStructuredText: 
+* can be used by Sphinx to generate documentation automatically
+* default in PyCharm
+
+Example:
+
+```Python
+"""
+This is a reStructuredText style.
+
+:param param1: this is a first param
+:param param2: this is a second param
+:returns: this is a description of what is returned
+:raises keyError: raises an exception
+"""
+```
 
 ## References
 
