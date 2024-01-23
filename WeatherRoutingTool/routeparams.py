@@ -52,8 +52,8 @@ class RouteParams():
         self.ship_params_per_step = ship_params_per_step
 
         assert self.lats_per_step.shape == self.lons_per_step.shape
-        assert self.lats_per_step.shape == self.course_per_step.shape
-        assert self.lats_per_step.shape == self.dists_per_step.shape
+        assert self.lats_per_step.shape[0] == self.course_per_step.shape[0] + 1
+        assert self.lats_per_step.shape[0] == self.dists_per_step.shape[0] + 1
         assert self.lats_per_step.shape == self.starttime_per_step.shape
 
     def print_route(self):
@@ -192,7 +192,7 @@ class RouteParams():
         r_waves = np.full(count, -99.)
         r_shallow = np.full(count, -99.)
         r_roughness = np.full(count, -99.)
-        course_per_step = np.full(count, -99.)
+        course_per_step = np.full(count - 1, -99.)
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
@@ -214,22 +214,25 @@ class RouteParams():
             r_shallow[ipoint] = property['shallow_water_resistance']['value']
             r_roughness[ipoint] = property['hull_roughness_resistance']['value']
 
-        speed = speed * u.meter/u.second
-        power = (power * u.kiloWatt).to(u.Watt)
-        fuel_rate = (fuel_rate * u.tonne/u.hour).to(u.kg/u.second)
+        speed = speed[:-1] * u.meter/u.second
+        power = (power[:-1] * u.kiloWatt).to(u.Watt)
+        fuel_rate = (fuel_rate[:-1] * u.tonne/u.hour).to(u.kg/u.second)
         rpm = rpm[:-1] * u.Hz
-        r_wind = r_wind * u.newton
-        r_calm = r_calm * u.newton
-        r_waves = r_waves * u.newton
-        r_shallow = r_shallow * u.newton
-        r_roughness = r_roughness * u.newton
+        r_wind = r_wind[:-1] * u.newton
+        r_calm = r_calm[:-1] * u.newton
+        r_waves = r_waves[:-1] * u.newton
+        r_shallow = r_shallow[:-1] * u.newton
+        r_roughness = r_roughness[:-1] * u.newton
 
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
         gcr = -99
         route_type = 'read_from_file'
         time = start_time_per_step[count - 1] - start_time_per_step[0]
-        dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step) * u.meter
+        dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
+        dists_per_step = dists_per_step[:-1]
+
+        count = count - 1
 
         ship_params_per_step = ShipParams(fuel_rate=fuel_rate, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm,
                                           r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
@@ -246,7 +249,7 @@ class RouteParams():
         for i in range(0, nsteps - 1):
             dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
             dist[i] = dist_step['s12']
-        return dist
+        return dist * u.meter
 
     def plot_route(self, ax, colour, label):
         lats = self.lats_per_step
@@ -260,24 +263,25 @@ class RouteParams():
 
     def get_power_type(self, power_type):
         if power_type == 'power':
-            return {"value": self.ship_params_per_step.get_power(), "label": 'Leistung', "unit": 'kW'}
+            return {"value": self.ship_params_per_step.get_power(), "label": 'Leistung', "unit": u.Watt}
         if power_type == 'fuel':
-            return {"value": self.get_fuel_per_dist(), "label": "Treibstoffverbrauch", "unit": 't'}
+            return {"value": self.get_fuel_per_dist(), "label": "Treibstoffverbrauch", "unit": u.kg}
 
     def plot_power_vs_dist(self, color, label, power_type):
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
-        dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
 
-        plt.bar(hist_values["bin_centres"], hist_values["bin_contents"], hist_values["bin_widths"], fill=False,
-                color=color, edgecolor=color, label=label)
-        plt.xlabel('Weglänge (km)')
         if power_type == 'power':
-            plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
+            plt.ylabel(power["label"] + ' (kW)')
+            plt.bar(hist_values["bin_centres"].to(u.km).value, hist_values["bin_contents"].to(u.kiloWatt).value, hist_values["bin_widths"].to(u.km).value,
+                    fill=False, color=color, edgecolor=color, label=label)
         else:
-            plt.ylabel(power["label"] + ' (' + power["unit"] + '/km)')
+            plt.ylabel(power["label"] + ' (t/km)')
+            plt.bar(hist_values["bin_centres"].to(u.km).value, hist_values["bin_contents"].to(u.tonne/u.kilometer).value, hist_values["bin_widths"].to(u.km).value,
+                    fill=False, color=color, edgecolor=color, label=label)
+        plt.xlabel('Weglänge (km)')
         plt.xticks()
 
     # TODO check whether correct: Why do we see steps and no smooth curve?
@@ -285,33 +289,33 @@ class RouteParams():
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
-        dist = dist / 1000  # [m] -> [km]
         hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
 
-        acc_bin_content = np.full(hist_values["bin_contents"].shape, -99)
-        fuel_sum = 0
+        acc_bin_content = np.array([]) * power["unit"]
+        fuel_sum = 0 * power["unit"]
         for i in range(0, len(hist_values["bin_centres"])):
             fuel_sum = fuel_sum + hist_values["bin_widths"][i] * hist_values["bin_contents"][i]
-            acc_bin_content[i] = fuel_sum
 
-        plt.bar(hist_values["bin_centres"], acc_bin_content, hist_values["bin_widths"], fill=False,
-                color=color, edgecolor=color, label=label, linewidth=1)
+            acc_bin_content = np.append(acc_bin_content, fuel_sum)
+
         plt.xlabel('Weglänge (km)')
         if power_type == 'power':
             plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
+            plt.bar(hist_values["bin_centres"].to(u.km).value, acc_bin_content.to(u.kiloWatt).value, hist_values["bin_widths"].to(u.km).value, fill=False,
+                    color=color, edgecolor=color, label=label, linewidth=1)
         else:
             plt.ylabel('akkumulierter ' + power["label"] + ' (t)')
+            plt.bar(hist_values["bin_centres"].to(u.km).value, acc_bin_content.to(u.tonne).value, hist_values["bin_widths"].to(u.km).value, fill=False,
+                    color=color, edgecolor=color, label=label, linewidth=1)
         plt.xticks()
 
     def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
         power_nom = self.get_power_type(power_type)
         dist_nom = self.dists_per_step
-        dist_nom = dist_nom / 1000  # [m] -> [km]
         hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom["value"], power_type)
 
         power_denom = denominator.get_power_type(power_type)
         dist_denom = denominator.dists_per_step
-        dist_denom = dist_denom / 1000  # [m] -> [km]
         hist_values_denom = graphics.get_hist_values_from_widths(dist_denom, power_denom["value"], power_type)
 
         if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
@@ -331,29 +335,31 @@ class RouteParams():
     def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
         power = self.get_power_type(power_type)
         if coordstring == 'lat':
-            coord = self.lats_per_step
+            coord = self.lats_per_step[:-1]
             label = 'latitude (°W)'
         else:
-            coord = self.lons_per_step
+            coord = self.lons_per_step[:-1]
             label = 'longitude (°W)'
-        power["value"] = np.delete(power["value"], power["value"].shape[0] - 1)
-        coord = np.delete(coord, coord.shape[0] - 1)
 
-        ax.plot(coord, power["value"], color=color, label=label)
+        if power_type == 'power':
+            ax.plot(coord, power["value"].to(u.kW).value, color=color, label=label)
+            plt.ylabel(power["label"] + ' (kW)')
+        else:
+            ax.plot(coord, power["value"].to(u.tonne).value, color=color, label=label)
+            plt.ylabel(power["label"] + ' (kg)')
         plt.xlabel(label)
-        plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
         # plt.ylim(1.8,2.2)
         plt.xticks()
 
     def get_fuel_per_dist(self):
-        fuel_per_hour = self.ship_params_per_step.fuel
-        delta_time = np.full(self.count - 1, timedelta(seconds=0))
-        fuel = np.full(self.count, -99.)
+        fuel_per_second = self.ship_params_per_step.fuel_rate
+        delta_time = np.full(self.count, timedelta(seconds=0))
+        fuel = np.array([]) * u.kg
 
-        for i in range(0, self.count - 1):
+        for i in range(0, self.count):
             delta_time[i] = self.starttime_per_step[i + 1] - self.starttime_per_step[i]
-            delta_time[i] = delta_time[i].total_seconds() / (60 * 60)
-            fuel[i] = fuel_per_hour[i] * delta_time[i]
+            delta_time[i] = delta_time[i].total_seconds() * u.second
+            fuel = np.append(fuel, fuel_per_second[i] * delta_time[i])
 
         return fuel
 
@@ -428,8 +434,8 @@ class RouteParams():
             print('end_lons: ', end_lons)
 
         move = geod.inverse(start_lats, start_lons, end_lats, end_lons)
-        dist = move["s12"]
-        courses = move["azi1"]
+        dist = move["s12"] * u.meter
+        courses = move["azi1"] * u.degree
         travel_times = dist / bs
 
         start_times = np.full(npoints - 1, datetime.strptime('1970-01-01T00:00Z', '%Y-%m-%dT%H:%MZ'))
@@ -454,23 +460,12 @@ class RouteParams():
         waypoint_coors['travel_times'] = travel_times
         return waypoint_coors
 
-    def get_full_dist(self, unit='km'):
+    def get_full_dist(self):
         dist = np.sum(self.dists_per_step)
+        return dist
 
-        if unit == 'km':
-            return dist / 1000
-        if unit == 'm':
-            return dist
-
-    def get_full_travel_time(self, unit='h'):
-        if unit == 'h':
-            return self.time.total_seconds() / 3600
-        if unit == 'min':
-            return self.time.total_seconds() / 60
-        if unit == 'sec':
-            return self.time.total_seconds()
-        if unit == 'datetime':
-            return self.time
+    def get_full_travel_time(self):
+        return self.time
 
     def get_full_fuel(self):
         full_fuel = 0

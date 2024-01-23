@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 
 import datetime as dt
+import logging
 
 import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
-
 
 def plot_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
@@ -55,18 +56,22 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
 
 if __name__ == "__main__":
     filename1 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/alternative_route.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/route_rough_weather_original.json")
+    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/alternative_route.json")
     filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_105_calmwaterres.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/Figures"
+    figurefile = "/home/kdemmich/MariData/ReviewUnits/Figures"
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
     depth_data = ""
 
+    set_up_logging()
+
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
+    rp_read1.print_route()
+
     # rp_read3 = RouteParams.from_file(filename3)
     # rp_read4 = RouteParams.from_file(filename4)
 
@@ -85,14 +90,14 @@ if __name__ == "__main__":
     do_plot_acc_fuel_vs_dist = True
 
     do_plot_power_vs_lon = True
-    do_plot_fuel_vs_lon = False
+    do_plot_fuel_vs_lon = True
     do_plot_power_vs_lat = True
-    do_plot_fuel_vs_lat = False
+    do_plot_fuel_vs_lat = True
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = False
-    do_plot_fuel_vs_dist_ratios = False
-    do_write_fuel = False
+    do_plot_power_vs_dist_ratios = True
+    do_plot_fuel_vs_dist_ratios = True
+    do_write_fuel = True
 
     ##
     # init wheather
@@ -182,17 +187,17 @@ if __name__ == "__main__":
         print('Full fuel consumption:')
         print(rp_1_str + ': ' + str(rp_read1.get_full_fuel()))
         print(rp_2_str + ': ' + str(rp_read2.get_full_fuel()))
-        print(rp_3_str + ': ' + str(rp_read3.get_full_fuel()))
-        print(rp_4_str + ': ' + str(rp_read4.get_full_fuel()))
+        #print(rp_3_str + ': ' + str(rp_read3.get_full_fuel()))
+        #print(rp_4_str + ': ' + str(rp_read4.get_full_fuel()))
 
         print('Full travel dist:')
         print(rp_1_str + ': ' + str(rp_read1.get_full_dist()))
         print(rp_2_str + ': ' + str(rp_read2.get_full_dist()))
-        print(rp_3_str + ': ' + str(rp_read3.get_full_dist()))
-        print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
+        #print(rp_3_str + ': ' + str(rp_read3.get_full_dist()))
+        #print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
 
         print('Full travel time:')
-        print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time('datetime')))
-        print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time('datetime')))
-        print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
-        print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))
+        print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time()))
+        print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time()))
+        #print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
+        #print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import os
+from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 from PIL import Image
@@ -214,9 +215,13 @@ def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
 
 
 def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
-    centres = np.array([])
+    centres = np.array([]) * u.meter
     contents = np.array([])
-    cent_temp = 0
+    if power_type == 'fuel':
+        contents = contents * u.kg/u.meter
+    else:
+        contents = contents * u.Watt
+    cent_temp = 0 * u.meter
     debug = False
 
     # ToDo: use logger.debug and args.debug
