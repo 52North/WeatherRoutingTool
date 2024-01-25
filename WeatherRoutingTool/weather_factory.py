@@ -43,9 +43,10 @@ class WeatherFactory:
 
         if data_mode == 'fake':
             var_dict = kwargs.get('var_dict')
+            coord_res = kwargs.get('coord_res')
 
             logger.info(form.get_log_step('Faking weather data.', 0))
-            wt_download = FakeWeather(departure_time, time_forecast, time_resolution, var_dict)
+            wt_download = FakeWeather(departure_time, time_forecast, time_resolution, coord_res, var_dict)
             wt_download.set_map_size(default_map)
             wt_download.read_dataset()
             wt_download.write_data(file_path)

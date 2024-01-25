@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
+from math import ceil
 
 import datacube
 import matplotlib.pyplot as plt
@@ -667,7 +668,7 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
-    def __init__(self, time, hours, time_res, var_dict=None):
+    def __init__(self, time, hours, time_res, coord_res=1/12, var_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
@@ -679,7 +680,7 @@ class FakeWeather(WeatherCond):
             'u-component_of_wind_height_above_ground': 0, 'v-component_of_wind_height_above_ground': 0,
             'Pressure_reduced_to_MSL_msl': 0
         }
-        self.coord_res = 0.0833
+        self.coord_res = coord_res
 
         self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero=var_list_zero)
 
@@ -691,14 +692,16 @@ class FakeWeather(WeatherCond):
 
     def read_dataset(self, filepath=None):
         # initialise coordinates
-        n_lat_values = round((self.map_size.lat2 - self.map_size.lat1)/self.coord_res)
+        # round differences to 10^-5 (~1 m for latitude) to prevent shifts due to floating numbers
+        # interpret the configured map size limits inclusive
+        n_lat_values = ceil(round(self.map_size.lat2 - self.map_size.lat1, 5)/self.coord_res) + 1
         lat_start = self.map_size.lat1
-        lat_end = self.map_size.lat1 + self.coord_res*n_lat_values
+        lat_end = self.map_size.lat1 + self.coord_res * (n_lat_values-1)
         lat = np.linspace(lat_start, lat_end, n_lat_values)
 
-        n_lon_values = round((self.map_size.lon2 - self.map_size.lon1)/self.coord_res)
+        n_lon_values = ceil(round(self.map_size.lon2 - self.map_size.lon1, 5)/self.coord_res) + 1
         lon_start = self.map_size.lon1
-        lon_end = self.map_size.lon1 + self.coord_res * n_lon_values
+        lon_end = self.map_size.lon1 + self.coord_res * (n_lon_values-1)
         lon = np.linspace(lon_start, lon_end, n_lon_values)
 
         n_time_values = self.time_steps + 1
