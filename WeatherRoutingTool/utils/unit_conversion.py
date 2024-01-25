@@ -10,6 +10,10 @@ import pandas as pd
 
 logger = logging.getLogger('WRT.weather')
 
+# unit definitions astropy
+knots = u.def_unit('knots', 0.5144 * u.meter/u.second)
+u.add_enabled_units([knots])
+
 
 def mps_to_knots(vals):
     """convert the Meters/second to knots.

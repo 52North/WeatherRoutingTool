@@ -9,6 +9,7 @@ from geovectorslib import geod
 from matplotlib import gridspec
 from astropy import units as u
 
+import WeatherRoutingTool.utils.unit_conversion as units
 import WeatherRoutingTool.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
@@ -480,7 +481,8 @@ class RouteParams():
         interval = 10
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
         sog = sog_data['SOG'].values
-        sog = sog[:-1] * 0.5144         # delete last element and convert from knots to m/s
+        sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s
+        sog = sog.to(u.meter/u.second)
 
         draught = sog_data['MIDDRAUGHT_LEVELP']
 
