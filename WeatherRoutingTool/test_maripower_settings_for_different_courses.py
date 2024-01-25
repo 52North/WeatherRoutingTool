@@ -89,7 +89,6 @@ def plot_polar_power(curve_list, label_list, courses, figuredir, name, fuel_type
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
-    parser.add_argument('-out', '--geojson-out', help="Geojson (absolute path)", required=False, type=str)
 
     args = parser.parse_args()
 
