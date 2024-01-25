@@ -319,10 +319,10 @@ class RouteParams():
 
         hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
 
-        plt.plot(hist_values_denom["bin_centres"], hist_values_ratios, marker='o', color=color, linewidth=0,
+        plt.plot(hist_values_denom["bin_centres"].to(u.km).value, hist_values_ratios, marker='o', color=color, linewidth=0,
                  label=label)
-        plt.errorbar(x=hist_values_denom["bin_centres"], y=hist_values_ratios, yerr=None,
-                     xerr=hist_values_denom["bin_widths"], fmt=' ', color=color, linestyle=None)
+        plt.errorbar(x=hist_values_denom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
+                     xerr=hist_values_denom["bin_widths"].to(u.km).value, fmt=' ', color=color, linestyle=None)
 
         plt.xlabel('Weglänge (km)')
         plt.ylabel(power_nom["label"] + ' Modifiziert/Standardwert')
@@ -484,7 +484,8 @@ class RouteParams():
         sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s
         sog = sog.to(u.meter/u.second)
 
-        draught = sog_data['MIDDRAUGHT_LEVELP']
+        draught = 0.25 * (sog_data['AFTER_DRAUGHT_LEVEL'] + sog_data['FORE_DRAUGHT_LEVEL']
+                          + sog_data['MIDDRAUGHT_LEVELS'] + sog_data['MIDDRAUGHT_LEVELP'])
 
         lat = data['Latitude'][::interval].values
         lon = data['Longitude'][::interval].values
