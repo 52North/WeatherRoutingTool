@@ -2,8 +2,10 @@ import argparse
 import copy
 import math
 from datetime import datetime, timedelta
+
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy import units as u
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
@@ -155,7 +157,7 @@ if __name__ == "__main__":
     # fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
-    courses = np.linspace(0, 360, 37)       # scan courses from 0 to 360° in steps of 10°
+    courses = np.linspace(0, 360, 37) * u.degree      # scan courses from 0 to 360° in steps of 10°
     courses_plot = copy.deepcopy(courses)
     start_lats = np.repeat(49.05, courses.shape)         # dummy times, distances
     start_lons = np.repeat(30.89, courses.shape)
@@ -186,36 +188,36 @@ if __name__ == "__main__":
             maripower_test_scenarios_wind[key],
             maripower_test_scenarios_wave[key],
             waypoint_dict, args.geojson_out,
-            key, weather_type)
+            key, weather_type, draught)
 
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
 
     nominator_list = [shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
     label_list = ['95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out,
-                          'calmwaterres_' + weather_type, 'power', draught)
+                          'calmwaterres_' + weather_type, 'power')
 
     nominator_list = [shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
     label_list = ['80% Zusatzwiderstand Wind', '120% Zusatzwiderstand Wind']
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out,
-                          'windres_' + weather_type, 'power', draught)
+                          'windres_' + weather_type, 'power')
 
     nominator_list = [shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
     label_list = ['80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, args.geojson_out,
-                          'waveres_' + weather_type, 'power', draught)
+                          'waveres_' + weather_type, 'power')
 
     curve_list = [shipparams_vec['original'], shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
     label_list = ['original', '95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
     plot_polar_power(curve_list, label_list, courses, args.geojson_out,
-                     'calmwaterres_' + weather_type, 'power', draught)
+                     'calmwaterres_' + weather_type, 'power')
 
     curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
     label_list = ['original', '80% Zusatzwiderstand Wind', '120% Zusatzwiderstand Wind']
     plot_polar_power(curve_list, label_list, courses, args.geojson_out,
-                     'windres_' + weather_type, 'power', draught)
+                     'windres_' + weather_type, 'power')
 
     curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
     label_list = ['original', '80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
     plot_polar_power(curve_list, label_list, courses, args.geojson_out,
-                     'waveres_' + weather_type, 'power', draught)
+                     'waveres_' + weather_type, 'power')
