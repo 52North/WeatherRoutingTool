@@ -10,6 +10,8 @@ MANDATORY_CONFIG_VARIABLES = ['COURSES_FILE', 'DEFAULT_MAP', 'DEFAULT_ROUTE', 'D
 
 RECOMMENDED_CONFIG_VARIABLES = {
     'BOAT_DRAUGHT': 10,
+    'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 1,
+    'BOAT_ROUGHNESS_LEVEL': 1,
     'BOAT_SPEED': 6,
     'DATA_MODE': 'automatic'
 }
@@ -51,6 +53,8 @@ class Config:
         # Details in README
         self.ALGORITHM_TYPE = None  # options: 'isofuel', 'genetic', 'speedy_isobased'
         self.BOAT_DRAUGHT = None  # in m
+        self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
+        self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SPEED = None  # in m/s
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints'
