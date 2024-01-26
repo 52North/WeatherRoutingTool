@@ -124,7 +124,7 @@ class Tanker(Boat):
         self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
         self.hydro_model.Roughness_Level = np.array([config.BOAT_ROUGHNESS_LEVEL])
         self.hydro_model.Roughness_Distribution_Level = np.array([config.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
-        self.use_depth_data = False
+        self.use_depth_data = True
 
     def set_ship_property(self, variable, value):
         print('Setting ship property ' + variable + ' to ' + str(value))
