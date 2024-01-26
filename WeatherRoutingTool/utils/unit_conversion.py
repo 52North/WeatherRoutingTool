@@ -73,7 +73,6 @@ def convert_nptd64_to_ints(time):
 
 def convert_npdt64_to_datetime(time):
     timestamp = ((time - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
-    logger.info('timestampt', type(timestamp))
     TIME = datetime.fromtimestamp(timestamp, tz=timezone.utc)
     return TIME
 

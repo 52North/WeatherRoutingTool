@@ -477,6 +477,9 @@ class RouteParams():
         data = pandas.read_parquet(filename)
         data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
 
+        full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].sum()
+        mean_engine_load = data['ME_LOAD'].mean()
+
         # select every interval's element from dataset
         interval = 10
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
@@ -494,10 +497,13 @@ class RouteParams():
         time = data.index[::interval].values
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
 
+        logger.info('Reading route from file: ' + filename)
         logger.info('start: (' + str(lat[0]) + ',' + str(lon[0]) + ')')
         logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
-        logger.info('start time: ', time[0])
-        logger.info('end time: ', time[-1])
+        logger.info('start time: ' + str(time[0]))
+        logger.info('end time: ' + str(time[-1]))
+        logger.info('full fuel consumed: ' + str(full_fuel_consumed))
+        logger.info('ME load: ' + str(mean_engine_load))
         logger.info('draught: ', draught)
 
         return lat, lon, time_converted, sog, draught

@@ -5,7 +5,7 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 
-from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
@@ -55,6 +55,8 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
     parser.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
                         type=str, default='False')
+
+    set_up_logging()
 
     args = parser.parse_args()
 
