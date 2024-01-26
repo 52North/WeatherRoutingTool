@@ -14,9 +14,9 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
-                                weather_scenario):
+                                weather_scenario, draught):
     boat = Tanker(config)
-    # boat.set_ship_property('Draught', [draught.mean()])
+    boat.set_ship_property('Draught', [draught.mean()])
     boat.set_ship_property('WindForcesFactor', windfactor)
     boat.set_ship_property('WaveForcesFactor', wavefactor)
     boat.set_ship_property('CalmWaterFactor', calmfactor)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    weather_type = 'rough_weather'  # rought_weather, calm_weather
+    weather_type = 'real_weather'  # rought_weather, calm_weather
     wind_speed = -99
     VHMO = -99
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         wind_speed = 2.5
         VHMO = 1
 
-    if wind_speed == -99 or VHMO == -99:
+    if (wind_speed == -99 or VHMO == -99) and (weather_type != 'real_weather'):
         raise ValueError('windspeed or VHM0 not set!')
 
     u_comp = - math.sin(45) * wind_speed
@@ -139,4 +139,6 @@ if __name__ == "__main__":
             waypoint_dict,
             routepath,
             key,
-            weather_type)
+            weather_type,
+            draught
+        )

@@ -498,5 +498,6 @@ class RouteParams():
         logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
         logger.info('start time: ', time[0])
         logger.info('end time: ', time[-1])
+        logger.info('draught: ', draught)
 
         return lat, lon, time_converted, sog, draught
