@@ -315,14 +315,17 @@ class RouteParams():
         hist_values_denom = graphics.get_hist_values_from_widths(dist_denom, power_denom["value"], power_type)
 
         if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
-            raise ValueError("Ratios are only possible for same binning!")
+            logger.warning("Histograms for building the ratio have different binning! Need to interpolate here ...")
+
+            hist_values_denom['bin_contents'] = np.interp(hist_values_nom['bin_centres'], hist_values_denom['bin_centres'], hist_values_denom['bin_contents'])
 
         hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
 
-        plt.plot(hist_values_denom["bin_centres"].to(u.km).value, hist_values_ratios, marker='o', color=color, linewidth=0,
+        plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios, marker='o', color=color, linewidth=0,
                  label=label)
-        plt.errorbar(x=hist_values_denom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
-                     xerr=hist_values_denom["bin_widths"].to(u.km).value, fmt=' ', color=color, linestyle=None)
+        plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
+                     xerr=hist_values_nom["bin_widths"].to(u.km).value/2, fmt=' ', color=color, linestyle=None)
+        plt.axhline(y=1, color='gray', linestyle='dashed')
 
         plt.xlabel('Weglänge (km)')
         plt.ylabel(power_nom["label"] + ' Modifiziert/Standardwert')
@@ -477,7 +480,7 @@ class RouteParams():
         data = pandas.read_parquet(filename)
         data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
 
-        full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].sum()
+        full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg/u.h
         mean_engine_load = data['ME_LOAD'].mean()
 
         # select every interval's element from dataset
@@ -502,8 +505,8 @@ class RouteParams():
         logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
         logger.info('start time: ' + str(time[0]))
         logger.info('end time: ' + str(time[-1]))
-        logger.info('full fuel consumed: ' + str(full_fuel_consumed))
-        logger.info('ME load: ' + str(mean_engine_load))
+        logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
+        logger.info('ME load (percentage): ' + str(mean_engine_load))
         logger.info('draught: ', draught)
 
         return lat, lon, time_converted, sog, draught
