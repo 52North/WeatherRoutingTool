@@ -117,7 +117,7 @@ class RouteParams():
 
         logger.info('Write route parameters to ' + filename)
 
-        for i in range(0, self.count + 1):
+        for i in range(0, self.count + 2):
             feature = {}
             geometry = {}
             properties = {}
@@ -127,7 +127,7 @@ class RouteParams():
             geometry['coordinates'] = [self.lons_per_step[i], self.lats_per_step[i]]
 
             properties['time'] = self.starttime_per_step[i]
-            if i == self.count:
+            if i == (self.count + 1):
                 properties['speed'] = {'value': -99, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': -99, 'unit': 'kW'}
                 properties['fuel_consumption'] = {'value': -99, 'unit': 'mt/h'}
