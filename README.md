@@ -70,6 +70,8 @@ Required variables (no default values provided):
 
 Recommended variables (default values provided but might be inaccurate/unsuitable):
 - `BOAT_DRAUGHT`: in m
+- `BOAT_ROUGHNESS_DISTRIBUTION_LEVEL`: numeric value (default: 1)
+- `BOAT_ROUGHNESS_LEVEL`: numeric value (default: 1)
 - `BOAT_SPEED`: in m/s
 - `DATA_MODE`: options: 'automatic', 'from_file', 'odc'
 

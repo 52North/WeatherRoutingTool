@@ -1,10 +1,10 @@
 import argparse
 import math
+import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 
-import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
@@ -13,7 +13,7 @@ from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
-def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, filedir, maripower_scenario,
+def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
                                 weather_scenario):
     boat = Tanker(config)
     # boat.set_ship_property('Draught', [draught.mean()])
@@ -43,8 +43,8 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
         starttime_per_step=time,
         ship_params_per_step=ship_params)
 
-    if args.geojson_out:
-        filename = filedir + 'route_' + weather_scenario + '_' + maripower_scenario + '.json'
+    if geojsondir:
+        filename = os.path.join(geojsondir, 'route_' + weather_scenario + '_' + maripower_scenario + '.json')
         print('Writing file: ', filename)
         rp.return_route_to_API(filename)
 
@@ -53,11 +53,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
     parser.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
-    parser.add_argument('-out', '--geojson-out', help="Geojson (absolute path)", required=False, type=str)
+    parser.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
+                        type=str, default='False')
 
     args = parser.parse_args()
-    if not args.file:
-        raise RuntimeError("No config file name provided!")
 
     config = Config(file_name=args.file)
     config.print()
@@ -65,6 +64,10 @@ if __name__ == "__main__":
     routename = 'original_resistances_calm_weather'
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
+    if str(args.write_geojson).lower() == 'true':
+        routepath = config.ROUTE_PATH
+    else:
+        routepath = None
     coursesfile = config.COURSES_FILE
     figurefile = get_figure_path()
     time_resolution = config.DELTA_TIME_FORECAST
@@ -134,6 +137,6 @@ if __name__ == "__main__":
             maripower_test_scenarios_wind[key],
             maripower_test_scenarios_wave[key],
             waypoint_dict,
-            args.geojson_out,
+            routepath,
             key,
             weather_type)
