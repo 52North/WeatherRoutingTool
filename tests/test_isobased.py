@@ -198,6 +198,7 @@ def test_get_delta_variables_last_step():
     # initialise boat
     tk = basic_test_func.create_dummy_Tanker_object()
     tk.speed = boat_speed
+    tk.use_depth_data = False
 
     ship_params = tk.get_ship_parameters(ra.get_current_course(), ra.get_current_lats(), ra.get_current_lons(),
                                          ra.time, [])

@@ -153,6 +153,7 @@ def test_power_consumption_returned():
 
     # dummy course netCDF
     pol = basic_test_func.create_dummy_Tanker_object()
+    pol.use_depth_data = False
     pol.set_boat_speed(np.array([8]) * u.meter/u.second)
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
@@ -336,6 +337,7 @@ def test_get_fuel_for_fixed_waypoints():
     route_lons = np.array([13.2, 13.4, 13.7, 13.9])
 
     pol = basic_test_func.create_dummy_Tanker_object()
+    pol.use_depth_data = False
     pol.set_boat_speed(bs)
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
@@ -385,6 +387,7 @@ def test_wind_force():
     bs = 6
 
     pol = basic_test_func.create_dummy_Tanker_object()
+    pol.use_depth_data = False
     pol.set_boat_speed(bs)
 
     ship_params = pol.get_ship_parameters(courses, lats, lons, time, [], True)
