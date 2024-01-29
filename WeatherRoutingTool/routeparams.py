@@ -19,16 +19,24 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 logger = logging.getLogger('WRT.Routeparams')
 
 
-##
-# Container class for route parameters
-
 class RouteParams():
+    """
+    This is a Container class for route parameters. Parameters are assumed to be constant for every route segment (=
+    distance from one coordinate pair to the following). The parameters for each routing step are tied to the start
+    point of each route segment. Since the number of routing steps is by one smaller than the number of coordinate
+    pairs, the arrays of this container class exhibit different lengths:
+        - Type 1: count + 1: dists_per_step, ship_params_per_step, courses_per_step
+        - Type 2: count + 2: lats_per_step, lons_per_step, starttime_per_step
+    When the RouteParams object is written to json file, the full arrays of type 2 are written. The corresponding values
+    from the arrays of type 1 are set to -99 for the last coordinate pair.
+    """
+
     count: int  # routing step (starting from 0)
     start: tuple  # lat, lon at start point (0 - 360°)
     finish: tuple  # lat, lon of destination (0 - 360°)
     gcr: tuple  # distance from start to end on great circle (0 - 360°)
     route_type: str  # route name
-    time: timedelta  # time needed for the route (s)
+    time: timedelta  # travel time needed for the route (s)
 
     ship_params_per_step: ShipParams  # ship parameters per routing step
     lats_per_step: tuple  # latitude at beginning of each step + latitude destination (0-360°)
@@ -468,7 +476,7 @@ class RouteParams():
 
     def get_full_fuel(self):
         full_fuel = 0
-        for ipoint in range(0, self.count - 1):
+        for ipoint in range(0, self.count):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
             fuel_per_step = self.ship_params_per_step.fuel_rate[ipoint] * time_passed * u.second
             full_fuel = full_fuel + fuel_per_step

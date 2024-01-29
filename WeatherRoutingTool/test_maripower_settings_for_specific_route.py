@@ -30,7 +30,7 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
     finish = (lat[-1], lon[-1])
 
     rp = RouteParams(
-        count=lat.shape[0] - 1,
+        count=lat.shape[0] - 2,
         start=start,
         finish=finish,
         gcr=None,
