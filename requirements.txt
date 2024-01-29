@@ -1,3 +1,4 @@
+astropy
 bbox
 cartopy>0.20.0
 dask
