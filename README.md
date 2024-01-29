@@ -173,7 +173,8 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 
 ### Units
 
-ToDo
+Apart from one exception, the WRT uses SI units for internal calculations. Only angles are handled in degrees as defined in the paragraph above. All input variables that carry a unit are converted according to these definitions. For the output -- i.e. when a route is written to a json file -- the engine power is converted to kW and the fuel rate to mt/h, where mt refers to *metric ton*. <br><br>
+The WRT uses the package [astropy](https://docs.astropy.org/en/stable/units/) for the convenient handling of units.
 
 ## Logging
 
