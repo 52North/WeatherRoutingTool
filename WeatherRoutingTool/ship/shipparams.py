@@ -233,8 +233,17 @@ class ShipParams():
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
 
-        sp = ShipParams(fuel_rate=fuel_rate, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves,
-                        r_shallow=r_shallow, r_roughness=r_roughness)
+        sp = ShipParams(
+            fuel_rate=fuel_rate,
+            power=power,
+            rpm=rpm,
+            speed=speed,
+            r_wind=r_wind,
+            r_calm=r_calm,
+            r_waves=r_waves,
+            r_shallow=r_shallow,
+            r_roughness=r_roughness
+        )
         return sp
 
     def get_reduced_2D_object(self, row_start=None, row_end=None, col_start=None, col_end=None, idxs=None):
@@ -264,6 +273,15 @@ class ShipParams():
             raise ValueError(
                 'Index ' + str(col_start) + ' is not available for array with length ' + str(self.speed.shape[0]))
 
-        sp = ShipParams(fuel_rate=fuel_rate, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm, r_waves=r_waves,
-                        r_shallow=r_shallow, r_roughness=r_roughness)
+        sp = ShipParams(
+            fuel_rate=fuel_rate,
+            power=power,
+            rpm=rpm,
+            speed=speed,
+            r_wind=r_wind,
+            r_calm=r_calm,
+            r_waves=r_waves,
+            r_shallow=r_shallow,
+            r_roughness=r_roughness
+        )
         return sp

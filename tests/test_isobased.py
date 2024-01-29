@@ -292,17 +292,16 @@ def test_pruning_select_correct_idxs():
     ra.dist_per_step = np.array([ra.full_dist_traveled])
     ra.course_per_step = np.array([ra.current_course]) * u.degree
 
-
     sp = ShipParams(
-        fuel_rate = fuel_rate * u.kg/u.second,
-        power = np.full(fuel_rate.shape, 0) * u.Watt,
-        rpm = np.full(fuel_rate.shape, 0) * u.Hz,
-        speed = speed_per_step  * u.meter/u.second,
-        r_calm = np.full(fuel_rate.shape, 0) * u.newton,
-        r_wind = np.full(fuel_rate.shape, 0) * u.newton,
-        r_waves = np.full(fuel_rate.shape, 0) * u.newton,
-        r_shallow = np.full(fuel_rate.shape, 0) * u.newton,
-        r_roughness = np.full(fuel_rate.shape, 0) * u.newton
+        fuel_rate=fuel_rate * u.kg/u.second,
+        power=np.full(fuel_rate.shape, 0) * u.Watt,
+        rpm=np.full(fuel_rate.shape, 0) * u.Hz,
+        speed=speed_per_step * u.meter/u.second,
+        r_calm=np.full(fuel_rate.shape, 0) * u.newton,
+        r_wind=np.full(fuel_rate.shape, 0) * u.newton,
+        r_waves=np.full(fuel_rate.shape, 0) * u.newton,
+        r_shallow=np.full(fuel_rate.shape, 0) * u.newton,
+        r_roughness=np.full(fuel_rate.shape, 0) * u.newton
     )
     ra.shipparams_per_step = sp
 
@@ -313,7 +312,8 @@ def test_pruning_select_correct_idxs():
 
     full_fuel_test = np.array(
         [fuel_rate[0, 1], fuel_rate[0, 2], fuel_rate[0, 5], fuel_rate[0, 6]]) * u.kg/u.second
-    speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2], speed_per_step[0, 5], speed_per_step[0, 6]]) * u.meter/u.second
+    speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2],
+                              speed_per_step[0, 5], speed_per_step[0, 6]]) * u.meter/u.second
     lat_test = np.array([[30, 30, 30, 30]])
     lon_test = np.array([[45, 45, 45, 45]])
     time_single = datetime(2023, 11, 11, 11, 11)

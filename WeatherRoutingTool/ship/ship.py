@@ -304,8 +304,6 @@ class Tanker(Boat):
             speed = np.repeat(self.speed, courses.shape, axis=0)
 
         courses = units.degree_to_pmpi(courses)
-        if courses.value.any() > 180 or courses.value.any() < -180:
-            raise ValueError('Angle conversion not working!')
 
         # ToDo: use logger.debug and args.debug
         if (debug):
@@ -395,10 +393,17 @@ class Tanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         speed = np.repeat(self.speed, power.shape)
 
-
-        ship_params = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
-                                 r_wind=r_wind, r_calm=r_calm, r_waves=r_waves, r_shallow=r_shallow,
-                                 r_roughness=r_roughness)
+        ship_params = ShipParams(
+            fuel_rate=fuel,
+            power=power,
+            rpm=rpm,
+            speed=speed,
+            r_wind=r_wind,
+            r_calm=r_calm,
+            r_waves=r_waves,
+            r_shallow=r_shallow,
+            r_roughness=r_roughness
+        )
 
         if (debug):
             form.print_step('Dataset with fuel' + str(ds), 1)

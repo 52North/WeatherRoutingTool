@@ -10,6 +10,7 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
+
 def plot_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
@@ -55,12 +56,12 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
 
 
 if __name__ == "__main__":
-    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/alternative_route.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_18/alternative_route.json")
-    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes/route_calm_weather_105_calmwaterres.json")
+    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_original.json")
+    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_25/Routes/alternative_route.json")
+    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_120perc_wave.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/ReviewUnits/Figures"
+    figurefile = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_25/Figures"
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
@@ -70,33 +71,33 @@ if __name__ == "__main__":
 
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
-    rp_read1.print_route()
+    rp_read3 = RouteParams.from_file(filename3)
 
     # rp_read3 = RouteParams.from_file(filename3)
     # rp_read4 = RouteParams.from_file(filename4)
 
-    rp_1_str = 'Route mit Isofuel-Algorithmus'
-    rp_2_str = 'Original CBT'
-    rp_3_str = '105% Glattwasserwiderstand'
+    rp_1_str = 'Original CBT'
+    rp_2_str = '80% Zusatzwiderstand Seegang'
+    rp_3_str = '120% Zusatzwiderstand Seegang'
     rp_4_str = 'original'
 
-    rp_list = [rp_read2, rp_read1]
-    rp_str_list = [rp_2_str, rp_1_str]
+    rp_list = [rp_read1, rp_read2]
+    rp_str_list = [rp_1_str, rp_2_str]
 
     do_plot_weather = False
     do_plot_route = True
-    do_plot_power_vs_dist = True
-    do_plot_fuel_vs_dist = True
-    do_plot_acc_fuel_vs_dist = True
+    do_plot_power_vs_dist = False
+    do_plot_fuel_vs_dist = False
+    do_plot_acc_fuel_vs_dist = False
 
-    do_plot_power_vs_lon = True
-    do_plot_fuel_vs_lon = True
-    do_plot_power_vs_lat = True
-    do_plot_fuel_vs_lat = True
+    do_plot_power_vs_lon = False
+    do_plot_fuel_vs_lon = False
+    do_plot_power_vs_lat = False
+    do_plot_fuel_vs_lat = False
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = True
-    do_plot_fuel_vs_dist_ratios = True
+    do_plot_power_vs_dist_ratios = False
+    do_plot_fuel_vs_dist_ratios = False
     do_write_fuel = True
 
     ##
@@ -187,17 +188,17 @@ if __name__ == "__main__":
         print('Full fuel consumption:')
         print(rp_1_str + ': ' + str(rp_read1.get_full_fuel()))
         print(rp_2_str + ': ' + str(rp_read2.get_full_fuel()))
-        #print(rp_3_str + ': ' + str(rp_read3.get_full_fuel()))
-        #print(rp_4_str + ': ' + str(rp_read4.get_full_fuel()))
+        # print(rp_3_str + ': ' + str(rp_read3.get_full_fuel()))
+        # print(rp_4_str + ': ' + str(rp_read4.get_full_fuel()))
 
         print('Full travel dist:')
         print(rp_1_str + ': ' + str(rp_read1.get_full_dist()))
         print(rp_2_str + ': ' + str(rp_read2.get_full_dist()))
-        #print(rp_3_str + ': ' + str(rp_read3.get_full_dist()))
-        #print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
+        # print(rp_3_str + ': ' + str(rp_read3.get_full_dist()))
+        # print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
 
         print('Full travel time:')
         print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time()))
         print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time()))
-        #print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
-        #print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))
+        # print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
+        # print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))

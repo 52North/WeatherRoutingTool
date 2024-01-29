@@ -959,10 +959,15 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.flip()
 
         route = RouteParams(count=self.count, start=self.start, finish=self.finish, gcr=self.full_dist_traveled,
-                            route_type='min_time_route', time=self.full_time_traveled, lats_per_step=self.lats_per_step[:],
-                            lons_per_step=self.lons_per_step[:], course_per_step=self.course_per_step[:],
-                            dists_per_step=self.dist_per_step[:], starttime_per_step=self.starttime_per_step[:],
-                            ship_params_per_step=self.shipparams_per_step)
+                            route_type='min_time_route',
+                            time=self.full_time_traveled,
+                            lats_per_step=self.lats_per_step[:],
+                            lons_per_step=self.lons_per_step[:],
+                            course_per_step=self.course_per_step[:],
+                            dists_per_step=self.dist_per_step[:],
+                            starttime_per_step=self.starttime_per_step[:],
+                            ship_params_per_step=self.shipparams_per_step
+                            )
 
         return route
 
@@ -983,7 +988,7 @@ class IsoBased(RoutingAlg):
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
         dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
-	 # ToDo: use logger.debug and args.debug
+    # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
             # print('dist traveled:', dist)
@@ -1075,7 +1080,6 @@ class IsoBased(RoutingAlg):
     def update_fuel(self, delta_fuel, fuel_rate):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
         self.absolutefuel_per_step = np.vstack((delta_fuel, self.absolutefuel_per_step))
-
 
     def get_delta_variables(self, boat, wind, bs):
         pass

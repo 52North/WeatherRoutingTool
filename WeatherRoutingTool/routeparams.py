@@ -158,7 +158,10 @@ class RouteParams():
                 properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i].value, 'unit': 'N'}
                 properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i].value, 'unit': 'N'}
                 properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i].value, 'unit': 'N'}
-                properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i].value, 'unit': 'N'}
+                properties['shallow_water_resistance'] = {
+                    'value': self.ship_params_per_step.r_shallow[i].value,
+                    'unit': 'N'
+                }
                 properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i].value,
                                                            'unit': 'N'}
 
@@ -238,8 +241,17 @@ class RouteParams():
 
         count = count - 1
 
-        ship_params_per_step = ShipParams(fuel_rate=fuel_rate, power=power, rpm=rpm, speed=speed, r_wind=r_wind, r_calm=r_calm,
-                                          r_waves=r_waves, r_shallow=r_shallow, r_roughness=r_roughness)
+        ship_params_per_step = ShipParams(
+            fuel_rate=fuel_rate,
+            power=power,
+            rpm=rpm,
+            speed=speed,
+            r_wind=r_wind,
+            r_calm=r_calm,
+            r_waves=r_waves,
+            r_shallow=r_shallow,
+            r_roughness=r_roughness
+        )
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,
                    lats_per_step=lats_per_step, lons_per_step=lons_per_step, course_per_step=course_per_step,
@@ -279,12 +291,19 @@ class RouteParams():
 
         if power_type == 'power':
             plt.ylabel(power["label"] + ' (kW)')
-            plt.bar(hist_values["bin_centres"].to(u.km).value, hist_values["bin_contents"].to(u.kiloWatt).value, hist_values["bin_widths"].to(u.km).value,
-                    fill=False, color=color, edgecolor=color, label=label)
+            plt.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                hist_values["bin_contents"].to(u.kiloWatt).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label)
         else:
             plt.ylabel(power["label"] + ' (t/km)')
-            plt.bar(hist_values["bin_centres"].to(u.km).value, hist_values["bin_contents"].to(u.tonne/u.kilometer).value, hist_values["bin_widths"].to(u.km).value,
-                    fill=False, color=color, edgecolor=color, label=label)
+            plt.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                hist_values["bin_contents"].to(u.tonne/u.kilometer).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label
+            )
         plt.xlabel('Weglänge (km)')
         plt.xticks()
 
@@ -305,12 +324,19 @@ class RouteParams():
         plt.xlabel('Weglänge (km)')
         if power_type == 'power':
             plt.ylabel(power["label"] + ' (' + power["unit"] + ')')
-            plt.bar(hist_values["bin_centres"].to(u.km).value, acc_bin_content.to(u.kiloWatt).value, hist_values["bin_widths"].to(u.km).value, fill=False,
-                    color=color, edgecolor=color, label=label, linewidth=1)
+            plt.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                acc_bin_content.to(u.kiloWatt).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label, linewidth=1
+            )
         else:
             plt.ylabel('akkumulierter ' + power["label"] + ' (t)')
-            plt.bar(hist_values["bin_centres"].to(u.km).value, acc_bin_content.to(u.tonne).value, hist_values["bin_widths"].to(u.km).value, fill=False,
-                    color=color, edgecolor=color, label=label, linewidth=1)
+            plt.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                acc_bin_content.to(u.tonne).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label, linewidth=1)
         plt.xticks()
 
     def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
@@ -325,12 +351,16 @@ class RouteParams():
         if not np.array_equal(hist_values_denom["bin_centres"], hist_values_nom["bin_centres"]):
             logger.warning("Histograms for building the ratio have different binning! Need to interpolate here ...")
 
-            hist_values_denom['bin_contents'] = np.interp(hist_values_nom['bin_centres'], hist_values_denom['bin_centres'], hist_values_denom['bin_contents'])
+            hist_values_denom['bin_contents'] = np.interp(
+                hist_values_nom['bin_centres'],
+                hist_values_denom['bin_centres'],
+                hist_values_denom['bin_contents']
+            )
 
         hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
 
-        plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios, marker='o', color=color, linewidth=0,
-                 label=label)
+        plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios,
+                 marker='o', color=color, linewidth=0, label=label)
         plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
                      xerr=hist_values_nom["bin_widths"].to(u.km).value/2, fmt=' ', color=color, linestyle=None)
         plt.axhline(y=1, color='gray', linestyle='dashed')
@@ -450,7 +480,8 @@ class RouteParams():
             if ipoint == 0:
                 start_times[ipoint] = start_time
             else:
-                start_times[ipoint] = start_times[ipoint - 1] + timedelta(seconds=travel_times[ipoint - 1].to(u.second).value)
+                start_times[ipoint] = (start_times[ipoint - 1] +
+                                       timedelta(seconds=travel_times[ipoint - 1].to(u.second).value))
         # ToDo: use logger.debug and args.debug
         if debug:
             print('dists: ', dist)

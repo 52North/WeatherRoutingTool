@@ -56,7 +56,7 @@ def degree_to_pmpi(degrees_unit):
     degrees[degrees <= -360] = degrees[degrees <= -360] + 360
     degrees[degrees > 180] = degrees[degrees > 180] - 360
     degrees[degrees < -180] = degrees[degrees < -180] + 360
-    degrees = (degrees * u.degree).to('radian') 
+    degrees = (degrees * u.degree).to('radian')
     return degrees
 
 
