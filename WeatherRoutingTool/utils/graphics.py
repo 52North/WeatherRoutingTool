@@ -140,8 +140,8 @@ def plot_legend(fig):
 
 
 def get_colour(i):
-    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet', 'crimson', 'olive',
-               'skyblue', 'moccasin', 'plum', 'firebrick']
+    colours = ['darkred', 'mediumblue', 'olive', 'peachpuff', 'seagreen', 'gold', 'darkviolet', 'crimson',
+               'moccasin', 'plum', 'firebrick', 'skyblue']
     if (i > 10):
         i = i-10
         print('Currently only 11 different colours available. Will use one that has already been used before: '

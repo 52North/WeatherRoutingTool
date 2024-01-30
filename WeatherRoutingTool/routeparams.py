@@ -283,27 +283,54 @@ class RouteParams():
         if power_type == 'fuel':
             return {"value": self.get_fuel_per_dist(), "label": "Treibstoffverbrauch", "unit": u.kg}
 
-    def plot_power_vs_dist(self, color, label, power_type):
+    def plot_power_vs_dist(self, color, label, power_type, ax):
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
         hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
 
+        # only for power: also plot bin showing weighted mean. This does not make sense for fuel.
         if power_type == 'power':
-            plt.ylabel(power["label"] + ' (kW)')
+            weighted_mean = power["value"] * dist
+            weighted_mean = weighted_mean.sum() / dist.sum()
+
+            # append empty bin
+            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], 3750 * u.km)
+            hist_values["bin_contents"] = np.append(hist_values["bin_contents"], -1 * weighted_mean)
+            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], 250 * u.km)
+
+            # append mean bin
+            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], 4000 * u.km)
+            hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
+            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], 150 * u.km)
+
+            # plt.ylabel(power["label"] + ' (kW)')
+            plt.ylabel(power["label"])
             plt.bar(
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.kiloWatt).value,
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label)
+            ax.set_ylim(0, 6000)
+
+            # customise labels
+            labels = ax.get_xticks().tolist()
+            for i in range(0, len(labels)):
+                labels[i] = int(labels[i])
+            labels[-2] = 'Mittelwert'
+            ax.set_xticklabels(labels)
+
+            ax.set_xlim(-100, 4499)
         else:
-            plt.ylabel(power["label"] + ' (t/km)')
+            # plt.ylabel(power["label"] + ' (t/km)')
+            plt.ylabel(power["label"])
             plt.bar(
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne/u.kilometer).value,
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label
             )
+
         plt.xlabel('Weglänge (km)')
         plt.xticks()
 
