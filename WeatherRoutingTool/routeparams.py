@@ -573,6 +573,6 @@ class RouteParams():
         logger.info('end time: ' + str(time[-1]))
         logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
         logger.info('ME load (percentage): ' + str(mean_engine_load))
-        logger.info('draught: ', draught)
+        logger.info('mean draught: ' + str(draught.mean()))
 
         return lat, lon, time_converted, sog, draught
