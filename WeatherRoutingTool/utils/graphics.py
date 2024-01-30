@@ -140,7 +140,7 @@ def plot_legend(fig):
 
 
 def get_colour(i):
-    colours = ['darkred', 'mediumblue', 'olive', 'peachpuff', 'seagreen', 'gold', 'darkviolet', 'crimson',
+    colours = ['darkred', 'mediumblue', 'seagreen', 'darkviolet', 'olive', 'peachpuff', 'gold', 'crimson',
                'moccasin', 'plum', 'firebrick', 'skyblue']
     if (i > 10):
         i = i-10
