@@ -1,7 +1,9 @@
-import matplotlib.pyplot as plt
-
+import argparse
 import datetime as dt
 import logging
+import os
+
+import matplotlib.pyplot as plt
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import set_up_logging
@@ -69,15 +71,23 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
 
 
 if __name__ == "__main__":
-    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_original.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_95perc_calm.json")
-    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_105perc_calm.json")
-    filename4 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_80perc_wind.json")
-    filename5 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_120perc_wind.json")
-    filename6 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_80perc_wave.json")
-    filename7 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_120perc_wave.json")
+    parser = argparse.ArgumentParser(description='Weather Routing Tool')
+    parser.add_argument('--base-dir', help="Base directory of route geojson files (absolute path)",
+                        required=True, type=str)
+    parser.add_argument('--figure-dir', help="Figure directory (absolute path)",
+                        required=True, type=str)
 
-    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Figures"
+    args = parser.parse_args()
+
+    filename1 = os.path.join(args.base_dir, "route_real_weather_original.json")
+    filename2 = os.path.join(args.base_dir, "route_real_weather_95perc_calm.json")
+    filename3 = os.path.join(args.base_dir, "route_real_weather_105perc_calm.json")
+    filename4 = os.path.join(args.base_dir, "route_real_weather_80perc_wind.json")
+    filename5 = os.path.join(args.base_dir, "route_real_weather_120perc_wind.json")
+    filename6 = os.path.join(args.base_dir, "route_real_weather_80perc_wave.json")
+    filename7 = os.path.join(args.base_dir, "route_real_weather_120perc_wave.json")
+
+    figurefile = args.figure_dir
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
@@ -93,7 +103,7 @@ if __name__ == "__main__":
     rp_read6 = RouteParams.from_file(filename6)
     rp_read7 = RouteParams.from_file(filename7)
 
-# rp_read3 = RouteParams.from_file(filename3)
+    # rp_read3 = RouteParams.from_file(filename3)
     # rp_read4 = RouteParams.from_file(filename4)
 
     rp_1_str = 'Originalroute'
@@ -126,7 +136,7 @@ if __name__ == "__main__":
     do_write_fuel = True
 
     ##
-    # init wheather
+    # init weather
     departure_time = "2023-09-28T09:00Z"
     time_for_plotting = "2023-11-01T09:00Z"
     time_forecast = 60
