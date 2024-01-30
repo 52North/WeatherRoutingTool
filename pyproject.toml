@@ -17,6 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "astropy",
     "bbox",
     "cartopy>0.20.0",
     "dask",
