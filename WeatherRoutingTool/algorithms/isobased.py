@@ -1105,7 +1105,7 @@ class IsoBased(RoutingAlg):
             self.depth = ds_depth_coarsened.where(
                 (ds_depth_coarsened.latitude > map_size.lat1) & (ds_depth_coarsened.latitude < map_size.lat2) &
                 (ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) &
-                (ds_depth_coarsened.depth < 0), drop=True)
+                (ds_depth_coarsened.z < 0), drop=True)
 
         self.fig, self.ax = graphics.generate_basemap(self.fig, self.depth, self.start, self.finish)
 

@@ -274,7 +274,7 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
 
     if show_depth:
         level_diff = 10
-        cp = depth['depth'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
+        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)

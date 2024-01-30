@@ -468,7 +468,7 @@ class WaveHeight(NegativeConstraintFromWeather):
 
 class WaterDepth(NegativeContraint):
     map_size: Map
-    depth_data: xr  # the xarray.Dataset is expected to have a variable called "depth"
+    depth_data: xr  # the xarray.Dataset is expected to have a variable called "z" (as in the original ETOPO dataset)
     current_depth: np.ndarray
     min_depth: float
 
@@ -482,7 +482,7 @@ class WaterDepth(NegativeContraint):
         self.depth_data = None
 
         if data_mode == 'odc':
-            self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['depth'])
+            self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['z'])
         elif data_mode == 'automatic':
             self.depth_data = self.load_data_automatic(depth_path)
         elif data_mode == 'from_file':
@@ -527,11 +527,7 @@ class WaterDepth(NegativeContraint):
 
         downloader = DownloaderFactory.get_downloader(downloader_type='opendap', platform='etoponcei')
         depth_data = downloader.download()
-        depth_data_chunked = depth_data.rename(z="depth")
-        # depth_data_chunked = depth_data_chunked.rename(lat="latitude")
-        # depth_data_chunked = depth_data_chunked.rename(lon="longitude")
-        depth_data_chunked = depth_data_chunked.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
-
+        depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
         depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),
                                                     longitude=slice(self.map_size.lon1, self.map_size.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
@@ -560,7 +556,7 @@ class WaterDepth(NegativeContraint):
     def check_depth(self, lat, lon, time):
         lat_da = xr.DataArray(lat, dims="dummy")
         lon_da = xr.DataArray(lon, dims="dummy")
-        rounded_ds = self.depth_data["depth"].interp(latitude=lat_da, longitude=lon_da, method="linear")
+        rounded_ds = self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear")
         self.current_depth = rounded_ds.to_numpy()
 
     def print_info(self):
@@ -607,11 +603,11 @@ class WaterDepth(NegativeContraint):
         self.depth_data = ds_depth_coarsened.where(
             (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) & (
                     ds_depth_coarsened.longitude > self.map_size.lon1) & (
-                    ds_depth_coarsened.longitude < self.map_size.lon2) & (ds_depth_coarsened.depth < 0), drop=True, )
+                    ds_depth_coarsened.longitude < self.map_size.lon2) & (ds_depth_coarsened.z < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = self.depth_data["depth"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                                                    transform=ccrs.PlateCarree())
+        cp = self.depth_data["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                                transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label="Wassertiefe (m)", pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)

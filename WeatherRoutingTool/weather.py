@@ -484,8 +484,8 @@ class WeatherCondFromFile(WeatherCond):
         depth = ds_depth['z'].to_numpy()
         depth = np.nan_to_num(depth)
 
-        weather_int['depth'] = (['latitude', 'longitude'], depth)
-        depth_test = weather_int['depth'].to_numpy()
+        weather_int['z'] = (['latitude', 'longitude'], depth)
+        depth_test = weather_int['z'].to_numpy()
         if np.isnan(depth_test).any():
             logger.error('depth_test:', depth_test)
             raise Exception('element of depth is nan!')
