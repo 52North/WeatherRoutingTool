@@ -43,7 +43,7 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
     plt.savefig(figurefile + '/' + power_type + '_vs_' + coordstring + '.png')
 
 
-def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
+def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     # windspeed = '12.5'
 
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
@@ -51,21 +51,24 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
 
     for irp in range(1, len(rp_list)):
         rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(irp),
-                                               rp_str_list[irp] + '/' + rp_str_list[0], power_type)
+                                               rp_str_list[irp], power_type)
 
-    ax.legend(loc='upper center', frameon=False)
+    ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)
-    # ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
+    ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
+            transform=ax.transAxes)
+    ax.text(0.11, 0.825, 'gestrichelte Linien: Mittelwerte', verticalalignment='top', horizontalalignment='left',
+            transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
 
 
 if __name__ == "__main__":
     filename1 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_original.json")
-    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_25/Routes/alternative_route.json")
-    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_120perc_wave.json")
+    filename2 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_95perc_calm.json")
+    filename3 = ("/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_105perc_calm.json")
     filename4 = ("/home/kdemmich/MariData/Code/Data/RouteCollection/min_time_route.json")
 
-    figurefile = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_25/Figures"
+    figurefile = "/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Figures"
 
     windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
 
@@ -81,14 +84,14 @@ if __name__ == "__main__":
     # rp_read4 = RouteParams.from_file(filename4)
 
     rp_1_str = 'Originalroute'
-    rp_2_str = 'Isofuel-Routenfindung'
-    rp_3_str = '120% Zusatzwiderstand Seegang'
+    rp_2_str = '95% Glattwasserwiderstand'
+    rp_3_str = '105% Glattwasserwiderstand'
     rp_4_str = 'original'
 
     scenario_str = 'Mittelmeer-Szenario'
 
-    rp_list = [rp_read1, rp_read2]
-    rp_str_list = [rp_1_str, rp_2_str]
+    rp_list = [rp_read1, rp_read2, rp_read3]
+    rp_str_list = [rp_1_str, rp_2_str, rp_3_str]
 
     do_plot_weather = False
     do_plot_route = True
@@ -183,10 +186,10 @@ if __name__ == "__main__":
     ##
     # plotting power vs dist ratios
     if do_plot_power_vs_dist_ratios:
-        plot_power_vs_dist_ratios(rp_list, rp_str_list, 'power')
+        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, 'power')
 
     if do_plot_fuel_vs_dist_ratios:
-        plot_power_vs_dist_ratios(rp_list, rp_str_list, 'fuel')
+        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, 'fuel')
 
     ##
     # write full fuel
