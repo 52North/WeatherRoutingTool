@@ -11,13 +11,16 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
-def plot_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
+def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
-        rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type)
+        rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
-    ax.legend(loc='lower left')
-    # ax.set_ylim(0, 0.016)
+    ax.legend(loc='upper left', frameon=False)
+    # ax.tick_params(top=True, right=True)
+    ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
+    ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
+            transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
 
@@ -26,7 +29,7 @@ def plot_acc_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_acc_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type)
 
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper center')
     # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + 'acc_vs_dist.png')
 
@@ -50,7 +53,8 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, power_type='fuel'):
         rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(irp),
                                                rp_str_list[irp] + '/' + rp_str_list[0], power_type)
 
-    ax.legend(loc='lower left')
+    ax.legend(loc='upper center', frameon=False)
+    ax.tick_params(top=True, right=True)
     # ax.set_title('Windige Wetterlage (Windgeschwindigkeit: ' + windspeed + ' m/s)')
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
 
@@ -76,17 +80,19 @@ if __name__ == "__main__":
     # rp_read3 = RouteParams.from_file(filename3)
     # rp_read4 = RouteParams.from_file(filename4)
 
-    rp_1_str = 'Original CBT'
-    rp_2_str = '80% Zusatzwiderstand Seegang'
+    rp_1_str = 'Originalroute'
+    rp_2_str = 'Isofuel-Routenfindung'
     rp_3_str = '120% Zusatzwiderstand Seegang'
     rp_4_str = 'original'
+
+    scenario_str = 'Mittelmeer-Szenario'
 
     rp_list = [rp_read1, rp_read2]
     rp_str_list = [rp_1_str, rp_2_str]
 
     do_plot_weather = False
     do_plot_route = True
-    do_plot_power_vs_dist = False
+    do_plot_power_vs_dist = True
     do_plot_fuel_vs_dist = False
     do_plot_acc_fuel_vs_dist = False
 
@@ -96,7 +102,7 @@ if __name__ == "__main__":
     do_plot_fuel_vs_lat = False
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = False
+    do_plot_power_vs_dist_ratios = True
     do_plot_fuel_vs_dist_ratios = False
     do_write_fuel = True
 
@@ -141,10 +147,10 @@ if __name__ == "__main__":
     ##
     # plotting  vs. distance
     if do_plot_power_vs_dist:
-        plot_power_vs_dist(rp_list, rp_str_list, 'power')
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'power')
 
     if do_plot_fuel_vs_dist:
-        plot_power_vs_dist(rp_list, rp_str_list, 'fuel')
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel')
 
     ##
     # plotting  accumulated vs. distance
