@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from datetime import datetime, timedelta
+from matplotlib.legend_handler import HandlerTuple
 
 from astropy import units as u
 
@@ -12,7 +13,6 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
-
 
 def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, waypoint_dict, maripower_scenario,
                                 weather_scenario):
@@ -29,9 +29,11 @@ def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, 
     return ship_params
 
 
-def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, figuredir, name, fuel_type):
+def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, figuredir, name, fuel_type, weather_type):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.9, 1.1)
+    ax.set_ylim(0.85, 1.2)
+    colour = 0
+    ratio = []
 
     for irp in range(0, len(nominator_list)):
         nominator = None
@@ -39,21 +41,42 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, 
         if fuel_type == 'power':
             nominator = nominator_list[irp].get_power()
             denominator = denominator_obj.get_power()
-            ylabel = 'Leistung'
+            ylabel = 'power consumption'
         else:
             nominator = nominator_list[irp].get_fuel()
             denominator = denominator_obj.get_fuel()
-            ylabel = 'Treibstoffverbrauch'
+            ylabel = 'fuel consumption'
 
-        plt.plot(courses, nominator/denominator, marker='o', color=graphics.get_colour(irp), linewidth=0,
-                 label=label_list[irp])
+
+        if label_list[irp] == '':
+            ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
+                     marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
+            colour = colour + 1
+        else:
+            ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
+                     marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
+
         plt.axhline(y=1, color='gray', linestyle='dashed')
+        ratio.append(ratio_tmp)
 
-    plt.xlabel('Course (degrees)')
-    plt.ylabel(ylabel + ' Modifiziert/Standardwert')
+    plt.xlabel('angular difference (degrees)')
+    plt.ylabel(ylabel + ' modified/standard')
     plt.xticks()
 
-    ax.legend()
+    ax.legend(
+        handles=[(ratio[1], ratio[0]), (ratio[3], ratio[2]), (ratio[5], ratio[4])],
+        labels=[label_list[0], label_list[2], label_list[4]],
+        handler_map={tuple: HandlerTuple(ndivide=None)},
+        loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.6, frameon=False
+    )
+
+    scenario_str = ''
+    if weather_type == "rough_weather":
+        scenario_str = "scenario: rough weather"
+    else:
+        scenario_str = "scenario: calm weather"
+    ax.text(0.98, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right', transform=ax.transAxes)
+    ax.tick_params(top=True, right=True)
 
     plt.savefig(os.path.join(figuredir, name + '.png'))
 
@@ -179,6 +202,26 @@ if __name__ == "__main__":
 
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
 
+    nominator_list = [
+        shipparams_vec['95perc_calm'],
+        shipparams_vec['105perc_calm'],
+        shipparams_vec['80perc_wind'],
+        shipparams_vec['120perc_wind'],
+        shipparams_vec['80perc_wave'],
+        shipparams_vec['120perc_wave']
+    ]
+    label_list = [
+        r'$\pm5\,\%$ calm water resistance',
+        '',
+        r'$\pm20\,\%$ added resistance in wind',
+        '',
+        r'$\pm20\,\%$ added resistance in waves',
+        ''
+    ]
+    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
+                          'inclusive_' + weather_type, 'power', weather_type)
+
+    '''
     nominator_list = [shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
     label_list = ['95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
@@ -208,3 +251,4 @@ if __name__ == "__main__":
     label_list = ['original', '80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
     plot_polar_power(curve_list, label_list, courses, figurepath,
                      'waveres_' + weather_type, 'power')
+    '''
