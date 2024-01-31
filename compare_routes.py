@@ -71,6 +71,8 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
 
 
 if __name__ == "__main__":
+    # Compare variations of resistances for specific routes
+
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('--base-dir', help="Base directory of route geojson files (absolute path)",
                         required=True, type=str)
@@ -111,7 +113,6 @@ if __name__ == "__main__":
 
     rp_list = [rp_read1, rp_read2, rp_read3, rp_read4, rp_read5, rp_read6, rp_read7]
     rp_str_list = [rp_1_str, rp_2_str, rp_3_str, rp_4_str, rp_5_str, rp_6_str, rp_7_str]
-
 
     '''
     filename1 = "/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_original.json"

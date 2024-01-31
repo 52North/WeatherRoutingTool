@@ -141,7 +141,8 @@ def plot_legend(fig):
 
 def get_colour(i):
     # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
-    colours = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9', '#006BA4', '#ABABAB', '#595959','#FFBC79']
+    colours = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442',
+               '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
 
     if (i > 19):
         print('Are you sure that you want to have so many curves in one plot?!')
@@ -153,9 +154,10 @@ def get_colour(i):
 
     return colours[i]
 
+
 def get_marker(i):
     markers = ['o', 's', 'd', 'P', 'D', 'x', 'p']
-    if (i> 6):
+    if (i > 6):
         i = i - 7
         print('Currently only 5 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))

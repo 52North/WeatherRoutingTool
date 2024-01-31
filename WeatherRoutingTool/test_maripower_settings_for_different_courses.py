@@ -14,6 +14,7 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
+
 def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, waypoint_dict, maripower_scenario,
                                 weather_scenario):
     boat = Tanker(config_obj)
@@ -29,7 +30,8 @@ def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, 
     return ship_params
 
 
-def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, figuredir, name, fuel_type, weather_type):
+def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses,
+                          figuredir, name, fuel_type, weather_type):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     ax.set_ylim(0.85, 1.2)
     colour = 0
@@ -47,14 +49,13 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses, 
             denominator = denominator_obj.get_fuel()
             ylabel = 'fuel consumption'
 
-
         if label_list[irp] == '':
             ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
-                     marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
+                                 marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
             colour = colour + 1
         else:
             ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
-                     marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
+                                 marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
 
         plt.axhline(y=1, color='gray', linestyle='dashed')
         ratio.append(ratio_tmp)
