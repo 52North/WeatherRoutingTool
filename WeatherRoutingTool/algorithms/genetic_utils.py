@@ -287,7 +287,7 @@ class RoutingProblem(ElementwiseProblem):
 
         shipparams = self.boat.get_ship_parameters(route_dict['courses'], route_dict['start_lats'],
                                                    route_dict['start_lons'], route_dict['start_times'], [])
-        fuel = shipparams.get_fuel()
+        fuel = shipparams.get_fuel_rate()
         fuel = (fuel / 3600) * route_dict['travel_times']
         return np.sum(fuel), shipparams
 

@@ -5,6 +5,7 @@ from datetime import timedelta
 import numpy as np
 import matplotlib
 import xarray as xr
+from astropy import units as u
 from matplotlib import pyplot as plt
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
@@ -111,23 +112,23 @@ class Genetic(RoutingAlg):
         courses = waypoint_coors['courses']
         start_times = waypoint_coors['start_times']
         travel_times = waypoint_coors['travel_times']
-        arrival_time = start_times[-1] + timedelta(seconds=dists[-1]/speed)
+        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value/speed.value)
 
-        dists = np.append(dists, -99)
-        courses = np.append(courses, -99)
+        dists = np.append(dists, -99 * u.meter)
+        courses = np.append(courses, -99 * u.degree)
         start_times = np.append(start_times, arrival_time)
-        travel_times = np.append(travel_times, -99)
+        travel_times = np.append(travel_times, -99 * u.second)
 
-        route = RouteParams(count=npoints,
+        route = RouteParams(count=npoints-1,
                             start=self.start,
                             finish=self.finish,
                             gcr=None,
                             route_type='min_fuel_route',
-                            time=travel_times,
+                            time=travel_times[-1],
                             lats_per_step=lats,
                             lons_per_step=lons,
-                            course_per_step=courses,
-                            dists_per_step=dists,
+                            course_per_step=courses[-1],
+                            dists_per_step=dists[-1],
                             starttime_per_step=start_times,
                             ship_params_per_step=self.ship_params)
 
