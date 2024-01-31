@@ -140,15 +140,26 @@ def plot_legend(fig):
 
 
 def get_colour(i):
-    colours = ['darkred', 'mediumblue', 'seagreen', 'darkviolet', 'olive', 'peachpuff', 'gold', 'crimson',
-               'moccasin', 'plum', 'firebrick', 'skyblue']
-    if (i > 10):
-        i = i-10
+    # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
+    colours = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9', '#006BA4', '#ABABAB', '#595959','#FFBC79']
+
+    if (i > 19):
+        print('Are you sure that you want to have so many curves in one plot?!')
+
+    if (i > 9):
+        i = i-9
         print('Currently only 11 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))
-    if (i > 20):
-        print('Are you sure that you want to have so many curves in one plot?!')
+
     return colours[i]
+
+def get_marker(i):
+    markers = ['o', 's', 'd', 'P', 'D', 'x', 'p']
+    if (i> 6):
+        i = i - 7
+        print('Currently only 5 different colours available. Will use one that has already been used before: '
+              'Colour=' + str(i))
+    return markers[i]
 
 
 def rebin(a, rebinx, rebiny):
@@ -282,7 +293,7 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
     ax.add_feature(cf.LAND)
     ax.add_feature(cf.COASTLINE)
     ax.gridlines(draw_labels=True)
-    # ax.set_extent((-1500000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
+    ax.set_extent((-1500000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
 
     if start is not None:
         ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
