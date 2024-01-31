@@ -317,7 +317,7 @@ class RouteParams():
             labels = ax.get_xticks().tolist()
             for i in range(0, len(labels)):
                 labels[i] = int(labels[i])
-            labels[-2] = 'Mittelwert'
+            labels[-2] = 'weighted mean'
             ax.set_xticklabels(labels)
 
             ax.set_xlim(-100, 4499)
@@ -331,7 +331,7 @@ class RouteParams():
                 fill=False, color=color, edgecolor=color, label=label
             )
 
-        plt.xlabel('Weglänge (km)')
+        plt.xlabel('travel distance (km)')
         plt.xticks()
 
     # TODO check whether correct: Why do we see steps and no smooth curve?
