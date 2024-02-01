@@ -81,7 +81,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    
     # Compare variations of resistances for specific routes
     filename1 = os.path.join(args.base_dir, "route_real_weather_original.json")
     filename2 = os.path.join(args.base_dir, "route_real_weather_95perc_calm.json")
@@ -100,7 +99,7 @@ if __name__ == "__main__":
     rp_read5 = RouteParams.from_file(filename5)
     rp_read6 = RouteParams.from_file(filename6)
     rp_read7 = RouteParams.from_file(filename7)
-    
+
     rp_1_str = 'Originalroute'
     rp_2_str = r'$\pm5\,\%$ calm water resistance'
     rp_3_str = ''
