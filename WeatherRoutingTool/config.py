@@ -38,6 +38,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'SHIP_TYPE': 'CBT',
+    'UNDER_KEEL_CLEARANCE': 20,
     'ISOCHRONE_MAX_ROUTING_STEPS': 100,
     'TIME_FORECAST': 90
 }
@@ -84,6 +85,7 @@ class Config:
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written
         self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
+        self.UNDER_KEEL_CLEARANCE = None  # vertical distance between keel and ground
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
