@@ -281,7 +281,7 @@ class IsoBased(RoutingAlg):
                 constraints_list.reached_positive()
                 self.finish_temp = constraints_list.get_current_destination()
                 self.start_temp = constraints_list.get_current_start()
-                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
                 self.route_reached_waypoint = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
@@ -1021,6 +1021,10 @@ class IsoBased(RoutingAlg):
                         move['lon2'][i] = new_lon[i]
             else:
                 self.route_reached_waypoint = True
+                move['azi2'] = dist_to_dest['azi1'].value
+                move['lat2'] = new_lat
+                move['lon2'] = new_lon
+
         return move
 
     def check_constraints(self, move, constraint_list):
@@ -1145,6 +1149,7 @@ class IsoBased(RoutingAlg):
         self.course_per_step = np.expand_dims(self.course_per_step, axis=1)
         self.dist_per_step = np.expand_dims(self.dist_per_step, axis=1)
         self.starttime_per_step = np.expand_dims(self.starttime_per_step, axis=1)
+        self.absolutefuel_per_step = np.expand_dims(self.absolutefuel_per_step, axis=1)
 
         self.shipparams_per_step.expand_axis_for_intermediate()
 
@@ -1165,7 +1170,7 @@ class IsoBased(RoutingAlg):
         constraint_list.init_positive_lists(self.start, self.finish)
         self.finish_temp = constraint_list.get_current_destination()
         self.start_temp = constraint_list.get_current_start()
-        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
 
         logger.info('Currently going from')
         logger.info(self.start_temp)
