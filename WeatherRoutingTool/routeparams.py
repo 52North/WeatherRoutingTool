@@ -146,6 +146,7 @@ class RouteParams():
                 properties['wave_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['shallow_water_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['hull_roughness_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['status'] = {'value': -99}
             else:
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
@@ -164,6 +165,7 @@ class RouteParams():
                 }
                 properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i].value,
                                                            'unit': 'N'}
+                properties['status'] = {'value': self.ship_params_per_step.status[i]}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
@@ -200,6 +202,7 @@ class RouteParams():
         r_shallow = np.full(count, -99.)
         r_roughness = np.full(count, -99.)
         course_per_step = np.full(count - 1, -99.)
+        status = np.full(count, -99)
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
@@ -220,6 +223,7 @@ class RouteParams():
             r_waves[ipoint] = property['wave_resistance']['value']
             r_shallow[ipoint] = property['shallow_water_resistance']['value']
             r_roughness[ipoint] = property['hull_roughness_resistance']['value']
+            status[ipoint] = property['status']['value']
 
         speed = speed[:-1] * u.meter/u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
@@ -250,7 +254,8 @@ class RouteParams():
             r_calm=r_calm,
             r_waves=r_waves,
             r_shallow=r_shallow,
-            r_roughness=r_roughness
+            r_roughness=r_roughness,
+            status=status
         )
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,

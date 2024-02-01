@@ -301,7 +301,8 @@ def test_pruning_select_correct_idxs():
         r_wind=np.full(fuel_rate.shape, 0) * u.newton,
         r_waves=np.full(fuel_rate.shape, 0) * u.newton,
         r_shallow=np.full(fuel_rate.shape, 0) * u.newton,
-        r_roughness=np.full(fuel_rate.shape, 0) * u.newton
+        r_roughness=np.full(fuel_rate.shape, 0) * u.newton,
+        status=np.full(fuel_rate.shape, 0)
     )
     ra.shipparams_per_step = sp
 
@@ -452,8 +453,10 @@ def test_find_routes_testduplicates():
     ra.shipparams_per_step.r_waves = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
     ra.shipparams_per_step.r_shallow = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
     ra.shipparams_per_step.r_roughness = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
+    ra.shipparams_per_step.status = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
     ra.course_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.degree
     ra.dist_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter
+
     ra.starttime_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
     ra.time = np.array([0, 0, 0, 0])
     ra.path_to_route_folder = None

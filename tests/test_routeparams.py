@@ -30,7 +30,8 @@ def test_get_acc_variables():
         r_wind=dummy * u.N,
         r_waves=dummy * u.N,
         r_shallow=dummy * u.N,
-        r_roughness=dummy * u.N
+        r_roughness=dummy * u.N,
+        status=dummy
     )
 
     rp = RouteParams(

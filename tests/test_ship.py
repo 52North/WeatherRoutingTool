@@ -89,12 +89,14 @@ def test_get_fuel_from_netCDF():
     rshallow = np.array([[4.2, 4.3], [4.4, 4.5], [4.6, 4.7], [4.8, 4.9]])
     rwaves = np.array([[5.2, 5.3], [5.4, 5.5], [5.6, 5.7], [5.8, 5.9]])
     rroughness = np.array([[6.2, 6.3], [6.4, 6.5], [6.6, 6.7], [6.8, 6.9]])
+    status = np.array([[1, 2], [3, 1], [2, 3], [1, 3]])
 
     data_vars = dict(Power_brake=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
                      Fuel_consumption_rate=(["lat", "it"], fcr), Calm_resistance=(["lat", "it"], rcalm),
                      Wind_resistance=(["lat", "it"], rwind), Wave_resistance=(["lat", "it"], rwaves),
                      Shallow_water_resistance=(["lat", "it"], rshallow),
-                     Hull_roughness_resistance=(["lat", "it"], rroughness))
+                     Hull_roughness_resistance=(["lat", "it"], rroughness),
+                     Status=(["lat", "it"], status))
 
     coords = dict(lat=(["lat"], lat), it=(["it"], it), )
     attrs = dict(description="Necessary descriptions added here.")
@@ -112,6 +114,7 @@ def test_get_fuel_from_netCDF():
     rshallow_test = ship_params.get_rshallow()
     rwaves_test = ship_params.get_rwaves()
     rroughness_test = ship_params.get_rroughness()
+    status_test = ship_params.get_status()
 
     power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
     rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * u.Hz
@@ -121,6 +124,7 @@ def test_get_fuel_from_netCDF():
     rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
     rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9]) * u.newton
     rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]) * u.newton
+    status_ref = np.array([1, 2, 3, 1, 2, 3, 1, 3])
 
     fuel_test = fuel_test.value * 3.6
     fuel_ref = fuel_ref.value
@@ -133,6 +137,7 @@ def test_get_fuel_from_netCDF():
     assert np.array_equal(rshallow_test, rshallow_ref)
     assert np.array_equal(rwaves_test, rwaves_ref)
     assert np.array_equal(rroughness_test, rroughness_ref)
+    assert np.array_equal(status_test, status_ref)
 
     ds.close()
 
@@ -188,13 +193,14 @@ def test_shipparams_get_element():
     rwaves = np.array([3.1, 3.2, 3.3, 3.4])
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
+    status = np.array([1, 2, 3, 1])
 
     sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
-                    r_shallow=rshallow, r_roughness=rroughness)
+                    r_shallow=rshallow, r_roughness=rroughness, status=status)
     idx = 2
 
-    fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test, rshallow_test, rroughness_test \
-        = sp.get_element(idx)
+    fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test, \
+        rshallow_test, rroughness_test, status_test = sp.get_element(idx)
 
     assert fuel[idx] == fuel_test
     assert speed[idx] == speed_test
@@ -205,6 +211,7 @@ def test_shipparams_get_element():
     assert rwaves[idx] == rwaves_test
     assert rshallow[idx] == rshallow_test
     assert rroughness[idx] == rroughness_test
+    assert status[idx] == status_test
 
 
 '''
@@ -222,9 +229,11 @@ def test_shipparams_get_single():
     rwaves = np.array([3.1, 3.2, 3.3, 3.4])
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
+    status = np.array([1, 2, 3, 1])
 
     sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
-                    r_shallow=rshallow, r_roughness=rroughness)
+                    r_shallow=rshallow, r_roughness=rroughness, status=status)
+
     idx = 2
 
     sp_test = sp.get_single_object(idx)
@@ -238,6 +247,7 @@ def test_shipparams_get_single():
     assert sp_test.r_waves == rwaves[idx]
     assert sp_test.r_shallow == rshallow[idx]
     assert sp_test.r_roughness == rroughness[idx]
+    assert sp_test.status == status[idx]
 
 
 '''

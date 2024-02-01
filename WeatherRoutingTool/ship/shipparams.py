@@ -16,9 +16,11 @@ class ShipParams():
     r_waves: np.ndarray  # (N)
     r_shallow: np.ndarray  # (N)
     r_roughness: np.ndarray  # (N)
+    status: np.array
+
     fuel_type: str
 
-    def __init__(self, fuel_rate, power, rpm, speed, r_calm, r_wind, r_waves, r_shallow, r_roughness):
+    def __init__(self, fuel_rate, power, rpm, speed, r_calm, r_wind, r_waves, r_shallow, r_roughness, status):
         self.fuel_rate = fuel_rate
         self.power = power
         self.rpm = rpm
@@ -28,6 +30,7 @@ class ShipParams():
         self.r_waves = r_waves
         self.r_shallow = r_shallow
         self.r_roughness = r_roughness
+        self.status = status
 
         self.fuel_type = 'HFO'
 
@@ -42,7 +45,8 @@ class ShipParams():
             r_wind=np.array([[0]]) * u.newton,
             r_waves=np.array([[0]]) * u.newton,
             r_shallow=np.array([[0]]) * u.newton,
-            r_roughness=np.array([[0]]) * u.newton
+            r_roughness=np.array([[0]]) * u.newton,
+            status=np.array([[0]])
         )
 
     @classmethod
@@ -55,7 +59,8 @@ class ShipParams():
                    r_wind=np.full(shape=ncoorinate_points, fill_value=0),
                    r_waves=np.full(shape=ncoorinate_points, fill_value=0),
                    r_shallow=np.full(shape=ncoorinate_points, fill_value=0),
-                   r_roughness=np.full(shape=ncoorinate_points, fill_value=0), )
+                   r_roughness=np.full(shape=ncoorinate_points, fill_value=0),
+                   status=np.full(shape=ncoorinate_points, fill_value=0))
 
     def print(self):
         logger.info('fuel_rate: ' + str(self.fuel_rate.value) + ' ' + self.fuel_rate.unit.to_string())
@@ -67,6 +72,7 @@ class ShipParams():
         logger.info('r_waves: ' + str(self.r_waves.value) + ' ' + self.r_waves.unit.to_string())
         logger.info('r_shallow: ' + str(self.r_shallow.value) + ' ' + self.r_shallow.unit.to_string())
         logger.info('r_roughness: ' + str(self.r_roughness.value) + ' ' + self.r_roughness.unit.to_string())
+        logger.info('status', self.status)
         logger.info('fuel_type: ' + str(self.fuel_type))
 
     def print_shape(self):
@@ -79,6 +85,7 @@ class ShipParams():
         logger.info('r_waves: ', self.r_waves.shape)
         logger.info('r_shallow: ', self.r_shallow.shape)
         logger.info('r_roughness: ', self.r_roughness.shape)
+        logger.info('status', self.status)
 
     def define_courses(self, courses_segments):
         self.speed = np.repeat(self.speed, courses_segments + 1, axis=1)
@@ -90,6 +97,7 @@ class ShipParams():
         self.r_waves = np.repeat(self.r_waves, courses_segments + 1, axis=1)
         self.r_shallow = np.repeat(self.r_shallow, courses_segments + 1, axis=1)
         self.r_roughness = np.repeat(self.r_roughness, courses_segments + 1, axis=1)
+        self.status = np.repeat(self.status, courses_segments + 1, axis=1)
 
     def get_power(self):
         return self.power
@@ -121,6 +129,9 @@ class ShipParams():
     def get_speed(self):
         return self.speed
 
+    def get_status(self):
+        return self.status
+
     def set_speed(self, new_speed):
         self.speed = new_speed
 
@@ -148,6 +159,9 @@ class ShipParams():
     def set_rroughness(self, new_rroughnes):
         self.r_roughness = new_rroughnes
 
+    def set_status(self, new_status):
+        self.status = new_status
+
     def select(self, idxs):
         self.speed = self.speed[:, idxs]
         self.fuel_rate = self.fuel_rate[:, idxs]
@@ -158,6 +172,7 @@ class ShipParams():
         self.r_waves = self.r_waves[:, idxs]
         self.r_shallow = self.r_shallow[:, idxs]
         self.r_roughness = self.r_roughness[:, idxs]
+        self.status = self.status[:, idxs]
 
     def flip(self):
         # should be replaced by more careful implementation
@@ -170,6 +185,7 @@ class ShipParams():
         self.r_waves = self.r_waves[:-1]
         self.r_shallow = self.r_shallow[:-1]
         self.r_roughness = self.r_roughness[:-1]
+        self.status = self.status[:-1]
 
         self.speed = np.flip(self.speed, 0)
         self.fuel_rate = np.flip(self.fuel_rate, 0)
@@ -180,6 +196,7 @@ class ShipParams():
         self.r_waves = np.flip(self.r_waves, 0)
         self.r_shallow = np.flip(self.r_shallow, 0)
         self.r_roughness = np.flip(self.r_roughness, 0)
+        self.status = np.flip(self.status, 0)
 
         self.speed = np.append(self.speed, -99 * self.speed.unit)
         self.fuel_rate = np.append(self.fuel_rate, -99 * self.fuel_rate.unit)
@@ -190,6 +207,7 @@ class ShipParams():
         self.r_waves = np.append(self.r_waves, -99 * self.r_waves.unit)
         self.r_shallow = np.append(self.r_shallow, -99 * self.r_shallow.unit)
         self.r_roughness = np.append(self.r_roughness, -99 * self.r_roughness.unit)
+        self.status = np.append(self.status, -99)
 
     def expand_axis_for_intermediate(self):
         self.speed = np.expand_dims(self.speed, axis=1)
@@ -201,6 +219,7 @@ class ShipParams():
         self.r_waves = np.expand_dims(self.r_waves, axis=1)
         self.r_shallow = np.expand_dims(self.r_shallow, axis=1)
         self.r_roughness = np.expand_dims(self.r_roughness, axis=1)
+        self.status = np.expand_dims(self.status, axis=1)
 
     def get_element(self, idx):
         try:
@@ -213,10 +232,11 @@ class ShipParams():
             r_waves = self.r_waves[idx]
             r_shallow = self.r_shallow[idx]
             r_roughness = self.r_roughness[idx]
+            status = self.status[idx]
         except ValueError:
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
-        return fuel_rate, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness
+        return fuel_rate, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness, status
 
     def get_single_object(self, idx):
         try:
@@ -229,6 +249,8 @@ class ShipParams():
             r_waves = self.r_waves[idx]
             r_shallow = self.r_shallow[idx]
             r_roughness = self.r_roughness[idx]
+            status = self.status[idx]
+
         except ValueError:
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
@@ -242,7 +264,8 @@ class ShipParams():
             r_calm=r_calm,
             r_waves=r_waves,
             r_shallow=r_shallow,
-            r_roughness=r_roughness
+            r_roughness=r_roughness,
+            status=status
         )
         return sp
 
@@ -259,6 +282,7 @@ class ShipParams():
                 r_waves = self.r_waves[row_start:row_end, col_start:col_end]
                 r_shallow = self.r_shallow[row_start:row_end, col_start:col_end]
                 r_roughness = self.r_roughness[row_start:row_end, col_start:col_end]
+                status = self.status[row_start:row_end, col_start:col_end]
             else:
                 speed = self.speed[:, idxs]
                 fuel_rate = self.fuel_rate[:, idxs]
@@ -269,6 +293,7 @@ class ShipParams():
                 r_waves = self.r_waves[:, idxs]
                 r_shallow = self.r_shallow[:, idxs]
                 r_roughness = self.r_roughness[:, idxs]
+                status = self.status[:, idxs]
         except ValueError:
             raise ValueError(
                 'Index ' + str(col_start) + ' is not available for array with length ' + str(self.speed.shape[0]))
@@ -282,6 +307,7 @@ class ShipParams():
             r_calm=r_calm,
             r_waves=r_waves,
             r_shallow=r_shallow,
-            r_roughness=r_roughness
+            r_roughness=r_roughness,
+            status=status
         )
         return sp
