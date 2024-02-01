@@ -172,16 +172,16 @@ class ConstraintsListFactory:
             constraints_list.add_neg_constraint(seamarks, 'continuous')
 
         if 'water_depth' in constraints_string_list:
-            if ('data_mode' not in kwargs) or ('boat_draught' not in kwargs) or ('depthfile' not in kwargs) or (
+            if ('data_mode' not in kwargs) or ('min_depth' not in kwargs) or ('depthfile' not in kwargs) or (
                     'map_size' not in kwargs):
                 raise ValueError(
                     'To use the depth constraint module, you need to provide the data mode for the download, '
                     'the boat draught, the map size and the path to the depth file.')
             data_mode = kwargs.get('data_mode')
-            boat_draught = kwargs.get('boat_draught')
+            min_depth = kwargs.get('min_depth')
             map_size = kwargs.get('map_size')
             depthfile = kwargs.get('depthfile')
-            water_depth = WaterDepth(data_mode, boat_draught, map_size, depthfile)
+            water_depth = WaterDepth(data_mode, min_depth, map_size, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
         if 'on_map' in constraints_string_list:
@@ -472,11 +472,11 @@ class WaterDepth(NegativeContraint):
     current_depth: np.ndarray
     min_depth: float
 
-    def __init__(self, data_mode, draught, map_size, depth_path=''):
+    def __init__(self, data_mode, min_depth, map_size, depth_path=''):
         NegativeContraint.__init__(self, 'WaterDepth')
         self.message += 'water not deep enough!'
         self.current_depth = np.array([-99])
-        self.min_depth = draught
+        self.min_depth = min_depth
         self.map_size = map_size
 
         self.depth_data = None
