@@ -384,10 +384,10 @@ def test_find_every_route_reaching_destination_testtwobranches():
     ra.lats_per_step = np.array([[37.67, 37.67, 37.66, 37.66], [37.42, 37.42, 37.43, 37.43]])
     ra.lons_per_step = np.array([[-123.76, -123.50, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
     ra.finish = (37.53, -123.24)
-    ra.current_last_step_dist = np.array([2, 2, 2, 0])
-    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.current_last_step_dist = np.array([2, 2, 2, 0]) * u.meter
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
-    ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]])
+    ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]]) * u.kg
     ra.print_init()
 
     ra.find_every_route_reaching_destination()
@@ -410,10 +410,10 @@ def test_find_every_route_reaching_destination_testonebranch():
     ra.lats_per_step = np.array([[37.67, 37.67, 37.66, 37.66], [37.42, 37.42, 37.43, 37.43]])
     ra.lons_per_step = np.array([[-123.76, -123.50, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
     ra.finish = (37.53, -123.24)
-    ra.current_last_step_dist = np.array([2, 2, 0, 0])
-    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.current_last_step_dist = np.array([2, 2, 0, 0]) * u.meter
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
-    ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]])
+    ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]]) * u.kg
     ra.print_init()
 
     ra.find_every_route_reaching_destination()
@@ -438,11 +438,11 @@ def test_find_routes_testduplicates():
     ra.lons_per_step = np.array([[-123.76, -123.76, -123.32, -123.09], [-123.61, -123.61, -123.23, -123.23]])
 
     ra.finish = (37.53, -123.24)
-    ra.current_last_step_dist = np.array([2, 2, 2, 0])
-    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1])
+    ra.current_last_step_dist = np.array([2, 2, 2, 0]) * u.meter
+    ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
     ra.shipparams_per_step.fuel_rate = np.array([[2, 2, 1, 1], [1, 1, 1, 1]]) * u.kg/u.second
-    ra.absolutefuel_per_step = np.array([[2, 2, 1, 1], [1, 1, 1, 1]])
+    ra.absolutefuel_per_step = np.array([[2, 2, 1, 1], [1, 1, 1, 1]]) * u.kg
 
     # definitions necessary only for completness
     ra.shipparams_per_step.speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter/u.second

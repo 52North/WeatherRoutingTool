@@ -390,9 +390,9 @@ class IsoBased(RoutingAlg):
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
-        df_current_last_step['dist'] = self.current_last_step_dist
-        df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest
-        df_current_last_step['fuel'] = self.absolutefuel_per_step[0, :]
+        df_current_last_step['dist'] = self.current_last_step_dist.value    # pandas struggles with units
+        df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest.value
+        df_current_last_step['fuel'] = self.absolutefuel_per_step[0, :].value
 
         len_df = df_current_last_step.shape[0]
 

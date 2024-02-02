@@ -40,35 +40,35 @@ class Boat:
 
 
 class ConstantFuelBoat(Boat):
-    fuel: float  # dummy value for fuel_rate that is returned
+    fuel_rate: float  # dummy value for fuel_rate that is returned
     speed: float    # boat speed
 
     def __init__(self, config):
         super().__init__(config)
-        self.fuel = config.CONSTANT_FUEL_RATE * u.kg/u.second
+        self.fuel_rate = config.CONSTANT_FUEL_RATE * u.kg/u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
-        logger.info(form.get_log_step('boat fuel rate' + str(self.fuel), 1))
+        logger.info(form.get_log_step('boat fuel rate' + str(self.fuel_rate), 1))
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False
         n_requests = len(courses)
 
         dummy_array = np.full(n_requests, -99)
-        fuel_array = np.full(n_requests, self.fuel)
+        fuel_array = np.full(n_requests, self.fuel_rate)
         speed_array = np.full(n_requests, self.speed)
 
         ship_params = ShipParams(
-            fuel=fuel_array,
-            power=dummy_array,
-            rpm=dummy_array,
-            speed=speed_array,
-            r_wind=dummy_array,
-            r_calm=dummy_array,
-            r_waves=dummy_array,
-            r_shallow=dummy_array,
-            r_roughness=dummy_array,
+            fuel_rate=fuel_array * u.kg/u.s,
+            power=dummy_array * u.Watt,
+            rpm=dummy_array * u.Hz,
+            speed=speed_array * u.meter/u.second,
+            r_wind=dummy_array * u.N,
+            r_calm=dummy_array * u.N,
+            r_waves=dummy_array * u.N,
+            r_shallow=dummy_array * u.N,
+            r_roughness=dummy_array * u.N,
             status=dummy_array
         )
 
@@ -393,7 +393,6 @@ class Tanker(Boat):
         r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         speed = np.repeat(self.speed, power.shape)
-        status = ds['Status'].to_numpy().flatten()
 
         ship_params = ShipParams(
             fuel_rate=fuel,
@@ -404,8 +403,7 @@ class Tanker(Boat):
             r_calm=r_calm,
             r_waves=r_waves,
             r_shallow=r_shallow,
-            r_roughness=r_roughness,
-            status=status
+            r_roughness=r_roughness
         )
 
         if (debug):
