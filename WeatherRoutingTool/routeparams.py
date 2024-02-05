@@ -324,7 +324,6 @@ class RouteParams():
                 labels[i] = int(labels[i])
             labels[-2] = 'weighted mean'
             ax.set_xticklabels(labels)
-
             ax.set_xlim(-100, 4499)
         else:
             # plt.ylabel(power["label"] + ' (t/km)')
@@ -335,7 +334,6 @@ class RouteParams():
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label
             )
-
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
@@ -562,8 +560,10 @@ class RouteParams():
         sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s
         sog = sog.to(u.meter/u.second)
 
-        draught = 0.25 * (sog_data['AFTER_DRAUGHT_LEVEL'] + sog_data['FORE_DRAUGHT_LEVEL']
-                          + sog_data['MIDDRAUGHT_LEVELS'] + sog_data['MIDDRAUGHT_LEVELP'])
+        # draught = 0.25 * (sog_data['AFTER_DRAUGHT_LEVEL'] + sog_data['FORE_DRAUGHT_LEVEL']
+        #                   + sog_data['MIDDRAUGHT_LEVELS'] + sog_data['MIDDRAUGHT_LEVELP'])
+        fore_draught = sog_data['FORE_DRAUGHT_LEVEL']
+        aft_draught = sog_data['AFTER_DRAUGHT_LEVEL']
 
         lat = data['Latitude'][::interval].values
         lon = data['Longitude'][::interval].values
@@ -579,6 +579,7 @@ class RouteParams():
         logger.info('end time: ' + str(time[-1]))
         logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
         logger.info('ME load (percentage): ' + str(mean_engine_load))
-        logger.info('mean draught: ' + str(draught.mean()))
+        logger.info('fore draught: ' + str(fore_draught))
+        logger.info('aft draught: ' + str(aft_draught))
 
-        return lat, lon, time_converted, sog, draught
+        return lat, lon, time_converted, sog, fore_draught, aft_draught

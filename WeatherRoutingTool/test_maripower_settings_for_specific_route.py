@@ -14,9 +14,10 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
-                                weather_scenario, draught):
+                                weather_scenario, draught_fp, draught_ap):
     boat = Tanker(config)
-    boat.set_ship_property('Draught', [draught.mean()])
+    boat.set_ship_property('Draught_FP', draught_fp)
+    boat.set_ship_property('Draught_AP', draught_ap)
     boat.set_ship_property('WindForcesFactor', windfactor)
     boat.set_ship_property('WaveForcesFactor', wavefactor)
     boat.set_ship_property('CalmWaterFactor', calmfactor)
@@ -78,7 +79,7 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    weather_type = 'real_weather'  # rought_weather, calm_weather
+    weather_type = 'real_weather'  # rough_weather, calm_weather
     wind_speed = -99
     VHMO = -99
 
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(12, 7))
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
-    lat, lon, time, sog, draught = RouteParams.from_gzip_file(args.route)
+    lat, lon, time, sog, fore_draught, aft_draught = RouteParams.from_gzip_file(args.route)
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     for key in maripower_test_scenarios_wind:
@@ -142,5 +143,6 @@ if __name__ == "__main__":
             routepath,
             key,
             weather_type,
-            draught
+            fore_draught,
+            aft_draught
         )

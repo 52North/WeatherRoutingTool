@@ -69,7 +69,8 @@ Required variables (no default values provided):
 - `WEATHER_DATA`: path to weather data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 
 Recommended variables (default values provided but might be inaccurate/unsuitable):
-- `BOAT_DRAUGHT`: in m
+- `BOAT_DRAUGHT_AFT`: aft draught (draught at rudder) in m
+- `BOAT_DRAUGHT_FORE`: fore draught (draught at forward perpendicular) in m
 - `BOAT_ROUGHNESS_DISTRIBUTION_LEVEL`: numeric value (default: 1)
 - `BOAT_ROUGHNESS_LEVEL`: numeric value (default: 1)
 - `BOAT_SPEED`: in m/s
@@ -154,7 +155,7 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
    source /home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/load_wrt.sh
    ```
 
-4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED' and 'BOAT_DRAUGHT'.
+4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED', 'BOAT_DRAUGHT_FORE' and 'BOAT_DRAUGHT_AFT'.
 5. Initiate the routing procedure by executing the file 'cli.py' *out of the base directory*:
 
     ```sh

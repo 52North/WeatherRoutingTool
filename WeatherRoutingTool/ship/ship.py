@@ -122,7 +122,8 @@ class Tanker(Boat):
         self.depth_path = config.DEPTH_DATA
 
         self.hydro_model = mariPower.ship.CBT()
-        self.hydro_model.Draught = np.array([config.BOAT_DRAUGHT])
+        self.hydro_model.Draught_AP = np.array([config.BOAT_DRAUGHT_AFT])
+        self.hydro_model.Draught_FP = np.array([config.BOAT_DRAUGHT_FORE])
         self.hydro_model.Roughness_Level = np.array([config.BOAT_ROUGHNESS_LEVEL])
         self.hydro_model.Roughness_Distribution_Level = np.array([config.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
         self.use_depth_data = True
@@ -392,6 +393,7 @@ class Tanker(Boat):
         r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
         r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
+        status = ds['Status'].to_numpy().flatten()
         speed = np.repeat(self.speed, power.shape)
 
         ship_params = ShipParams(
@@ -403,7 +405,8 @@ class Tanker(Boat):
             r_calm=r_calm,
             r_waves=r_waves,
             r_shallow=r_shallow,
-            r_roughness=r_roughness
+            r_roughness=r_roughness,
+            status=status
         )
 
         if (debug):

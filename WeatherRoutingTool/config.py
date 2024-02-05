@@ -9,7 +9,8 @@ MANDATORY_CONFIG_VARIABLES = ['COURSES_FILE', 'DEFAULT_MAP', 'DEFAULT_ROUTE', 'D
                               'ROUTE_PATH', 'WEATHER_DATA']
 
 RECOMMENDED_CONFIG_VARIABLES = {
-    'BOAT_DRAUGHT': 10,
+    'BOAT_DRAUGHT_AFT': 10,
+    'BOAT_DRAUGHT_FORE': 10,
     'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 1,
     'BOAT_ROUGHNESS_LEVEL': 1,
     'BOAT_SPEED': 6,
@@ -29,6 +30,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'GENETIC_POPULATION_SIZE': 20,
     'GENETIC_POPULATION_TYPE': 'grid_based',
     'INTERMEDIATE_WAYPOINTS': [],
+    'ISOCHRONE_MAX_ROUTING_STEPS': 100,
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
     'ISOCHRONE_NUMBER_OF_ROUTES': 1,
     'ISOCHRONE_PRUNE_GROUPS': 'larger_direction',
@@ -38,9 +40,8 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'SHIP_TYPE': 'CBT',
-    'UNDER_KEEL_CLEARANCE': 20,
-    'ISOCHRONE_MAX_ROUTING_STEPS': 100,
-    'TIME_FORECAST': 90
+    'TIME_FORECAST': 90,
+    'UNDER_KEEL_CLEARANCE': 20
 }
 
 
@@ -53,7 +54,8 @@ class Config:
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
         self.ALGORITHM_TYPE = None  # options: 'isofuel', 'genetic', 'speedy_isobased'
-        self.BOAT_DRAUGHT = None  # in m
+        self.BOAT_DRAUGHT_AFT = None  # aft draught (draught at rudder) in m
+        self.BOAT_DRAUGHT_FORE = None  # fore draught (draught at forward perpendicular) in m
         self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SPEED = None  # in m/s
