@@ -16,8 +16,8 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
                                 weather_scenario, draught_fp, draught_ap):
     boat = Tanker(config)
-    boat.set_ship_property('Draught_FP', draught_fp)
-    boat.set_ship_property('Draught_AP', draught_ap)
+    boat.set_ship_property('Draught_FP', draught_fp.mean())
+    boat.set_ship_property('Draught_AP', draught_ap.mean())
     boat.set_ship_property('WindForcesFactor', windfactor)
     boat.set_ship_property('WaveForcesFactor', wavefactor)
     boat.set_ship_property('CalmWaterFactor', calmfactor)
