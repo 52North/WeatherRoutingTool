@@ -201,7 +201,7 @@ def test_get_delta_variables_last_step():
     tk.use_depth_data = False
 
     ship_params = tk.get_ship_parameters(ra.get_current_course(), ra.get_current_lats(), ra.get_current_lons(),
-                                         ra.time, [])
+                                         ra.time, None)
     ship_params.print()
 
     delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.get_boat_speed())

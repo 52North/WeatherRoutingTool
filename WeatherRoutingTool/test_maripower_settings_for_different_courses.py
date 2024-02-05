@@ -25,7 +25,7 @@ def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, 
     print('Running scenario for ' + weather_scenario + ' with maripower setting ' + maripower_scenario)
 
     ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                           waypoint_dict['start_lons'], waypoint_dict['time'], [], True)
+                                           waypoint_dict['start_lons'], waypoint_dict['time'], None, True)
 
     return ship_params
 

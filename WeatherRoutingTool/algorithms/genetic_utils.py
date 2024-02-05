@@ -67,6 +67,7 @@ class FromGeojsonPopulation(Sampling):
         routes = np.full((n_samples, 1), None, dtype=object)
         # Routes have to be named route_1.json, route_2.json, etc.
         # See method find_routes_reaching_destination_in_current_step in isobased.py
+        # ToDo: exit program with error when number of files is not equal to n_samples
         for i in range(n_samples):
             route_file = os.path.join(self.path_to_route_folder, f'route_{i+1}.json')
             try:
@@ -286,7 +287,7 @@ class RoutingProblem(ElementwiseProblem):
                                                          self.boat.get_boat_speed())
 
         shipparams = self.boat.get_ship_parameters(route_dict['courses'], route_dict['start_lats'],
-                                                   route_dict['start_lons'], route_dict['start_times'], [])
+                                                   route_dict['start_lons'], route_dict['start_times'])
         fuel = shipparams.get_fuel_rate()
         fuel = (fuel / 3600) * route_dict['travel_times']
         return np.sum(fuel), shipparams
