@@ -395,6 +395,7 @@ class Tanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         status = ds['Status'].to_numpy().flatten()
         speed = np.repeat(self.speed, power.shape)
+        status = ds['Status'].to_numpy().flatten()
 
         ship_params = ShipParams(
             fuel_rate=fuel,
