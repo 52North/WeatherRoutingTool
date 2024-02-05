@@ -3,6 +3,7 @@ import math
 import os
 from datetime import datetime
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from WeatherRoutingTool.config import Config, set_up_logging
@@ -50,6 +51,35 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
         rp.return_route_to_API(filename)
 
 
+def cut_indices(lat, lon, time, sog, fore_draught, aft_draught, cut_route):
+    start_indices_lat = int(np.where(abs(lat - cut_route[0]) < 0.001)[0][0])
+    end_indices_lat = int(np.where(abs(lat - cut_route[2]) < 0.001)[0][0])
+    start_indices_lon = int(np.where(abs(lon - cut_route[1]) < 0.001)[0][0])
+    end_indices_lon = int(np.where(abs(lon - cut_route[3]) < 0.001)[0][0])
+
+    print('start_lat: ', lat[start_indices_lat])
+    print('end_lat: ', lat[end_indices_lat])
+    print('start_lon: ', lon[start_indices_lon])
+    print('end_lon: ', lon[end_indices_lon])
+
+    if (start_indices_lat != start_indices_lon) or (end_indices_lat != end_indices_lon):
+        raise ValueError('Latitude and longitude are not matching for cut')
+
+    lat = lat[start_indices_lat:end_indices_lat + 1]
+    lon = lon[start_indices_lat:end_indices_lat + 1]
+    time = time[start_indices_lat:end_indices_lat + 1]
+    fore_draught = fore_draught[start_indices_lat:end_indices_lat + 1]
+    aft_draught = aft_draught[start_indices_lat:end_indices_lat + 1]
+    sog = sog[start_indices_lat:end_indices_lat]
+
+    print('mean speed cut: ', sog.mean())
+    print('start time cut: ', time[0])
+    print('mean aft draugh cut: ', aft_draught.mean())
+    print('mean fore draugh cut: ', fore_draught.mean())
+
+    return lat, lon, time, sog, fore_draught, aft_draught
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
@@ -65,6 +95,8 @@ if __name__ == "__main__":
     config.print()
 
     routename = 'original_resistances_calm_weather'
+    cut_route = [37.5057, 12.3046, 33.827, 34.311]    # MedSea
+    # cut_route = [48.889, -5.775, 43.2834, -10.1932]     # Ärmelkanal
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     if str(args.write_geojson).lower() == 'true':
@@ -132,6 +164,9 @@ if __name__ == "__main__":
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
     lat, lon, time, sog, fore_draught, aft_draught = RouteParams.from_gzip_file(args.route)
+    lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
+                                                                 aft_draught, cut_route)
+
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     for key in maripower_test_scenarios_wind:
