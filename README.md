@@ -81,6 +81,9 @@ Optional variables (default values provided and don't need to be changed normall
 - `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints'
 - `DELTA_FUEL`: amount of fuel per routing step (kg)
 - `DELTA_TIME_FORECAST`: time resolution of weather forecast (hours)
+- `FACTOR_CALM_WATER`: multiplication factor for the calm water resistance model
+- `FACTOR_WAVE_FORCES`: multiplication factor for the added resistance in waves model
+- `FACTOR_WIND_FORCES`: multiplication factor for the added resistance in wind model
 - `GENETIC_MUTATION_TYPE`: type for mutation (options: 'grid_based')
 - `GENETIC_NUMBER_GENERATIONS`: number of generations for genetic algorithm
 - `GENETIC_NUMBER_OFFSPRINGS`: number of offsprings for genetic algorithm

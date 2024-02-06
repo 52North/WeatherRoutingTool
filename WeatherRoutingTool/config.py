@@ -24,6 +24,9 @@ OPTIONAL_CONFIG_VARIABLES = {
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth'],
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
+    'FACTOR_CALM_WATER': 1.0,
+    'FACTOR_WAVE_FORCES': 1.0,
+    'FACTOR_WIND_FORCES': 1.0,
     'GENETIC_MUTATION_TYPE': 'grid_based',
     'GENETIC_NUMBER_GENERATIONS': 20,
     'GENETIC_NUMBER_OFFSPRINGS': 2,
@@ -70,6 +73,9 @@ class Config:
         self.DELTA_TIME_FORECAST = None  # time resolution of weather forecast (hours)
         self.DEPARTURE_TIME = None  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
         self.DEPTH_DATA = None  # path to depth data
+        self.FACTOR_CALM_WATER = None  # multiplication factor for the calm water resistance model
+        self.FACTOR_WAVE_FORCES = None  # multiplication factor for the added resistance in waves model
+        self.FACTOR_WIND_FORCES = None  # multiplication factor for the added resistance in wind model
         self.GENETIC_MUTATION_TYPE = None  # type for mutation (options: 'grid_based')
         self.GENETIC_NUMBER_GENERATIONS = None  # number of generations for genetic algorithm
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
