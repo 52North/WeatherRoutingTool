@@ -436,6 +436,7 @@ class IsoBased(RoutingAlg):
         for idxs in route_df:
             self.current_number_of_routes = self.current_number_of_routes + 1
             route_object = self.make_route_object(idxs)
+            self.check_status(route_object.ship_params_per_step.get_status(), str(self.current_number_of_routes))
             self.route_list.append(route_object)
             if self.path_to_route_folder is not None:
                 route_object.return_route_to_API(self.path_to_route_folder + '/' +
@@ -952,6 +953,7 @@ class IsoBased(RoutingAlg):
 
     def terminate(self, **kwargs):
         super().terminate()
+        self.check_status(self.shipparams_per_step.get_status(), 'minimum')
 
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
@@ -972,6 +974,17 @@ class IsoBased(RoutingAlg):
                             )
 
         return route
+
+    def check_status(self, shipparams_per_step_status, route_name):
+        success_array = []
+        success_array = np.where(shipparams_per_step_status == 1)  # Status 1=OK
+        if success_array == 0:
+            logger.info('0% of status values of the route segments are successful for Route '+route_name+'!')
+            return
+        success_percentage = (len(success_array[0])/(len(shipparams_per_step_status)-1))*100
+        logger.info("{:.2f}".format(success_percentage) + '% of status values '
+                                                          'of the route segments are successful for Route '
+                                                          + route_name+'!')
 
     def update_time(self, delta_time):
         self.full_time_traveled += delta_time

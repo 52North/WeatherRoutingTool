@@ -272,10 +272,14 @@ class RouteParams():
             dist[i] = dist_step['s12']
         return dist * u.meter
 
-    def plot_route(self, ax, colour, label):
+    def plot_route(self, ax, colour, label, linestyle=False):
         lats = self.lats_per_step
         lons = self.lons_per_step
-        ax.plot(lons, lats, color=colour, label=label, linewidth=2)
+
+        if linestyle:
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot')
+        else:
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2)
 
         ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour, markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
