@@ -111,8 +111,8 @@ if __name__ == "__main__":
         cbar = plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax,
                             location='right', shrink=0.6, pad=0.15)
         cbar.ax.get_yaxis().set_ticks([])
-        for j, lab in enumerate(['$OK$', '$Warning$', '$Error$']):
-            cbar.ax.text(2.1, j * 1.1/0.8, lab, ha='left', va='center')
+        for index, label in enumerate(['$OK$', '$Warning$', '$Error$']):
+            cbar.ax.text(2.1, index * 1.1/0.8, label, ha='left', va='center')
         cbar.ax.set_title('Status code')
 
         plt.xlim(x_min - 2, x_max + 2)
