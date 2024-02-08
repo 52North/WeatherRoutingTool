@@ -125,12 +125,12 @@ if __name__ == "__main__":
     if (wind_speed == -99 or VHMO == -99) and (weather_type != 'real_weather'):
         raise ValueError('windspeed or VHM0 not set!')
 
-    u_comp = - math.sin(45) * wind_speed
-    v_comp = - math.cos(45) * wind_speed
+    u_comp = - math.sin(math.radians(45)) * wind_speed
+    v_comp = - math.cos(math.radians(45)) * wind_speed
 
     # currents = 0.1
-    # utotal = math.sin(45) * currents
-    # vtotal = -math.cos(45) * currents
+    # utotal = math.sin(math.radians(45)) * currents
+    # vtotal = - math.cos(math.radians(45)) * currents
 
     var_dict = {
         'thetao': 20,  # °C
