@@ -81,8 +81,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    figurefile = args.figure_dir
+
     # Compare variations of resistances for specific routes
-    filename1 = os.path.join(args.base_dir, "route_real_weather_original.json")
+    '''filename1 = os.path.join(args.base_dir, "route_real_weather_original.json")
     filename2 = os.path.join(args.base_dir, "route_real_weather_95perc_calm.json")
     filename3 = os.path.join(args.base_dir, "route_real_weather_105perc_calm.json")
     filename4 = os.path.join(args.base_dir, "route_real_weather_80perc_wind.json")
@@ -90,7 +92,6 @@ if __name__ == "__main__":
     filename6 = os.path.join(args.base_dir, "route_real_weather_80perc_wave.json")
     filename7 = os.path.join(args.base_dir, "route_real_weather_120perc_wave.json")
 
-    figurefile = args.figure_dir
 
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
@@ -114,8 +115,8 @@ if __name__ == "__main__":
     rp_str_list = [rp_1_str, rp_2_str, rp_3_str, rp_4_str, rp_5_str, rp_6_str, rp_7_str]
 
     '''
-    filename1 = "/home/kdemmich/MariData/IMDC_paper/Routes_24_01_24/Routes/route_real_weather_original.json"
-    filename2 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_01_25/Routes/alternative_route.json"
+    filename1 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes/route_real_weather_original.json"
+    filename2 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes/min_time_route.json"
 
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
@@ -127,15 +128,15 @@ if __name__ == "__main__":
 
     rp_list = [rp_read1, rp_read2]
     rp_str_list = [rp_1_str, rp_2_str]
-    '''
 
-    windfile = "/home/kdemmich/MariData/Simulationsstudien_NovDez23/EnvData/bbox_/indian_ocean_earlier_incl.nc"
+
+    windfile = "/home/kdemmich/MariData/IMDC_paper/weather_imdc_route_16.nc"
     depth_data = ""
     set_up_logging()
 
-    do_plot_weather = False
-    do_plot_route = True
-    do_plot_power_vs_dist = True
+    do_plot_weather = True
+    do_plot_route = False
+    do_plot_power_vs_dist = False
     do_plot_fuel_vs_dist = False
     do_plot_acc_fuel_vs_dist = False
 
@@ -145,16 +146,16 @@ if __name__ == "__main__":
     do_plot_fuel_vs_lat = False
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = True
+    do_plot_power_vs_dist_ratios = False
     do_plot_fuel_vs_dist_ratios = False
-    do_write_fuel = True
+    do_write_fuel = False
 
     ##
     # init weather
-    departure_time = "2023-09-28T09:00Z"
-    time_for_plotting = "2023-11-01T09:00Z"
+    departure_time = "2023-08-19T10:32Z"
+    time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (44, -15, 53, 3)
+    lat1, lon1, lat2, lon2 = (30, 10, 40, 35)
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -167,7 +168,11 @@ if __name__ == "__main__":
         wt = WeatherFactory.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
 
         fig, ax = plt.subplots(figsize=(12, 7))
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
+        fig, ax = graphics.generate_basemap(fig, None, rp_read1.start, rp_read1.finish, '', False)
         wt.plot_weather_map(fig, ax, plot_time, "wind")
+        plt.show()
 
     ##
     # init Constraints

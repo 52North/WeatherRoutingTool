@@ -348,24 +348,30 @@ class WeatherCondFromFile(WeatherCond):
         return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
 
     def plot_weather_map(self, fig, ax, time, varname):
-        rebinx = 2
-        rebiny = 2
+        rebinx = 5
+        rebiny = 5
 
         if varname == 'wind':
-            # .sel(time=time, height_above_ground=10)
-            u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time)
-            v = self.ds['v-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(time=time)
-            unp = u.to_numpy()
-            vnp = v.to_numpy()
-            unp = graphics.rebin(unp, rebinx, rebiny)
-            vnp = graphics.rebin(vnp, rebinx, rebiny)
+            u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
+                time=time,
+                height_above_ground=10,
+                latitude=slice(self.map_size.lat1, self.map_size.lat2),
+                longitude=slice(self.map_size.lon1, self.map_size.lon2)
+            )
+            v = self.ds['v-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
+                time=time,
+                height_above_ground=10,
+                latitude=slice(self.map_size.lat1, self.map_size.lat2),
+                longitude=slice(self.map_size.lon1, self.map_size.lon2)
+            )
+
+            u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
+            v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
 
             windspeed = np.sqrt(u ** 2 + v ** 2)
 
-            print('windspeed: ', windspeed)
-
-            cp = windspeed.plot()
-            cp.set_clim(0, 20)
+            cp = windspeed.plot(alpha=0.5)
+            # cp.set_clim(0, 20)
             plt.title('wind speed and direction')
             plt.rcParams['font.size'] = '20'
             plt.title('current')
@@ -377,7 +383,6 @@ class WeatherCondFromFile(WeatherCond):
             y = windspeed.coords['latitude'].values
             # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
             plt.barbs(x, y, u.values, v.values, clim=[0, 20])
-            plt.show()
 
         if varname == 'waveheight':
             height = self.ds['VHM0'].sel(time=time)
