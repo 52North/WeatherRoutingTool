@@ -141,7 +141,7 @@ def plot_legend(fig):
 
 def get_colour(i):
     # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
-    colours = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442',
+    colours = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
 
     if (i > 18):
