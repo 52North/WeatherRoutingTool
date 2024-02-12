@@ -1,8 +1,10 @@
 import argparse
+import matplotlib.image as image
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 from datetime import datetime, timedelta
+from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 from matplotlib.legend_handler import HandlerTuple
 
 from astropy import units as u
@@ -49,6 +51,8 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses,
             denominator = denominator_obj.get_fuel()
             ylabel = 'fuel consumption'
 
+        mean_dev = (nominator/denominator).mean()
+        plt.axhline(y=mean_dev, color=graphics.get_colour(colour), linestyle='dashed')
         if label_list[irp] == '':
             ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
                                  marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
@@ -57,9 +61,22 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses,
             ratio_tmp, = ax.plot(courses, nominator/denominator, color=graphics.get_colour(colour),
                                  marker=graphics.get_marker(irp), linewidth=0, label=label_list[irp])
 
-        plt.axhline(y=1, color='gray', linestyle='dashed')
         ratio.append(ratio_tmp)
 
+    ship_tail_wind = image.imread('/home/kdemmich/MariData/IMDC_paper/ship_tail_wind.png')
+    imagebox_tail_wind = OffsetImage(ship_tail_wind, zoom=0.25)
+    ship_head_wind = image.imread('/home/kdemmich/MariData/IMDC_paper/ship_head_wind.png')
+    imagebox_head_wind = OffsetImage(ship_head_wind, zoom=0.25)
+    ab_left = AnnotationBbox(imagebox_tail_wind, (0, 1), (-300, -250), boxcoords="offset points", frameon=False)
+    ab_mid = AnnotationBbox(imagebox_head_wind, (0, 1), (0, -250), boxcoords="offset points", frameon=False)
+    ab_right = AnnotationBbox(imagebox_tail_wind, (0, 1), (+300, -250), boxcoords="offset points", frameon=False)
+
+    ax.add_artist(ab_left)
+    ax.add_artist(ab_mid)
+    ax.add_artist(ab_right)
+
+    ax.text(0.11, 0.74, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
+            transform=ax.transAxes)
     plt.xlabel('angular difference (degrees)')
     plt.ylabel(ylabel + ' modified/standard')
     plt.xticks()
@@ -70,14 +87,8 @@ def plot_power_vs_courses(nominator_list, label_list, denominator_obj, courses,
         handler_map={tuple: HandlerTuple(ndivide=None)},
         loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.6, frameon=False
     )
-
-    scenario_str = ''
-    if weather_type == "rough_weather":
-        scenario_str = "scenario: rough weather"
-    else:
-        scenario_str = "scenario: calm weather"
-    ax.text(0.98, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right', transform=ax.transAxes)
     ax.tick_params(top=True, right=True)
+    fig.subplots_adjust(bottom=0.2)  # or whatever
 
     plt.savefig(os.path.join(figuredir, name + '.png'))
 
@@ -131,18 +142,18 @@ if __name__ == "__main__":
     lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE  # lat_end and lon_end are not used
     coord_res = 0.1
 
-    weather_type = 'rough_weather'  # rough_weather, calm_weather
+    weather_type = 'calm_weather'  # rough_weather, calm_weather
     wind_speed = -99
     VHMO = -99
     VTPK = -99
 
     if weather_type == 'rough_weather':
-        wind_speed = 12.5
+        wind_speed = 12
         VHMO = 3.5
-        VTPK = 9.4
+        VTPK = 9.0
     if weather_type == 'calm_weather':
-        wind_speed = 2.5
-        VHMO = 0.1
+        wind_speed = 2
+        VHMO = 0.09
         VTPK = 1.5
 
     if wind_speed == -99 or VHMO == -99:
@@ -154,7 +165,7 @@ if __name__ == "__main__":
     var_dict = {
         'thetao': 20,
         'so': 33.5,
-        'Temperature_surface': 283,
+        'Temperature_surface': 293,
         'Pressure_reduced_to_MSL_msl': 101325,
         'u-component_of_wind_height_above_ground': u_comp,
         'v-component_of_wind_height_above_ground': v_comp,
@@ -221,35 +232,3 @@ if __name__ == "__main__":
     ]
     plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
                           'inclusive_' + weather_type, 'power', weather_type)
-
-    '''
-    nominator_list = [shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
-    label_list = ['95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
-    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
-                          'calmwaterres_' + weather_type, 'power')
-
-    nominator_list = [shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
-    label_list = ['80% Zusatzwiderstand Wind', '120% Zusatzwiderstand Wind']
-    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
-                          'windres_' + weather_type, 'power')
-
-    nominator_list = [shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
-    label_list = ['80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
-    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
-                          'waveres_' + weather_type, 'power')
-
-    curve_list = [shipparams_vec['original'], shipparams_vec['95perc_calm'], shipparams_vec['105perc_calm']]
-    label_list = ['original', '95% Glattwasserwiderstand', '105% Glattwasserwiderstand']
-    plot_polar_power(curve_list, label_list, courses, figurepath,
-                     'calmwaterres_' + weather_type, 'power')
-
-    curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wind'], shipparams_vec['120perc_wind']]
-    label_list = ['original', '80% Zusatzwiderstand Wind', '120% Zusatzwiderstand Wind']
-    plot_polar_power(curve_list, label_list, courses, figurepath,
-                     'windres_' + weather_type, 'power')
-
-    curve_list = [shipparams_vec['original'], shipparams_vec['80perc_wave'], shipparams_vec['120perc_wave']]
-    label_list = ['original', '80% Zusatzwiderstand Seegang', '120% Zusatzwiderstand Seegang']
-    plot_polar_power(curve_list, label_list, courses, figurepath,
-                     'waveres_' + weather_type, 'power')
-    '''
