@@ -347,9 +347,7 @@ class WeatherCondFromFile(WeatherCond):
 
         return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
 
-    def plot_weather_map(self, fig, ax, time, varname):
-        rebinx = 5
-        rebiny = 5
+    def plot_weather_map(self, fig, ax, time, varname, rebinx=5, rebiny=5, **kwargs):
 
         if varname == 'wind':
             u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
@@ -369,12 +367,10 @@ class WeatherCondFromFile(WeatherCond):
             v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
 
             windspeed = np.sqrt(u ** 2 + v ** 2)
-
             windspeed.plot(alpha=0.5)
-            # cp.set_clim(0, 20)
-            plt.title('wind speed and direction')
+
+            plt.title(f'wind speed and direction at {time}')
             plt.rcParams['font.size'] = '20'
-            plt.title('current')
             plt.ylabel('latitude (°N)', fontsize=20)
             plt.xlabel('longitude (°W)', fontsize=20)
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
@@ -382,7 +378,7 @@ class WeatherCondFromFile(WeatherCond):
             x = windspeed.coords['longitude'].values
             y = windspeed.coords['latitude'].values
             # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
-            plt.barbs(x, y, u.values, v.values, clim=[0, 20])
+            plt.barbs(x, y, u.values, v.values, clim=[0, 20], **kwargs)
 
         if varname == 'waveheight':
             height = self.ds['VHM0'].sel(time=time)
