@@ -292,7 +292,7 @@ class RouteParams():
         if power_type == 'fuel':
             return {"value": self.get_fuel_per_dist(), "label": "fuel consumption", "unit": u.kg}
 
-    def plot_power_vs_dist(self, color, label, power_type, ax):
+    def plot_power_vs_dist(self, color, label, power_type, ax, bin_center_mean=None, bin_width_mean=None):
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
@@ -303,15 +303,15 @@ class RouteParams():
             weighted_mean = power["value"] * dist
             weighted_mean = weighted_mean.sum() / dist.sum()
 
-            # append empty bin
-            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], 3750 * u.km)
-            hist_values["bin_contents"] = np.append(hist_values["bin_contents"], -1 * weighted_mean)
-            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], 250 * u.km)
+            if bin_width_mean is None:
+                bin_width_mean = 150 * u.km
+            if bin_center_mean is None:
+                bin_center_mean = max(hist_values["bin_centres"]) + 2 * bin_width_mean
 
             # append mean bin
-            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], 4000 * u.km)
+            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
             hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
-            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], 150 * u.km)
+            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
 
             # plt.ylabel(power["label"] + ' (kW)')
             plt.ylabel(power["label"])
@@ -320,7 +320,7 @@ class RouteParams():
                 hist_values["bin_contents"].to(u.kiloWatt).value,
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label)
-            ax.set_ylim(0, 6000)
+            # ax.set_ylim(0, 6000)
 
             # customise labels
             labels = ax.get_xticks().tolist()
@@ -328,7 +328,8 @@ class RouteParams():
                 labels[i] = int(labels[i])
             labels[-2] = 'weighted mean'
             ax.set_xticklabels(labels)
-            ax.set_xlim(-100, 4499)
+            left, right = plt.xlim()
+            ax.set_xlim(-100, right)
         else:
             # plt.ylabel(power["label"] + ' (t/km)')
             plt.ylabel(power["label"])
