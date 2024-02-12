@@ -83,39 +83,8 @@ if __name__ == "__main__":
 
     figurefile = args.figure_dir
 
-    # Compare variations of resistances for specific routes
-    '''filename1 = os.path.join(args.base_dir, "route_real_weather_original.json")
-    filename2 = os.path.join(args.base_dir, "route_real_weather_95perc_calm.json")
-    filename3 = os.path.join(args.base_dir, "route_real_weather_105perc_calm.json")
-    filename4 = os.path.join(args.base_dir, "route_real_weather_80perc_wind.json")
-    filename5 = os.path.join(args.base_dir, "route_real_weather_120perc_wind.json")
-    filename6 = os.path.join(args.base_dir, "route_real_weather_80perc_wave.json")
-    filename7 = os.path.join(args.base_dir, "route_real_weather_120perc_wave.json")
-
-
-    rp_read1 = RouteParams.from_file(filename1)
-    rp_read2 = RouteParams.from_file(filename2)
-    rp_read3 = RouteParams.from_file(filename3)
-    rp_read4 = RouteParams.from_file(filename4)
-    rp_read5 = RouteParams.from_file(filename5)
-    rp_read6 = RouteParams.from_file(filename6)
-    rp_read7 = RouteParams.from_file(filename7)
-
-    rp_1_str = 'Originalroute'
-    rp_2_str = r'$\pm5\,\%$ calm water resistance'
-    rp_3_str = ''
-    rp_4_str = r'$\pm20\,\%$ added resistance in wind'
-    rp_5_str = ''
-    rp_6_str = r'$\pm20\,\%$ added resistance in waves'
-    rp_7_str = ''
-
-    scenario_str = 'scenario: Mediterranean Sea'
-
-    rp_list = [rp_read1, rp_read2, rp_read3, rp_read4, rp_read5, rp_read6, rp_read7]
-    rp_str_list = [rp_1_str, rp_2_str, rp_3_str, rp_4_str, rp_5_str, rp_6_str, rp_7_str]
-
-    '''
-    filename1 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes/route_real_weather_original.json"
+    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes"
+                 "/route_real_weather_original.json")
     filename2 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes/min_time_route.json"
 
     rp_read1 = RouteParams.from_file(filename1)
@@ -128,7 +97,6 @@ if __name__ == "__main__":
 
     rp_list = [rp_read1, rp_read2]
     rp_str_list = [rp_1_str, rp_2_str]
-
 
     windfile = "/home/kdemmich/MariData/IMDC_paper/weather_imdc_route_16.nc"
     depth_data = ""

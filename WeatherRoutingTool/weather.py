@@ -370,7 +370,7 @@ class WeatherCondFromFile(WeatherCond):
 
             windspeed = np.sqrt(u ** 2 + v ** 2)
 
-            cp = windspeed.plot(alpha=0.5)
+            windspeed.plot(alpha=0.5)
             # cp.set_clim(0, 20)
             plt.title('wind speed and direction')
             plt.rcParams['font.size'] = '20'
