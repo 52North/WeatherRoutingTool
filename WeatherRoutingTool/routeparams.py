@@ -319,7 +319,7 @@ class RouteParams():
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.kiloWatt).value,
                 hist_values["bin_widths"].to(u.km).value,
-                fill=False, color=color, edgecolor=color, label=label)
+                fill=False, color=color, edgecolor=color, label=label, linewidth=2)
             # ax.set_ylim(0, 6000)
 
             # customise labels
