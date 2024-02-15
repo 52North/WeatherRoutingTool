@@ -95,8 +95,8 @@ if __name__ == "__main__":
     config.print()
 
     routename = 'original_resistances_calm_weather'
-    cut_route = [37.5057, 12.3046, 33.827, 34.311]    # MedSea
-    # cut_route = [48.889, -5.775, 43.2834, -10.1932]     # Ärmelkanal
+    # cut_route = [37.5057, 12.3046, 33.827, 34.311]    # MedSea
+    # cut_route = [48.634715, -6.081798333333333, 43.53411833333333, -10.028818333333334]     # Ärmelkanal
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     if str(args.write_geojson).lower() == 'true':
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
     lat, lon, time, sog, fore_draught, aft_draught = RouteParams.from_gzip_file(args.route)
-    lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
-                                                                 aft_draught, cut_route)
+    # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
+    #                                                               aft_draught, cut_route)
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
