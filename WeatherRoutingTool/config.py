@@ -63,7 +63,7 @@ class Config:
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SPEED = None  # in m/s
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
-        # 'water_depth', 'on_map', 'via_waypoints'
+        # 'water_depth', 'on_map', 'via_waypoints', 'status_error'
         self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step
         self.DATA_MODE = None  # options: 'automatic', 'from_file', 'odc'

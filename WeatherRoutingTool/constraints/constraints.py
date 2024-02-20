@@ -184,6 +184,11 @@ class ConstraintsListFactory:
             water_depth = WaterDepth(data_mode, min_depth, map_size, depthfile)
             constraints_list.add_neg_constraint(water_depth)
 
+        if 'status_error' in constraints_string_list:
+            coursesfile = kwargs.get('coursesfile')
+            status_error = StatusCodeError(coursesfile)
+            constraints_list.add_neg_constraint(status_error, 'continuous')
+
         if 'on_map' in constraints_string_list:
             if 'map_size' not in kwargs:
                 raise ValueError('To use the on-map constraint module, you need to providethe map size.')
@@ -325,6 +330,8 @@ class ConstraintsList:
         return is_constrained
 
     def safe_crossing(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
+        debug = False
+
         is_constrained_discrete = is_constrained
         is_constrained_continuous = is_constrained
         is_constrained_discrete = self.safe_crossing_discrete(lat_start, lon_start, lat_end, lon_end, current_time,
@@ -332,9 +339,19 @@ class ConstraintsList:
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end, current_time)
 
         # TO NBE UPDATED
+        if debug:
+            print('is_constrained_discrete: ', is_constrained_discrete)
+            print('is_constrained', type(is_constrained))
+            print('is_constrained_discrete', type(is_constrained_discrete))
+            print('is_constrained_continuous', type(is_constrained_continuous))
+
         is_constrained = is_constrained + is_constrained_discrete + is_constrained_continuous
         # is_constrained.append(is_constrained_discrete)
         # is_constrained.append(is_constrained_continuous)
+
+        if debug:
+            print('constrained all list', is_constrained)
+
         return is_constrained
 
     def safe_crossing_continuous(self, lat_start, lon_start, lat_end, lon_end, current_time):
@@ -349,14 +366,14 @@ class ConstraintsList:
 
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end, current_time)
-            logger.info('is_constrained_temp: ', is_constrained_temp)
-            logger.info('is_constrained: ', is_constrained)
+            # logger.info('is_constrained_temp: ', is_constrained_temp)
+            # logger.info('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
-            logger.info('is_constrained end of loop: ', is_constrained)
+            # logger.info('is_constrained end of loop: ', is_constrained)
         # ToDo: use logger.debug and args.debug
         if debug:
             print('is_constrained_final: ', is_constrained)
-        return is_constrained
+        return is_constrained.tolist()
 
     ##
     # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
@@ -443,6 +460,34 @@ class LandCrossing(NegativeContraint):
 
     def print_info(self):
         logger.info(form.get_log_step("no land crossing", 1))
+
+
+class StatusCodeError(NegativeContraint):
+    status: np.ndarray
+    courses_file: str
+
+    def __init__(self, coursesfile):
+        NegativeContraint.__init__(self, 'StatusErrorCode')
+        self.message += 'routes have error status! '
+        self.courses_file = coursesfile
+
+    def load_data_from_file(self, coursesfile):
+        routeData = xr.open_dataset(coursesfile)
+        status = routeData['Status'].to_numpy().flatten()
+
+        return status
+
+    def check_crossing(self, lat_start=None, lon_start=None, lat_end=None, lon_end=None, current_time=None):
+        debug = False
+
+        self.status = self.load_data_from_file(self.courses_file)
+        if debug:
+            print('status', self.status)
+            self.status[3:20] = 1
+
+        # status error = 3, warning = 2, OK = 1
+        is_status_error = (self.status == 3)
+        return is_status_error
 
 
 class WaveHeight(NegativeConstraintFromWeather):
