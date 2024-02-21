@@ -78,7 +78,7 @@ Recommended variables (default values provided but might be inaccurate/unsuitabl
 
 Optional variables (default values provided and don't need to be changed normally):
 - `ALGORITHM_TYPE`: options: 'isofuel'
-- `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints'
+- `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints', 'status_error'
 - `DELTA_FUEL`: amount of fuel per routing step (kg)
 - `DELTA_TIME_FORECAST`: time resolution of weather forecast (hours)
 - `FACTOR_CALM_WATER`: multiplication factor for the calm water resistance model
