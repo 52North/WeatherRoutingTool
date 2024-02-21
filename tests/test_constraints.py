@@ -1,10 +1,12 @@
 import os
 
 import numpy as np
+import xarray as xr
 
 import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
-                                                        RunTestContinuousChecks, WaterDepth, WaveHeight)
+                                                        RunTestContinuousChecks, WaterDepth, WaveHeight,
+                                                        StatusCodeError)
 from WeatherRoutingTool.utils.maps import Map
 
 
@@ -207,3 +209,24 @@ def test_safe_crossing_continuous():
                                                               dummy_lats)
 
     assert np.array_equal(is_constrained_test, is_constrained)
+
+
+'''
+    test elements of is_constrained for status error of the status values = [1, 2, 3, 2, 3, 1]
+    where 3 is the the error value
+'''
+
+
+def test_check_crossing_status_errror():
+    ref_is_constrained = np.array([False, False, True, False, True, False])
+
+    dirname = os.path.dirname(__file__)
+    coursesfile = os.path.join(dirname, 'data/CoursesRouteStatus.nc')
+    statusCodeError = StatusCodeError(coursesfile)
+
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(statusCodeError, 'continuous')
+    is_constrained = [False for i in range(0, len(ref_is_constrained))]
+    is_constrained = constraint_list.negative_constraints_continuous[0].check_crossing()
+
+    assert np.array_equal(ref_is_constrained, is_constrained)
