@@ -339,18 +339,13 @@ class ConstraintsList:
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end, current_time)
 
         # TO NBE UPDATED
-        if debug:
-            print('is_constrained_discrete: ', is_constrained_discrete)
-            print('is_constrained', type(is_constrained))
-            print('is_constrained_discrete', type(is_constrained_discrete))
-            print('is_constrained_continuous', type(is_constrained_continuous))
-
-        is_constrained = is_constrained + is_constrained_discrete + is_constrained_continuous
-        # is_constrained.append(is_constrained_discrete)
-        # is_constrained.append(is_constrained_continuous)
+        is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) | np.array(is_constrained_continuous)
+        is_constrained = is_constrained_array.tolist()
 
         if debug:
-            print('constrained all list', is_constrained)
+            print('is_constrained_discrete', is_constrained_discrete)
+            print('is_constrained_continuous', is_constrained_continuous)
+            print('is_constrained', is_constrained)
 
         return is_constrained
 
@@ -742,10 +737,10 @@ class ContinuousCheck(NegativeContraint):
         self.password = os.getenv("WRT_DB_PASSWORD")
         self.port = os.getenv("WRT_DB_PORT")
         self.seamark_object = ["nodes", "ways", "land_polygons"]
-        self.query = ["SELECT * FROM openseamap.nodes", "SELECT *, linestring AS geom FROM openseamap.ways",
+        self.query = ["SELECT * FROM public.nodes", "SELECT *, linestring AS geom FROM public.ways",
                       "SELECT *,geometry as geom FROM openseamap.land_polygons"]
         self.predicates = ["intersects", "contains", "touches", "crosses", "overlaps"]
-        self.tags = ["separation_zone", "separation_line", "restricted_area"]
+        self.tags = ["restricted_area"]
         self.land_polygon_gdf = None
 
     def print_info(self):
@@ -974,7 +969,7 @@ class SeamarkCrossing(ContinuousCheck):
              gdf including all the features with specified seamark tags using ways OSM element
          """
         if seamark_list is None:
-            seamark_list = ["separation_line", "separation_zone", "restricted_area"]
+            seamark_list = ["restricted_area"]
         if seamark_object is None:
             seamark_object = self.seamark_object
 
@@ -1088,7 +1083,7 @@ class SeamarkCrossing(ContinuousCheck):
                         gdf_list.append(gdf1)
 
                 gdf_concat = pd.concat(gdf_list)
-                logger.info(f'concat geodataframe is {gdf_concat}')
+                logger.debug(f'concat geodataframe is {gdf_concat}')
 
                 return gdf_concat
         else:
@@ -1098,7 +1093,7 @@ class SeamarkCrossing(ContinuousCheck):
 
             if ("nodes" in seamark_object) and ("ways" in seamark_object):
                 gdf = self.concat_nodes_ways()
-                logger.info(f"concat gdf {gdf}")
+                logger.debug(f"concat gdf {gdf}")
                 gdf_list = []
                 for i in range(0, len(seamark_list)):
                     if isinstance(gdf["tags"].iloc[i], str):
@@ -1110,13 +1105,13 @@ class SeamarkCrossing(ContinuousCheck):
                         gdf_list.append(gdf1)
 
                 gdf_concat = pd.concat(gdf_list)
-                logger.info(f'concat geodataframe is {gdf_concat}')
+                logger.debug(f'concat geodataframe is {gdf_concat}')
 
                 return gdf_concat
             logger.error("error in engine and query initialisation")
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, engine=None, query=None, seamark_list=None,
-                       seamark_object=None, time=None):  # best way to go (keep just these arguments)
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None, engine=None, query=None,
+                       seamark_list=None, seamark_object=None):  # best way to go (keep just these arguments)
         """
          Check if certain route crosses specified seamark objects
 
@@ -1159,19 +1154,19 @@ class SeamarkCrossing(ContinuousCheck):
                 # for predicate in self.predicates:
                 concat_df = concat_gdf
                 # concat_df = ways_gdf  # with all the ways from the seamarks data
-                logger.info(f'PRINT CONCAT DF {concat_df}')
+                logger.debug(f'PRINT CONCAT DF {concat_df}')
                 tree = STRtree(concat_df["geom"])
-                geom_object = tree.query(route_df["geom"], predicate='intersects').tolist()
+                geom_object = tree.query(route_df["geometry"], predicate='intersects').tolist()
 
                 # checks if there is spatial relation between routes and seamarks objects
                 if geom_object == [[], []] or geom_object == []:
                     # if route is not constrained
                     query_tree.append(False)
-                    logger.info(f'NO CROSSING for  {line} in the query tree: {query_tree} ')
+                    logger.debug(f'NO CROSSING for  {line} in the query tree: {query_tree} ')
                 else:
                     # if route is constrained
                     query_tree.append(True)
-                    logger.info(f'CROSSING for  {line} in the query tree: {query_tree} ')
+                    logger.debug(f'CROSSING for  {line} in the query tree: {query_tree} ')
 
             # returns a list bools (spatial relation)
             return query_tree
