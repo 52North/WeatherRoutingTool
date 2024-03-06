@@ -339,7 +339,8 @@ class ConstraintsList:
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end, current_time)
 
         # TO NBE UPDATED
-        is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) | np.array(is_constrained_continuous)
+        is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) \
+                                                        | np.array(is_constrained_continuous)
         is_constrained = is_constrained_array.tolist()
 
         if debug:
