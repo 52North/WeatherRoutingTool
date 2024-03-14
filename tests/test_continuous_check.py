@@ -1,15 +1,14 @@
 import geopandas as gpd
-import numpy
+import numpy as np
 import pandas as pd
-import pytest
 import sqlalchemy as db
-from shapely.geometry import LineString, Point, MultiPolygon, box, Polygon
+from shapely.geometry import LineString, Point, box
+from shapely.strtree import STRtree
 
-from WeatherRoutingTool.constraints.constraints import ContinuousCheck, SeamarkCrossing, LandPolygonsCrossing
+from WeatherRoutingTool.constraints.constraints import ContinuousCheck
 from WeatherRoutingTool.utils.maps import Map
+import tests.basic_test_func as basic_test_func
 
-# Create engine using SQLite
-engine = db.create_engine("sqlite:///gdfDB.sqlite")
 
 # Create dummy GeoDataFrames
 test_nodes_gdf = gpd.GeoDataFrame(
@@ -135,55 +134,50 @@ test_ways_gdf = gpd.GeoDataFrame(
 test_land_polygons_gdf = gpd.GeoDataFrame(geometry=[box(4.056342603541809, 49.06378892560051,
                                                         8.748316591073674, 51.19862259935186)])
 
+# Create engine using SQLite
+engine = db.create_engine("sqlite:///gdfDB.sqlite")
+
 
 class TestContinuousCheck:
-    """
-    Contains various functions to test data connection,
-    gathering and use for obtaining spatial relations
-    for the continuous check in the negative constraints
-    """
-
-    # write geodataframe into spatialite database (nodes)
+    # write geodataframe into spatialite database
     test_nodes_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="nodes", overwrite=True
     )
 
-    # write geodataframe into spatialite database (ways)
     test_ways_gdf.to_file(
         f'{"gdfDB.sqlite"}', driver="SQLite", layer="ways", overwrite=True
     )
 
     test_land_polygons_gdf.to_file(
-        f'{"gdfDB.sqlite"}', driver="SQLite", layer="land_polygons", overwrite=True
+        f'{"gdfDB.sqlite"}', driver="SQLite", layer="land_polygons",
+        overwrite=True
     )
 
-    @pytest.mark.skip(reason="Might miss files for github actions")
-    def test_connect_database(self):
-        """
-        Test for checking the engine object and if the connection with the db is estabilished
-        """
+    def test_set_map_bbox(self):
+        lat1 = 1
+        lat2 = 5
+        lon1 = 2
+        lon2 = 7
 
-        # parameters might change when creating the engine
-        self.connection = engine.connect()
+        # shapely.geometry.box(minx, miny, maxx, maxy, ccw=True)
+        test_bbox = box(2, 1, 7, 5)
 
-        assert isinstance(
-            ContinuousCheck().connect_database(), type(engine)
-        ), "Engine Instantiation Error"
+        map_bbx = Map(lat1, lon1, lat2, lon2)
+        continuouscheck_obj = ContinuousCheck(db_engine=engine)
+        continuous_bbox_wkt = continuouscheck_obj.set_map_bbox(map_bbx)
 
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
+        assert continuous_bbox_wkt == test_bbox.wkt
+
     def test_query_nodes(self):
-        check = SeamarkCrossing()
-        gdf = check.query_nodes(engine=engine, query="SELECT *,geometry as geom FROM nodes")
+        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
+        gdf = seamark_obj.query_nodes(engine,
+                                      "SELECT *,geometry as geom FROM nodes")
 
-        # gdf = gpd.read_postgis(sql="SELECT * FROM nodes",con=engine,geom_col="geometry")
-
-        point = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
+        point = {"col1": ["name1", "name2"],
+                 "geometry": [Point(1, 2), Point(2, 1)]}
         point_df = gpd.GeoDataFrame(point)
 
         assert isinstance(gdf, gpd.GeoDataFrame)
-        # assert "SELECT * FROM openseamap.nodes" == check.query[0]
-        # assert type(check.con) == type(check.connect_database())
         assert len(gdf) > 0
         assert not gdf.empty, "GeoDataFrame is empty."
         assert isinstance(gdf, type(point_df)), "GeoDataFrame Type Error"
@@ -191,18 +185,13 @@ class TestContinuousCheck:
             assert isinstance(geom, Point), "Point Instantiation Error"
         print("point type checked")
 
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
     def test_query_ways(self):
-        check = SeamarkCrossing()
-        gdf = check.query_ways(
-            engine=engine, query="SELECT *, geometry AS geom FROM ways"
-        )
+        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
+        gdf = seamark_obj.query_ways(engine,
+                                     "SELECT *, geometry AS geom FROM ways")
 
-        line = {
-            "col1": ["name1", "name2"],
-            "geometry": [LineString([(1, 2), (3, 4)]), LineString([(2, 1), (5, 6)])],
-        }
+        line = {"col1": ["name1", "name2"],
+                "geometry": [LineString([(1, 2), (3, 4)]), LineString([(2, 1), (5, 6)])]}
         line_df = gpd.GeoDataFrame(line)
 
         assert isinstance(gdf, gpd.GeoDataFrame)
@@ -213,94 +202,47 @@ class TestContinuousCheck:
             assert isinstance(geom, LineString), "LineString Instantiation Error"
         print("Linestring type checked")
 
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
-    def test_gdf_seamark_combined_nodes(self):
-        """
-        Test for checking if gdf nodes is gdf and geometry is Point type
-        """
-        nodes_concat = SeamarkCrossing().gdf_seamark_combined_nodes(
-            engine,
-            query="SELECT *, geometry as geom FROM nodes",
-            seamark_object=["nodes"],
-            seamark_list=["separation_zone", "separation_line"],
-        )
-
-        # Create points dummy data
-        point1 = {
-            "tags": [{"seamark:type": "separation_line"}],
-            "geometry": [Point(1, 2)],
-        }
-
-        point1_df = gpd.GeoDataFrame(point1)
-        point2 = {
-            "tags": [{"seamark:type": "separation_zone"}],
-            "geometry": [Point(6, 2)],
-        }
-        point2_df = gpd.GeoDataFrame(point2)
-
-        concat_df = pd.concat([point1_df, point2_df])
-
-        assert isinstance(nodes_concat, gpd.GeoDataFrame)
-        assert not nodes_concat.empty, "GeoDataFrame is empty."
-        assert isinstance(concat_df, type(nodes_concat))
-
-        nodes_tags = [item["seamark:type"] for item in list(nodes_concat["tags"])]
-        test_tags = [item["seamark:type"] for item in list(concat_df["tags"])]
-
-        assert len(set(nodes_tags).intersection(set(test_tags))) > 0, "no intersection"
-
-        for geom in nodes_concat["geom"]:
-            assert isinstance(geom, Point), "Point Instantiation Error"
-
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
-    def test_gdf_seamark_combined_ways(self):
-        """
-        Test for checking if gdf ways is gdf and geometry is LineString type
-        """
-        lines_concat = SeamarkCrossing().gdf_seamark_combined_ways(
-            engine=engine,
-            query="SELECT *, geometry AS geom FROM ways",
-            seamark_object=["ways"],
-            seamark_list=["separation_zone", "separation_line"],
-        )
-
-        # Create linestrings dummy data
-        line1 = {
-            "tags": [{"seamark:type": "separation_line"}],
-            "geometry": [LineString([(7, 8), (5, 9)])],
-        }
-        line1_df = gpd.GeoDataFrame(line1)
-        line2 = {
-            "tags": [{"seamark:type": "separation_zone"}],
-            "geometry": [LineString([(1, 2), (3, 4)])],
-        }
-        line2_df = gpd.GeoDataFrame(line2)
-        concat_df = pd.concat([line1_df, line2_df])
-
-        assert isinstance(lines_concat, gpd.GeoDataFrame)
-        assert not lines_concat.empty, "GeoDataFrame is empty."
-        assert isinstance(concat_df, type(lines_concat))
-        lines_tags = [item["seamark:type"] for item in list(lines_concat["tags"])]
-        test_tags = [item["seamark:type"] for item in list(concat_df["tags"])]
-        assert len(set(lines_tags).intersection(set(test_tags))) > 0, "no intersection"
-        for geom in lines_concat["geom"]:
-            assert isinstance(geom, LineString), "Linestring Instantiation Error"
-
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
     def test_concat_nodes_ways(self):
         """
         Test for checking if table with  ways and nodes includes geometries (Point, LineString)
         """
-        concat_all = SeamarkCrossing().concat_nodes_ways(
+        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+            db_engine=engine)
+        concat_all = seamark_obj.concat_nodes_ways(
+            db_engine=engine,
             query=[
                 "SELECT *, geometry as geom FROM nodes",
-                "SELECT *, geometry AS geom FROM ways",
-            ],
-            engine=engine,
+                "SELECT *, geometry AS geom FROM ways"
+            ]
         )
+
+        # Create points and linestrings dummy data
+
+        point1 = {
+            "tags": [{"seamark:type": "separation_line"}],
+            "geometry": [Point(1, 2)],
+        }
+        point1_df = gpd.GeoDataFrame(point1)
+
+        line1 = {
+            "tags": [{"seamark:type": "separation_line"}, {"seamark:type": "separation_lane"}],
+            "geometry": [LineString([(7, 8), (5, 9)]), LineString([(24.6575999, 59.6085725), (24.7026512, 59.5505585)])]
+        }
+        line1_df = gpd.GeoDataFrame(line1)
+        concat_df_all = pd.concat([point1_df, line1_df])
+
+        assert isinstance(concat_all, gpd.GeoDataFrame)
+        assert not concat_all.empty, "GeoDataFrame is empty."
+        assert isinstance(concat_all, type(concat_df_all))
+        type_list = [type(geometry) for geometry in concat_all["geom"]]
+        assert set(type_list).intersection([Point, LineString]), "Geometry type error"
+
+    def test_set_STRETree(self):
+        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+            db_engine=engine)
+        test_query = ["SELECT *, geometry as geom FROM nodes",
+                      "SELECT *, geometry AS geom FROM ways"]
+        concat_tree = seamark_obj.set_STRTree(db_engine=engine, query=test_query)
 
         # Create points and linestrings dummy data
         point1 = {
@@ -310,152 +252,72 @@ class TestContinuousCheck:
         point1_df = gpd.GeoDataFrame(point1)
 
         line1 = {
-            "tags": [{"seamark:type": "separation_line"}],
-            "geometry": [LineString([(7, 8), (5, 9)])],
+            "tags": [{"seamark:type": "separation_line"},
+                     {"seamark:type": "separation_lane"}],
+            "geometry": [LineString([(7, 8), (5, 9)]), LineString(
+                [(24.6575999, 59.6085725), (24.7026512, 59.5505585)])]
         }
         line1_df = gpd.GeoDataFrame(line1)
 
         concat_df_all = pd.concat([point1_df, line1_df])
+        test_concat_tree = STRtree(concat_df_all["geometry"])
 
-        assert isinstance(concat_all, gpd.GeoDataFrame)
-        assert not concat_all.empty, "GeoDataFrame is empty."
+        assert isinstance(concat_tree, STRtree)
+        assert isinstance(concat_tree, type(test_concat_tree))
+        assert not (concat_tree.geometries.size == 0), "ndarray is empty."
 
-        assert isinstance(concat_all, type(concat_df_all))
-
-        type_list = [type(geometry) for geometry in concat_all["geom"]]
-        assert set(type_list).intersection([Point, LineString]), "Geometry type error"
-
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
-    def test_gdf_seamark_combined_nodes_ways(self):
-        """
-        Test for checking if combined gdf (nodes and ways) includes geometries (Point, LineString) and is a gdf
-        """
-
-        # gdf with nodes and linestrings
-        nodes_lines_concat = SeamarkCrossing().gdf_seamark_combined_nodes_ways(
-            engine=engine,
-            query=[
-                "SELECT *,geometry AS geom FROM nodes",
-                "SELECT *, geometry AS geom FROM ways",
-            ],
-            seamark_object=["nodes", "ways"],
-            seamark_list=["separation_zone", "separation_line"],
-        )
-
-        # creating dummy data point
-        nodes1 = {
-            "tags": [
-                {"seamark:type": "separation_line"},
-                {"seamark:type": "separation_zone"},
-                {""},
-            ],
-            "geometry": [Point(1, 2), Point(4, 7), None],
-        }
-        nodes_df = gpd.GeoDataFrame(nodes1)
-
-        ways1 = {
-            "tags": [
-                {"seamark:type": "separation_line"},
-                {"seamark:type": "separation_zone"},
-                {"seamark:type": "restricted_area"},
-                {""},
-            ],
-            "geometry": [
-                LineString([(7, 8), (5, 9)]),
-                LineString([(16, 14), (8, 13)]),
-                LineString([(2, 11), (7, 15)]),
-                None,
-            ],
-        }
-
-        ways_df = gpd.GeoDataFrame(ways1)
-
-        concat_df = pd.concat([nodes_df, ways_df])
-
-        assert isinstance(nodes_lines_concat, gpd.GeoDataFrame)
-        assert not nodes_lines_concat.empty, "GeoDataFrame is empty."
-        assert isinstance(concat_df, type(nodes_lines_concat)), "DataFrame type error"
-
-        nodes_lines_tags = [
-            item["seamark:type"] for item in list(nodes_lines_concat["tags"])
-        ]
-        test_tags = [
-            item["seamark:type"]
-            for item in concat_df["tags"]
-            if item is not None and "seamark:type" in item
-        ]
-        assert (
-                len(set(nodes_lines_tags).intersection(set(test_tags))) > 0
-        ), "no intersection"
-
-        type_list = [type(geometry) for geometry in nodes_lines_concat["geom"]]
-        assert set(type_list).intersection([Point, LineString]), "Geometry type error"
-
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
     def test_check_crossing(self):
-        """
-        Test for checking if different spatial relations (intersection, contain, touches ...) are being returned
-        """
+        lat_start = np.array((54.192091, 54.1919199, 54.1905871, 54.189601, 1))
+        lon_start = np.array((6.3732417, 6.3593333, 6.3310833, 6.3182992, 1))
+        lat_end = np.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595, 2))
+        lon_end = np.array((12.01631, 12.04631, 12.05631, 12.08631, 2))
 
-        # route = {
-        #     "tags": [{"seamark:type": "separation_line"}],
-        #     "geom": [LineString([(7, 8), (5, 9)])],
-        # }
-        # route_df = gpd.GeoDataFrame(route)
+        test_crossing_list = [True, True, True, True, False]
 
-        # 9.91950, 57.06081)],
-        # [{"seamark:type": "buoy_cardinal"}, Point(12.01631, 48.92595)],
-        # [{"seamark:type": "separation_boundary"}, Point(12.01631, 48.92595)],
-        # [{"seamark:type": "separation_crossing"}, Point(12.01631, 48.92595
+        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
+        test_query = ["SELECT *, geometry as geom FROM nodes",
+                      "SELECT *, geometry AS geom FROM ways"
+                      ]
+        concat_tree = seamark_obj.set_STRTree(db_engine=engine, query=test_query)
+        seamark_obj.concat_tree = concat_tree
 
-        lat_start = numpy.array((54.192091, 54.1919199, 54.1905871, 54.189601))
-        lon_start = numpy.array((6.3732417, 6.3593333, 6.3310833, 6.3182992))
-        lat_end = numpy.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595))
-        lon_end = numpy.array((12.01631, 12.04631, 12.05631, 12.08631))
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        check_list = SeamarkCrossing().check_crossing(
-            lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end,
-            engine=engine,
-            query=[
-                "SELECT * , geometry as geom FROM nodes",
-                "SELECT *, geometry AS geom FROM ways",
-            ],
-            seamark_object=["nodes", "ways"],
-            seamark_list=["separation_zone", "separation_line"],
-        )
+        check_list = seamark_obj.check_crossing(lat_start=lat_start, lon_start=lon_start,
+                                                lat_end=lat_end, lon_end=lon_end)
 
         for i in range(len(check_list)):
+            print(check_list[i])
             assert isinstance(check_list[i], bool)
+        assert test_crossing_list == check_list
 
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
-    def test_query_land_polygons(self):
-        gdf = LandPolygonsCrossing(Map(0, 0, 0, 0)).query_land_polygons(
-            engine=engine, query="SELECT *,geometry as geom from land_polygons")
-        print(gdf)
-        assert isinstance(gdf, gpd.GeoDataFrame)
-        assert not gdf.empty, 'empty geodataframe'
+    def test_set_landpolygon_STRTree(self):
+        landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(engine)
+        test_query = "SELECT *,geometry as geom from land_polygons"
+        landpolygon_tree = landpolygoncrossing_obj.set_landpolygon_STRTree(db_engine=engine, query=test_query)
 
-        for geom in gdf["geom"].to_list():
-            assert isinstance(geom, Polygon) or isinstance(geom, LineString) or isinstance(
-                geom, MultiPolygon), "Geometry Instantiation Error"
+        test_land_polygons_gdf = gpd.GeoDataFrame(
+            geometry=[box(0, 1, 3, 5)])
+        test_concat_tree = STRtree(test_land_polygons_gdf["geometry"])
 
-    @pytest.mark.skip(reason="Need to change with latest implementations with "
-                             "seamarks and restriction area")
+        assert isinstance(landpolygon_tree, STRtree)
+        assert isinstance(landpolygon_tree, type(test_concat_tree))
+        assert not (landpolygon_tree.geometries.size == 0), "ndarray is empty."
+
     def test_check_land_crossing(self):
-        lat_start = numpy.array((54.192091, 54.1919199, 54.1905871, 54.189601))
-        lon_start = numpy.array((6.3732417, 6.3593333, 6.3310833, 6.3182992))
-        lat_end = numpy.array((48.92595, 48.02595, 48.12595, 48.22595, 48.42595))
-        lon_end = numpy.array((12.01631, 12.04631, 12.05631, 12.08631))
-        # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
-        check_list = LandPolygonsCrossing(Map(0, 0, 0, 0)).check_crossing(
-            lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end,
-            engine=engine,
-            query="SELECT *,geometry as geom from land_polygons"
+        lat_start = np.array((47, 49.5, 48, 48, 47))
+        lon_start = np.array((4.5, 6, 7, 9, 5))
+        lat_end = np.array((52, 50.7, 50.5, 50, 50.2))
+        lon_end = np.array((4.5, 7.5, 10, 10, 5))
+        test_list = [True, True, True, False, True]
+
+        landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(
+            engine)
+        landpolygoncrossing_obj.land_polygon_STRTree = STRtree(test_land_polygons_gdf["geometry"])
+        check_list = landpolygoncrossing_obj.check_crossing(
+            lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end
         )
 
+        assert test_list == check_list
         for i in range(len(check_list)):
             assert isinstance(check_list[i], bool)
 

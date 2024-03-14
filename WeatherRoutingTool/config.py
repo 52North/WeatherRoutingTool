@@ -21,7 +21,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
     'CONSTANT_FUEL_RATE': None,
-    'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth'],
+    'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth', 'on_map'],
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
     'FACTOR_CALM_WATER': 1.0,

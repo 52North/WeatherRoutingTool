@@ -3,7 +3,8 @@ import os
 from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars
+from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
+    SeamarkCrossing, LandPolygonsCrossing
 from WeatherRoutingTool.ship.ship import Tanker
 
 
@@ -45,3 +46,13 @@ def create_dummy_Tanker_object():
 
     pol = Tanker(config)
     return pol
+
+
+def create_dummy_SeamarkCrossing_object(db_engine):
+    seamark_obj = SeamarkCrossing(db_engine=db_engine)
+    return seamark_obj
+
+
+def create_dummy_landpolygonsCrossing_object(db_engine):
+    landpolygoncrossing_obj = LandPolygonsCrossing(db_engine=db_engine)
+    return landpolygoncrossing_obj
