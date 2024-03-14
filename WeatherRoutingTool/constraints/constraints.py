@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from global_land_mask import globe
-import ast
 
 from maridatadownloader import DownloaderFactory
 import WeatherRoutingTool.utils.graphics as graphics
@@ -24,8 +23,7 @@ import geopandas as gpd
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
 
-import cProfile
-import pstats
+
 # Load the environment variables from the .env file
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
