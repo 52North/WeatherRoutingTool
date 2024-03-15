@@ -1,28 +1,25 @@
+import os
 import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import datacube
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import sqlalchemy
 import xarray as xr
 from global_land_mask import globe
-
-from maridatadownloader import DownloaderFactory
-import WeatherRoutingTool.utils.graphics as graphics
-import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.weather import WeatherCond
-
-# used as a part of the continuouscheck class ##
-import os
-import sqlalchemy
-import pandas as pd
-import geopandas as gpd
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
 
+import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.utils.formatting as form
+from maridatadownloader import DownloaderFactory
+from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather import WeatherCond
 
 # Load the environment variables from the .env file
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +27,6 @@ parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger = logging.getLogger("WRT.Constraints")
 
 
-#
 # Constraint: Main class for handling of constraints
 # PositiveConstraint: handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)
 # NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth,
