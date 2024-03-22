@@ -131,6 +131,11 @@ class Tanker(Boat):
         self.hydro_model.WaveForcesFactor = config.FACTOR_WAVE_FORCES
         self.hydro_model.CalmWaterFactor = config.FACTOR_CALM_WATER
         self.use_depth_data = True
+        # Fine-tuning the following parameters might lead to a significant speedup of mariPower. However, they should
+        # be set carefully because the accuracy of the predictions might also be affected
+        # self.hydro_model.MaxIterations = 25  # mariPower default: 10
+        # self.hydro_model.Tolerance = 0.000001  # mariPower default: 0.0
+        # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
 
     def set_ship_property(self, variable, value):
         print('Setting ship property ' + variable + ' to ' + str(value))
