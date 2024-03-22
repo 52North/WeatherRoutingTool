@@ -42,7 +42,7 @@ def create_dummy_Tanker_object():
     dirname = os.path.dirname(__file__)
     config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
     config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_FILE = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
     pol = Tanker(config)
     return pol
