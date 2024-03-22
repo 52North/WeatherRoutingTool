@@ -1,3 +1,4 @@
+# import cProfile
 from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
@@ -13,6 +14,9 @@ def merge_figures_to_gif(path, nof_figures):
 
 
 def execute_routing(config):
+    # prof = cProfile.Profile()
+    # prof.enable()
+
     # *******************************************
     # basic settings
     windfile = config.WEATHER_DATA
@@ -54,3 +58,6 @@ def execute_routing(config):
     min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
     min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
+
+    # prof.disable()
+    # prof.dump_stats('wrt_run.prof')
