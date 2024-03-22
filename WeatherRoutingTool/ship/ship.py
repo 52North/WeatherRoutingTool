@@ -120,6 +120,7 @@ class Tanker(Boat):
         self.environment_path = config.WEATHER_DATA
         self.courses_path = config.COURSES_FILE
         self.depth_path = config.DEPTH_DATA
+        self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
 
         self.hydro_model = mariPower.ship.CBT()
         self.hydro_model.Draught_AP = np.array([config.BOAT_DRAUGHT_AFT])
@@ -450,7 +451,7 @@ class Tanker(Boat):
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
             mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path,
-                                                        self.depth_path)
+                                                        self.depth_data)
         else:
             mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path)
         # form.print_current_time('time for mariPower request:', start_time)
