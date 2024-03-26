@@ -616,6 +616,27 @@ class IsoBased(RoutingAlg):
         new_rshallow = np.vstack((ship_params_single_step.get_rshallow(), self.shipparams_per_step.get_rshallow()))
         new_rroughness = np.vstack(
             (ship_params_single_step.get_rroughness(), self.shipparams_per_step.get_rroughness()))
+        new_wave_height = np.vstack((ship_params_single_step.get_wave_height(),
+                                     self.shipparams_per_step.get_wave_height()))
+        new_wave_direction = np.vstack((ship_params_single_step.get_wave_direction(),
+                                        self.shipparams_per_step.get_wave_direction()))
+        new_wave_period = np.vstack((ship_params_single_step.get_wave_period(),
+                                     self.shipparams_per_step.get_wave_period()))
+        new_u_currents = np.vstack((ship_params_single_step.get_u_currents(),
+                                    self.shipparams_per_step.get_u_currents()))
+        new_v_currents = np.vstack((ship_params_single_step.get_v_currents(),
+                                    self.shipparams_per_step.get_v_currents()))
+        new_u_wind_speed = np.vstack((ship_params_single_step.get_u_wind_speed(),
+                                      self.shipparams_per_step.get_u_wind_speed()))
+        new_v_wind_speed = np.vstack((ship_params_single_step.get_v_wind_speed(),
+                                      self.shipparams_per_step.get_v_wind_speed()))
+        new_pressure = np.vstack((ship_params_single_step.get_pressure(), self.shipparams_per_step.get_pressure()))
+        new_air_temperature = np.vstack((ship_params_single_step.get_air_temperature(),
+                                         self.shipparams_per_step.get_air_temperature()))
+        new_salinity = np.vstack((ship_params_single_step.get_salinity(),
+                                  self.shipparams_per_step.get_salinity()))
+        new_water_temperature = np.vstack((ship_params_single_step.get_water_temperature(),
+                                           self.shipparams_per_step.get_water_temperature()))
         new_status = np.vstack((ship_params_single_step.get_status(), self.shipparams_per_step.get_status()))
 
         self.shipparams_per_step.set_rpm(new_rpm)
@@ -626,6 +647,17 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_rwaves(new_rwaves)
         self.shipparams_per_step.set_rshallow(new_rshallow)
         self.shipparams_per_step.set_rroughness(new_rroughness)
+        self.shipparams_per_step.set_wave_height(new_wave_height)
+        self.shipparams_per_step.set_wave_direction(new_wave_direction)
+        self.shipparams_per_step.set_wave_period(new_wave_period)
+        self.shipparams_per_step.set_u_currents(new_u_currents)
+        self.shipparams_per_step.set_v_currents(new_v_currents)
+        self.shipparams_per_step.set_u_wind_speed(new_u_wind_speed)
+        self.shipparams_per_step.set_v_wind_speed(new_v_wind_speed)
+        self.shipparams_per_step.set_pressure(new_pressure)
+        self.shipparams_per_step.set_air_temperature(new_air_temperature)
+        self.shipparams_per_step.set_salinity(new_salinity)
+        self.shipparams_per_step.set_water_temperature(new_water_temperature)
         self.shipparams_per_step.set_status(new_status)
 
     def check_course_def(self):

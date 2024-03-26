@@ -69,6 +69,17 @@ class ConstantFuelBoat(Boat):
             r_waves=dummy_array * u.N,
             r_shallow=dummy_array * u.N,
             r_roughness=dummy_array * u.N,
+            wave_height=dummy_array * u.meter,
+            wave_direction=dummy_array * u.radian,
+            wave_period=dummy_array * u.second,
+            u_currents=dummy_array * u.meter/u.second,
+            v_currents=dummy_array * u.meter/u.second,
+            u_wind_speed=dummy_array * u.meter/u.second,
+            v_wind_speed=dummy_array * u.meter/u.second,
+            pressure=dummy_array * u.kg/u.meter/u.second**2,
+            air_temperature=dummy_array * u.deg_C,
+            salinity=dummy_array * u.dimensionless_unscaled,
+            water_temperature=dummy_array * u.deg_C,
             status=dummy_array
         )
 
@@ -402,6 +413,17 @@ class Tanker(Boat):
         r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
         r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
+        wave_height = ds['VHM0'].to_numpy().flatten() * u.meter
+        wave_direction = ds['VMDR'].to_numpy().flatten() * u.radian
+        wave_period = ds['VTPK'].to_numpy().flatten() * u.second
+        u_currents = ds['utotal'].to_numpy().flatten() * u.meter/u.second
+        v_currents = ds['vtotal'].to_numpy().flatten() * u.meter/u.second
+        u_wind_speed = ds['u-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter/u.second
+        v_wind_speed = ds['v-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter/u.second
+        pressure = ds['Pressure_reduced_to_MSL_msl'].to_numpy().flatten() * u.kg/u.meter/u.second**2
+        air_temperature = ds['Temperature_surface'].to_numpy().flatten() * u.deg_C
+        salinity = ds['so'].to_numpy().flatten() * u.dimensionless_unscaled
+        water_temperature = ds['thetao'].to_numpy().flatten() * u.deg_C
         status = ds['Status'].to_numpy().flatten()
         speed = np.repeat(self.speed, power.shape)
 
@@ -415,6 +437,17 @@ class Tanker(Boat):
             r_waves=r_waves,
             r_shallow=r_shallow,
             r_roughness=r_roughness,
+            wave_height=wave_height,
+            wave_direction=wave_direction,
+            wave_period=wave_period,
+            u_currents=u_currents,
+            v_currents=v_currents,
+            u_wind_speed=u_wind_speed,
+            v_wind_speed=v_wind_speed,
+            pressure=pressure,
+            air_temperature=air_temperature,
+            salinity=salinity,
+            water_temperature=water_temperature,
             status=status
         )
 

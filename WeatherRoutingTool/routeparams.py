@@ -146,6 +146,17 @@ class RouteParams():
                 properties['wave_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['shallow_water_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['hull_roughness_resistance'] = {'value': -99, 'unit': 'N'}
+                properties['wave_height'] = {'value': -99, 'unit': 'm'}
+                properties['wave_direction'] = {'value': -99, 'unit': 'radian'}
+                properties['wave_period'] = {'value': -99, 'unit': 's'}
+                properties['u_currents'] = {'value': -99, 'unit': 'm/s'}
+                properties['v_currents'] = {'value': -99, 'unit': 'm/s'}
+                properties['u_wind_speed'] = {'value': -99, 'unit': 'm/s'}
+                properties['v_wind_speed'] = {'value': -99, 'unit': 'm/s'}
+                properties['pressure'] = {'value': -99, 'unit': 'Pa'}
+                properties['air_temperature'] = {'value': -99, 'unit': '°C'}
+                properties['salinity'] = {'value': -99, 'unit': '-'}
+                properties['water_temperature'] = {'value': -99, 'unit': '°C'}
                 properties['status'] = {'value': -99}
             else:
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': 'm/s'}
@@ -159,12 +170,24 @@ class RouteParams():
                 properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i].value, 'unit': 'N'}
                 properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i].value, 'unit': 'N'}
                 properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i].value, 'unit': 'N'}
-                properties['shallow_water_resistance'] = {
-                    'value': self.ship_params_per_step.r_shallow[i].value,
-                    'unit': 'N'
-                }
+                properties['shallow_water_resistance'] = {'value': self.ship_params_per_step.r_shallow[i].value,
+                                                          'unit': 'N'}
                 properties['hull_roughness_resistance'] = {'value': self.ship_params_per_step.r_roughness[i].value,
                                                            'unit': 'N'}
+                properties['wave_height'] = {'value': self.ship_params_per_step.wave_height[i].value, 'unit': 'm'}
+                properties['wave_direction'] = {'value': self.ship_params_per_step.wave_direction[i].value,
+                                                'unit': 'radian'}
+                properties['wave_period'] = {'value': self.ship_params_per_step.wave_period[i].value, 'unit': 's'}
+                properties['u_currents'] = {'value': self.ship_params_per_step.u_currents[i].value, 'unit': 'm/s'}
+                properties['v_currents'] = {'value': self.ship_params_per_step.v_currents[i].value, 'unit': 'm/s'}
+                properties['u_wind_speed'] = {'value': self.ship_params_per_step.u_wind_speed[i].value, 'unit': 'm/s'}
+                properties['v_wind_speed'] = {'value': self.ship_params_per_step.v_wind_speed[i].value, 'unit': 'm/s'}
+                properties['pressure'] = {'value': self.ship_params_per_step.pressure[i].value, 'unit': 'Pa'}
+                properties['air_temperature'] = {'value': self.ship_params_per_step.air_temperature[i].value,
+                                                 'unit': '°C'}
+                properties['salinity'] = {'value': self.ship_params_per_step.salinity[i].value, 'unit': '-'}
+                properties['water_temperature'] = {'value': self.ship_params_per_step.water_temperature[i].value,
+                                                   'unit': '°C'}
                 properties['status'] = {'value': self.ship_params_per_step.status[i]}
 
             feature['type'] = 'Feature'
@@ -201,6 +224,17 @@ class RouteParams():
         r_waves = np.full(count, -99.)
         r_shallow = np.full(count, -99.)
         r_roughness = np.full(count, -99.)
+        wave_height = np.full(count, -99.)
+        wave_direction = np.full(count, -99.)
+        wave_period = np.full(count, -99.)
+        u_currents = np.full(count, -99.)
+        v_currents = np.full(count, -99.)
+        u_wind_speed = np.full(count, -99.)
+        v_wind_speed = np.full(count, -99.)
+        pressure = np.full(count, -99.)
+        air_temperature = np.full(count, -99.)
+        salinity = np.full(count, -99.)
+        water_temperature = np.full(count, -99.)
         course_per_step = np.full(count - 1, -99.)
         status = np.full(count, -99)
         fuel_type = np.full(count, "")
@@ -223,6 +257,17 @@ class RouteParams():
             r_waves[ipoint] = property['wave_resistance']['value']
             r_shallow[ipoint] = property['shallow_water_resistance']['value']
             r_roughness[ipoint] = property['hull_roughness_resistance']['value']
+            wave_height[ipoint] = property['wave_height']['value']
+            wave_direction[ipoint] = property['wave_direction']['value']
+            wave_period[ipoint] = property['wave_period']['value']
+            u_currents[ipoint] = property['u_currents']['value']
+            v_currents[ipoint] = property['v_currents']['value']
+            u_wind_speed[ipoint] = property['u_wind_speed']['value']
+            v_wind_speed[ipoint] = property['v_wind_speed']['value']
+            pressure[ipoint] = property['pressure']['value']
+            air_temperature[ipoint] = property['air_temperature']['value']
+            salinity[ipoint] = property['salinity']['value']
+            water_temperature[ipoint] = property['water_temperature']['value']
             status[ipoint] = property['status']['value']
 
         speed = speed[:-1] * u.meter/u.second
@@ -234,6 +279,17 @@ class RouteParams():
         r_waves = r_waves[:-1] * u.newton
         r_shallow = r_shallow[:-1] * u.newton
         r_roughness = r_roughness[:-1] * u.newton
+        wave_height = wave_height[:-1] * u.meter
+        wave_direction = wave_direction[:-1] * u.radian
+        wave_period = wave_period[:-1] * u.second
+        u_currents = u_currents[:-1] * u.meter/u.second
+        v_currents = v_currents[:-1] * u.meter/u.second
+        u_wind_speed = u_wind_speed[:-1] * u.meter/u.second
+        v_wind_speed = v_wind_speed[:-1] * u.meter/u.second
+        pressure = pressure[:-1] * u.kg/u.meter/u.second**2
+        air_temperature = air_temperature[:-1] * u.deg_C
+        salinity = salinity[:-1] * u.dimensionless_unscaled
+        water_temperature = water_temperature[:-1] * u.deg_C
 
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
@@ -255,6 +311,17 @@ class RouteParams():
             r_waves=r_waves,
             r_shallow=r_shallow,
             r_roughness=r_roughness,
+            wave_height=wave_height,
+            wave_direction=wave_direction,
+            wave_period=wave_period,
+            u_currents=u_currents,
+            v_currents=v_currents,
+            u_wind_speed=u_wind_speed,
+            v_wind_speed=v_wind_speed,
+            pressure=pressure,
+            air_temperature=air_temperature,
+            salinity=salinity,
+            water_temperature=water_temperature,
             status=status
         )
 
