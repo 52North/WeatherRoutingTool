@@ -49,6 +49,7 @@ class RoutingAlg:
         self.gcr_course = gcr * u.degree
 
         self.figure_path = get_figure_path()
+        plt.switch_backend("Agg")
 
     def init_fig(self, **kwargs):
         pass

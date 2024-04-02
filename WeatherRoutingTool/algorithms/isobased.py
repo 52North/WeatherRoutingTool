@@ -1168,21 +1168,20 @@ class IsoBased(RoutingAlg):
         if self.figure_path is None:
             return
         fig = self.fig
-        route_ensemble = []
         self.ax.remove()
         fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
 
-        count_routeseg = self.lats_per_step.shape[1]
+        latitudes = self.lats_per_step.copy()
+        longitudes = self.lons_per_step.copy()
 
-        for iRoute in range(0, count_routeseg):
-            route, = self.ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], color="firebrick")
-            route_ensemble.append(route)
+        latitudes_T = latitudes.T
+        longitudes_T = longitudes.T
+        # Plotting each route
+        for lat_segment, lon_segment in zip(latitudes_T, longitudes_T):
+            self.ax.plot(lon_segment, lat_segment, color="firebrick", linestyle='-', linewidth=0.6)
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
 
-        for iRoute in range(0, count_routeseg):
-            route_ensemble[iRoute].set_xdata(self.lons_per_step[:, iRoute])
-            route_ensemble[iRoute].set_ydata(self.lats_per_step[:, iRoute])
-            fig.canvas.draw()
-            fig.canvas.flush_events()
         if self.pruning_error:
             final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
