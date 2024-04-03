@@ -138,9 +138,9 @@ class RouteParams():
             if i == (self.count + 1):
                 properties['speed'] = {'value': -99, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': -99, 'unit': 'kW'}
-                properties['fuel_consumption'] = {'value': -99, 'unit': 'mt/h'}
+                properties['fuel_consumption'] = {'value': -99, 'unit': 't/h'}
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value': -99, 'unit': 'Hz'}
+                properties['propeller_revolution'] = {'value': -99, 'unit': 'rpm'}
                 properties['calm_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['wind_resistance'] = {'value': -99, 'unit': 'N'}
                 properties['wave_resistance'] = {'value': -99, 'unit': 'N'}
@@ -163,10 +163,10 @@ class RouteParams():
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
                 properties['fuel_consumption'] = {
                     'value': self.ship_params_per_step.fuel_rate[i].to(u.tonne/u.hour).value,
-                    'unit': 'mt/h'
+                    'unit': 't/h'
                 }
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
-                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i].value, 'unit': 'Hz'}
+                properties['propeller_revolution'] = {'value': self.ship_params_per_step.rpm[i].value, 'unit': 'rpm'}
                 properties['calm_resistance'] = {'value': self.ship_params_per_step.r_calm[i].value, 'unit': 'N'}
                 properties['wind_resistance'] = {'value': self.ship_params_per_step.r_wind[i].value, 'unit': 'N'}
                 properties['wave_resistance'] = {'value': self.ship_params_per_step.r_waves[i].value, 'unit': 'N'}
@@ -273,7 +273,7 @@ class RouteParams():
         speed = speed[:-1] * u.meter/u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
         fuel_rate = (fuel_rate[:-1] * u.tonne/u.hour).to(u.kg/u.second)
-        rpm = rpm[:-1] * u.Hz
+        rpm = rpm[:-1] * 1/u.minute
         r_wind = r_wind[:-1] * u.newton
         r_calm = r_calm[:-1] * u.newton
         r_waves = r_waves[:-1] * u.newton

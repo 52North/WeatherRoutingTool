@@ -405,7 +405,7 @@ class Tanker(Boat):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
         power = ds['Power_brake'].to_numpy().flatten() * u.Watt
-        rpm = ds['RotationRate'].to_numpy().flatten() * u.Hz
+        rpm = ds['RotationRate'].to_numpy().flatten() * 1/u.minute
         fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne/u.hour
         fuel = fuel.to(u.kg/u.second)
         r_wind = ds['Wind_resistance'].to_numpy().flatten() * u.newton

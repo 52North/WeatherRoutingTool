@@ -9,7 +9,7 @@ logger = logging.getLogger('WRT.ship')
 class ShipParams():
     fuel_rate: np.ndarray  # (kg/s)
     power: np.ndarray  # (W)
-    rpm: np.ndarray  # (Hz)
+    rpm: np.ndarray  # (rpm)
     speed: np.ndarray  # (m/s)
     r_calm: np.ndarray  # (N)
     r_wind: np.ndarray  # (N)
@@ -64,7 +64,7 @@ class ShipParams():
             speed=np.array([[0]]) * u.meter/u.second,
             fuel_rate=np.array([[0]]) * u.kg/u.second,
             power=np.array([[0]]) * u.Watt,
-            rpm=np.array([[0]]) * u.Hz,
+            rpm=np.array([[0]]) * 1/u.minute,
             r_calm=np.array([[0]]) * u.newton,
             r_wind=np.array([[0]]) * u.newton,
             r_waves=np.array([[0]]) * u.newton,
