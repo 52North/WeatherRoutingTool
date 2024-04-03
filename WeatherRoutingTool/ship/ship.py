@@ -488,11 +488,17 @@ class Tanker(Boat):
     def get_fuel_netCDF(self):
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
-            mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path,
-                                                        self.depth_data)
+            status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
+                mariPower_ship, self.courses_path, self.environment_path, self.depth_data)
         else:
-            mariPower.__main__.PredictPowerOrSpeedRoute(mariPower_ship, self.courses_path, self.environment_path)
+            status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
+                mariPower_ship, self.courses_path, self.environment_path)
         # form.print_current_time('time for mariPower request:', start_time)
+        # ToDo: read messages from netCDF and store them in ship_params (changes in mariPower necessary)
+        # for idx in range(0, len(status.flatten())):
+        #     if status.flatten()[idx] != 1:
+        #         logger.warning(f"{idx}: status.shape={status.shape}, status={status.flatten()[idx]}, "
+        #                        f"message={message.flatten()[idx]}")
 
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
