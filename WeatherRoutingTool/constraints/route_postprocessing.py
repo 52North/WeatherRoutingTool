@@ -8,7 +8,6 @@ from geovectorslib import geod
 from shapely.geometry import box, LineString, Point
 
 from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.config import Config
 
 
 class RoutePostprocessing:
@@ -244,7 +243,7 @@ class RoutePostprocessing:
 
     def recalculate_starttime_per_route_segment(self, final_route):
         """
-        To recalculate the new time taken for route step, first a new integer index is set
+        To recalculate the start time of the new route segments, first a new integer index is set
         to final route segments dataframe. Then, the index of first Not available Timestamp
         value is searched and start calculating the new time taken from that index to rest
         of the dataframe
@@ -259,8 +258,9 @@ class RoutePostprocessing:
 
     def calculate_timsestamp(self, final_route, route_index, speed):
         """
-        Calculate the new time taken using time = distance * ship speed
-        and then added the new time taken into previous timestamp
+        Calculate the time taken using time = distance / ship speed of the previous
+        route segment and then added the new time taken into previous timestamp to
+        get the new start time
         """
         previous_step_index = route_index - 1
         previous_timestamp = final_route.loc[(previous_step_index), 'timestamp']
