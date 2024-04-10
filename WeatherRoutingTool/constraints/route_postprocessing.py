@@ -8,6 +8,7 @@ from geovectorslib import geod
 from shapely.geometry import box, LineString, Point
 
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.config import Config
 
 
 class RoutePostprocessing:
@@ -18,11 +19,14 @@ class RoutePostprocessing:
     route: RouteParams
     lats_per_step: list
     lons_per_step: list
-    start_time_per_step: list
+    starttime_per_step: list
+    ship_speed: float
 
-    def __init__(self, min_fuel_route=None):
+    def __init__(self, min_fuel_route=None, boat_speed=None):
         self.route = min_fuel_route
+        self.ship_speed = boat_speed
         self.set_data(self.route)
+
         self.host = os.getenv("WRT_DB_HOST")
         self.database = os.getenv("WRT_DB_DATABASE")
         self.user = os.getenv("WRT_DB_USERNAME")
@@ -36,7 +40,7 @@ class RoutePostprocessing:
     def set_data(self, route):
         self.lats_per_step = route.lats_per_step
         self.lons_per_step = route.lons_per_step
-        self.time_per_step = route.starttime_per_step
+        self.starttime_per_step = route.starttime_per_step
 
     def post_process_route(self, engine):
         route_bbx = self.get_route_bbox()
@@ -56,8 +60,7 @@ class RoutePostprocessing:
 
             final_route = self.connect_route_segments(first_route_seg_gdf, separation_lane_gdf,
                                                       last_route_seg_gdf)
-            recalculate_time_per_route_segment = self.recalculate_time_per_route_segment(final_route,
-                                                                                         first_route_seg_gdf)
+            recalculate_starttime_per_route_segment = self.recalculate_starttime_per_route_segment(final_route)
 
             # return postprocess routes to Maripower
 
@@ -77,7 +80,7 @@ class RoutePostprocessing:
             segment = LineString([(self.lons_per_step[i], self.lats_per_step[i]),
                                   (self.lons_per_step[i + 1], self.lats_per_step[i + 1])])
             route_segments.append(segment)
-            timestamp.append(self.time_per_step[i+1])
+            timestamp.append(self.starttime_per_step[i])
 
         # Add LineString segments to a new GeoDataFrame
         route_segments_gdf = gpd.GeoDataFrame({'timestamp': timestamp}, geometry=route_segments, crs="EPSG:4326")
@@ -239,33 +242,29 @@ class RoutePostprocessing:
         first_connecting_seg = LineString([last_node_of_separation_lane, first_node_of_last_route_seg])
         return first_connecting_seg
 
-    def recalculate_time_per_route_segment(self, final_route, first_route_seg_gdf):
+    def recalculate_starttime_per_route_segment(self, final_route):
         """
         To recalculate the new time taken for route step, first a new integer index is set
         to final route segments dataframe. Then, the index of first Not available Timestamp
         value is searched and start calculating the new time taken from that index to rest
         of the dataframe
         """
-
-        # ToDo: Update the boat speed dynamically
-        speed = 6
         final_route_index = pd.RangeIndex(start=0, stop=final_route.shape[0], step=1)
         final_route.set_index(final_route_index, inplace=True)
-        NaT_timestamp = pd.isna(final_route['timestamp'])
-        first_NaT_index = NaT_timestamp[NaT_timestamp].index[0]
-        array_len = len(NaT_timestamp)
+        NaT_timestamp_array = pd.isna(final_route['timestamp'])
+        first_NaT_index = NaT_timestamp_array[NaT_timestamp_array].index[0]
+        array_len = len(NaT_timestamp_array)
         for index in range(first_NaT_index, array_len):
-            self.calculate_timsestamp(final_route, index, speed)
-
-        print(final_route)
+            self.calculate_timsestamp(final_route, index, self.ship_speed)
 
     def calculate_timsestamp(self, final_route, route_index, speed):
         """
         Calculate the new time taken using time = distance * ship speed
         and then added the new time taken into previous timestamp
         """
-        previous_timestamp = final_route.loc[(route_index - 1), 'timestamp']
-        line_geom = final_route.loc[route_index, 'geometry']
+        previous_step_index = route_index - 1
+        previous_timestamp = final_route.loc[(previous_step_index), 'timestamp']
+        line_geom = final_route.loc[previous_step_index, 'geometry']
         x, y = line_geom.xy
         len_x_array = len(x)
 
@@ -276,12 +275,11 @@ class RoutePostprocessing:
 
         total_distance = 0.0
         for node_index in range(len_x_array-1):
-            gcd = geod.inverse([x[node_index]], [y[node_index]], [x[node_index+1]], [y[node_index+1]])
+            gcd = geod.inverse([y[node_index]], [x[node_index]], [y[node_index+1]], [x[node_index+1]])
             dist = gcd['s12']
             total_distance += dist[0]
 
-        time_taken_for_current_step = speed * total_distance
-
+        time_taken_for_current_step = total_distance / speed
         current_timestamp = previous_timestamp + timedelta(
             seconds=int(time_taken_for_current_step))
 
