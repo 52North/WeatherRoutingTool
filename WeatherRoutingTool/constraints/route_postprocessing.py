@@ -130,7 +130,8 @@ class RoutePostprocessing:
                 # they are exact only when there's a right angle. All of the DE-9IM predicates like 'intersects'
                 # requires exact node. Therefore, 2 strategies can be applied in this scenario. Setting a buffer
                 # or test the distance between the geometries.
-                EPS = 1e-15
+                # Tolerance: 1° is approx 110km. Hence, 10^-12 of 110 km is 110 picometers.
+                EPS = 1e-12
                 dist = intersecting_point.geometry.distance(seg.geometry) < EPS
                 if dist:
                     intersected_route_indices_list.append(index_seg)
