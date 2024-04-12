@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import geopandas as gpd
 import pandas as pd
@@ -59,7 +59,7 @@ class RoutePostprocessing:
 
             final_route = self.connect_route_segments(first_route_seg_gdf, separation_lane_gdf,
                                                       last_route_seg_gdf)
-            recalculate_starttime_per_route_segment = self.recalculate_starttime_per_route_segment(final_route)
+            self.recalculate_starttime_per_node(final_route)
 
             # return postprocess routes to Maripower
 
@@ -241,46 +241,54 @@ class RoutePostprocessing:
         first_connecting_seg = LineString([last_node_of_separation_lane, first_node_of_last_route_seg])
         return first_connecting_seg
 
-    def recalculate_starttime_per_route_segment(self, final_route):
+    def recalculate_starttime_per_node(self, final_route):
         """
         To recalculate the start time of the new route segments, first a new integer index is set
         to final route segments dataframe. Then, the index of first Not available Timestamp
         value is searched and start calculating the new time taken from that index to rest
         of the dataframe
         """
-        final_route_index = pd.RangeIndex(start=0, stop=final_route.shape[0], step=1)
-        final_route.set_index(final_route_index, inplace=True)
-        NaT_timestamp_array = pd.isna(final_route['timestamp'])
-        first_NaT_index = NaT_timestamp_array[NaT_timestamp_array].index[0]
-        array_len = len(NaT_timestamp_array)
-        for index in range(first_NaT_index, array_len):
-            self.calculate_timsestamp(final_route, index, self.ship_speed)
+        self.lats_per_step = []
+        self.lons_per_step = []
+        self.starttime_per_step = []
 
-    def calculate_timsestamp(self, final_route, route_index, speed):
+        for index, route_segment in final_route.iterrows():
+            line = route_segment['geometry']
+
+            for point in line.coords:
+                self.lons_per_step.append(point[0])
+                self.lats_per_step.append(point[1])
+
+            if index < len(final_route) - 1:
+                # Check if the end point of the current LineString is the same as the start point of the next LineString
+                if line.coords[-1] == final_route['geometry'].iloc[index + 1].coords[0]:
+                    # If they match, remove the duplicate node
+                    self.lons_per_step.pop()
+                    self.lats_per_step.pop()
+
+        start_time = final_route.loc[0, 'timestamp']
+
+        self.starttime_per_step.append(start_time)
+        array_len = len(self.lons_per_step)
+
+        first_index = 1
+        for index in range(first_index, array_len):
+            current_timestamp = self.calculate_timsestamp(self.lats_per_step, self.lons_per_step,
+                                                          self.starttime_per_step, index, self.ship_speed)
+            self.starttime_per_step.append(current_timestamp)
+
+    def calculate_timsestamp(self, lat, lon, starttime, node_index, speed):
         """
         Calculate the time taken using time = distance / ship speed of the previous
         route segment and then added the new time taken into previous timestamp to
         get the new start time
         """
-        previous_step_index = route_index - 1
-        previous_timestamp = final_route.loc[(previous_step_index), 'timestamp']
-        line_geom = final_route.loc[previous_step_index, 'geometry']
-        x, y = line_geom.xy
-        len_x_array = len(x)
+        previous_step_index = node_index - 1
+        previous_timestamp = starttime[previous_step_index]
+        gcd = geod.inverse([lat[previous_step_index]], [lon[previous_step_index]],
+                           [lat[node_index]], [lon[node_index]])
+        dist = gcd['s12']
+        time_taken_for_current_step = dist[0] / speed
+        current_timestamp = previous_timestamp + timedelta(seconds=int(time_taken_for_current_step))
 
-        # Calculating total distance is important, as speration lanes are having
-        # multipoint LineString. Hence, it as always calculated the distance between two
-        # nodes and keep iterating over consecutive nodes instead of getting the
-        # the distance between first and last node of the LineString
-
-        total_distance = 0.0
-        for node_index in range(len_x_array-1):
-            gcd = geod.inverse([y[node_index]], [x[node_index]], [y[node_index+1]], [x[node_index+1]])
-            dist = gcd['s12']
-            total_distance += dist[0]
-
-        time_taken_for_current_step = total_distance / speed
-        current_timestamp = previous_timestamp + timedelta(
-            seconds=int(time_taken_for_current_step))
-
-        final_route.loc[(route_index), 'timestamp'] = current_timestamp
+        return current_timestamp
