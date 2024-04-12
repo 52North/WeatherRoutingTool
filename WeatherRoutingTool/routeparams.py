@@ -158,6 +158,7 @@ class RouteParams():
                 properties['salinity'] = {'value': -99, 'unit': '-'}
                 properties['water_temperature'] = {'value': -99, 'unit': '°C'}
                 properties['status'] = {'value': -99}
+                properties['message'] = {'value': ""}
             else:
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
@@ -189,6 +190,7 @@ class RouteParams():
                 properties['water_temperature'] = {'value': self.ship_params_per_step.water_temperature[i].value,
                                                    'unit': '°C'}
                 properties['status'] = {'value': self.ship_params_per_step.status[i]}
+                properties['message'] = {'value': self.ship_params_per_step.message[i]}
 
             feature['type'] = 'Feature'
             feature['geometry'] = geometry
@@ -237,6 +239,7 @@ class RouteParams():
         water_temperature = np.full(count, -99.)
         course_per_step = np.full(count - 1, -99.)
         status = np.full(count, -99)
+        message = np.full(count, "")
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
@@ -269,6 +272,7 @@ class RouteParams():
             salinity[ipoint] = property['salinity']['value']
             water_temperature[ipoint] = property['water_temperature']['value']
             status[ipoint] = property['status']['value']
+            message[ipoint] = property['message']['value']
 
         speed = speed[:-1] * u.meter/u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
@@ -322,7 +326,8 @@ class RouteParams():
             air_temperature=air_temperature,
             salinity=salinity,
             water_temperature=water_temperature,
-            status=status
+            status=status,
+            message=message
         )
 
         return cls(count=count, start=start, finish=finish, gcr=gcr, route_type=route_type, time=time,

@@ -638,6 +638,7 @@ class IsoBased(RoutingAlg):
         new_water_temperature = np.vstack((ship_params_single_step.get_water_temperature(),
                                            self.shipparams_per_step.get_water_temperature()))
         new_status = np.vstack((ship_params_single_step.get_status(), self.shipparams_per_step.get_status()))
+        new_message = np.vstack((ship_params_single_step.get_message(), self.shipparams_per_step.get_message()))
 
         self.shipparams_per_step.set_rpm(new_rpm)
         self.shipparams_per_step.set_power(new_power)
@@ -659,6 +660,7 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_salinity(new_salinity)
         self.shipparams_per_step.set_water_temperature(new_water_temperature)
         self.shipparams_per_step.set_status(new_status)
+        self.shipparams_per_step.set_message(new_message)
 
     def check_course_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (

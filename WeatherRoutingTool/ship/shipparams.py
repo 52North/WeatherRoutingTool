@@ -28,12 +28,13 @@ class ShipParams():
     salinity: np.ndarray  # dimensionless (kg/kg)
     water_temperature: np.ndarray  # °C
     status: np.array
+    message: np.ndarray
 
     fuel_type: str
 
     def __init__(self, fuel_rate, power, rpm, speed, r_calm, r_wind, r_waves, r_shallow, r_roughness, wave_height,
                  wave_direction, wave_period, u_currents, v_currents, u_wind_speed, v_wind_speed, pressure,
-                 air_temperature, salinity, water_temperature, status):
+                 air_temperature, salinity, water_temperature, status, message):
         self.fuel_rate = fuel_rate
         self.power = power
         self.rpm = rpm
@@ -55,6 +56,7 @@ class ShipParams():
         self.salinity = salinity
         self.water_temperature = water_temperature
         self.status = status
+        self.message = message
 
         self.fuel_type = 'HFO'
 
@@ -81,7 +83,8 @@ class ShipParams():
             air_temperature=np.array([[0]]) * u.deg_C,
             salinity=np.array([[0]]) * u.dimensionless_unscaled,
             water_temperature=np.array([[0]]) * u.deg_C,
-            status=np.array([[0]])
+            status=np.array([[0]]),
+            message=np.array([[""]])
         )
 
     @classmethod
@@ -106,7 +109,8 @@ class ShipParams():
                    air_temperature=np.full(shape=ncoorinate_points, fill_value=0),
                    salinity=np.full(shape=ncoorinate_points, fill_value=0),
                    water_temperature=np.full(shape=ncoorinate_points, fill_value=0),
-                   status=np.full(shape=ncoorinate_points, fill_value=0))
+                   status=np.full(shape=ncoorinate_points, fill_value=0),
+                   message=np.full(shape=ncoorinate_points, fill_value=""))
 
     def print(self):
         logger.info('fuel_rate: ' + str(self.fuel_rate.value) + ' ' + self.fuel_rate.unit.to_string())
@@ -131,6 +135,7 @@ class ShipParams():
         logger.info('water_temperature: ' + str(self.water_temperature.value) + ' ' +
                     self.water_temperature.unit.to_string())
         logger.info('status', self.status)
+        logger.info('message', self.message)
         logger.info('fuel_type: ' + str(self.fuel_type))
 
     def print_shape(self):
@@ -155,6 +160,7 @@ class ShipParams():
         logger.info('salinity: ', self.salinity.shape)
         logger.info('water_temperature: ', self.water_temperature.shape)
         logger.info('status', self.status)
+        logger.info('message', self.message)
 
     def define_courses(self, courses_segments):
         self.speed = np.repeat(self.speed, courses_segments + 1, axis=1)
@@ -178,6 +184,7 @@ class ShipParams():
         self.salinity = np.repeat(self.salinity, courses_segments + 1, axis=1)
         self.water_temperature = np.repeat(self.water_temperature, courses_segments + 1, axis=1)
         self.status = np.repeat(self.status, courses_segments + 1, axis=1)
+        self.message = np.repeat(self.message, courses_segments + 1, axis=1)
 
     def get_power(self):
         return self.power
@@ -245,6 +252,9 @@ class ShipParams():
     def get_status(self):
         return self.status
 
+    def get_message(self):
+        return self.message
+
     def set_speed(self, new_speed):
         self.speed = new_speed
 
@@ -308,6 +318,9 @@ class ShipParams():
     def set_status(self, new_status):
         self.status = new_status
 
+    def set_message(self, new_message):
+        self.message = new_message
+
     def select(self, idxs):
         self.speed = self.speed[:, idxs]
         self.fuel_rate = self.fuel_rate[:, idxs]
@@ -330,6 +343,7 @@ class ShipParams():
         self.salinity = self.salinity[:, idxs]
         self.water_temperature = self.water_temperature[:, idxs]
         self.status = self.status[:, idxs]
+        self.message = self.message[:, idxs]
 
     def flip(self):
         # should be replaced by more careful implementation
@@ -354,6 +368,7 @@ class ShipParams():
         self.salinity = self.salinity[:-1]
         self.water_temperature = self.water_temperature[:-1]
         self.status = self.status[:-1]
+        self.message = self.message[:-1]
 
         self.speed = np.flip(self.speed, 0)
         self.fuel_rate = np.flip(self.fuel_rate, 0)
@@ -376,6 +391,7 @@ class ShipParams():
         self.salinity = np.flip(self.salinity, 0)
         self.water_temperature = np.flip(self.water_temperature, 0)
         self.status = np.flip(self.status, 0)
+        self.message = np.flip(self.message, 0)
 
         self.speed = np.append(self.speed, -99 * self.speed.unit)
         self.fuel_rate = np.append(self.fuel_rate, -99 * self.fuel_rate.unit)
@@ -398,6 +414,7 @@ class ShipParams():
         self.salinity = np.append(self.salinity, -99 * self.salinity.unit)
         self.water_temperature = np.append(self.water_temperature, -99 * self.water_temperature.unit)
         self.status = np.append(self.status, -99)
+        self.message = np.append(self.message, "")
 
     def expand_axis_for_intermediate(self):
         self.speed = np.expand_dims(self.speed, axis=1)
@@ -421,6 +438,7 @@ class ShipParams():
         self.salinity = np.expand_dims(self.salinity, axis=1)
         self.water_temperature = np.expand_dims(self.water_temperature, axis=1)
         self.status = np.expand_dims(self.status, axis=1)
+        self.message = np.expand_dims(self.message, axis=1)
 
     def get_element(self, idx):
         try:
@@ -445,12 +463,13 @@ class ShipParams():
             salinity = self.salinity[idx]
             water_temperature = self.water_temperature[idx]
             status = self.status[idx]
+            message = self.message[idx]
         except ValueError:
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
         return (fuel_rate, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness, wave_height,
                 wave_direction, wave_period, u_currents, v_currents, u_wind_speed, v_wind_speed, v_wind_speed, pressure,
-                air_temperature, salinity, water_temperature, status)
+                air_temperature, salinity, water_temperature, status, message)
 
     def get_single_object(self, idx):
         # ToDo: reuse get_element here
@@ -476,6 +495,7 @@ class ShipParams():
             salinity = self.salinity[idx]
             water_temperature = self.water_temperature[idx]
             status = self.status[idx]
+            message = self.message[idx]
 
         except ValueError:
             raise ValueError(
@@ -502,7 +522,8 @@ class ShipParams():
             air_temperature=air_temperature,
             salinity=salinity,
             water_temperature=water_temperature,
-            status=status
+            status=status,
+            message=message
         )
         return sp
 
@@ -531,6 +552,7 @@ class ShipParams():
                 salinity = self.salinity[row_start:row_end, col_start:col_end]
                 water_temperature = self.water_temperature[row_start:row_end, col_start:col_end]
                 status = self.status[row_start:row_end, col_start:col_end]
+                message = self.message[row_start:row_end, col_start:col_end]
             else:
                 speed = self.speed[:, idxs]
                 fuel_rate = self.fuel_rate[:, idxs]
@@ -553,6 +575,7 @@ class ShipParams():
                 salinity = self.salinity[:, idxs]
                 water_temperature = self.water_temperature[:, idxs]
                 status = self.status[:, idxs]
+                message = self.message[:, idxs]
         except ValueError:
             raise ValueError(
                 'Index ' + str(col_start) + ' is not available for array with length ' + str(self.speed.shape[0]))
@@ -578,6 +601,7 @@ class ShipParams():
             air_temperature=air_temperature,
             salinity=salinity,
             water_temperature=water_temperature,
-            status=status
+            status=status,
+            message=message
         )
         return sp

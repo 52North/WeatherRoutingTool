@@ -80,7 +80,8 @@ class ConstantFuelBoat(Boat):
             air_temperature=dummy_array * u.deg_C,
             salinity=dummy_array * u.dimensionless_unscaled,
             water_temperature=dummy_array * u.deg_C,
-            status=dummy_array
+            status=dummy_array,
+            message=np.full(n_requests, "")
         )
 
         if (debug):
@@ -425,6 +426,7 @@ class Tanker(Boat):
         salinity = ds['so'].to_numpy().flatten() * u.dimensionless_unscaled
         water_temperature = ds['thetao'].to_numpy().flatten() * u.deg_C
         status = ds['Status'].to_numpy().flatten()
+        message = ds['Message'].to_numpy().flatten()
         speed = np.repeat(self.speed, power.shape)
 
         ship_params = ShipParams(
@@ -448,7 +450,8 @@ class Tanker(Boat):
             air_temperature=air_temperature,
             salinity=salinity,
             water_temperature=water_temperature,
-            status=status
+            status=status,
+            message=message
         )
 
         if (debug):
