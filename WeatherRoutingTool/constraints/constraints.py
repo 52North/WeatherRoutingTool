@@ -178,8 +178,8 @@ class ConstraintsListFactory:
             constraints_list.add_neg_constraint(water_depth)
 
         if 'status_error' in constraints_string_list:
-            coursesfile = kwargs.get('coursesfile')
-            status_error = StatusCodeError(coursesfile)
+            courses_path = kwargs.get('courses_path')
+            status_error = StatusCodeError(courses_path)
             constraints_list.add_neg_constraint(status_error, 'continuous')
 
         if 'on_map' in constraints_string_list:
@@ -296,7 +296,7 @@ class ConstraintsList:
     def get_current_start(self):
         start_lat = self.positive_point_dict["lat"][self.current_positive]
         start_lon = self.positive_point_dict["lon"][self.current_positive]
-        return (start_lat, start_lon)
+        return start_lat, start_lon
 
     def shall_I_pass(self, lat, lon, time):
         is_constrained = [False for i in range(0, lat.shape[1])]
@@ -311,28 +311,24 @@ class ConstraintsList:
     def split_route(self):
         pass
 
-    ##
-    # Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops
-    # over all Constraints added to the ConstraintList
     def safe_endpoint(self, lat, lon, current_time, is_constrained):
-        debug = False
-
+        """
+        Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops
+        over all Constraints added to the ConstraintList
+        :param lat:
+        :param lon:
+        :param current_time:
+        :param is_constrained:
+        :return:
+        """
         for iConst in range(0, self.neg_dis_size):
             is_constrained_temp = self.negative_constraints_discrete[iConst].constraint_on_point(lat, lon, current_time)
             if is_constrained_temp.any():
                 self.constraints_crossed.append(self.negative_constraints_discrete[iConst].message)
-            # ToDo: use logger.debug and args.debug
-            if debug:
-                print("is_constrained_temp: ", is_constrained_temp)
-                print("is_constrained: ", is_constrained)  # form.print_current_time('constraint execution', start_time)
-
             is_constrained += is_constrained_temp
-        # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
     def safe_crossing(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
-        debug = False
-
         is_constrained_discrete = is_constrained
         is_constrained_continuous = is_constrained
         is_constrained_discrete = self.safe_crossing_discrete(lat_start, lon_start, lat_end, lon_end, current_time,
@@ -340,43 +336,38 @@ class ConstraintsList:
         is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end,
                                                                   is_constrained)
 
-        # TO NBE UPDATED
+        # TO BE UPDATED
         is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) \
                                                         | np.array(is_constrained_continuous)
         is_constrained = is_constrained_array.tolist()
-
-        if debug:
-            print('is_constrained_discrete', is_constrained_discrete)
-            print('is_constrained_continuous', is_constrained_continuous)
-            print('is_constrained', is_constrained)
-
         return is_constrained
 
     def safe_crossing_continuous(self, lat_start, lon_start, lat_end, lon_end, is_constrained):
-        debug = False
         is_constrained = np.array(is_constrained)
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('Entering continuous checks')
-            print('Length of latitudes: ' + str(len(lat_start)))
+        logger.debug('Entering continuous checks')
+        logger.debug('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end)
             is_constrained = np.array(is_constrained) | np.array(is_constrained_temp)
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('is_constrained_final: ', is_constrained)
         return is_constrained.tolist()
 
-    ##
-    # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
-    # (lat_end, lon_end).
-    # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and
-    # loops through all these steps
-    # calling ConstraintList.safe_endpoint()
     def safe_crossing_discrete(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
+        """
+        Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
+        (lat_end, lon_end).
+        To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and
+        loops through all these steps calling ConstraintList.safe_endpoint()
+        :param lat_start:
+        :param lon_start:
+        :param lat_end:
+        :param lon_end:
+        :param current_time:
+        :param is_constrained:
+        :return:
+        """
         debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
@@ -458,30 +449,34 @@ class LandCrossing(NegativeContraint):
 
 
 class StatusCodeError(NegativeContraint):
-    status: np.ndarray
-    courses_file: str
+    """
+    Negative constraint for points where mariPower returns a status code of 3 (=error).
+    FIXME: currently, this constraint is added as 'continuous' constraint, but a 'discrete' constraint would
+        be more suitable/intuitive. However, this cannot be used at the moment because discrete constraints are checked
+        on intermediate points between two consecutive routing points and the status code is not available for these.
+    """
+    courses_path: str
 
-    def __init__(self, coursesfile):
+    def __init__(self, courses_path):
         NegativeContraint.__init__(self, 'StatusErrorCode')
-        self.message += 'routes have error status! '
-        self.courses_file = coursesfile
+        self.message = 'At least one point discarded as routes have error status! '
+        self.courses_path = courses_path
 
-    def load_data_from_file(self, coursesfile):
-        routeData = xr.open_dataset(coursesfile)
+    def load_data_from_file(self, courses_path):
+        routeData = xr.open_dataset(courses_path)
         status = routeData['Status'].to_numpy().flatten()
-
-        return status
+        lats = np.repeat(routeData.lat.values, len(routeData.it_course))
+        lons = np.repeat(routeData.lon.values, len(routeData.it_course))
+        routeData.close()
+        return status, lats, lons
 
     def check_crossing(self, lat_start=None, lon_start=None, lat_end=None, lon_end=None, current_time=None):
-        debug = False
-
-        self.status = self.load_data_from_file(self.courses_file)
-        if debug:
-            print('status', self.status)
-            self.status[3:20] = 1
-
+        status, lats_netcdf, lon_netcdf = self.load_data_from_file(self.courses_path)
+        # Double-check coordinates
+        assert (lats_netcdf == lat_start).all()
+        assert (lon_netcdf == lon_start).all()
         # status error = 3, warning = 2, OK = 1
-        is_status_error = (self.status == 3)
+        is_status_error = (status == 3)
         return is_status_error
 
 
@@ -589,9 +584,9 @@ class WaterDepth(NegativeContraint):
 
     def constraint_on_point(self, lat, lon, time):
         self.check_depth(lat, lon, time)
-        returnvalue = self.current_depth > -self.min_depth
+        return_value = self.current_depth > -self.min_depth
         # form.print_step('current_depth:' + str(self.current_depth), 1)
-        return returnvalue
+        return return_value
 
     def check_depth(self, lat, lon, time):
         lat_da = xr.DataArray(lat, dims="dummy")
