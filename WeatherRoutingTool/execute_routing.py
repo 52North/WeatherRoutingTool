@@ -60,9 +60,10 @@ def execute_routing(config):
     # min_fuel_route.print_route()
     min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
-    postprocess_route = RoutePostprocessing(min_fuel_route, config.BOAT_SPEED)
-    # postprocess_route.return_route_to_API
-    # (routepath + '/' + str(postprocess_route.route_type)+ '_postprocessed' + ".json")
-
+    if config.ROUTE_POSTPROCESSING:
+        postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
+        min_fuel_route_postprocessed = postprocessed_route.post_process_route()
+        min_fuel_route_postprocessed.return_route_to_API(routepath + '/' + str(min_fuel_route_postprocessed.route_type)
+                                                         + '_postprocessed' + ".json")
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')
