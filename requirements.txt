@@ -11,8 +11,8 @@ icecream
 lxml
 git+https://github.com/52North/maridatadownloader
 matplotlib
-netcdf4==1.5.8
-numpy==1.26
+netcdf4
+numpy
 pandas
 Pillow
 pymoo>=0.6.1
