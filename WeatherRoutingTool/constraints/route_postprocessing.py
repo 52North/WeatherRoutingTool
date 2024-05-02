@@ -29,16 +29,19 @@ class RoutePostprocessing:
     ship_speed: list
     boat: Boat
 
-    def __init__(self, min_fuel_route, boat):
+    def __init__(self, min_fuel_route, boat, db_engine=None):
         self.set_data(min_fuel_route, boat)
 
-        self.host = os.getenv("WRT_DB_HOST")
-        self.database = os.getenv("WRT_DB_DATABASE")
-        self.user = os.getenv("WRT_DB_USERNAME")
-        self.password = os.getenv("WRT_DB_PASSWORD")
-        self.schema = os.getenv("POSTGRES_SCHEMA")
-        self.port = os.getenv("WRT_DB_PORT")
-        self.engine = self.connect_database()
+        if db_engine is not None:
+            self.engine = db_engine
+        else:
+            self.host = os.getenv("WRT_DB_HOST")
+            self.database = os.getenv("WRT_DB_DATABASE")
+            self.user = os.getenv("WRT_DB_USERNAME")
+            self.password = os.getenv("WRT_DB_PASSWORD")
+            self.schema = os.getenv("POSTGRES_SCHEMA")
+            self.port = os.getenv("WRT_DB_PORT")
+            self.engine = self.connect_database()
 
     def set_data(self, route, boat):
         self.route = route
@@ -58,7 +61,8 @@ class RoutePostprocessing:
         no_of_intersections = len(intersecting_route_node_list)
 
         if no_of_intersections:
-            if self.is_start_or_finish_node_in_seamark(route_segments_gdf, seamark_gdf):
+            if self.is_start_or_finish_node_in_separation_zone(
+                    route_segments_gdf, seamark_gdf):
                 route_postprocessed = self.route
                 return route_postprocessed
 
@@ -173,7 +177,7 @@ class RoutePostprocessing:
 
         return intersected_route_indices_list
 
-    def is_start_or_finish_node_in_seamark(self, route_segments_gdf, seamark_gdf):
+    def is_start_or_finish_node_in_separation_zone(self, route_segments_gdf, seamark_gdf):
         """
         Find whether seamark TSS objects contains the starting or ending node of the
         route. If contains, the route is not forwarded for postprocessing
