@@ -47,7 +47,7 @@ def execute_routing(config):
         constraints_string_list=config.CONSTRAINTS_LIST, data_mode=config.DATA_MODE,
         min_depth=max_draught + config.UNDER_KEEL_CLEARANCE,
         map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS,
-        coursesfile=config.COURSES_FILE)
+        courses_path=config.COURSES_FILE)
 
     # *******************************************
     # initialise route

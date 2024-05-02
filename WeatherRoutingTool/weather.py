@@ -209,7 +209,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
         par_CMEMS_wave = ["VMDR", "VHM0", "VTPK"]
         sel_dict_CMEMS_wave = {'time': slice(time_min, time_max), 'latitude': slice(lat_min, lat_max),
                                'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_wave = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
+        downloader_cmems_wave = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
                                                                  product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
                                                                  product_type='nrt', username=cmems_username,
                                                                  password=cmems_password)
@@ -219,7 +219,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
         par_CMEMS_phys = ["thetao", "so"]
         sel_dict_CMEMS_phys = {'time': slice(time_min_CMEMS_phys, time_max_CMEMS_phys, 3),
                                'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_phys = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
+        downloader_cmems_phys = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
                                                                  product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
                                                                  product_type='nrt', username=cmems_username,
                                                                  password=cmems_password)
@@ -229,7 +229,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
         par_CMEMS_curr = ["vtotal", "utotal"]
         sel_dict_CMEMS_curr = {'time': slice(time_min_CMEMS_phys, time_max_CMEMS_phys, 3),
                                'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_curr = DownloaderFactory.get_downloader(downloader_type='opendap', platform='cmems',
+        downloader_cmems_curr = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
                                                                  product='cmems_mod_glo_phy_anfc_merged-uv_PT1H-i',
                                                                  product_type='nrt', username=cmems_username,
                                                                  password=cmems_password)

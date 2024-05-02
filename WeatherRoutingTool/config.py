@@ -132,7 +132,7 @@ class Config:
 
     def print(self):
         # ToDo: prettify output
-        logger.info(self.__dict__)
+        logger.info(f"Config variables: \n{json.dumps(self.__dict__, indent=4)}")
 
     def read_from_dict(self, config_dict):
         self._set_mandatory_config(config_dict)
