@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 from datetime import datetime, timedelta
 
@@ -83,11 +84,35 @@ class RoutePostprocessing:
                                                           last_route_seg_gdf, route_segments_gdf)
             else:
                 last_node_of_first_route_seg = self.find_last_node_of_route_seg(first_route_seg_gdf)
-                separation_lane_gdf = self.find_seperation_lane_to_follow(last_node_of_first_route_seg,
-                                                                          separation_lanes_data_gdf)
+                first_node_of_last_route_seg = self.find_first_node_of_route_seg(last_route_seg_gdf)
+                is_valid_90_crossing, separation_lane_segment = self.check_valid_crossing(separation_lanes_data_gdf,
+                                                                                          last_node_of_first_route_seg,
+                                                                                          first_node_of_last_route_seg)
+                if is_valid_90_crossing:
+                    x_point_on_lane, y_point_on_lane = self.find_point_from_perpendicular_angle(
+                                                            last_node_of_first_route_seg, separation_lane_segment)
+                    perpendicular_line_segment = LineString([last_node_of_first_route_seg,
+                                                             (x_point_on_lane, y_point_on_lane)])
+                    end_node_x, end_node_y = self.find_point_from_perpendicular_angle(first_node_of_last_route_seg,
+                                                                                      perpendicular_line_segment)
+                    extended_line = LineString([last_node_of_first_route_seg, (x_point_on_lane, y_point_on_lane),
+                                                (end_node_x, end_node_y)])
+                    extended_line_gdf = gpd.GeoDataFrame(crs='epsg:4326', geometry=[extended_line])
+                    extended_line_gdf.rename_geometry('geom', inplace=True)
+                    connecting_line = self.create_last_connecting_line(last_route_seg_gdf,
+                                                                       extended_line_gdf.iloc[0])
+                    connecting_line_to_last_route_seg_gdf = gpd.GeoDataFrame(geometry=[connecting_line],
+                                                                             crs=first_route_seg_gdf.crs)
+                    connecting_line_to_last_route_seg_gdf.rename_geometry('geom', inplace=True)
+                    final_route = self.connect_route_segments(first_route_seg_gdf,
+                                                              connecting_line_to_last_route_seg_gdf.iloc[0],
+                                                              last_route_seg_gdf)
 
-                final_route = self.connect_route_segments(first_route_seg_gdf, separation_lane_gdf,
-                                                          last_route_seg_gdf)
+                else:
+                    separation_lane_gdf = self.find_seperation_lane_to_follow(last_node_of_first_route_seg,
+                                                                              separation_lanes_data_gdf)
+                    final_route = self.connect_route_segments(first_route_seg_gdf, separation_lane_gdf,
+                                                              last_route_seg_gdf)
             starttime_list = self.recalculate_starttime_per_node(final_route)
 
             route_postprocessed = self.terminate(self.lons_per_step, self.lats_per_step,
@@ -429,3 +454,108 @@ class RoutePostprocessing:
                             ship_params_per_step=ship_params)
 
         return route
+
+    def find_point_from_perpendicular_angle(self, start_node,
+                                            segment):
+        """
+        Find the intersecting point on a line segment which it makes a perpendicular
+        angle from a given point
+        :param start_node: given point
+        :param segment: given line segment
+        :returns: coordinates of the point on the line which  makes a right angle
+        from the given point
+        """
+        line_x, line_y = segment.xy
+        x_start = line_x[0]
+        y_start = line_y[0]
+        x_end = line_x[1]
+        y_end = line_y[1]
+        xp = start_node.x
+        yp = start_node.y
+
+        slope = self.calculate_slope(x_start, y_start, x_end, y_end)
+        m = (-1) / slope
+        x = (m * xp - yp - slope * x_start + y_start) / (m - slope)
+        y = m * x - m * xp + yp
+        return x, y
+
+    def check_valid_crossing(self, separation_lanes_data_gdf,
+                             last_node_of_first_route_seg,
+                             first_node_of_last_route_seg):
+        """
+        This checks whether the straight line starting from the point before the intersection
+        and ending from the point after the last intersection makes an angle between 60 to 120
+        with respect to the nearest separation lane of the starting point.
+        """
+        intersecting_route_seg_geom = LineString(
+            [(last_node_of_first_route_seg.x, last_node_of_first_route_seg.y),
+             (first_node_of_last_route_seg.x, first_node_of_last_route_seg.y)])
+        intersecting_route_seg_gdf = gpd.GeoDataFrame(
+            geometry=[intersecting_route_seg_geom],
+            crs=separation_lanes_data_gdf.crs)
+        intersecting_separation_lanes = gpd.overlay(intersecting_route_seg_gdf,
+                                                    separation_lanes_data_gdf,
+                                                    how='intersection',
+                                                    keep_geom_type=False)
+        if len(intersecting_separation_lanes) == 0:
+            return False, None
+        merged_separation_lanes_data_df = pd.merge(
+            intersecting_separation_lanes, separation_lanes_data_gdf, on='id',
+            how='left')
+        dist_to_separation_lane = last_node_of_first_route_seg.distance(
+            merged_separation_lanes_data_df['geom'])
+        min_dist_indx = dist_to_separation_lane.idxmin()
+        separation_lane = merged_separation_lanes_data_df.iloc[[min_dist_indx]]
+        angle_current_crossing, separation_lane_segment = self.calculate_angle_of_current_crossing(
+            last_node_of_first_route_seg, first_node_of_last_route_seg,
+            separation_lane, intersecting_route_seg_geom)
+        if angle_current_crossing >= 60 and angle_current_crossing <= 120:
+            return True, separation_lane_segment
+        else:
+            return False, None
+
+    def calculate_slope(self, x1, y1, x2, y2):
+        """
+        Calculate the slope of a line from the two given points on the same line
+        """
+        slope = (y2 - y1) / (x2 - x1)
+        return slope
+
+    def calculate_angle_from_slope(self, s1, s2):
+        """
+        Calculate angle between two lines when the slopes of the two lines are given
+        """
+        angle = math.degrees(math.atan((s2 - s1) / (1 + (s2 * s1))))
+        return angle
+
+    def calculate_angle_of_current_crossing(self, start_node, end_node,
+                                            separation_lane_gdf,
+                                            intersecting_route_seg_geom):
+        """
+        Calculate the angle between the straight line which starts from the point before first
+        intersection and ends after the last intersection with respect to the intersecting
+        separation lane segment. Separation lane can contains multiple line segments.
+        :param start_node: starting node of the straight line
+        :param end_node: ending node of the straight line
+        :param separation_lane_gdf: separation lanes
+        :param intersecting_route_seg_geom: route segment which is intersecting the separation
+        lane
+        """
+
+        slope_route = self.calculate_slope(start_node.x, start_node.y,
+                                           end_node.x, end_node.y)
+
+        for line in separation_lane_gdf.geom:
+            for i in range(len(line.coords) - 1):
+                separation_lane_segment = LineString(
+                    [line.coords[i], line.coords[i + 1]])
+                if separation_lane_segment.intersects(intersecting_route_seg_geom):
+                    point_x, point_y = separation_lane_segment.xy
+                    slope_separation_lane = self.calculate_slope(point_x[0],
+                                                                 point_y[0],
+                                                                 point_x[1],
+                                                                 point_y[1])
+                    angle_current_crossing = self.calculate_angle_from_slope(
+                        slope_route,
+                        slope_separation_lane)
+                    return abs(angle_current_crossing), separation_lane_segment
