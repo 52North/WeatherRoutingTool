@@ -365,5 +365,78 @@ class TestRoutePostprocessing:
         for timestamp in time_list:
             assert isinstance(timestamp, datetime)
 
+    def test_find_point_from_perpendicular_angle(self):
+        test_point = Point(1, 1)
+
+        start_node = Point(0, 2)
+        segment = LineString([(0, 0), (2, 2)])
+
+        rpp = self.generate_test_route_postprocessing_obj()
+        x, y = rpp.find_point_from_perpendicular_angle(start_node, segment)
+        rpp_point = Point(x, y)
+
+        assert test_point == rpp_point
+
+    def test_check_valid_crossing(self):
+        test_valid_crossing = True
+
+        separation_line_1 = LineString([(0, 2), (2, 0)])
+        separation_line_2 = LineString([(0, 3), (3, 0)])
+
+        separation_lane_gdf = gpd.GeoDataFrame({'geom': [separation_line_1, separation_line_2]},
+                                               geometry='geom')
+        separation_lane_gdf['id'] = [0, 1]
+        last_node_of_fisrt_routing_seg = Point(0, 0)
+        fisrt_node_of_last_routing_seg = Point(4, 4)
+
+        rpp = self.generate_test_route_postprocessing_obj()
+        valid_crossing, segment = rpp.check_valid_crossing(separation_lane_gdf, last_node_of_fisrt_routing_seg,
+                                                           fisrt_node_of_last_routing_seg)
+        assert test_valid_crossing == valid_crossing
+
+    def test_calculate_slope(self):
+        test_slope = 1
+
+        x1, y1, x2, y2 = 1, 1, 2, 2
+        rpp = self.generate_test_route_postprocessing_obj()
+        slope = rpp.calculate_slope(x1, y1, x2, y2)
+
+        assert test_slope == slope
+
+    def test_calculate_angle_from_slope(self):
+        test_angle = 90.0
+        s1 = 2
+        s2 = (-1)/2
+        rpp = self.generate_test_route_postprocessing_obj()
+        angle1 = rpp.calculate_angle_from_slope(s1, s2)
+
+        assert test_angle == angle1
+
+        test_angle = 45.0
+        s1 = 1
+        s2 = 0
+        angle2 = rpp.calculate_angle_from_slope(s1, s2)
+
+        assert test_angle == angle2
+
+    def test_calculate_angle_of_current_crossing(self):
+        test_angle = 90.0
+        start_node = Point(0, 0)
+        end_node = Point(4, 4)
+
+        separation_line_1 = LineString([(0, 2), (2, 0)])
+        separation_line_2 = LineString([(0, 3), (3, 0)])
+
+        separation_lane_gdf = gpd.GeoDataFrame(
+            {'geom': [separation_line_1, separation_line_2]},
+            geometry='geom')
+        separation_lane_gdf['id'] = [0, 1]
+
+        intersecting_route_seg_geom = LineString([(0, 2), (2, 0)])
+        rpp = self.generate_test_route_postprocessing_obj()
+        angle, segment = rpp.calculate_angle_of_current_crossing(start_node, end_node,
+                                                                 separation_lane_gdf, intersecting_route_seg_geom)
+        assert test_angle == angle
+
 
 engine.dispose
