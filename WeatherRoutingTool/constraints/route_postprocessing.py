@@ -525,7 +525,10 @@ class RoutePostprocessing:
         """
         Calculate angle between two lines when the slopes of the two lines are given
         """
-        angle = math.degrees(math.atan((s2 - s1) / (1 + (s2 * s1))))
+        if s1*s2 == -1:
+            angle = 90.0
+        else:
+            angle = math.degrees(math.atan((s1 - s2) / (1 + (s1 * s2))))
         return angle
 
     def calculate_angle_of_current_crossing(self, start_node, end_node,
