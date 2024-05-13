@@ -99,7 +99,7 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
 - `ROUTER_HDGS_SEGMENTS`: total number of headings (put even number!!); headings are oriented around the great circle from current point to (temporary - i.e. next waypoint if used) destination
-- `ROUTE_POSTPROCEEING`: enable route postprocessing to follow the Traffic Separation Scheme
+- `ROUTE_POSTPROCEEING`: enable route postprocessing to follow the Traffic Separation Scheme in route postprocessing
 - `SHIP_TYPE`: options: 'CBT', 'SAL'
 - `TIME_FORECAST`: forecast hours weather
 
@@ -445,7 +445,7 @@ The primary TSS rules have been addressed in the current development phase are:
   <figcaption>   </figcaption>
 </figure>
 
-Furthermore, if a starting node or ending node is located inside a traffic separation zone, route postprocessing is not further executed. 
+Furthermore, if the starting node or the ending node is located inside a traffic separation zone, route postprocessing is not further executed. 
 
 #### Useful links:
 
