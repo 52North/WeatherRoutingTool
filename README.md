@@ -99,6 +99,7 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
 - `ROUTER_HDGS_SEGMENTS`: total number of headings (put even number!!); headings are oriented around the great circle from current point to (temporary - i.e. next waypoint if used) destination
+- `ROUTE_POSTPROCEEING`: enable route postprocessing to follow the Traffic Separation Scheme
 - `SHIP_TYPE`: options: 'CBT', 'SAL'
 - `TIME_FORECAST`: forecast hours weather
 
@@ -278,7 +279,7 @@ Route segments are organised in groups before the pruning is performed. Segments
 4. *branch-based*: Route segments of one *branch* form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.
 <figure>
   <p align="center">
-  <img src="figures_readme/branch_based_pruning.png" width="400" " />
+  <img src="figures_readme/branch_based_pruning.png" width="400"  />
   </p>
 </figure>
 <br>
@@ -422,6 +423,34 @@ The arguments that are passed for the second routing step are the start and end 
 - lon_end =  (lon_end<sub>&#945;</sub>, lon_end<sub>&#946;</sub>,lon_end<sub>&#947;</sub>,lon_end<sub>&#948;</sub>, lon_end<sub>&#949;</sub>,lon_end<sub>&#950;</sub>)
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
+### Route Postprocessing
+When the optional config variable `ROUTE_POSTPROCESSING` is enabled, the route is forwarded for postprocessing to follow Traffic Separation Scheme(TSS) rules.  
+Pgsnapshot schema with Osmosis were used to import OpenSeaMap data into the PostGIS+PostgreSQL database to retrieve TSS related data. The key OpenSeaMap TSS tags considered for route postprocessing are `separation_boundary`, `separation_lane`, `separation_boundary` and `separation_line`.
+The primary TSS rules have been addressed in the current development phase are:
+1. If the current route is crossing any Inshore Traffic Zone or other TTS element, then the route should enter and leave the nearest sepeartion lane which is heading to the direction of destination.
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/follow_separation_lane.png" height="400"  />
+  </p>
+  <figcaption>   </figcaption>
+</figure>
+
+2. If the current route is intersecting the Traffic Separation Lanes and the angle between the route nodes before the intersection and after the intersection is between 60° to 120°, the new route segment is introduced as it is perpendicular to the separation lane and extends towards the last route segment, perpendicularly.
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/right_angle_crossing.png" height="400"  />
+  </p>
+  <figcaption>   </figcaption>
+</figure>
+
+Furthermore, if a starting node or ending node is located inside a traffic separation zone, route postprocessing is not further executed. 
+
+#### Useful links:
+
+- https://en.wikipedia.org/wiki/Traffic_separation_scheme
+- Szlapczynski, Rafal. (2012). Evolutionary approach to ship's trajectory planning within Traffic Separation Schemes. Polish Maritime Research. 19. 10.2478/v10012-012-0002-x.<https://www.researchgate.net/publication/271052992_Evolutionary_approach_to_ship's_trajectory_planning_within_Traffic_Separation_Schemes>
 
 ## Developing
 
