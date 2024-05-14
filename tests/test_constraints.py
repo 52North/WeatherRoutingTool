@@ -219,6 +219,8 @@ def test_safe_crossing_continuous():
 
 def test_check_crossing_status_errror():
     ref_is_constrained = np.array([False, False, True, False, True, False])
+    ref_lat = [1, 1, 1, 2, 2, 2]
+    ref_lon = [4, 4, 4, 3, 3, 3]
 
     dirname = os.path.dirname(__file__)
     coursesfile = os.path.join(dirname, 'data/CoursesRouteStatus.nc')
@@ -226,7 +228,7 @@ def test_check_crossing_status_errror():
 
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(statusCodeError, 'continuous')
-    is_constrained = [False for i in range(0, len(ref_is_constrained))]
-    is_constrained = constraint_list.negative_constraints_continuous[0].check_crossing()
+
+    is_constrained = constraint_list.negative_constraints_continuous[0].check_crossing(ref_lat, ref_lon)
 
     assert np.array_equal(ref_is_constrained, is_constrained)
