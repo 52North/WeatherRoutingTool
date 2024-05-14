@@ -302,7 +302,19 @@ def test_pruning_select_correct_idxs():
         r_waves=np.full(fuel_rate.shape, 0) * u.newton,
         r_shallow=np.full(fuel_rate.shape, 0) * u.newton,
         r_roughness=np.full(fuel_rate.shape, 0) * u.newton,
-        status=np.full(fuel_rate.shape, 0)
+        wave_height=np.full(fuel_rate.shape, 0) * u.meter,
+        wave_direction=np.full(fuel_rate.shape, 0) * u.radian,
+        wave_period=np.full(fuel_rate.shape, 0) * u.second,
+        u_currents=np.full(fuel_rate.shape, 0) * u.meter / u.second,
+        v_currents=np.full(fuel_rate.shape, 0) * u.meter / u.second,
+        u_wind_speed=np.full(fuel_rate.shape, 0) * u.meter / u.second,
+        v_wind_speed=np.full(fuel_rate.shape, 0) * u.meter / u.second,
+        pressure=np.full(fuel_rate.shape, 0) * u.kg / u.meter / u.second ** 2,
+        air_temperature=np.full(fuel_rate.shape, 0) * u.deg_C,
+        salinity=np.full(fuel_rate.shape, 0) * u.dimensionless_unscaled,
+        water_temperature=np.full(fuel_rate.shape, 0) * u.deg_C,
+        status=np.full(fuel_rate.shape, 0),
+        message=np.full(fuel_rate.shape, 0)
     )
     ra.shipparams_per_step = sp
 
@@ -453,7 +465,19 @@ def test_find_routes_testduplicates():
     ra.shipparams_per_step.r_waves = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
     ra.shipparams_per_step.r_shallow = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
     ra.shipparams_per_step.r_roughness = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
+    ra.shipparams_per_step.wave_height = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter
+    ra.shipparams_per_step.wave_direction = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.radian
+    ra.shipparams_per_step.wave_period = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.second
+    ra.shipparams_per_step.u_currents = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter / u.second
+    ra.shipparams_per_step.v_currents = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter / u.second
+    ra.shipparams_per_step.u_wind_speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter / u.second
+    ra.shipparams_per_step.v_wind_speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter / u.second
+    ra.shipparams_per_step.pressure = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.kg / u.meter / u.second ** 2
+    ra.shipparams_per_step.air_temperature = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.deg_C
+    ra.shipparams_per_step.salinity = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.dimensionless_unscaled
+    ra.shipparams_per_step.water_temperature = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.deg_C
     ra.shipparams_per_step.status = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
+    ra.shipparams_per_step.message = np.array([[0, 0, 0], [0, 0, 0]])
     ra.course_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.degree
     ra.dist_per_step = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter
 
