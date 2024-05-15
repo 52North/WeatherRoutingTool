@@ -5,6 +5,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
+from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.algorithms.routingalg_factory import RoutingAlgFactory
 from WeatherRoutingTool.utils.maps import Map
 
@@ -59,5 +60,10 @@ def execute_routing(config):
     # min_fuel_route.print_route()
     min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
+    if config.ROUTE_POSTPROCESSING:
+        postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
+        min_fuel_route_postprocessed = postprocessed_route.post_process_route()
+        min_fuel_route_postprocessed.return_route_to_API(routepath + '/' + str(min_fuel_route_postprocessed.route_type)
+                                                         + '_postprocessed' + ".json")
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')

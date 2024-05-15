@@ -42,6 +42,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ISOCHRONE_PRUNE_SEGMENTS': 20,
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
+    'ROUTE_POSTPROCESSING': False,
     'SHIP_TYPE': 'CBT',
     'TIME_FORECAST': 90,
     'UNDER_KEEL_CLEARANCE': 20
@@ -92,6 +93,7 @@ class Config:
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written
+        self.ROUTE_POSTPROCESSING = None  # Route is postprocessed with Traffic Separation Scheme
         self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
         self.UNDER_KEEL_CLEARANCE = None  # vertical distance between keel and ground
         self.TIME_FORECAST = None  # forecast hours weather

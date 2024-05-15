@@ -31,7 +31,20 @@ def test_get_acc_variables():
         r_waves=dummy * u.N,
         r_shallow=dummy * u.N,
         r_roughness=dummy * u.N,
+        wave_height=dummy * u.m,
+        wave_direction=dummy * u.rad,
+        wave_period=dummy * u.second,
+        u_currents=dummy * u.m/u.s,
+        v_currents=dummy * u.m/u.s,
+        u_wind_speed=dummy * u.m/u.s,
+        v_wind_speed=dummy * u.m/u.s,
+        pressure=dummy * u.kg/u.meter/u.second**2,
+        air_temperature=dummy * u.deg_C,
+        salinity=dummy * u.dimensionless_unscaled,
+        water_temperature=dummy * u.deg_C,
+        message=dummy,
         status=dummy
+
     )
 
     rp = RouteParams(
