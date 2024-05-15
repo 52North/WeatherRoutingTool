@@ -425,7 +425,7 @@ The arguments that are passed for the second routing step are the start and end 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
 ### Route Postprocessing
 When the optional config variable `ROUTE_POSTPROCESSING` is enabled, the route is forwarded for postprocessing to follow Traffic Separation Scheme(TSS) rules.  
-Pgsnapshot schema with Osmosis were used to import OpenSeaMap data into the PostGIS+PostgreSQL database to retrieve TSS related data. The key OpenSeaMap TSS tags considered for route postprocessing are `separation_boundary`, `separation_lane`, `separation_boundary` and `separation_line`.
+Pgsnapshot schema with Osmosis were used to import OpenSeaMap data into the PostGIS+PostgreSQL database to retrieve TSS related data. The key OpenSeaMap TSS tags considered for route postprocessing are `inshore_traffic_zone`, `separation_boundary`, `separation_lane`, `separation_boundary` and `separation_line`.
 The primary TSS rules have been addressed in the current development phase are:
 1. If the current route is crossing any Inshore Traffic Zone or other TTS element, then the route should enter and leave the nearest sepeartion lane which is heading to the direction of destination.
 
@@ -450,6 +450,7 @@ Furthermore, if the starting node or the ending node is located inside a traffic
 #### Useful links:
 
 - https://en.wikipedia.org/wiki/Traffic_separation_scheme
+- https://wiki.openstreetmap.org/wiki/Seamarks/Seamark_Objects
 - Szlapczynski, Rafal. (2012). Evolutionary approach to ship's trajectory planning within Traffic Separation Schemes. Polish Maritime Research. 19. 10.2478/v10012-012-0002-x.<https://www.researchgate.net/publication/271052992_Evolutionary_approach_to_ship's_trajectory_planning_within_Traffic_Separation_Schemes>
 
 ## Developing

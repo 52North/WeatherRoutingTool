@@ -167,7 +167,8 @@ class RoutePostprocessing:
         """
         query = "SELECT *,linestring AS geom FROM " + self.schema + ".ways " \
                 "WHERE  (tags -> 'seamark:type'='separation_boundary' OR tags -> 'seamark:type'='separation_line' " \
-                "OR tags -> 'seamark:type'='separation_zone' OR tags -> 'seamark:type'='separation_lane')" \
+                "OR tags -> 'seamark:type'='separation_zone' OR tags -> 'seamark:type'='separation_lane' " \
+                "OR tags -> 'seamark:type'='inshore_traffic_zone')" \
                 "AND ST_Intersects(linestring, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
         seamark_gdf = self.query_data(query, engine)
         return seamark_gdf
