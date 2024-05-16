@@ -468,7 +468,7 @@ class ShipParams():
             raise ValueError(
                 'Index ' + str(idx) + ' is not available for array with length ' + str(self.speed.shape[0]))
         return (fuel_rate, power, rpm, speed, r_wind, r_calm, r_waves, r_shallow, r_roughness, wave_height,
-                wave_direction, wave_period, u_currents, v_currents, u_wind_speed, v_wind_speed, v_wind_speed, pressure,
+                wave_direction, wave_period, u_currents, v_currents, u_wind_speed, v_wind_speed, pressure,
                 air_temperature, salinity, water_temperature, status, message)
 
     def get_single_object(self, idx):

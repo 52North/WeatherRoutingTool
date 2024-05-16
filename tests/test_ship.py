@@ -89,14 +89,42 @@ def test_get_fuel_from_netCDF():
     rshallow = np.array([[4.2, 4.3], [4.4, 4.5], [4.6, 4.7], [4.8, 4.9]])
     rwaves = np.array([[5.2, 5.3], [5.4, 5.5], [5.6, 5.7], [5.8, 5.9]])
     rroughness = np.array([[6.2, 6.3], [6.4, 6.5], [6.6, 6.7], [6.8, 6.9]])
-    status = np.array([[1, 2], [3, 1], [2, 3], [1, 3]])
+    wave_height = np.array([[4.1, 4.2], [4.11, 4.12], [4.21, 4.22], [4.31, 4.32]])
+    wave_direction = np.array([[4.4, 4.5], [4.41, 4.42], [4.51, 4.52], [4.61, 4.62]])
+    wave_period = np.array([[4.7, 4.8], [4.71, 4.72], [4.81, 4.82], [4.91, 4.92]])
+    u_currents = np.array([[5.1, 5.2], [5.11, 5.12], [5.21, 5.22], [5.31, 5.32]])
+    v_currents = np.array([[5.4, 5.5], [5.41, 5.42], [5.51, 5.52], [5.61, 5.62]])
+    u_wind_speed = np.array([[7.1, 7.2], [7.11, 7.12], [7.21, 7.22], [7.31, 7.32]])
+    v_wind_speed = np.array([[7.4, 7.5], [7.41, 7.42], [7.51, 7.52], [7.61, 7.62]])
+    pressure = np.array([[5.7, 5.8], [5.71, 5.72], [5.81, 5.82], [5.91, 5.92]])
+    air_temperature = np.array([[6.1, 6.2], [6.11, 6.12], [6.21, 6.22], [6.31, 6.32]])
+    salinity = np.array([[6.4, 6.5], [6.41, 6.42], [6.51, 6.52], [6.61, 6.62]])
+    water_temperature = np.array([[6.7, 6.8], [6.71, 6.72], [6.81, 6.82], [6.91, 6.92]])
+    status = np.array([[1, 2], [2, 3], [3, 2], [1, 3]])
+    message = np.array([['OK', 'OK'], ['OK', 'ERROR'],
+                        ['ERROR', 'OK'], ['ERROR', 'ERROR']])
 
-    data_vars = dict(Power_brake=(["lat", "it"], power), RotationRate=(["lat", "it"], rpm),
-                     Fuel_consumption_rate=(["lat", "it"], fcr), Calm_resistance=(["lat", "it"], rcalm),
-                     Wind_resistance=(["lat", "it"], rwind), Wave_resistance=(["lat", "it"], rwaves),
-                     Shallow_water_resistance=(["lat", "it"], rshallow),
-                     Hull_roughness_resistance=(["lat", "it"], rroughness),
-                     Status=(["lat", "it"], status))
+    data_vars = {'Power_brake': (["lat", "it"], power),
+                 'RotationRate': (["lat", "it"], rpm),
+                 'Fuel_consumption_rate': (["lat", "it"], fcr),
+                 'Calm_resistance': (["lat", "it"], rcalm),
+                 'Wind_resistance': (["lat", "it"], rwind),
+                 'Wave_resistance': (["lat", "it"], rwaves),
+                 'Shallow_water_resistance': (["lat", "it"], rshallow),
+                 'Hull_roughness_resistance': (["lat", "it"], rroughness),
+                 'VHM0': (["lat", "it"], wave_height),
+                 'VMDR': (["lat", "it"], wave_direction),
+                 'VTPK': (["lat", "it"], wave_period),
+                 'utotal': (["lat", "it"], u_currents),
+                 'vtotal': (["lat", "it"], v_currents),
+                 'u-component_of_wind_height_above_ground': (["lat", "it"], u_wind_speed),
+                 'v-component_of_wind_height_above_ground': (["lat", "it"], v_wind_speed),
+                 'Pressure_reduced_to_MSL_msl': (["lat", "it"], pressure),
+                 'Temperature_surface': (["lat", "it"], air_temperature),
+                 'so': (["lat", "it"], salinity),
+                 'thetao': (["lat", "it"], water_temperature),
+                 'Status': (["lat", "it"], status),
+                 'Message': (["lat", "it"], message)}
 
     coords = dict(lat=(["lat"], lat), it=(["it"], it), )
     attrs = dict(description="Necessary descriptions added here.")
@@ -114,17 +142,41 @@ def test_get_fuel_from_netCDF():
     rshallow_test = ship_params.get_rshallow()
     rwaves_test = ship_params.get_rwaves()
     rroughness_test = ship_params.get_rroughness()
+    wave_height_test = ship_params.get_wave_height()
+    wave_direction_test = ship_params.get_wave_direction()
+    wave_period_test = ship_params.get_wave_period()
+    u_currents_test = ship_params.get_u_currents()
+    v_currents_test = ship_params.get_v_currents()
+    u_wind_speed_test = ship_params.get_u_wind_speed()
+    v_wind_speed_test = ship_params.get_v_wind_speed()
+    pressure_test = ship_params.get_pressure()
+    air_temperature_test = ship_params.get_air_temperature()
+    salinity_test = ship_params.get_salinity()
+    water_temperature_test = ship_params.get_water_temperature()
     status_test = ship_params.get_status()
+    message_test = ship_params.get_message()
 
     power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
-    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * u.Hz
+    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1/u.minute
     fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg/u.second
     rcalm_ref = np.array([2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9]) * u.newton
     rwind_ref = np.array([3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]) * u.newton
     rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
     rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9]) * u.newton
     rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]) * u.newton
-    status_ref = np.array([1, 2, 3, 1, 2, 3, 1, 3])
+    wave_height_ref = np.array([4.1, 4.2, 4.11, 4.12, 4.21, 4.22, 4.31, 4.32]) * u.meter
+    wave_direction_ref = np.array([4.4, 4.5, 4.41, 4.42, 4.51, 4.52, 4.61, 4.62]) * u.radian
+    wave_period_ref = np.array([4.7, 4.8, 4.71, 4.72, 4.81, 4.82, 4.91, 4.92]) * u.second
+    u_currents_ref = np.array([5.1, 5.2, 5.11, 5.12, 5.21, 5.22, 5.31, 5.32]) * u.meter/u.second
+    v_currents_ref = np.array([5.4, 5.5, 5.41, 5.42, 5.51, 5.52, 5.61, 5.62]) * u.meter/u.second
+    u_wind_speed_ref = np.array([7.1, 7.2, 7.11, 7.12, 7.21, 7.22, 7.31, 7.32]) * u.meter/u.second
+    v_wind_speed_ref = np.array([7.4, 7.5, 7.41, 7.42, 7.51, 7.52, 7.61, 7.62]) * u.meter/u.second
+    pressure_ref = np.array([5.7, 5.8, 5.71, 5.72, 5.81, 5.82, 5.91, 5.92]) * u.kg/u.meter/u.second**2
+    air_temperature_ref = np.array([6.1, 6.2, 6.11, 6.12, 6.21, 6.22, 6.31, 6.32]) * u.deg_C
+    salinity_ref = np.array([6.4, 6.5, 6.41, 6.42, 6.51, 6.52, 6.61, 6.62]) * u.dimensionless_unscaled
+    water_temperature_ref = np.array([6.7, 6.8, 6.71, 6.72, 6.81, 6.82, 6.91, 6.92]) * u.deg_C
+    status_ref = np.array([1, 2,  2, 3, 3, 2, 1, 3])
+    message_ref = np.array(['OK', 'OK', 'OK', 'ERROR', 'ERROR', 'OK', 'ERROR', 'ERROR'])
 
     fuel_test = fuel_test.value * 3.6
     fuel_ref = fuel_ref.value
@@ -137,8 +189,19 @@ def test_get_fuel_from_netCDF():
     assert np.array_equal(rshallow_test, rshallow_ref)
     assert np.array_equal(rwaves_test, rwaves_ref)
     assert np.array_equal(rroughness_test, rroughness_ref)
+    assert np.array_equal(wave_height_test, wave_height_ref)
+    assert np.array_equal(wave_direction_test, wave_direction_ref)
+    assert np.array_equal(wave_period_test, wave_period_ref)
+    assert np.array_equal(u_currents_test, u_currents_ref)
+    assert np.array_equal(v_currents_test, v_currents_ref)
+    assert np.array_equal(u_wind_speed_test, u_wind_speed_ref)
+    assert np.array_equal(v_wind_speed_test, v_wind_speed_ref)
+    assert np.array_equal(pressure_test, pressure_ref)
+    assert np.array_equal(air_temperature_test, air_temperature_ref)
+    assert np.array_equal(salinity_test, salinity_ref)
+    assert np.array_equal(water_temperature_test, water_temperature_ref)
     assert np.array_equal(status_test, status_ref)
-
+    assert np.array_equal(message_test, message_ref)
     ds.close()
 
 
@@ -193,14 +256,32 @@ def test_shipparams_get_element():
     rwaves = np.array([3.1, 3.2, 3.3, 3.4])
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
-    status = np.array([1, 2, 3, 1])
+    wave_height = np.array([4.1, 4.2, 4.11, 4.12])
+    wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
+    wave_period = np.array([4.7, 4.8, 4.71, 4.72])
+    u_currents = np.array([.1, 5.2, 5.11, 5.12])
+    v_currents = np.array([5.4, 5.5, 5.41, 5.42])
+    u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
+    v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
+    pressure = np.array([5.7, 5.8, 5.71, 5.72])
+    air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
+    salinity = np.array([6.4, 6.5, 6.41, 6.42])
+    water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
+    status = np.array([1, 2, 2, 3])
+    message = np.array(['OK', 'OK', 'Error' 'OK'])
 
     sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
-                    r_shallow=rshallow, r_roughness=rroughness, status=status)
+                    r_shallow=rshallow, r_roughness=rroughness, wave_height=wave_height,
+                    wave_direction=wave_direction, wave_period=wave_period, u_currents=u_currents,
+                    v_currents=v_currents, u_wind_speed=u_wind_speed, v_wind_speed=v_wind_speed, pressure=pressure,
+                    air_temperature=air_temperature, salinity=salinity, water_temperature=water_temperature,
+                    status=status, message=message)
     idx = 2
 
     fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test, \
-        rshallow_test, rroughness_test, status_test = sp.get_element(idx)
+        rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test, \
+        u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test, air_temperature_test, \
+        salinity_test, water_temperature_test, status_test, message_test = sp.get_element(idx)
 
     assert fuel[idx] == fuel_test
     assert speed[idx] == speed_test
@@ -211,7 +292,19 @@ def test_shipparams_get_element():
     assert rwaves[idx] == rwaves_test
     assert rshallow[idx] == rshallow_test
     assert rroughness[idx] == rroughness_test
+    assert wave_height[idx] == wave_height_test
+    assert wave_direction[idx] == wave_direction_test
+    assert wave_period[idx] == wave_period_test
+    assert u_currents[idx] == u_currents_test
+    assert v_currents[idx] == v_currents_test
+    assert u_wind_speed[idx] == u_wind_speed_test
+    assert v_wind_speed[idx] == v_wind_speed_test
+    assert pressure[idx] == pressure_test
+    assert air_temperature[idx] == air_temperature_test
+    assert salinity[idx] == salinity_test
+    assert water_temperature[idx] == water_temperature_test
     assert status[idx] == status_test
+    assert message[idx] == message_test
 
 
 '''
@@ -229,10 +322,32 @@ def test_shipparams_get_single():
     rwaves = np.array([3.1, 3.2, 3.3, 3.4])
     rshallow = np.array([4.1, 4.2, 4.3, 4.4])
     rroughness = np.array([5.1, 5.2, 5.3, 5.4])
-    status = np.array([1, 2, 3, 1])
+    rroughness = np.array([5.1, 5.2, 5.3, 5.4])
+    wave_height = np.array([4.1, 4.2, 4.11, 4.12])
+    wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
+    wave_period = np.array([4.7, 4.8, 4.71, 4.72])
+    u_currents = np.array([.1, 5.2, 5.11, 5.12])
+    v_currents = np.array([5.4, 5.5, 5.41, 5.42])
+    u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
+    v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
+    pressure = np.array([5.7, 5.8, 5.71, 5.72])
+    air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
+    salinity = np.array([6.4, 6.5, 6.41, 6.42])
+    water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
+    status = np.array([1, 2, 2, 3])
+    message = np.array(['OK', 'OK', 'Error' 'OK'])
 
-    sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
-                    r_shallow=rshallow, r_roughness=rroughness, status=status)
+    sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
+                    r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
+                    r_shallow=rshallow, r_roughness=rroughness,
+                    wave_height=wave_height,
+                    wave_direction=wave_direction, wave_period=wave_period,
+                    u_currents=u_currents,
+                    v_currents=v_currents, u_wind_speed=u_wind_speed,
+                    v_wind_speed=v_wind_speed, pressure=pressure,
+                    air_temperature=air_temperature, salinity=salinity,
+                    water_temperature=water_temperature,
+                    status=status, message=message)
 
     idx = 2
 
@@ -247,7 +362,19 @@ def test_shipparams_get_single():
     assert sp_test.r_waves == rwaves[idx]
     assert sp_test.r_shallow == rshallow[idx]
     assert sp_test.r_roughness == rroughness[idx]
+    assert sp_test.wave_height == wave_height[idx]
+    assert sp_test.wave_direction == wave_direction[idx]
+    assert sp_test.wave_period == wave_period[idx]
+    assert sp_test.u_currents == u_currents[idx]
+    assert sp_test.v_currents == v_currents[idx]
+    assert sp_test.u_wind_speed == u_wind_speed[idx]
+    assert sp_test.v_wind_speed == v_wind_speed[idx]
+    assert sp_test.pressure == pressure[idx]
+    assert sp_test.air_temperature == air_temperature[idx]
+    assert sp_test.salinity == salinity[idx]
+    assert sp_test.water_temperature == water_temperature[idx]
     assert sp_test.status == status[idx]
+    assert sp_test.message == message[idx]
 
 
 '''
