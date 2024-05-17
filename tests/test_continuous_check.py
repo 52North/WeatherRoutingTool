@@ -163,15 +163,18 @@ class TestContinuousCheck:
         test_bbox = box(2, 1, 7, 5)
 
         map_bbx = Map(lat1, lon1, lat2, lon2)
-        continuouscheck_obj = ContinuousCheck(db_engine=engine)
+        with engine.connect() as conn:
+            continuouscheck_obj = ContinuousCheck(db_engine=conn.connection)
         continuous_bbox_wkt = continuouscheck_obj.set_map_bbox(map_bbx)
 
         assert continuous_bbox_wkt == test_bbox.wkt
 
     def test_query_nodes(self):
-        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
-        gdf = seamark_obj.query_nodes(engine,
-                                      "SELECT *,geometry as geom FROM nodes")
+        with engine.connect() as conn:
+            seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+                db_engine=conn.connection)
+            gdf = seamark_obj.query_nodes(conn.connection,
+                                          "SELECT *,geometry as geom FROM nodes")
 
         point = {"col1": ["name1", "name2"],
                  "geometry": [Point(1, 2), Point(2, 1)]}
@@ -186,9 +189,11 @@ class TestContinuousCheck:
         print("point type checked")
 
     def test_query_ways(self):
-        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
-        gdf = seamark_obj.query_ways(engine,
-                                     "SELECT *, geometry AS geom FROM ways")
+        with engine.connect() as conn:
+            seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+                db_engine=conn.connection)
+            gdf = seamark_obj.query_ways(conn.connection,
+                                         "SELECT *, geometry AS geom FROM ways")
 
         line = {"col1": ["name1", "name2"],
                 "geometry": [LineString([(1, 2), (3, 4)]), LineString([(2, 1), (5, 6)])]}
@@ -206,15 +211,12 @@ class TestContinuousCheck:
         """
         Test for checking if table with  ways and nodes includes geometries (Point, LineString)
         """
-        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
-            db_engine=engine)
-        concat_all = seamark_obj.concat_nodes_ways(
-            db_engine=engine,
-            query=[
-                "SELECT *, geometry as geom FROM nodes",
-                "SELECT *, geometry AS geom FROM ways"
-            ]
-        )
+        with engine.connect() as conn:
+            seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+                            db_engine=conn.connection)
+            concat_all = seamark_obj.concat_nodes_ways(db_engine=conn.connection,
+                                                       query=["SELECT *, geometry as geom FROM nodes",
+                                                              "SELECT *, geometry AS geom FROM ways"])
 
         # Create points and linestrings dummy data
 
@@ -238,11 +240,12 @@ class TestContinuousCheck:
         assert set(type_list).intersection([Point, LineString]), "Geometry type error"
 
     def test_set_STRETree(self):
-        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
-            db_engine=engine)
-        test_query = ["SELECT *, geometry as geom FROM nodes",
-                      "SELECT *, geometry AS geom FROM ways"]
-        concat_tree = seamark_obj.set_STRTree(db_engine=engine, query=test_query)
+        with engine.connect() as conn:
+            seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(
+                            db_engine=conn.connection)
+            test_query = ["SELECT *, geometry as geom FROM nodes",
+                          "SELECT *, geometry AS geom FROM ways"]
+            concat_tree = seamark_obj.set_STRTree(db_engine=conn.connection, query=test_query)
 
         # Create points and linestrings dummy data
         point1 = {
@@ -274,11 +277,12 @@ class TestContinuousCheck:
 
         test_crossing_list = [True, True, True, True, False]
 
-        seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=engine)
-        test_query = ["SELECT *, geometry as geom FROM nodes",
-                      "SELECT *, geometry AS geom FROM ways"
-                      ]
-        concat_tree = seamark_obj.set_STRTree(db_engine=engine, query=test_query)
+        with engine.connect() as conn:
+            seamark_obj = basic_test_func.create_dummy_SeamarkCrossing_object(db_engine=conn.connection)
+            test_query = ["SELECT *, geometry as geom FROM nodes",
+                          "SELECT *, geometry AS geom FROM ways"]
+
+            concat_tree = seamark_obj.set_STRTree(db_engine=conn.connection, query=test_query)
         seamark_obj.concat_tree = concat_tree
 
         # returns a list of tuples(shapelySTRTree, predicate, result_array, bool type)
@@ -291,9 +295,11 @@ class TestContinuousCheck:
         assert test_crossing_list == check_list
 
     def test_set_landpolygon_STRTree(self):
-        landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(engine)
-        test_query = "SELECT *,geometry as geom from land_polygons"
-        landpolygon_tree = landpolygoncrossing_obj.set_landpolygon_STRTree(db_engine=engine, query=test_query)
+        with engine.connect() as conn:
+            landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(conn.connection)
+            test_query = "SELECT *,geometry as geom from land_polygons"
+            landpolygon_tree = landpolygoncrossing_obj.set_landpolygon_STRTree(
+                db_engine=conn.connection, query=test_query)
 
         test_land_polygons_gdf = gpd.GeoDataFrame(
             geometry=[box(0, 1, 3, 5)])
@@ -310,8 +316,9 @@ class TestContinuousCheck:
         lon_end = np.array((4.5, 7.5, 10, 10, 5))
         test_list = [True, True, True, False, True]
 
-        landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(
-            engine)
+        with engine.connect() as conn:
+            landpolygoncrossing_obj = basic_test_func.create_dummy_landpolygonsCrossing_object(
+                                        conn.connection)
         landpolygoncrossing_obj.land_polygon_STRTree = STRtree(test_land_polygons_gdf["geometry"])
         check_list = landpolygoncrossing_obj.check_crossing(
             lat_start=lat_start, lon_start=lon_start, lat_end=lat_end, lon_end=lon_end
