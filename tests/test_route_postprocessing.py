@@ -128,7 +128,8 @@ class TestRoutePostprocessing:
         )
         boat = basic_test_func.create_dummy_Tanker_object()
         boat.set_boat_speed(6)
-        postprocessed_route = RoutePostprocessing(rp, boat, db_engine=engine)
+        with engine.connect() as conn:
+            postprocessed_route = RoutePostprocessing(rp, boat, db_engine=conn.connection)
         return postprocessed_route
 
     def test_create_route_segments(self):
@@ -158,7 +159,8 @@ class TestRoutePostprocessing:
     def test_query_data(self):
         test_query = "SELECT *, geometry as geom From seamark"
         rpp = self.generate_test_route_postprocessing_obj()
-        gdf_seamark = rpp.query_data(test_query, engine=engine)
+        with engine.connect() as conn:
+            gdf_seamark = rpp.query_data(test_query, engine=conn.connection)
         assert isinstance(gdf_seamark, type(test_seamark_gdf))
         type_list = [type(geometry) for geometry in gdf_seamark["geom"]]
         assert set(type_list).intersection([LineString]), "Geometry type error"
