@@ -87,9 +87,9 @@ class Config:
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
         self.ISOCHRONE_NUMBER_OF_ROUTES = None  # integer specifying how many routes should be searched
         self.ISOCHRONE_PRUNE_GROUPS = None  # can be 'courses', 'larger_direction', 'branch'
-        self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning
-        self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector
-        self.ISOCHRONE_PRUNE_SYMMETRY_AXIS = None  # symmetry axis for pruning. Can be 'gcr' or 'headings_based'
+        self.ISOCHRONE_PRUNE_SECTOR_DEG_HALF = None  # half of the angular range of azimuth angle considered for pruning; not used for branch-based pruning
+        self.ISOCHRONE_PRUNE_SEGMENTS = None  # total number of azimuth bins used for pruning in prune sector; not used for branch-based pruning
+        self.ISOCHRONE_PRUNE_SYMMETRY_AXIS = None  # symmetry axis for pruning. Can be 'gcr' or 'headings_based'; not used for branch-based pruning
         self.ROUTER_HDGS_INCREMENTS_DEG = None  # increment of headings
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written

@@ -1,28 +1,35 @@
-# Weather Routing Tool
+# Weather Routing Tool (WRT)
 
 ## Installation instructions
 
-The routing tool can be installed in two ways: via the file requirements.txt and via the file setup.py. If the latter option is chosen, the WRT can also be directly imported into other python packages.
+Steps:
+- clone the repository: `git clone https://github.com/52North/WeatherRoutingTool.git`
+- change to the folder: `cd WeatherRoutingTool`
+- [recommended] create and activate a virtual environment, e.g.
+  - `python3 -m venv "venv"`
+  - `source venv/bin/activate`
+- install the WRT: `pip install .` or in editable mode (recommended for development) `pip install -e .`
 
-Only Python < 3.11 supported!
+**Power/fuel consumption framework**
 
-### Installation via the requirements.txt
+In order to get high-quality results, a suitable power/fuel modelling framework should be used as it is the core of any weather routing optimization.
 
-- generate a virtual environment e.g. via `python -m venv "venv"`
-- activate the virtual environment: `source venv/bin/activate`
-- install the routing tool: `pip install -r /path-to-WRT/requirements.txt`
-- install mariPower:
-  - request access to the respective git repository and clone it
-  - install maripower: `pip install -e maripower`
+The WRT was originally implemented within the research project [MariData](https://maridata.org/en/start_en). Within this project the power/fuel modelling framework **mariPower** was developed by project partners from the [Institute of Fluid Dynamics and Ship Theory](https://www.tuhh.de/fds/home) of the Hamburg University of Technology.
+The mariPower package allows to predict engine power and fuel consumption under various environmental conditions for specific ships investigated in the project. More details about the package and the project as a whole can be found in the following publication: [https://proceedings.open.tudelft.nl/imdc24/article/view/875](https://proceedings.open.tudelft.nl/imdc24/article/view/875).  
+The mariPower package is closed source software and this will most likely not change in the future. However, as power demand varies from ship to ship users have to provide code for making power predictions on their own suitable to the use case.
 
-### Installation via the setup.py
+For users with access to mariPower:
+- clone the repository
+- change to the folder: `cd maripower`
+- install mariPower: `pip install .` or `pip install -e .`
 
-- generate a virtual environment e.g. via `python3.9 -m venv "venv"`
-- activate the virtual environment: `source venv/bin/activate`
-- install the WRT: `/path/to/WRT/setup.py install`
-- install mariPower:
-  - request access to the respective git repository and clone it
-  - install maripower: `pip install -e maripower`
+For users without access to mariPower:
+
+One way to quickly test the WRT without mariPower is to use the configuration `ALGORITHM_TYPE='speedy_isobased'` and specifying the config parameter `'CONSTANT_FUEL_RATE'`. This will assume a constant fuel rate of the vessel in any condition (high waves, low waves, etc.) and at any time. Of course, results will be highly inaccurate, but it is a way to quickly try and test the code and get some first ideas of possible routes.
+
+New ships with their own power/fuel model can be integrated by implementing a new [ship class](https://github.com/52North/WeatherRoutingTool/blob/main/WeatherRoutingTool/ship/ship.py) and using it in the config.
+
+In the future, it would be interesting to integrate general empirical formulas for power demand which provide reasonable results based on a small set of general ship parameters provided by the user like length and draft of the ship. However, for optimal results it is necessary to have a power prediction framework specifically designed for the ship(s) investigated. This could be based, e.g., on physical laws or data driven.
 
 ## Configuration
 
@@ -94,9 +101,9 @@ Optional variables (default values provided and don't need to be changed normall
 - `ISOCHRONE_MINIMISATION_CRITERION`: options: 'dist', 'squareddist_over_disttodest'
 - `ISOCHRONE_NUMBER_OF_ROUTES`: integer specifying how many routes should be searched (default: 1)
 - `ISOCHRONE_PRUNE_GROUPS`: can be 'courses', 'larger_direction', 'branch'
-- `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning
-- `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector
-- `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'
+- `ISOCHRONE_PRUNE_SECTOR_DEG_HALF`: half of the angular range of azimuth angle considered for pruning; not used for branch-based pruning
+- `ISOCHRONE_PRUNE_SEGMENTS`: total number of azimuth bins used for pruning in prune sector; not used for branch-based pruning
+- `ISOCHRONE_PRUNE_SYMMETRY_AXIS`: symmetry axis for pruning. Can be 'gcr' or 'headings_based'; not used for branch-based pruning
 - `ROUTER_HDGS_INCREMENTS_DEG`: increment of headings
 - `ROUTER_HDGS_SEGMENTS`: total number of headings (put even number!!); headings are oriented around the great circle from current point to (temporary - i.e. next waypoint if used) destination
 - `ROUTE_POSTPROCESSING`: enable route postprocessing to follow the Traffic Separation Scheme in route postprocessing
@@ -156,7 +163,7 @@ Before running the WRT, the necessary input data needs to be setup. Please follo
 3. Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file). If you want to import the WRT into another python project, export the environment variables via doing
 
    ```sh
-   source /home/kdemmich/MariData/Code/MariGeoRoute/WeatherRoutingTool/load_wrt.sh
+   source <path-to-WRT>/load_wrt.sh
    ```
 
 4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED', 'BOAT_DRAUGHT_FORE' and 'BOAT_DRAUGHT_AFT'.
