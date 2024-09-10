@@ -31,13 +31,13 @@ New ships with their own power/fuel model can be integrated by implementing a ne
 
 In the future, it would be interesting to integrate general empirical formulas for power demand which provide reasonable results based on a small set of general ship parameters provided by the user like length and draft of the ship. However, for optimal results it is necessary to have a power prediction framework specifically designed for the ship(s) investigated. This could be based, e.g., on physical laws or data driven.
 
-## Configuration
+## Configure and run the tool
 
 Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.example.json`.
 
 The configuration file has to be provided when calling the Weather Routing Tool from the command line:
 ```shell
-python WeatherRoutingTool/cli.py -f <path>/config.json
+python3 WeatherRoutingTool/cli.py -f <path>/config.json
 ```
 
 Additionally, it's possible to define files for logging (separately for info and warning level) and if debugging mode should be used.
@@ -66,7 +66,7 @@ Some variables have to be set using environment variables (see below).
 
 The following lists contain information on each variable which can be set.
 
-Required variables (no default values provided):
+**Required variables** (no default values provided):
 - `COURSES_FILE`: path to file that acts as intermediate storage for courses per routing step
 - `DEFAULT_MAP`: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
 - `DEFAULT_ROUTE`: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
@@ -75,7 +75,7 @@ Required variables (no default values provided):
 - `ROUTE_PATH`: path to json file to which the route will be written
 - `WEATHER_DATA`: path to weather data (Attention: if `DATA_MODE` is `automatic` or `odc`, this file will be overwritten!)
 
-Recommended variables (default values provided but might be inaccurate/unsuitable):
+**Recommended variables** (default values provided but might be inaccurate/unsuitable):
 - `BOAT_DRAUGHT_AFT`: aft draught (draught at rudder) in m
 - `BOAT_DRAUGHT_FORE`: fore draught (draught at forward perpendicular) in m
 - `BOAT_ROUGHNESS_DISTRIBUTION_LEVEL`: numeric value (default: 1)
@@ -83,7 +83,7 @@ Recommended variables (default values provided but might be inaccurate/unsuitabl
 - `BOAT_SPEED`: in m/s
 - `DATA_MODE`: options: 'automatic', 'from_file', 'odc'
 
-Optional variables (default values provided and don't need to be changed normally):
+**Optional variables** (default values provided and don't need to be changed normally):
 - `ALGORITHM_TYPE`: options: 'isofuel'
 - `CONSTRAINTS_LIST`: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints', 'status_error'
 - `DELTA_FUEL`: amount of fuel per routing step (kg)
@@ -119,7 +119,7 @@ Credentials for the Copernicus Marine Environment Monitoring Service (CMEMS) to 
 
 If not provided `DATA_MODE='automatic'` cannot be used.
 
-Configuration parameter for the database which stores OpenSeaMap data (used in the constraints modules):
+Configuration parameters for the database which stores OpenSeaMap data:
 
 - `WRT_DB_HOST`
 - `WRT_DB_PORT`
@@ -127,13 +127,18 @@ Configuration parameter for the database which stores OpenSeaMap data (used in t
 - `WRT_DB_USERNAME`
 - `WRT_DB_PASSWORD`
 
-If not provided the 'land_crossing_polygons' and 'seamarks' options of `CONSTRAINTS_LIST` cannot be used.
+If not provided the 'land_crossing_polygons' and 'seamarks' options of `CONSTRAINTS_LIST` and `ROUTE_POSTPROCESSING=True` cannot be used.
 
 Path for storing figures (mainly for debugging purposes):
 
 - `WRT_FIGURE_PATH`
 
 If not set or the path doesn't exist or access rights are wrong, no figures will be saved.
+
+You can define the environment variables in a separate .env file and call the provided shell script:
+```sh
+source <path-to-WRT>/load_wrt.sh
+```
 
 ### Logging and Debugging
 
@@ -143,35 +148,32 @@ Debugging mode can be enabled (disabled by default) which sets the stream (stdou
 The top-level logger is named "WRT". Child loggers are following the scheme "WRT.<child-name>".
 They inherit the top-level loggers' logging level.
 
-## Run the software
+### Input data
 
-Before running the WRT, the necessary input data needs to be setup. Please follow these steps:
+Depending on the power/fuel consumption model used, different sets of environmental data are needed. The data described below are needed for the usage of **mariPower**.
 
-1. For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
-   - u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
-   - v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
-   - vtotal (Northward total velocity: Eulerian + Waves + Tide)
-   - utotal (Eastward total velocity: Eulerian + Waves + Tide)
-   - VHMO (spectral significant wave height @ sea surface)
-   - VMDR (mean wave direction @ sea surface)
-   - VTPK (wave period at spectral peak)
-   - thetao (potential temperature)
-   - Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
-   - Temperature_surface (temperature at the water surface)
-   - so (salinity)
-2. For standalone execution, download data on the water depth from [here](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc).
-3. Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file). If you want to import the WRT into another python project, export the environment variables via doing
+There are three general options on how to provide the necessary input data:
 
-   ```sh
-   source <path-to-WRT>/load_wrt.sh
-   ```
+1. The easiest option is to set the config parameter `DATA_MODE='automatic'`. To use it, valid CMEMS credentials have to be configured using system environment variables (see above). In this case, the WRT will automatically download the necessary weather and ocean data for the chosen temporal and spatial extent and store it in the file specified by the environment variable `WEATHER_DATA`. Moreover, water depth data from [NOAA](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc) is downloaded and stored in the file specified by the environment variable `DEPTH_DATA`.
 
-4. Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to a map size that encompasses the final route. The boat speed and draught can be configured via the variables 'BOAT_SPEED', 'BOAT_DRAUGHT_FORE' and 'BOAT_DRAUGHT_AFT'.
-5. Initiate the routing procedure by executing the file 'cli.py' *out of the base directory*:
+2. It is also possible to prepare two NetCDF files containing the weather and ocean data and the water depth data and pointing the WRT to these files using the same environment variables as before. To do so set `DATA_MODE='from_file'`. Be sure the temporal and spatial extent is consistent with the other config variables. The [maridatadownloader](https://github.com/52North/maridatadownloader) - which is used by the WRT - can facilitate the preparation.
 
-    ```sh
-    python WeatherRoutingTool/cli.py -f <path>/config.json
-    ```
+3. A third option is to set up an [Open Data Cube (ODC)](https://www.opendatacube.org/) instance. To use it set `DATA_MODE='odc'`. In this case, the data will be extracted from ODC and also stored in the two files as described before.
+
+Be sure that the water depth data is available and configured correctly in order to use the `water_depth` option of `CONSTRAINTS_LIST`.
+
+The following parameters are downloaded automatically or need to be prepared:
+- u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
+- v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
+- vtotal (Northward total velocity: Eulerian + Waves + Tide)
+- utotal (Eastward total velocity: Eulerian + Waves + Tide)
+- VHMO (spectral significant wave height @ sea surface)
+- VMDR (mean wave direction @ sea surface)
+- VTPK (wave period at spectral peak)
+- thetao (potential temperature)
+- Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
+- Temperature_surface (temperature at the water surface)
+- so (salinity)
 
 ![Fig. 1: Basic installation workflow for the WeatherRoutingTool.](figures_readme/sequence_diagram_installation_workflow.png)
 
