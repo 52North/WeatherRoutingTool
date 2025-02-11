@@ -202,7 +202,7 @@ class WeatherCondEnvAutomatic(WeatherCond):
                         'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min, lon_max),
                         'latitude': slice(lat_min, lat_max)}
 
-        downloader_gfs = DownloaderFactory.get_downloader('opendap', 'gfs')
+        downloader_gfs = DownloaderFactory.get_downloader('xarray', 'gfs')
         ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
 
         # download CMEMS wave data
