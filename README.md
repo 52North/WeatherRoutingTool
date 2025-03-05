@@ -15,7 +15,7 @@ Steps:
 In order to get high-quality results, a suitable power/fuel modelling framework should be used as it is the core of any weather routing optimization.
 
 The WRT was originally implemented within the research project [MariData](https://maridata.org/en/start_en). Within this project the power/fuel modelling framework **mariPower** was developed by project partners from the [Institute of Fluid Dynamics and Ship Theory](https://www.tuhh.de/fds/home) of the Hamburg University of Technology.
-The mariPower package allows to predict engine power and fuel consumption under various environmental conditions for specific ships investigated in the project. More details about the package and the project as a whole can be found in the following publication: [https://proceedings.open.tudelft.nl/imdc24/article/view/875](https://proceedings.open.tudelft.nl/imdc24/article/view/875).  
+The mariPower package allows to predict engine power and fuel consumption under various environmental conditions for specific ships investigated in the project. More details about the package and the project as a whole can be found in the following publication: [https://proceedings.open.tudelft.nl/imdc24/article/view/875](https://proceedings.open.tudelft.nl/imdc24/article/view/875).
 The mariPower package is closed source software and this will most likely not change in the future. However, as power demand varies from ship to ship users have to provide code for making power predictions on their own suitable to the use case.
 
 For users with access to mariPower:
@@ -33,7 +33,7 @@ In the future, it would be interesting to integrate general empirical formulas f
 
 ## Configure and run the tool
 
-Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.example.json`.
+Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.template.json`.
 
 The configuration file has to be provided when calling the Weather Routing Tool from the command line:
 ```shell
@@ -433,7 +433,7 @@ The arguments that are passed for the second routing step are the start and end 
 
 i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
 ### Route Postprocessing
-When the optional config variable `ROUTE_POSTPROCESSING` is enabled, the route is forwarded for postprocessing to follow Traffic Separation Scheme(TSS) rules.  
+When the optional config variable `ROUTE_POSTPROCESSING` is enabled, the route is forwarded for postprocessing to follow Traffic Separation Scheme(TSS) rules.
 Pgsnapshot schema with Osmosis were used to import OpenSeaMap data into the PostGIS+PostgreSQL database to retrieve TSS related data. The key OpenSeaMap TSS tags considered for route postprocessing are `inshore_traffic_zone`, `separation_boundary`, `separation_lane`, `separation_boundary` and `separation_line`.
 The primary TSS rules have been addressed in the current development phase are:
 1. If the current route is crossing any Inshore Traffic Zone or other TTS element, then the route should enter and leave the nearest sepeartion lane which is heading to the direction of destination.
@@ -454,7 +454,7 @@ The primary TSS rules have been addressed in the current development phase are:
   <figcaption>   </figcaption>
 </figure>
 
-Furthermore, if the starting node or the ending node is located inside a traffic separation zone, route postprocessing is not further executed. 
+Furthermore, if the starting node or the ending node is located inside a traffic separation zone, route postprocessing is not further executed.
 
 #### Useful links:
 
@@ -470,7 +470,7 @@ Furthermore, if the starting node or the ending node is located inside a traffic
 
 ToDo: document chosen format, relevant PEPs, etc.
 
-reStructuredText: 
+reStructuredText:
 * can be used by Sphinx to generate documentation automatically
 * default in PyCharm
 
