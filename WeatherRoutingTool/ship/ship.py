@@ -10,10 +10,11 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-import mariPower
+# import mariPower
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-from mariPower import __main__
+# from mariPower import __main__
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 logger = logging.getLogger('WRT.ship')
@@ -37,6 +38,26 @@ class Boat:
 
     def print_init(self):
         pass
+
+class DirectPowerBoat(Boat):
+    ship_path: str
+
+    design_power: float
+    design_speed: float
+
+    def __init__(self, config):
+        super().__init__(config)
+        config_obj = ShipConfig(file_name=config.BOAT_CONFIG)
+        config_obj.print()
+
+        self.design_power = config_obj.DESIGN_POWER * u.kiloWatt
+        self.design_power = self.design_power.to(u.Watt)
+        self.design_speed = config_obj.DESIGN_SPEED * u.meter/u.second
+
+        if self.speed != self.design_speed:
+            logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
+                                           'Method is activated', 1))
+
 
 
 class ConstantFuelBoat(Boat):
@@ -117,7 +138,7 @@ class ConstantFuelBoat(Boat):
 
 class Tanker(Boat):
     # Connection to hydrodynamic modeling
-    hydro_model: mariPower.ship
+    #hydro_model: mariPower.ship
     draught: float
 
     # additional information
