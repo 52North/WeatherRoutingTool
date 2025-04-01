@@ -13,7 +13,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'PROPULSION_EFFICIENCY': 0.63, # assuming n_H = 1.05, n_0 = 0.1, n_R = 1
-    'OVERLOAD_FACTOR': 1
+    'OVERLOAD_FACTOR': 0
 }
 
 class RequiredConfigError(RuntimeError):

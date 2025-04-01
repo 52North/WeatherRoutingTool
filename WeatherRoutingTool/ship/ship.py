@@ -27,7 +27,7 @@ class Boat:
     speed: float  # boat speed in m/s
 
     def __init__(self, config):
-        self.speed = config.BOAT_SPEED * u.meter/u.second
+        self.speed = config.BOAT_SPEED * u.meter / u.second
         pass
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
@@ -39,8 +39,10 @@ class Boat:
     def print_init(self):
         pass
 
+
 class DirectPowerBoat(Boat):
     ship_path: str
+    weather_path: str
 
     design_power: float
     design_speed: float
@@ -50,23 +52,136 @@ class DirectPowerBoat(Boat):
         config_obj = ShipConfig(file_name=config.BOAT_CONFIG)
         config_obj.print()
 
+        self.weather_path = config.WEATHER_DATA
+
         self.design_power = config_obj.DESIGN_POWER * u.kiloWatt
         self.design_power = self.design_power.to(u.Watt)
-        self.design_speed = config_obj.DESIGN_SPEED * u.meter/u.second
+        self.design_speed = config_obj.DESIGN_SPEED * u.meter / u.second
+        self.eta_prop = config_obj.PROPULSION_EFFICIENCY
+        self.overload_factor = config_obj.OVERLOAD_FACTOR
 
         if self.speed != self.design_speed:
             logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
                                            'Method is activated', 1))
 
+    def approx_weather(self, var, lats, lons, time, height=None):
+        ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
+        if height:
+            ship_var = ship_var.sel(height_above_ground2=height, method='nearest', drop=False)
+        ship_var = ship_var.fillna(0).to_numpy()
+
+        return ship_var
+
+    def evaluate_weather(self, ship_params, lats, lons, time):
+        weather_data = xr.open_dataset(self.weather_path)
+        n_coords = len(lats)
+
+        wave_height = []
+        wave_direction = []
+        wave_period = []
+        u_wind_speed = []
+        v_wind_speed = []
+
+        for i_coord in range(0, n_coords):
+            wave_direction.append(
+                self.approx_weather(weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
+            wave_period.append(self.approx_weather(weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
+            wave_height.append(self.approx_weather(weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
+            # ship_params.u_currents = weather_data['utotal'].sel(latitude = lats[i_coord], longitude = lons[i_coord], time = time[i_coord]) * u.meter / u.second
+            # ship_params.v_currents = weather_data['vtotal'].sel(latitude = lats[i_coord], longitude = lons[i_coord], time = time[i_coord]) * u.meter / u.second
+            u_wind_speed.append(
+                self.approx_weather(weather_data['u-component_of_wind_height_above_ground'], lats[i_coord],
+                                    lons[i_coord], time[i_coord], 10))
+            v_wind_speed.append(
+                self.approx_weather(weather_data['v-component_of_wind_height_above_ground'], lats[i_coord],
+                                    lons[i_coord], time[i_coord], 10))
+            # ship_params.pressure = weather_data['Pressure_reduced_to_MSL_msl'] * u.kg / u.meter / u.second ** 2
+            # ship_params.air_temperature = weather_data['thetao'] * u.deg_C
+            # ship_params.salinity = weather_data['so'] * u.dimensionless_unscaled
+            # ship_params.water_temperature = weather_data['Temperature_surface'] * u.deg_C
+
+        ship_params.wave_direction = np.array(wave_direction, dtype='float32') * u.radian
+        ship_params.wave_period = np.array(wave_period, dtype='float32') * u.second
+        ship_params.wave_height = np.array(wave_height, dtype='float32') * u.meter
+        ship_params.u_wind_speed = np.array(u_wind_speed, dtype='float32') * u.meter / u.second
+        ship_params.v_wind_speed = np.array(v_wind_speed, dtype='float32') * u.meter / u.second
+
+        return ship_params
+
+    def evaluate_resistance(self, ship_params):
+        r_wind = self.get_wind_resistance(ship_params, ship_params.u_wind_speed, ship_params.v_wind_speed)
+        r_waves = self.get_wave_resistance(ship_params, ship_params.wave_height, ship_params.wave_direction,
+                                           ship_params.wave_period)
+        ship_params.r_wind = r_wind
+        ship_params.r_waves = r_waves
+
+        return ship_params
+
+    def get_wind_resistance(self, ship_params, u_wind_speed, v_winds_speed):
+        n_coords = len(u_wind_speed)
+        dummy_array = np.full(n_coords, 4800)
+        return dummy_array * u.Newton
+
+    def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
+        n_coords = len(wave_height)
+        dummy_array = np.full(n_coords, 800)
+        return dummy_array * u.Newton
+
+    def get_power(self, deltaR):
+        Plin = deltaR * self.speed / self.eta_prop
+        P = self.design_power * (Plin + self.design_power) / (Plin * self.overload_factor + self.design_power)
+        return P
+
+    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+        debug = False
+        n_requests = len(courses)
+
+        # initialise clean ship params object
+        dummy_array = np.full(n_requests, -99)
+        speed_array = np.full(n_requests, self.speed)
+
+        ship_params = ShipParams(
+            fuel_rate=dummy_array * u.kg / u.s,
+            power=dummy_array * u.Watt,
+            rpm=dummy_array * u.Hz,
+            speed=speed_array * u.meter / u.second,
+            r_wind=dummy_array * u.N,
+            r_calm=dummy_array * u.N,
+            r_waves=dummy_array * u.N,
+            r_shallow=dummy_array * u.N,
+            r_roughness=dummy_array * u.N,
+            wave_height=dummy_array * u.meter,
+            wave_direction=dummy_array * u.radian,
+            wave_period=dummy_array * u.second,
+            u_currents=dummy_array * u.meter / u.second,
+            v_currents=dummy_array * u.meter / u.second,
+            u_wind_speed=dummy_array * u.meter / u.second,
+            v_wind_speed=dummy_array * u.meter / u.second,
+            pressure=dummy_array * u.kg / u.meter / u.second ** 2,
+            air_temperature=dummy_array * u.deg_C,
+            salinity=dummy_array * u.dimensionless_unscaled,
+            water_temperature=dummy_array * u.deg_C,
+            status=dummy_array,
+            message=np.full(n_requests, "")
+        )
+        # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
+        ship_params = self.evaluate_weather(ship_params, lats, lons, time)
+        ship_params = self.evaluate_resistance(ship_params)
+        added_resistance = ship_params.r_wind + ship_params.r_waves
+
+        P = self.get_power(added_resistance)
+        ship_params.fuel_rate = P
+
+        return ship_params
 
 
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
-    speed: float    # boat speed
+    speed: float  # boat speed
 
     def __init__(self, config):
         super().__init__(config)
-        self.fuel_rate = config.CONSTANT_FUEL_RATE * u.kg/u.second
+        self.fuel_rate = config.CONSTANT_FUEL_RATE * u.kg / u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
@@ -81,10 +196,10 @@ class ConstantFuelBoat(Boat):
         speed_array = np.full(n_requests, self.speed)
 
         ship_params = ShipParams(
-            fuel_rate=fuel_array * u.kg/u.s,
+            fuel_rate=fuel_array * u.kg / u.s,
             power=dummy_array * u.Watt,
             rpm=dummy_array * u.Hz,
-            speed=speed_array * u.meter/u.second,
+            speed=speed_array * u.meter / u.second,
             r_wind=dummy_array * u.N,
             r_calm=dummy_array * u.N,
             r_waves=dummy_array * u.N,
@@ -93,11 +208,11 @@ class ConstantFuelBoat(Boat):
             wave_height=dummy_array * u.meter,
             wave_direction=dummy_array * u.radian,
             wave_period=dummy_array * u.second,
-            u_currents=dummy_array * u.meter/u.second,
-            v_currents=dummy_array * u.meter/u.second,
-            u_wind_speed=dummy_array * u.meter/u.second,
-            v_wind_speed=dummy_array * u.meter/u.second,
-            pressure=dummy_array * u.kg/u.meter/u.second**2,
+            u_currents=dummy_array * u.meter / u.second,
+            v_currents=dummy_array * u.meter / u.second,
+            u_wind_speed=dummy_array * u.meter / u.second,
+            v_wind_speed=dummy_array * u.meter / u.second,
+            pressure=dummy_array * u.kg / u.meter / u.second ** 2,
             air_temperature=dummy_array * u.deg_C,
             salinity=dummy_array * u.dimensionless_unscaled,
             water_temperature=dummy_array * u.deg_C,
@@ -138,7 +253,7 @@ class ConstantFuelBoat(Boat):
 
 class Tanker(Boat):
     # Connection to hydrodynamic modeling
-    #hydro_model: mariPower.ship
+    # hydro_model: mariPower.ship
     draught: float
 
     # additional information
@@ -427,9 +542,9 @@ class Tanker(Boat):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
         power = ds['Power_brake'].to_numpy().flatten() * u.Watt
-        rpm = ds['RotationRate'].to_numpy().flatten() * 1/u.minute
-        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne/u.hour
-        fuel = fuel.to(u.kg/u.second)
+        rpm = ds['RotationRate'].to_numpy().flatten() * 1 / u.minute
+        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne / u.hour
+        fuel = fuel.to(u.kg / u.second)
         r_wind = ds['Wind_resistance'].to_numpy().flatten() * u.newton
         r_calm = ds['Calm_resistance'].to_numpy().flatten() * u.newton
         r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
@@ -438,11 +553,11 @@ class Tanker(Boat):
         wave_height = ds['VHM0'].to_numpy().flatten() * u.meter
         wave_direction = ds['VMDR'].to_numpy().flatten() * u.radian
         wave_period = ds['VTPK'].to_numpy().flatten() * u.second
-        u_currents = ds['utotal'].to_numpy().flatten() * u.meter/u.second
-        v_currents = ds['vtotal'].to_numpy().flatten() * u.meter/u.second
-        u_wind_speed = ds['u-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter/u.second
-        v_wind_speed = ds['v-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter/u.second
-        pressure = ds['Pressure_reduced_to_MSL_msl'].to_numpy().flatten() * u.kg/u.meter/u.second**2
+        u_currents = ds['utotal'].to_numpy().flatten() * u.meter / u.second
+        v_currents = ds['vtotal'].to_numpy().flatten() * u.meter / u.second
+        u_wind_speed = ds['u-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
+        v_wind_speed = ds['v-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
+        pressure = ds['Pressure_reduced_to_MSL_msl'].to_numpy().flatten() * u.kg / u.meter / u.second ** 2
         air_temperature = ds['Temperature_surface'].to_numpy().flatten() * u.deg_C
         salinity = ds['so'].to_numpy().flatten() * u.dimensionless_unscaled
         water_temperature = ds['thetao'].to_numpy().flatten() * u.deg_C

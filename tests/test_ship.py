@@ -4,6 +4,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 import xarray as xr
 from astropy import units as u
 
@@ -77,7 +78,7 @@ def test_get_netCDF_courses():
     test whether power is correctly extracted from courses netCDF
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_get_fuel_from_netCDF():
     lat = np.array([1.1, 2.2, 3.3, 4.4])
     it = np.array([1, 2])
@@ -209,7 +210,7 @@ def test_get_fuel_from_netCDF():
     check return values by maripower: has there been renaming? Do the return values have a sensible order of magnitude?
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_power_consumption_returned():
     # dummy weather file
     time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
@@ -382,7 +383,7 @@ def test_shipparams_get_single():
      match properties of original array)
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
     lon = np.array([4., 4., 4, 3, 3, 3])
@@ -429,7 +430,7 @@ def test_get_netCDF_courses_isobased():
      match properties of original array) for the genetic algorithm
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_get_netCDF_courses_GA():
     lat_short = np.array([1, 2, 1])
     lon_short = np.array([4, 4, 1.5])
@@ -466,7 +467,7 @@ def test_get_netCDF_courses_GA():
     are correctly calculated
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_get_fuel_for_fixed_waypoints():
     bs = 6 * u.meter/u.second
     start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
@@ -513,7 +514,7 @@ def test_get_fuel_for_fixed_waypoints():
     east, ellipse generated needs to be shifted towards the left
 '''
 
-
+@pytest.mark.skip(reason="needs maripower")
 def test_wind_force():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
@@ -544,3 +545,60 @@ def test_wind_force():
     axes[1].set_title("Wind resistence", va='top')
 
     plt.show()
+
+def test_evaluate_weather_for_direct_power_method():
+    # dummy weather file
+    dirname = os.path.dirname(__file__)
+    weather_data = xr.open_dataset(os.path.join(dirname, 'data/reduced_testdata_weather.nc'))
+
+    time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
+
+    # courses test file
+    courses_test = np.array([0, 180, 0, 180, 180, 0]) * u.degree
+    lat_test = np.array([54.3, 54.3, 54.6, 55.6, 55.9, 55.9])
+    lon_test = np.array([13.3, 13.3, 13.6, 16., 16.9, 13.9])
+    time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
+
+    # dummy course netCDF
+    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+
+    ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
+    ship_params.print()
+
+    for i in range(0,6):
+        ship_params.wave_direction[i] = np.nan_to_num(ship_params.wave_direction[i])
+        wavedir_data = weather_data['VMDR'].sel(latitude = lat_test[i], longitude = lon_test[i], time = time_test[i],method='nearest', drop=False).fillna(0).to_numpy()
+
+        ship_params.wave_height[i] = np.nan_to_num(ship_params.wave_height[i])
+        waveheight_data = weather_data['VHM0'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                             method='nearest', drop=False).fillna(0).to_numpy()
+        ship_params.wave_period[i] = np.nan_to_num(ship_params.wave_period[i])
+        waveperiod_data = weather_data['VTPK'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                                   method='nearest', drop=False).fillna(0).to_numpy()
+
+        assert abs(ship_params.wave_direction[i].value-wavedir_data) < 0.0001
+        assert abs(ship_params.wave_height[i].value-waveheight_data) < 0.0001
+        assert abs(ship_params.wave_period[i].value-waveperiod_data) < 0.0001
+
+        assert abs(
+            ship_params.v_wind_speed[i].value - float(weather_data['v-component_of_wind_height_above_ground'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground2=10,
+                method='nearest', drop=False).to_numpy())) < 0.00001
+        assert abs(
+            ship_params.u_wind_speed[i].value - float(weather_data['u-component_of_wind_height_above_ground'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground2=10,
+                method='nearest', drop=False).to_numpy())) < 0.00001
+
+
+def test_get_power_for_direct_power_method():
+    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+    DeltaR = 5000
+    speed = 6
+    design_power = 6502000
+    P = DeltaR * speed/0.63 + design_power
+
+    Ptest = pol.get_power(5000 * u.N)
+    assert P == Ptest.value
+    assert 'W' == Ptest.unit
+
+
