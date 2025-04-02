@@ -601,4 +601,31 @@ def test_get_power_for_direct_power_method():
     assert P == Ptest.value
     assert 'W' == Ptest.unit
 
+def test_get_wind_dir():
+    wind_dir = [30,120, 210, 300]
+    absv = 20
+
+    courses = [10,100,190,280]
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+
+    for i in range (0,4):
+        v_wind = -absv * math.cos(math.radians(wind_dir[i]))
+        u_wind = -absv * math.sin(math.radians(wind_dir[i]))
+        wind_dir_test = pol.get_wind_speed(courses, u_wind, v_wind)
+        assert wind_dir[i] * u.degree == wind_dir_test
+
+
+def test_get_relative_wind_dir():
+    wind_dir = np.array([30, 30, 30, 30]) * u.degree
+    courses = np.array([10, 100, 190, 280]) * u.degree
+    rel_wind_dir = np.array([20, 70, 160, 110])
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+    wind_dir_test = pol.get_relative_wind_dir(courses, wind_dir)
+
+    for i in range(0, 4):
+        assert rel_wind_dir[i] * u.degree == wind_dir_test[i]
+
+
 

@@ -13,7 +13,8 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'PROPULSION_EFFICIENCY': 0.63, # assuming n_H = 1.05, n_0 = 0.1, n_R = 1
-    'OVERLOAD_FACTOR': 0
+    'OVERLOAD_FACTOR': 0,
+    'AIR_MASS_DENSITY': 1.2225  #kg/m^3
 }
 
 class RequiredConfigError(RuntimeError):
@@ -28,6 +29,12 @@ class ShipConfig:
         self.DESIGN_SPEED = None  # speed at propeller design point
         self.PROPULSION_EFFICIENCY = None # propulsion efficiency coefficient in ideal conditions
         self.OVERLOAD_FACTOR = None
+        self.LENGTH = None # overall length
+        self.BREADTH = None # ship breadth
+        self.AIR_MASS_DENSITY = None # mass density of air
+        self.CMC = None # horizontal distance from midship section to centre of lateral projected area AYV
+        self.HBR = None # height of top of superstructure (bridge etc.)
+        self.HC = None # height of waterline to centre of lateral projected area Ayv
 
 
         if init_mode == 'from_json':

@@ -59,6 +59,18 @@ class DirectPowerBoat(Boat):
         self.design_speed = config_obj.DESIGN_SPEED * u.meter / u.second
         self.eta_prop = config_obj.PROPULSION_EFFICIENCY
         self.overload_factor = config_obj.OVERLOAD_FACTOR
+        self.head_wind_coeff = 1
+
+        self.Axv = 1
+        self.Ayv = 1
+        self.Aod = 1
+        self.length = config_obj.LENGTH
+        self.breadth = config_obj.BREADTH
+        self.cmc = config_obj.CMC
+        self.hbr = config_obj.HBR
+        self.hc = config_obj.HC
+
+        self.air_mass_density = config_obj.AIR_MASS_DENSITY
 
         if self.speed != self.design_speed:
             logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
@@ -108,7 +120,7 @@ class DirectPowerBoat(Boat):
 
         return ship_params
 
-    def evaluate_resistance(self, ship_params):
+    def evaluate_resistance(self, ship_params, courses):
         r_wind = self.get_wind_resistance(ship_params, ship_params.u_wind_speed, ship_params.v_wind_speed)
         r_waves = self.get_wave_resistance(ship_params, ship_params.wave_height, ship_params.wave_direction,
                                            ship_params.wave_period)
@@ -117,10 +129,111 @@ class DirectPowerBoat(Boat):
 
         return ship_params
 
-    def get_wind_resistance(self, ship_params, u_wind_speed, v_winds_speed):
-        n_coords = len(u_wind_speed)
-        dummy_array = np.full(n_coords, 4800)
-        return dummy_array * u.Newton
+    def get_wind_dir(self, u_wind_speed, v_wind_speed):
+        # calculate wind direction in degree from u and v
+        wind_dir = (180 * u.degree + 180 * u.degree/math.pi * math.atan2(u_wind_speed, v_wind_speed)) % (360 * u.degree)
+        return wind_dir
+
+    def get_relative_wind_dir(self, ang_boat, ang_wind):
+        delta_ang = ang_wind - ang_boat
+
+        delta_ang[delta_ang<0*u.degree] = abs(delta_ang[delta_ang<0*u.degree])
+        delta_ang[delta_ang>180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang>180 * u.degree])
+
+        return delta_ang
+
+    def get_wind_factors_small_angle(self, psi):
+        beta10 = 0.922
+        beta11 = -0.507
+        beta12 = -1.162
+        delta10 = -0.458
+        delta11 = -3.245
+        delta12 = 2.313
+        eta10 = 0.585
+        eta11 = 0.906
+        eta12 = -3.239
+
+        CLF = -99
+        CXLI = -99
+        CALF = -99
+
+        CLF = beta10 + beta11 + self.Ayv / (self.length * self.breadth) + beta12 * self.cmc * self.length
+        CXLI = delta10 + delta11 * self.Ayv / (self.length * self.hbr) + delta12 * self.Axv / (self.breadth * self.hbr)
+        CALF = eta10 + eta11 * self.Aod / self.Ayv + eta12 * self.breadth / self.length
+
+        return {'CLF': CLF, 'CXLI': CXLI, 'CALF': CALF}
+
+    def get_wind_factors_large_angle(self, psi):
+        beta20 = -0.018
+        beta21 = 5.091
+        beta22 = -10.367
+        beta23 = 3.011
+        beta24 = 0.341
+        delta20 = 1.901
+        delta21 = -12.727
+        delta22 = -24.407
+        delta23 = 40.310
+        delta24 = 5.481
+        eta20 = 0.314
+        eta21 = 1.117
+
+        CLF = -99
+        CXLI = -99
+        CALF = -99
+
+        CLF = beta20 + beta21 * self.breadth / self.length + beta22 * self.hc / self.length + beta23 * self.Aod / (
+                    self.length * self.length) + beta24 * self.Axv / (self.breadth * self.breadth)
+        CXLI = delta20 + delta21 * self.Ayv / (
+                    self.length * self.hbr) + delta22 + self.Axv / self.Ayv + delta23 * self.breadth / self.length + delta24 * self.Axv / (
+                           self.breadth * self.hbr)
+        CALF = eta20 + eta21 * self.Aod / self.Ayv
+
+        return {'CLF': CLF, 'CXLI': CXLI, 'CALF': CALF}
+
+
+
+
+
+    def get_wind_coeff(self, psi_deg, CLF, CXLI, CALF):
+        psi = math.radians(psi_deg)
+
+        sinpsi = math.sin(psi)
+        cospsi = math.cos(psi)
+
+        CAA = (CLF * cospsi +
+               CXLI * (sinpsi - 1/2 * sinpsi * cospsi * cospsi) *
+               sinpsi * cospsi + CALF * sinpsi * cospsi * cospsi * cospsi)
+
+        return CAA
+
+    def get_wind_resistance(self, ship_params, u_wind_speed, v_winds_speed, courses):
+        CLF = -99
+        CXLI = -99
+        CALF = -99
+        wind_fac = None
+        wind_coeff = None
+
+        psi = self.get_wind_dir(u_wind_speed, v_winds_speed)
+        psi = self.get_relative_wind_dir(courses, psi)
+        wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed)
+
+        if psi >= 0 & psi < 90:
+            wind_fac = self.get_wind_factors_small_angle(psi)
+        if psi > 90 & psi <= 180:
+            wind_fac = self.get_wind_factors_large_angle(psi)
+        if psi == 90:
+            wind_fac_small = self.get_wind_factors_small_angle(psi-10)
+            wind_fac_large = self.get_wind_factors_large_angle(psi+10)
+            wind_coeff = 1/2 * (
+                    self.get_wind_coeff(psi, wind_fac_small['CLF'], wind_fac_small['CXLI'], wind_fac_small['CALF'])+
+                    self.get_wind_coeff(psi, wind_fac_large['CLF'], wind_fac_large['CXLI'], wind_fac_large['CALF'])
+            )
+        else:
+            wind_coeff = self.get_wind_coeff(psi, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
+
+        r_wind = 1/2 * self.air_mass_density * wind_coeff * self.Axv * wind_speed * wind_speed - 1/2 * self.air_mass_density * self.head_wind_coeff * self.Axv * self.speed * self.speed
+
+        return r_wind * u.Newton
 
     def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
         n_coords = len(wave_height)
@@ -166,7 +279,7 @@ class DirectPowerBoat(Boat):
         )
         # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
-        ship_params = self.evaluate_resistance(ship_params)
+        ship_params = self.evaluate_resistance(ship_params, courses)
         added_resistance = ship_params.r_wind + ship_params.r_waves
 
         P = self.get_power(added_resistance)
