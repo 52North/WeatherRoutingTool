@@ -61,22 +61,23 @@ class DirectPowerBoat(Boat):
         self.overload_factor = config_obj.OVERLOAD_FACTOR
         self.head_wind_coeff = 1
 
-        self.Axv = config_obj.AXV
-        self.Ayv = config_obj.AYV
-        self.Aod = config_obj.AOD
-        self.length = config_obj.LENGTH
-        self.breadth = config_obj.BREADTH
-        self.hs1 = config_obj.HS1
-        self.hs2 = config_obj.HS2
-        self.ls1 = config_obj.LS1
-        self.ls2 = config_obj.LS2
-        self.bs1 = config_obj.BS1
-        self.cmc = config_obj.CMC
-        self.hbr = config_obj.HBR
-        self.hc = config_obj.HC
+        self.Axv = config_obj.AXV * u.meter * u.meter
+        self.Ayv = config_obj.AYV * u.meter * u.meter
+        self.Aod = config_obj.AOD * u.meter * u.meter
+        self.length = config_obj.LENGTH * u.meter
+        self.breadth = config_obj.BREADTH * u.meter
+        self.hs1 = config_obj.HS1 * u.meter
+        self.hs2 = config_obj.HS2 * u.meter
+        self.ls1 = config_obj.LS1 * u.meter
+        self.ls2 = config_obj.LS2 * u.meter
+        self.bs1 = config_obj.BS1 * u.meter
+        self.cmc = config_obj.CMC * u.meter
+        self.hbr = config_obj.HBR * u.meter
+        self.hc = config_obj.HC * u.meter
 
-        self.air_mass_density = config_obj.AIR_MASS_DENSITY
+        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
         self.calculate_ship_geometry()
+        self.calculate_head_wind_coeff()
 
         if self.speed != self.design_speed:
             logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
@@ -88,9 +89,9 @@ class DirectPowerBoat(Boat):
             'ls1': 0.2 * self.length,
             'hs2': 0.1 * self.hbr,
             'ls2': 0.3 * self.length,
-            'cmc': 0.05 * self.length,
+            'cmc': -0.035 * self.length,
             'bs1': 0.9 * self.breadth,
-            'hc' : 7
+            'hc' : 10 * u.meter
         }
         if par<0:
             par = approx_pars[par_string]
@@ -114,6 +115,9 @@ class DirectPowerBoat(Boat):
         if self.Aod< 0:
             self.Aod = self.hs1 * self.ls1 + self.hs2 * self.ls2
 
+    def calculate_head_wind_coeff(self):
+        wind_fac = self.get_wind_factors_small_angle(0)
+        self.head_wind_coeff = self.get_wind_coeff(0, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
 
 
     def approx_weather(self, var, lats, lons, time, height=None):
@@ -161,10 +165,10 @@ class DirectPowerBoat(Boat):
         return ship_params
 
     def evaluate_resistance(self, ship_params, courses):
-        r_wind = self.get_wind_resistance(ship_params, ship_params.u_wind_speed, ship_params.v_wind_speed)
+        r_wind = self.get_wind_resistance(ship_params.u_wind_speed, ship_params.v_wind_speed)
         r_waves = self.get_wave_resistance(ship_params, ship_params.wave_height, ship_params.wave_direction,
                                            ship_params.wave_period)
-        ship_params.r_wind = r_wind
+        ship_params.r_wind = r_wind["r_wind"]
         ship_params.r_waves = r_waves
 
         return ship_params
@@ -197,7 +201,7 @@ class DirectPowerBoat(Boat):
         CXLI = -99
         CALF = -99
 
-        CLF = beta10 + beta11 + self.Ayv / (self.length * self.breadth) + beta12 * self.cmc * self.length
+        CLF = beta10 + beta11 * self.Ayv / (self.length * self.breadth) + beta12 * self.cmc/self.length
         CXLI = delta10 + delta11 * self.Ayv / (self.length * self.hbr) + delta12 * self.Axv / (self.breadth * self.hbr)
         CALF = eta10 + eta11 * self.Aod / self.Ayv + eta12 * self.breadth / self.length
 
@@ -224,14 +228,11 @@ class DirectPowerBoat(Boat):
         CLF = beta20 + beta21 * self.breadth / self.length + beta22 * self.hc / self.length + beta23 * self.Aod / (
                     self.length * self.length) + beta24 * self.Axv / (self.breadth * self.breadth)
         CXLI = delta20 + delta21 * self.Ayv / (
-                    self.length * self.hbr) + delta22 + self.Axv / self.Ayv + delta23 * self.breadth / self.length + delta24 * self.Axv / (
+                    self.length * self.hbr) + delta22 * self.Axv / self.Ayv + delta23 * self.breadth / self.length + delta24 * self.Axv / (
                            self.breadth * self.hbr)
         CALF = eta20 + eta21 * self.Aod / self.Ayv
 
         return {'CLF': CLF, 'CXLI': CXLI, 'CALF': CALF}
-
-
-
 
 
     def get_wind_coeff(self, psi_deg, CLF, CXLI, CALF):
@@ -246,34 +247,47 @@ class DirectPowerBoat(Boat):
 
         return CAA
 
-    def get_wind_resistance(self, ship_params, u_wind_speed, v_winds_speed, courses):
+    def get_wind_resistance(self, u_wind_speed, v_winds_speed, courses):
         CLF = -99
         CXLI = -99
         CALF = -99
         wind_fac = None
-        wind_coeff = None
+        wind_coeff_arr = []
 
-        psi = self.get_wind_dir(u_wind_speed, v_winds_speed)
-        psi = self.get_relative_wind_dir(courses, psi)
-        wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed)
+        psi_arr = self.get_wind_dir(u_wind_speed, v_winds_speed)
+        psi_arr = self.get_relative_wind_dir(courses, psi_arr)
+        wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed) * u.meter / u.second
 
-        if psi >= 0 & psi < 90:
-            wind_fac = self.get_wind_factors_small_angle(psi)
-        if psi > 90 & psi <= 180:
-            wind_fac = self.get_wind_factors_large_angle(psi)
-        if psi == 90:
-            wind_fac_small = self.get_wind_factors_small_angle(psi-10)
-            wind_fac_large = self.get_wind_factors_large_angle(psi+10)
-            wind_coeff = 1/2 * (
+        for psi in psi_arr:
+            psi = psi.value
+            if psi >= 0 and psi < 90:
+                wind_fac = self.get_wind_factors_small_angle(psi)
+            if psi > 90 and psi <= 180:
+                wind_fac = self.get_wind_factors_large_angle(psi)
+            if psi == 90:
+                wind_fac_small = self.get_wind_factors_small_angle(psi-10)
+                wind_fac_large = self.get_wind_factors_large_angle(psi+10)
+                wind_coeff = 1/2 * (
                     self.get_wind_coeff(psi, wind_fac_small['CLF'], wind_fac_small['CXLI'], wind_fac_small['CALF'])+
                     self.get_wind_coeff(psi, wind_fac_large['CLF'], wind_fac_large['CXLI'], wind_fac_large['CALF'])
-            )
-        else:
-            wind_coeff = self.get_wind_coeff(psi, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
+                )
+            else:
+                wind_coeff = self.get_wind_coeff(psi, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
+            wind_coeff_arr.append(wind_coeff)
 
-        r_wind = 1/2 * self.air_mass_density * wind_coeff * self.Axv * wind_speed * wind_speed - 1/2 * self.air_mass_density * self.head_wind_coeff * self.Axv * self.speed * self.speed
+        wind_coeff_arr = np.array(wind_coeff_arr)
 
-        return r_wind * u.Newton
+        print('air mass density: ', self.air_mass_density)
+        print('wind_coeff_arr: ', wind_coeff_arr)
+        print('Axv:', self.Axv)
+        print('wind_speed: ', wind_speed)
+        print('head_wind_coeff: ', self.head_wind_coeff)
+        print('boat speed: ', self.speed)
+
+
+        r_wind = 1/2 * self.air_mass_density * wind_coeff_arr * self.Axv * wind_speed * wind_speed - 1/2 * self.air_mass_density * self.head_wind_coeff * self.Axv * self.speed * self.speed
+
+        return {"r_wind" : r_wind * u.Newton, "wind_coeff": wind_coeff_arr}
 
     def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
         n_coords = len(wave_height)

@@ -9,6 +9,7 @@ import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as utils
+import WeatherRoutingTool.utils.graphics as graphics
 import tests.basic_test_func as basic_test_func
 
 from WeatherRoutingTool.config import Config
@@ -687,5 +688,24 @@ def test_calculate_geometry_manual_method():
     assert pol.Axv == Axv
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
+
+def test_wind_coeff():
+    u_wind_speed = 0
+    v_wind_speed = -10
+
+    courses = np.array([0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180]) * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
+    r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
+
+    print('courses: ', courses)
+    print('r_wind["wind_coeff"]: ', r_wind["wind_coeff"])
+
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
+    plt.show()
+
+    assert 1==2
+
 
 
