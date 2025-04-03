@@ -61,20 +61,60 @@ class DirectPowerBoat(Boat):
         self.overload_factor = config_obj.OVERLOAD_FACTOR
         self.head_wind_coeff = 1
 
-        self.Axv = 1
-        self.Ayv = 1
-        self.Aod = 1
+        self.Axv = config_obj.AXV
+        self.Ayv = config_obj.AYV
+        self.Aod = config_obj.AOD
         self.length = config_obj.LENGTH
         self.breadth = config_obj.BREADTH
+        self.hs1 = config_obj.HS1
+        self.hs2 = config_obj.HS2
+        self.ls1 = config_obj.LS1
+        self.ls2 = config_obj.LS2
+        self.bs1 = config_obj.BS1
         self.cmc = config_obj.CMC
         self.hbr = config_obj.HBR
         self.hc = config_obj.HC
 
         self.air_mass_density = config_obj.AIR_MASS_DENSITY
+        self.calculate_ship_geometry()
 
         if self.speed != self.design_speed:
             logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
                                            'Method is activated', 1))
+
+    def set_optional_parameter(self, par_string, par):
+        approx_pars = {
+            'hs1': 0.2 * self.hbr,
+            'ls1': 0.2 * self.length,
+            'hs2': 0.1 * self.hbr,
+            'ls2': 0.3 * self.length,
+            'cmc': 0.05 * self.length,
+            'bs1': 0.9 * self.breadth,
+            'hc' : 7
+        }
+        if par<0:
+            par = approx_pars[par_string]
+        return par
+
+    def calculate_ship_geometry(self):
+        #check for provided parameters
+        self.hs1 = self.set_optional_parameter('hs1', self.hs1)
+        self.ls1 = self.set_optional_parameter('ls1', self.ls1)
+        self.hs2 = self.set_optional_parameter('hs2', self.hs2)
+        self.ls2 = self.set_optional_parameter('ls2', self.ls2)
+        self.cmc = self.set_optional_parameter('cmc', self.cmc)
+        self.bs1 = self.set_optional_parameter('bs1', self.bs1)
+        self.hc = self.set_optional_parameter('hc', self.hc)
+
+        if self.Axv < 0:
+            self.Axv = self.hbr * self.breadth + self.hs1 * self.bs1 - self.hs1 * self.breadth
+        if self.Ayv < 0:
+            self.Ayv = (self.hs1 * self.ls1 + self.hs2 * self.ls2 + self.hbr * self.length - 1/2 * self.hbr * self.hbr
+                        - self.hs1 * self.length)
+        if self.Aod< 0:
+            self.Aod = self.hs1 * self.ls1 + self.hs2 * self.ls2
+
+
 
     def approx_weather(self, var, lats, lons, time, height=None):
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)

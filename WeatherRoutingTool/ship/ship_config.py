@@ -5,7 +5,7 @@ import sys
 
 logger = logging.getLogger('WRT.ShipConfig')
 
-MANDATORY_CONFIG_VARIABLES = ['DESIGN_POWER', 'DESIGN_RPM', 'DESIGN_SPEED']
+MANDATORY_CONFIG_VARIABLES = ['DESIGN_POWER', 'DESIGN_RPM', 'DESIGN_SPEED', 'LENGTH', 'BREADTH', 'HBR']
 
 RECOMMENDED_CONFIG_VARIABLES = {
 }
@@ -14,7 +14,17 @@ RECOMMENDED_CONFIG_VARIABLES = {
 OPTIONAL_CONFIG_VARIABLES = {
     'PROPULSION_EFFICIENCY': 0.63, # assuming n_H = 1.05, n_0 = 0.1, n_R = 1
     'OVERLOAD_FACTOR': 0,
-    'AIR_MASS_DENSITY': 1.2225  #kg/m^3
+    'AIR_MASS_DENSITY': 1.2225,  #kg/m^3,
+    'AXV': -99,
+    'AYV': -99,
+    'AOD': -99,
+    'LS1': -99,
+    'LS2': -99,
+    'HS1': -99,
+    'HS2': -99,
+    'BS1': -99,
+    'CMC': -99,
+    'HC': -99,
 }
 
 class RequiredConfigError(RuntimeError):
@@ -35,7 +45,14 @@ class ShipConfig:
         self.CMC = None # horizontal distance from midship section to centre of lateral projected area AYV
         self.HBR = None # height of top of superstructure (bridge etc.)
         self.HC = None # height of waterline to centre of lateral projected area Ayv
-
+        self.AXV = None # area of maximum transverse section exposed to the winds
+        self.AYV = None # projected lateral area above the waterline
+        self.AOD = None # lateral projected area of superstructures etc. on deck
+        self.LS1 = None # length of substructure 1
+        self.LS2 = None # length of substructure 2
+        self.HS1 = None # height of substructure 1
+        self.HS2 = None # height of substructure 2
+        self.BS1 = None # breadth of substructure 1
 
         if init_mode == 'from_json':
             assert file_name

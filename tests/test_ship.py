@@ -591,7 +591,7 @@ def test_evaluate_weather_for_direct_power_method():
 
 
 def test_get_power_for_direct_power_method():
-    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
     DeltaR = 5000
     speed = 6
     design_power = 6502000
@@ -607,7 +607,7 @@ def test_get_wind_dir():
 
     courses = [10,100,190,280]
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
 
     for i in range (0,4):
         v_wind = -absv * math.cos(math.radians(wind_dir[i]))
@@ -621,11 +621,71 @@ def test_get_relative_wind_dir():
     courses = np.array([10, 100, 190, 280]) * u.degree
     rel_wind_dir = np.array([20, 70, 160, 110])
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship()
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
     wind_dir_test = pol.get_relative_wind_dir(courses, wind_dir)
 
     for i in range(0, 4):
         assert rel_wind_dir[i] * u.degree == wind_dir_test[i]
 
+
+def test_calculate_geometry_simple_method():
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    hbr = 30
+    breadth = 32
+    length = 180
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = 0.05 * length
+    hc = 7
+    Axv = 940.8
+    Ayv = 4248
+    Aod = 378
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
+
+def test_calculate_geometry_manual_method():
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    hbr = 30
+    breadth = 32
+    length = 180
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = 0.05 * length
+    hc = 7
+    Axv = 716
+    Ayv = 1910
+    Aod = 378
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
 
 
