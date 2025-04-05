@@ -1,0 +1,24 @@
+astropy
+bbox
+cartopy>0.20.0
+dask
+datacube
+geographiclib<2.0
+geopandas
+geovectorslib
+global_land_mask
+icecream
+lxml
+maridatadownloader@ git+https://github.com/52North/maridatadownloader
+matplotlib
+netcdf4
+numpy
+pandas
+Pillow
+pymoo>=0.6.1
+pytest
+scikit-image
+scipy>=1.10.0
+shapely
+sqlalchemy>1.4.51
+xarray

@@ -1,11 +1,9 @@
 import copy
-from dis import Positions
 import logging
 import math
 import sys
 
 import datetime
-from jinja2 import Environment
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -17,7 +15,6 @@ import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
 from mariPower import __main__
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from datetime import datetime
 
 logger = logging.getLogger('WRT.ship')
 
@@ -637,20 +634,3 @@ class Tanker(Boat):
         plt.xlabel('speed (m/s)')
         plt.ylabel('power (W)')
         plt.show()
-class MySyntheticBoat(Boat):
-    def get_ship_parameters(self, environment: Environment, position: Positions, time: datetime) -> ShipParams:
-        # Obtain wave height (in meters)
-        wave_height = environment.wave_height(position, time)
-        
-        # Synthetic fuel consumption: base 0.2 kg/s + 0.05 * wave height
-        base_rate = 0.2  # kg/s
-        factor = 0.05    # increase per meter of wave height
-        fuel_rate = base_rate + factor * wave_height
-        
-        # Constant speed (e.g, 5 knots)
-        speed = 5.0
-
-        return ShipParams(
-            fuel_rate=fuel_rate,
-            speed_through_water=speed
-        )

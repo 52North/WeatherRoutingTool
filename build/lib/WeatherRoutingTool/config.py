@@ -14,7 +14,6 @@ RECOMMENDED_CONFIG_VARIABLES = {
     'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 1,
     'BOAT_ROUGHNESS_LEVEL': 1,
     'BOAT_SPEED': 6,
-     'BOAT_TYPE': "MySyntheticBoat",
     'DATA_MODE': 'automatic'
 }
 
