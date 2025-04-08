@@ -628,6 +628,21 @@ def test_get_relative_wind_dir():
     for i in range(0, 4):
         assert rel_wind_dir[i] * u.degree == wind_dir_test[i]
 
+def test_get_apparent_wind():
+    wind_dir = np.array([0, 45, 90, 135, 180]) * u.degree
+    wind_speed = np.array([100, 100, 100, 100, 100]) * u.meter/u.second
+    wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter/u.second
+    wind_dir_test = np.array([0, 28.41, 59.04, 81.39, 180]) * u.degree
+
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
+
+    print('app. wind speed: ', wind_result['app_wind_speed'])
+    for i in range(0, 4):
+        assert abs(wind_result['app_wind_speed'][i] - wind_speed_test[i]) < 0.01 * u.meter/u.second
+        assert abs(wind_result['app_wind_angle'][i] - wind_dir_test[i]) < 0.01 * u.degree
+
 
 def test_calculate_geometry_simple_method():
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
@@ -706,6 +721,65 @@ def test_wind_coeff():
     plt.show()
 
     assert 1==2
+
+def test_wind_resistance():
+    u_wind_speed = 0
+    v_wind_speed = -10
+
+    courses = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180])
+    courses_rad = np.radians(courses)
+    courses = courses * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
+    r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+
+    axes[0].plot(courses_rad, r_wind['r_wind'])
+    axes[0].legend()
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[1].plot(courses_rad, r_wind['r_wind'])
+    axes[0].set_title("Power", va='bottom')
+    axes[1].set_title("Wind resistence", va='top')
+
+    plt.show()
+
+def test_compare_wind_resistance_to_maripower():
+    lats = np.full(10, 54.9)  # 37
+    lons = np.full(10, 13.2)
+    courses = np.linspace(0, 360, 10) * u.degree
+    courses_rad = utils.degree_to_pmpi(courses)
+    u_wind_speed = 9.07084712
+    v_wind_speed = -0.68707157
+
+    time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
+    bs = 6
+
+    pol_maripower = basic_test_func.create_dummy_Tanker_object()
+    pol_maripower.use_depth_data = False
+    pol_maripower.set_boat_speed(bs)
+    ship_params = pol_maripower.get_ship_parameters(courses, lats, lons, time, None, True)
+    rwind_maripower = ship_params.get_rwind()
+
+    pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    r_wind_simple = pol_simple.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+
+    axes[0].plot(courses_rad, rwind_maripower)
+    axes[0].legend()
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[1].plot(courses_rad, r_wind_simple['r_wind'])
+    axes[0].set_title("Wind resistance maripower", va='bottom')
+    axes[1].set_title("Wind resistence Fujiwara", va='top')
+    plt.show()
+
 
 
 

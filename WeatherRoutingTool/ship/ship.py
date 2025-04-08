@@ -10,10 +10,10 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-# import mariPower
+import mariPower
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-# from mariPower import __main__
+from mariPower import __main__
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
@@ -181,10 +181,22 @@ class DirectPowerBoat(Boat):
     def get_relative_wind_dir(self, ang_boat, ang_wind):
         delta_ang = ang_wind - ang_boat
 
-        delta_ang[delta_ang<0*u.degree] = abs(delta_ang[delta_ang<0*u.degree])
+        delta_ang[delta_ang < 0*u.degree] = abs(delta_ang[delta_ang<0*u.degree])
         delta_ang[delta_ang>180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang>180 * u.degree])
 
         return delta_ang
+
+    def get_apparent_wind(self, true_wind_speed, true_wind_angle):
+        apparent_wind_speed = (self.speed * self.speed + true_wind_speed * true_wind_speed
+                         - 2.0 * self.speed * true_wind_speed * np.cos(np.radians((180.0* u.degree- true_wind_angle))))
+        apparent_wind_speed = np.sqrt(apparent_wind_speed)
+
+        apparent_wind_angle = np.where(
+            (true_wind_angle == 180 * u.degree),
+            180 * u.degree,
+            np.arcsin(true_wind_speed * np.sin(np.radians(180 * u.degree - true_wind_angle)) / apparent_wind_speed))
+
+        return {'app_wind_speed' : apparent_wind_speed, 'app_wind_angle' :apparent_wind_angle}
 
     def get_wind_factors_small_angle(self, psi):
         beta10 = 0.922
@@ -254,11 +266,13 @@ class DirectPowerBoat(Boat):
         wind_fac = None
         wind_coeff_arr = []
 
-        psi_arr = self.get_wind_dir(u_wind_speed, v_winds_speed)
-        psi_arr = self.get_relative_wind_dir(courses, psi_arr)
-        wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed) * u.meter / u.second
+        true_wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed) * u.meter / u.second
 
-        for psi in psi_arr:
+        true_wind_dir = self.get_wind_dir(u_wind_speed, v_winds_speed)
+        true_wind_dir = self.get_relative_wind_dir(courses, true_wind_dir)
+        apparent_wind = self.get_apparent_wind(true_wind_speed, true_wind_dir)
+
+        for psi in apparent_wind['app_wind_angle']:
             psi = psi.value
             if psi >= 0 and psi < 90:
                 wind_fac = self.get_wind_factors_small_angle(psi)
@@ -276,16 +290,8 @@ class DirectPowerBoat(Boat):
             wind_coeff_arr.append(wind_coeff)
 
         wind_coeff_arr = np.array(wind_coeff_arr)
-
-        print('air mass density: ', self.air_mass_density)
-        print('wind_coeff_arr: ', wind_coeff_arr)
-        print('Axv:', self.Axv)
-        print('wind_speed: ', wind_speed)
-        print('head_wind_coeff: ', self.head_wind_coeff)
-        print('boat speed: ', self.speed)
-
-
-        r_wind = 1/2 * self.air_mass_density * wind_coeff_arr * self.Axv * wind_speed * wind_speed - 1/2 * self.air_mass_density * self.head_wind_coeff * self.Axv * self.speed * self.speed
+        r_wind = (1/2 * self.air_mass_density * wind_coeff_arr * self.Axv * apparent_wind['app_wind_speed']
+                  * apparent_wind['app_wind_speed'])
 
         return {"r_wind" : r_wind * u.Newton, "wind_coeff": wind_coeff_arr}
 
@@ -717,19 +723,19 @@ class Tanker(Boat):
         r_waves = ds['Wave_resistance'].to_numpy().flatten() * u.newton
         r_shallow = ds['Shallow_water_resistance'].to_numpy().flatten() * u.newton
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
-        wave_height = ds['VHM0'].to_numpy().flatten() * u.meter
-        wave_direction = ds['VMDR'].to_numpy().flatten() * u.radian
-        wave_period = ds['VTPK'].to_numpy().flatten() * u.second
-        u_currents = ds['utotal'].to_numpy().flatten() * u.meter / u.second
-        v_currents = ds['vtotal'].to_numpy().flatten() * u.meter / u.second
-        u_wind_speed = ds['u-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
-        v_wind_speed = ds['v-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
-        pressure = ds['Pressure_reduced_to_MSL_msl'].to_numpy().flatten() * u.kg / u.meter / u.second ** 2
-        air_temperature = ds['Temperature_surface'].to_numpy().flatten() * u.deg_C
-        salinity = ds['so'].to_numpy().flatten() * u.dimensionless_unscaled
-        water_temperature = ds['thetao'].to_numpy().flatten() * u.deg_C
+        #wave_height = ds['VHM0'].to_numpy().flatten() * u.meter
+        #wave_direction = ds['VMDR'].to_numpy().flatten() * u.radian
+        #wave_period = ds['VTPK'].to_numpy().flatten() * u.second
+        #u_currents = ds['utotal'].to_numpy().flatten() * u.meter / u.second
+        #v_currents = ds['vtotal'].to_numpy().flatten() * u.meter / u.second
+        #u_wind_speed = ds['u-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
+        #v_wind_speed = ds['v-component_of_wind_height_above_ground'].to_numpy().flatten() * u.meter / u.second
+        #pressure = ds['Pressure_reduced_to_MSL_msl'].to_numpy().flatten() * u.kg / u.meter / u.second ** 2
+        #air_temperature = ds['Temperature_surface'].to_numpy().flatten() * u.deg_C
+        #salinity = ds['so'].to_numpy().flatten() * u.dimensionless_unscaled
+        #water_temperature = ds['thetao'].to_numpy().flatten() * u.deg_C
         status = ds['Status'].to_numpy().flatten()
-        message = ds['Message'].to_numpy().flatten()
+        #message = ds['Message'].to_numpy().flatten()
         speed = np.repeat(self.speed, power.shape)
 
         ship_params = ShipParams(
@@ -742,19 +748,19 @@ class Tanker(Boat):
             r_waves=r_waves,
             r_shallow=r_shallow,
             r_roughness=r_roughness,
-            wave_height=wave_height,
-            wave_direction=wave_direction,
-            wave_period=wave_period,
-            u_currents=u_currents,
-            v_currents=v_currents,
-            u_wind_speed=u_wind_speed,
-            v_wind_speed=v_wind_speed,
-            pressure=pressure,
-            air_temperature=air_temperature,
-            salinity=salinity,
-            water_temperature=water_temperature,
+            wave_height=-99,
+            wave_direction=-99,
+            wave_period=-99,
+            u_currents=-99,
+            v_currents=-99,
+            u_wind_speed=-99,
+            v_wind_speed=-99,
+            pressure=-99,
+            air_temperature=-99,
+            salinity=-99,
+            water_temperature=-99,
             status=status,
-            message=message
+            message=-99
         )
 
         if (debug):
