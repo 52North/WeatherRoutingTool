@@ -44,8 +44,7 @@ class DirectPowerBoat(Boat):
     ship_path: str
     weather_path: str
 
-    design_power: float
-    design_speed: float
+    power_at_sp: float  # power at the service propulsion point
 
     def __init__(self, config):
         super().__init__(config)
@@ -54,9 +53,10 @@ class DirectPowerBoat(Boat):
 
         self.weather_path = config.WEATHER_DATA
 
-        self.design_power = config_obj.DESIGN_POWER * u.kiloWatt
-        self.design_power = self.design_power.to(u.Watt)
-        self.design_speed = config_obj.DESIGN_SPEED * u.meter / u.second
+        # determine power at the service propulsion point i.e. substract 15% sea and 10% engine margin
+        self.power_at_sp = config_obj.SMCR_POWER * u.kiloWatt
+        self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
+
         self.eta_prop = config_obj.PROPULSION_EFFICIENCY
         self.overload_factor = config_obj.OVERLOAD_FACTOR
         self.head_wind_coeff = 1
@@ -74,14 +74,15 @@ class DirectPowerBoat(Boat):
         self.cmc = config_obj.CMC * u.meter
         self.hbr = config_obj.HBR * u.meter
         self.hc = config_obj.HC * u.meter
+        self.fuel_rate = config_obj.FUEL_RATE * u.gram/(u.kiloWatt * u.hour)
+        self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 
-        if self.speed != self.design_speed:
-            logger.error(form.get_log_step('Can not travel with speed that is not the design speed if Direct Power '
-                                           'Method is activated', 1))
+        logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
+                                      'to 70% SMCR power.'))
 
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
@@ -165,7 +166,7 @@ class DirectPowerBoat(Boat):
         return ship_params
 
     def evaluate_resistance(self, ship_params, courses):
-        r_wind = self.get_wind_resistance(ship_params.u_wind_speed, ship_params.v_wind_speed)
+        r_wind = self.get_wind_resistance(ship_params.u_wind_speed, ship_params.v_wind_speed, courses)
         r_waves = self.get_wave_resistance(ship_params, ship_params.wave_height, ship_params.wave_direction,
                                            ship_params.wave_period)
         ship_params.r_wind = r_wind["r_wind"]
@@ -175,7 +176,7 @@ class DirectPowerBoat(Boat):
 
     def get_wind_dir(self, u_wind_speed, v_wind_speed):
         # calculate wind direction in degree from u and v
-        wind_dir = (180 * u.degree + 180 * u.degree/math.pi * math.atan2(u_wind_speed, v_wind_speed)) % (360 * u.degree)
+        wind_dir = (180 * u.degree + 180 * u.degree/math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (360 * u.degree)
         return wind_dir
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
@@ -266,7 +267,7 @@ class DirectPowerBoat(Boat):
         wind_fac = None
         wind_coeff_arr = []
 
-        true_wind_speed= math.sqrt(u_wind_speed*u_wind_speed + v_winds_speed*v_winds_speed) * u.meter / u.second
+        true_wind_speed= np.sqrt(u_wind_speed.value*u_wind_speed.value + v_winds_speed.value*v_winds_speed.value) * u.meter / u.second
 
         true_wind_dir = self.get_wind_dir(u_wind_speed, v_winds_speed)
         true_wind_dir = self.get_relative_wind_dir(courses, true_wind_dir)
@@ -293,16 +294,16 @@ class DirectPowerBoat(Boat):
         r_wind = (1/2 * self.air_mass_density * wind_coeff_arr * self.Axv * apparent_wind['app_wind_speed']
                   * apparent_wind['app_wind_speed'])
 
-        return {"r_wind" : r_wind * u.Newton, "wind_coeff": wind_coeff_arr}
+        return {"r_wind" : r_wind.to(u.Newton), "wind_coeff": wind_coeff_arr}
 
     def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
         n_coords = len(wave_height)
-        dummy_array = np.full(n_coords, 800)
+        dummy_array = np.full(n_coords, 0)
         return dummy_array * u.Newton
 
     def get_power(self, deltaR):
         Plin = deltaR * self.speed / self.eta_prop
-        P = self.design_power * (Plin + self.design_power) / (Plin * self.overload_factor + self.design_power)
+        P = self.power_at_sp * (Plin + self.power_at_sp) / (Plin * self.overload_factor + self.power_at_sp)
         return P
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
@@ -340,10 +341,14 @@ class DirectPowerBoat(Boat):
         # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
         ship_params = self.evaluate_resistance(ship_params, courses)
+
+        print('r_wind: ', ship_params.r_wind)
+        print('r_waves: ', ship_params.r_waves)
         added_resistance = ship_params.r_wind + ship_params.r_waves
 
         P = self.get_power(added_resistance)
-        ship_params.fuel_rate = P
+        ship_params.power = P
+        ship_params.fuel_rate = self.fuel_rate * P
 
         return ship_params
 
