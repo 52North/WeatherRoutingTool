@@ -189,7 +189,7 @@ class DirectPowerBoat(Boat):
 
     def get_apparent_wind(self, true_wind_speed, true_wind_angle):
         apparent_wind_speed = (self.speed * self.speed + true_wind_speed * true_wind_speed
-                         - 2.0 * self.speed * true_wind_speed * np.cos(np.radians((180.0* u.degree- true_wind_angle))))
+                         + 2.0 * self.speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
 
         angle_rad = np.radians(true_wind_angle.value)
