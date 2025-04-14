@@ -736,7 +736,7 @@ def test_wind_coeff():
     u_wind_speed = 0 * u.meter/u.second
     v_wind_speed = -10 * u.meter/u.second
 
-    courses = np.array([0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180]) * u.degree
+    courses = np.linspace(0, 180, 19) * u.degree
 
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
@@ -751,10 +751,10 @@ def test_wind_coeff():
     assert 1==2
 
 def test_wind_resistance():
-    u_wind_speed = 0
-    v_wind_speed = -10
+    u_wind_speed = 0 * u.meter/u.second
+    v_wind_speed = -10  * u.meter/u.second
 
-    courses = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180])
+    courses = np.linspace(0, 180, 19)
     courses_rad = np.radians(courses)
     courses = courses * u.degree
 
@@ -782,7 +782,7 @@ def test_compare_wind_resistance_to_maripower():
     courses_rad = utils.degree_to_pmpi(courses)
 
     time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
-    bs = 7.7
+    bs = 7.7 * u.meter/u.second
 
     pol_maripower = basic_test_func.create_dummy_Tanker_object()
     pol_maripower.set_ship_property('WaveForcesFactor', 0)
@@ -794,6 +794,7 @@ def test_compare_wind_resistance_to_maripower():
     P_maripower = ship_params_maripower.get_power()
 
     pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    pol_simple.set_boat_speed(bs)
     ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
     r_wind_simple = ship_params_simple.get_rwind()
     P_simple = ship_params_simple.get_power()

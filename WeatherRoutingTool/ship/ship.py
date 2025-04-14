@@ -39,6 +39,9 @@ class Boat:
     def print_init(self):
         pass
 
+    def set_boat_speed(self, speed):
+        self.speed = speed
+
 
 class DirectPowerBoat(Boat):
     ship_path: str
@@ -507,9 +510,6 @@ class Tanker(Boat):
     #    self.hydro_model = mariPower.ship.CBT()
     #    self.environment_path = netCDF_filepath
     #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
-
-    def set_boat_speed(self, speed):
-        self.speed = speed
 
     def set_env_data_path(self, path):
         self.environment_path = path
