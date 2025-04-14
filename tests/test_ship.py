@@ -631,7 +631,8 @@ def test_get_wind_dir():
     assert np.all((rel_wind_dir -true_wind_dir)<0.0001 * u.degree)
 
 '''
-    DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated
+    DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single values of
+    wind speed and wind dir
 '''
 def test_get_apparent_wind():
     wind_dir = np.array([0, 45, 90, 135, 180]) * u.degree
@@ -645,6 +646,27 @@ def test_get_apparent_wind():
     for i in range(0, 4):
         assert abs(wind_result['app_wind_speed'][i] - wind_speed_test[i]) < 0.01 * u.meter/u.second
         assert abs(wind_result['app_wind_angle'][i] - wind_dir_test[i]) < 0.01 * u.degree
+
+
+'''
+    DIRECT POWER METHOD: check whether apparent wind speed and direction look fine on polar plot
+'''
+def test_get_apparent_wind_polar_plot():
+    wind_dir = np.linspace(0, 180, 19) * u.degree
+    wind_speed = np.full(19,10) * u.meter/u.second
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
+
+    fig, axes = plt.subplots(subplot_kw={'projection': 'polar'})
+    axes.plot(np.radians(wind_dir), wind_speed, label="true wind")
+    axes.plot(np.radians(wind_result['app_wind_angle']), wind_result['app_wind_speed'], label="apparent wind")
+    axes.plot(np.radians(wind_result['app_wind_angle']), wind_speed, label="apparent wind dir, fixed speed")
+    axes.legend(loc="upper right")
+    axes.set_title("Wind direction", va='bottom')
+    plt.show()
+
+    assert 1==2
 
 '''
     DIRECT POWER METHOD: check whether ship geometry is approximated correctly if only mandatory parameters

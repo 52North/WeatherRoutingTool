@@ -192,10 +192,15 @@ class DirectPowerBoat(Boat):
                          - 2.0 * self.speed * true_wind_speed * np.cos(np.radians((180.0* u.degree- true_wind_angle))))
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
 
+        angle_rad = np.radians(true_wind_angle.value)
         apparent_wind_angle = np.where(
-            (true_wind_angle == 180 * u.degree),
-            180 * u.degree,
-            np.arcsin(true_wind_speed * np.sin(np.radians(180 * u.degree - true_wind_angle)) / apparent_wind_speed))
+            apparent_wind_speed > 0,
+            np.arcsin(true_wind_speed * np.sin(np.radians(true_wind_angle)) / apparent_wind_speed),
+            0)
+        # catch it if argument from arcsin > 90°, i.e. calculate true wind angle for which apparent wind angle is 90°
+        true_ang_perp = np.pi * u.radian - np.arccos(self.speed/true_wind_speed)
+        apparent_wind_angle[angle_rad * u.radian>true_ang_perp] = np.pi  * u.radian- apparent_wind_angle[angle_rad * u.radian>true_ang_perp]
+        apparent_wind_angle = apparent_wind_angle.to(u.degree)
 
         return {'app_wind_speed' : apparent_wind_speed, 'app_wind_angle' :apparent_wind_angle}
 
