@@ -741,11 +741,11 @@ def test_wind_coeff():
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
-    print('courses: ', courses)
-    print('r_wind["wind_coeff"]: ', r_wind["wind_coeff"])
-
+    plt.rcParams['text.usetex'] = True
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
+    ax.set_xlabel('angle of attack (degrees)')
+    ax.set_ylabel(r'$C_{AA}$')
     plt.show()
 
     assert 1==2
