@@ -596,12 +596,9 @@ def test_evaluate_weather_for_direct_power_method():
     DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as 
     expected and correct power and corresponding unit are returned
 '''
-
-def test_get_power_for_direct_power_method():
+@pytest.mark.parametrize("DeltaR,speed,design_power", [(5000,6,6502000 * 0.75)])
+def test_get_power_for_direct_power_method(DeltaR, speed, design_power):
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
-    DeltaR = 5000
-    speed = 6
-    design_power = 6502000 * 0.75
     P = DeltaR * speed/0.63 + design_power
 
     Ptest = pol.get_power(5000 * u.N)
