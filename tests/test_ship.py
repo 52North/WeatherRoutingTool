@@ -633,7 +633,7 @@ def test_get_apparent_wind():
     wind_dir = np.array([0, 45, 90, 135, 180]) * u.degree
     wind_speed = np.array([10, 10, 10, 10, 10]) * u.meter/u.second
     wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter/u.second
-    wind_dir_test = np.array([0, 28.41, 59.04, 81.39, 180]) * u.degree
+    wind_dir_test = np.array([0, 28.41, 59.04, 98.606, 180]) * u.degree
 
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
     wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
