@@ -79,7 +79,7 @@ def test_get_netCDF_courses():
     test whether power is correctly extracted from courses netCDF
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_get_fuel_from_netCDF():
     lat = np.array([1.1, 2.2, 3.3, 4.4])
     it = np.array([1, 2])
@@ -211,7 +211,7 @@ def test_get_fuel_from_netCDF():
     check return values by maripower: has there been renaming? Do the return values have a sensible order of magnitude?
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_power_consumption_returned():
     # dummy weather file
     time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
@@ -246,8 +246,6 @@ def test_power_consumption_returned():
 '''
     test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
 '''
-
-
 def test_shipparams_get_element():
     fuel = np.array([1, 2, 3, 4])
     speed = np.array([0.1, 0.2, 0.3, 0.4])
@@ -384,7 +382,7 @@ def test_shipparams_get_single():
      match properties of original array)
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
     lon = np.array([4., 4., 4, 3, 3, 3])
@@ -431,7 +429,7 @@ def test_get_netCDF_courses_isobased():
      match properties of original array) for the genetic algorithm
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_get_netCDF_courses_GA():
     lat_short = np.array([1, 2, 1])
     lon_short = np.array([4, 4, 1.5])
@@ -468,7 +466,7 @@ def test_get_netCDF_courses_GA():
     are correctly calculated
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_get_fuel_for_fixed_waypoints():
     bs = 6 * u.meter/u.second
     start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
@@ -515,7 +513,7 @@ def test_get_fuel_for_fixed_waypoints():
     east, ellipse generated needs to be shifted towards the left
 '''
 
-@pytest.mark.skip(reason="needs maripower")
+@pytest.mark.maripower
 def test_wind_force():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
@@ -651,6 +649,7 @@ def test_get_apparent_wind():
 '''
     DIRECT POWER METHOD: check whether apparent wind speed and direction look fine on polar plot
 '''
+@pytest.mark.manual
 def test_get_apparent_wind_polar_plot():
     wind_dir = np.linspace(0, 180, 19) * u.degree
     wind_speed = np.full(19,10) * u.meter/u.second
@@ -666,7 +665,6 @@ def test_get_apparent_wind_polar_plot():
     axes.set_title("Wind direction", va='bottom')
     plt.show()
 
-    assert 1==2
 
 '''
     DIRECT POWER METHOD: check whether ship geometry is approximated correctly if only mandatory parameters
@@ -702,6 +700,7 @@ def test_calculate_geometry_simple_method():
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
 
+
 def test_calculate_geometry_manual_method():
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
     hbr = 30 * u.meter
@@ -732,6 +731,7 @@ def test_calculate_geometry_manual_method():
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
 
+@pytest.mark.manual
 def test_wind_coeff():
     u_wind_speed = 0 * u.meter/u.second
     v_wind_speed = -10 * u.meter/u.second
@@ -748,8 +748,7 @@ def test_wind_coeff():
     ax.set_ylabel(r'$C_{AA}$')
     plt.show()
 
-    assert 1==2
-
+@pytest.mark.manual
 def test_wind_resistance():
     u_wind_speed = 0 * u.meter/u.second
     v_wind_speed = -10  * u.meter/u.second
@@ -775,6 +774,7 @@ def test_wind_resistance():
 
     plt.show()
 
+@pytest.mark.manual
 def test_compare_wind_resistance_to_maripower():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
@@ -815,8 +815,6 @@ def test_compare_wind_resistance_to_maripower():
     axes[1].set_title("Power", va='top')
     axes[0].legend(loc="upper right")
     plt.show()
-
-    assert 1==2
 
 
 
