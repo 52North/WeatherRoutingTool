@@ -763,7 +763,7 @@ def test_wind_coeff():
 
     courses = np.linspace(0, 180, 19) * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
     plt.rcParams['text.usetex'] = True
@@ -782,7 +782,7 @@ def test_wind_resistance():
     courses_rad = np.radians(courses)
     courses = courses * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_FujiwaraShip')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
     fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
