@@ -102,17 +102,54 @@ class Boat:
         return ship_var
 
 
+
 class DirectPowerBoat(Boat):
-    ship_path: str
+    """
+        estimates power & fuel consumption based on the so-called Direct Power Method
+
+        The following approximations are used:
+            - a fixed working point of 70% SMCR power and an average ship speed is assumed
+              (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
+            - additional power and fuel consumption is derived from added resistances of the environmental conditions
+            - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
+              the Fujiwara approximation
+
+            Returns:
+                ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
+    """
+
+    ship_path: str      # path to ship configuration file
 
     power_at_sp: float  # power at the service propulsion point
+    eta_prop: float     # propulsion efficiency
+    overload_factor: float  # overload factor
+    head_wind_coeff: float  # wind coefficient for head wind (psi = 0°)
+    fuel_rate: float    # fuel rate
+
+    # ship geometry
+    Axv: float
+    Ayv: float
+    Aod: float
+    length: float
+    breadth: float
+    hs1: float
+    hs2: float
+    ls1: float
+    ls2: float
+    bs1: float
+    cmc: float
+    hbr: float
+    hc: float
+
+    air_mass_density: float     # air mass density
+
 
     def __init__(self, config):
         super().__init__(config)
         config_obj = ShipConfig(file_name=config.BOAT_CONFIG)
         config_obj.print()
 
-        # determine power at the service propulsion point i.e. substract 15% sea and 10% engine margin
+        # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
         self.power_at_sp = config_obj.SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
 
@@ -175,7 +212,11 @@ class DirectPowerBoat(Boat):
         if self.Aod< 0:
             self.Aod = self.hs1 * self.ls1 + self.hs2 * self.ls2
 
+
     def calculate_head_wind_coeff(self):
+        """
+            calculate wind coefficient for head wind (psi = 0°)
+        """
         wind_fac = self.get_wind_factors_small_angle(0)
         self.head_wind_coeff = self.get_wind_coeff(0, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
 
@@ -189,11 +230,20 @@ class DirectPowerBoat(Boat):
         return ship_params
 
     def get_wind_dir(self, u_wind_speed, v_wind_speed):
-        # calculate wind direction in degree from u and v
+        """
+            calculate true wind direction in degree from u and v
+        """
         wind_dir = (180 * u.degree + 180 * u.degree/math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (360 * u.degree)
         return wind_dir
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
+        """
+            calculate relative wind direction [0°,180°] between ship course and true wind direction
+
+            - head wind: 0°
+            - tail wind: 180°
+        """
+
         delta_ang = ang_wind - ang_boat
 
         delta_ang[delta_ang < 0*u.degree] = abs(delta_ang[delta_ang<0*u.degree])
@@ -202,6 +252,9 @@ class DirectPowerBoat(Boat):
         return delta_ang
 
     def get_apparent_wind(self, true_wind_speed, true_wind_angle):
+        """
+            calculate apparent wind speed from true wind and ship course
+        """
         apparent_wind_speed = (self.speed * self.speed + true_wind_speed * true_wind_speed
                          + 2.0 * self.speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
@@ -219,6 +272,9 @@ class DirectPowerBoat(Boat):
         return {'app_wind_speed' : apparent_wind_speed, 'app_wind_angle' :apparent_wind_angle}
 
     def get_wind_factors_small_angle(self, psi):
+        """
+            calculate factors CLF, CXLI and CALF for psi < 90°
+        """
         beta10 = 0.922
         beta11 = -0.507
         beta12 = -1.162
@@ -240,6 +296,10 @@ class DirectPowerBoat(Boat):
         return {'CLF': CLF, 'CXLI': CXLI, 'CALF': CALF}
 
     def get_wind_factors_large_angle(self, psi):
+        """
+            calculate factors CLF, CXLI and CALF for psi > 90°
+        """
+
         beta20 = -0.018
         beta21 = 5.091
         beta22 = -10.367
@@ -268,6 +328,10 @@ class DirectPowerBoat(Boat):
 
 
     def get_wind_coeff(self, psi_deg, CLF, CXLI, CALF):
+        """
+            calculate wind coefficient C_AA
+        """
+
         psi = math.radians(psi_deg)
 
         sinpsi = math.sin(psi)
@@ -280,9 +344,10 @@ class DirectPowerBoat(Boat):
         return CAA
 
     def get_wind_resistance(self, u_wind_speed, v_winds_speed, courses):
-        CLF = -99
-        CXLI = -99
-        CALF = -99
+        """
+            calculate wind resistance r_wind
+        """
+
         wind_fac = None
         wind_coeff_arr = []
 
@@ -316,6 +381,10 @@ class DirectPowerBoat(Boat):
         return {"r_wind" : r_wind.to(u.Newton), "wind_coeff": wind_coeff_arr}
 
     def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
+        """
+            calculate wave resistance r_wave (not yet implemented)
+        """
+
         n_coords = len(wave_height)
         dummy_array = np.full(n_coords, 0)
         return dummy_array * u.Newton
@@ -360,9 +429,6 @@ class DirectPowerBoat(Boat):
         # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
         ship_params = self.evaluate_resistance(ship_params, courses)
-
-        print('r_wind: ', ship_params.r_wind)
-        print('r_waves: ', ship_params.r_waves)
         added_resistance = ship_params.r_wind + ship_params.r_waves
 
         P = self.get_power(added_resistance)
