@@ -546,7 +546,7 @@ def test_wind_force():
     plt.show()
 
 '''
-    DIRECT POWER METHOD: check whether weather data for wave and wind is correctly read from file
+    DIRECT POWER METHOD: check whether values weather data are correctly read from file
 '''
 
 def test_evaluate_weather_for_direct_power_method():
@@ -591,6 +591,34 @@ def test_evaluate_weather_for_direct_power_method():
             ship_params.u_wind_speed[i].value - float(weather_data['u-component_of_wind_height_above_ground'].sel(
                 latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground2=10,
                 method='nearest', drop=False).to_numpy())) < 0.00001
+        assert abs(
+            ship_params.u_currents[i].value - float(weather_data['utotal'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                method='nearest', drop=False).fillna(0).to_numpy())) < 0.00001
+        assert abs(
+            ship_params.v_currents[i].value - float(weather_data['vtotal'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                method='nearest', drop=False).fillna(0).to_numpy())) < 0.00001
+        assert abs(
+            ship_params.pressure[i].value - float(weather_data['Pressure_reduced_to_MSL_msl'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                method='nearest', drop=False).to_numpy())) < 0.01
+        assert abs(
+            ship_params.water_temperature[i].value - float(weather_data['thetao'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                method='nearest', drop=False).fillna(0).to_numpy())) < 0.00001
+        salinity_test = float(weather_data['so'].sel(
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                method='nearest', drop=False).fillna(0).to_numpy())
+        salinity_test = salinity_test * 0.001
+        assert abs(ship_params.salinity[i].value - salinity_test) < 0.00001
+        air_temp_test = float(weather_data['Temperature_surface'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).to_numpy())
+        air_temp_test = air_temp_test - 273.15
+        assert abs(ship_params.air_temperature[i].value - air_temp_test) < 0.0001
+
+
 
 '''
     DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as 
