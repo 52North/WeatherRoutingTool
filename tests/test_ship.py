@@ -546,7 +546,7 @@ def test_wind_force():
     plt.show()
 
 '''
-    DIRECT POWER METHOD: check whether values weather data are correctly read from file
+    DIRECT POWER METHOD: check whether values of weather data are correctly read from file
 '''
 
 def test_evaluate_weather_for_direct_power_method():
@@ -725,7 +725,9 @@ def test_calculate_geometry_simple_method():
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
 
-
+'''
+    DIRECT POWER METHOD: check whether ship geometry parameters are set correctly if manual values are supplied
+'''
 def test_calculate_geometry_manual_method():
     pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
     hbr = 30 * u.meter
@@ -756,6 +758,9 @@ def test_calculate_geometry_manual_method():
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
 
+'''
+    DIRECT POWER METHOD: check for reasonable behaviour of wind coefficient C_AA
+'''
 @pytest.mark.manual
 def test_wind_coeff():
     u_wind_speed = 0 * u.meter/u.second
@@ -773,6 +778,9 @@ def test_wind_coeff():
     ax.set_ylabel(r'$C_{AA}$')
     plt.show()
 
+'''
+    DIRECT POWER METHOD: check for reasonable behaviour of wind resistance on polar plot
+'''
 @pytest.mark.manual
 def test_wind_resistance():
     u_wind_speed = 0 * u.meter/u.second
@@ -799,6 +807,13 @@ def test_wind_resistance():
 
     plt.show()
 
+
+'''
+    DIRECT POWER METHOD: compare wind resistance and power from the Direct Power Method to results from maripower.
+    
+    - relative difference of wind direction and boat course is changing in steps of 10 degrees
+    - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
+'''
 @pytest.mark.manual
 def test_compare_wind_resistance_to_maripower():
     lats = np.full(10, 54.9)  # 37
