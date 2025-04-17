@@ -1,20 +1,10 @@
-import copy
 import logging
-import math
-import sys
 
-import datetime
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-import mariPower
 import WeatherRoutingTool.utils.formatting as form
-import WeatherRoutingTool.utils.unit_conversion as units
-from mariPower import __main__
-from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 logger = logging.getLogger('WRT.ship')
