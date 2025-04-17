@@ -8,7 +8,6 @@ from geovectorslib import geod
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import LandCrossing, WaveHeight
-from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 '''

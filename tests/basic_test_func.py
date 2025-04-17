@@ -5,7 +5,8 @@ from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
     SeamarkCrossing, LandPolygonsCrossing
-from WeatherRoutingTool.ship.ship import Tanker, DirectPowerBoat
+from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 
 
 def generate_dummy_constraint_list():
@@ -44,7 +45,7 @@ def create_dummy_Tanker_object():
     config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
     config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
-    pol = Tanker(config)
+    pol = MariPowerTanker(config)
     return pol
 
 def create_dummy_Direct_Power_Ship(ship_config_path):

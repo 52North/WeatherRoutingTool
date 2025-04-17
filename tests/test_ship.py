@@ -14,7 +14,7 @@ import tests.basic_test_func as basic_test_func
 
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 
