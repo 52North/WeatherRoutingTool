@@ -5,8 +5,6 @@ from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
     SeamarkCrossing, LandPolygonsCrossing
-from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
-from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 
 
 def generate_dummy_constraint_list():
@@ -35,32 +33,8 @@ def create_dummy_IsoFuel_object():
     return ra
 
 
-def create_dummy_Tanker_object():
-    dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
-    config = Config(file_name=configpath)
 
-    dirname = os.path.dirname(__file__)
-    config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
-    pol = MariPowerTanker(config)
-    return pol
-
-def create_dummy_Direct_Power_Ship(ship_config_path):
-    dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
-    config = Config(file_name=configpath)
-
-    dirname = os.path.dirname(__file__)
-    config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-    config.BOAT_CONFIG = os.path.join(dirname, ship_config_path+'.json')
-
-    pol = DirectPowerBoat(config)
-    return pol
 
 
 def create_dummy_SeamarkCrossing_object(db_engine):
