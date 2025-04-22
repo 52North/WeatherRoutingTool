@@ -64,7 +64,7 @@ class Config:
         self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SPEED = None  # in m/s
-        self.BOAT_CONFIG = None # config file for Direct Power Method
+        self.CONFIG_PATH = None # path to config file
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints', 'status_error'
         self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
@@ -103,6 +103,7 @@ class Config:
 
         if init_mode == 'from_json':
             assert file_name
+            self.CONFIG_PATH = file_name
             self.read_from_json(file_name)
         elif init_mode == 'from_dict':
             assert config_dict

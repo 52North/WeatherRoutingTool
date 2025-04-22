@@ -146,34 +146,34 @@ class DirectPowerBoat(Boat):
 
     def __init__(self, config):
         super().__init__(config)
-        config_obj = ShipConfig(file_name=config.BOAT_CONFIG)
+        config_obj = ShipConfig(file_name=config.CONFIG_PATH)
         config_obj.print()
 
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
-        self.power_at_sp = config_obj.SMCR_POWER * u.kiloWatt
+        self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
 
-        self.eta_prop = config_obj.PROPULSION_EFFICIENCY
-        self.overload_factor = config_obj.OVERLOAD_FACTOR
+        self.eta_prop = config_obj.BOAT_PROPULSION_EFFICIENCY
+        self.overload_factor = config_obj.BOAT_OVERLOAD_FACTOR
         self.head_wind_coeff = 1
 
-        self.Axv = config_obj.AXV * u.meter * u.meter
-        self.Ayv = config_obj.AYV * u.meter * u.meter
-        self.Aod = config_obj.AOD * u.meter * u.meter
-        self.length = config_obj.LENGTH * u.meter
-        self.breadth = config_obj.BREADTH * u.meter
-        self.hs1 = config_obj.HS1 * u.meter
-        self.hs2 = config_obj.HS2 * u.meter
-        self.ls1 = config_obj.LS1 * u.meter
-        self.ls2 = config_obj.LS2 * u.meter
-        self.bs1 = config_obj.BS1 * u.meter
-        self.cmc = config_obj.CMC * u.meter
-        self.hbr = config_obj.HBR * u.meter
-        self.hc = config_obj.HC * u.meter
-        self.fuel_rate = config_obj.FUEL_RATE * u.gram/(u.kiloWatt * u.hour)
+        self.Axv = config_obj.BOAT_AXV * u.meter * u.meter
+        self.Ayv = config_obj.BOAT_AYV * u.meter * u.meter
+        self.Aod = config_obj.BOAT_AOD * u.meter * u.meter
+        self.length = config_obj.BOAT_LENGTH * u.meter
+        self.breadth = config_obj.BOAT_BREADTH * u.meter
+        self.hs1 = config_obj.BOAT_HS1 * u.meter
+        self.hs2 = config_obj.BOAT_HS2 * u.meter
+        self.ls1 = config_obj.BOAT_LS1 * u.meter
+        self.ls2 = config_obj.BOAT_LS2 * u.meter
+        self.bs1 = config_obj.BOAT_BS1 * u.meter
+        self.cmc = config_obj.BOAT_CMC * u.meter
+        self.hbr = config_obj.BOAT_HBR * u.meter
+        self.hc = config_obj.BOAT_HC * u.meter
+        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram/(u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
-        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
+        self.air_mass_density = config_obj.BOAT_AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 

@@ -563,7 +563,7 @@ def test_evaluate_weather_for_direct_power_method():
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
 
     # dummy course netCDF
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
 
     ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
     ship_params.print()
@@ -626,7 +626,7 @@ def test_evaluate_weather_for_direct_power_method():
 '''
 @pytest.mark.parametrize("DeltaR,speed,design_power", [(5000,6,6502000 * 0.75)])
 def test_get_power_for_direct_power_method(DeltaR, speed, design_power):
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
     P = DeltaR * speed/0.63 + design_power
 
     Ptest = pol.get_power(5000 * u.N)
@@ -643,7 +643,7 @@ def test_get_wind_dir():
     courses = np.array([10,10,20,20]) * u.degree
     rel_wind_dir = np.array([20, 110, 170, 70]) * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
 
     v_wind = -absv * np.cos(np.radians(wind_dir)) * u.meter/u.second
     u_wind = -absv * np.sin(np.radians(wind_dir)) * u.meter/u.second
@@ -663,7 +663,7 @@ def test_get_apparent_wind():
     wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter/u.second
     wind_dir_test = np.array([0, 28.41, 59.04, 98.606, 180]) * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
     wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
     for i in range(0, 4):
@@ -679,7 +679,7 @@ def test_get_apparent_wind_polar_plot():
     wind_dir = np.linspace(0, 180, 19) * u.degree
     wind_speed = np.full(19,10) * u.meter/u.second
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
     wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
     fig, axes = plt.subplots(subplot_kw={'projection': 'polar'})
@@ -696,7 +696,7 @@ def test_get_apparent_wind_polar_plot():
     are supplied
 '''
 def test_calculate_geometry_simple_method():
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
     hbr = 30 * u.meter
     breadth = 32 * u.meter
     length = 180 * u.meter
@@ -729,7 +729,7 @@ def test_calculate_geometry_simple_method():
     DIRECT POWER METHOD: check whether ship geometry parameters are set correctly if manual values are supplied
 '''
 def test_calculate_geometry_manual_method():
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
     hbr = 30 * u.meter
     breadth = 32 * u.meter
     length = 180 * u.meter
@@ -768,7 +768,7 @@ def test_wind_coeff():
 
     courses = np.linspace(0, 180, 19) * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
     plt.rcParams['text.usetex'] = True
@@ -790,7 +790,7 @@ def test_wind_resistance():
     courses_rad = np.radians(courses)
     courses = courses * u.degree
 
-    pol = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
     r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
     fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
@@ -833,7 +833,7 @@ def test_compare_wind_resistance_to_maripower():
     rwind_maripower = ship_params_maripower.get_rwind()
     P_maripower = ship_params_maripower.get_power()
 
-    pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+    pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
     pol_simple.set_boat_speed(bs)
     ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
     r_wind_simple = ship_params_simple.get_rwind()
