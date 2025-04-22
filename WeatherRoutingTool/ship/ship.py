@@ -173,7 +173,7 @@ class DirectPowerBoat(Boat):
         self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram/(u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
-        self.air_mass_density = config_obj.BOAT_AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
+        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 

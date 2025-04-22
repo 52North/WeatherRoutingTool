@@ -20,7 +20,6 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
-    'BOAT_CONFIG': None,
     'CONSTANT_FUEL_RATE': None,
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth', 'on_map'],
     'DELTA_FUEL': 3000,
