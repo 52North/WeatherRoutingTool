@@ -65,11 +65,11 @@ class Boat:
                 self.approx_weather(weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_period.append(self.approx_weather(weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_height.append(self.approx_weather(weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
-            v_currents.append(self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord]))
-            u_currents.append(self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord]))
+            v_currents.append(self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            u_currents.append(self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
             pressure.append(self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord], time[i_coord]))
-            water_temperature.append(self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord]))
-            salinity.append(self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord]))
+            water_temperature.append(self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            salinity.append(self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
             air_temperature.append(self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
             u_wind_speed.append(
                 self.approx_weather(weather_data['u-component_of_wind_height_above_ground'], lats[i_coord],
@@ -93,10 +93,12 @@ class Boat:
 
         return ship_params
 
-    def approx_weather(self, var, lats, lons, time, height=None):
+    def approx_weather(self, var, lats, lons, time, height=None, depth=None):
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:
-            ship_var = ship_var.sel(height_above_ground2=height, method='nearest', drop=False)
+            ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)
+        if depth:
+            ship_var = ship_var.sel(depth=depth, method='nearest', drop=False)
         ship_var = ship_var.fillna(0).to_numpy()
 
         return ship_var
@@ -265,8 +267,14 @@ class DirectPowerBoat(Boat):
             np.arcsin(true_wind_speed * np.sin(np.radians(true_wind_angle)) / apparent_wind_speed),
             0)
         # catch it if argument from arcsin > 90°, i.e. calculate true wind angle for which apparent wind angle is 90°
-        true_ang_perp = np.pi * u.radian - np.arccos(self.speed/true_wind_speed)
-        apparent_wind_angle[angle_rad * u.radian>true_ang_perp] = np.pi  * u.radian- apparent_wind_angle[angle_rad * u.radian>true_ang_perp]
+        for iang in range(0, true_wind_speed.shape[0]):
+            arg_arccos = self.speed/true_wind_speed[iang]
+            if arg_arccos >1 or arg_arccos < -1:
+                continue
+            true_ang_perp = np.pi * u.radian- np.arccos(self.speed/true_wind_speed[iang])
+            if angle_rad[iang] * u.radian > true_ang_perp:
+                apparent_wind_angle[iang] = np.pi  * u.radian- apparent_wind_angle[iang]
+
         apparent_wind_angle = apparent_wind_angle.to(u.degree)
 
         return {'app_wind_speed' : apparent_wind_speed, 'app_wind_angle' :apparent_wind_angle}
@@ -434,6 +442,9 @@ class DirectPowerBoat(Boat):
         P = self.get_power(added_resistance)
         ship_params.power = P
         ship_params.fuel_rate = self.fuel_rate * P
+
+        if debug:
+            ship_params.print()
 
         return ship_params
 
