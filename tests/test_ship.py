@@ -585,11 +585,11 @@ def test_evaluate_weather_for_direct_power_method():
 
         assert abs(
             ship_params.v_wind_speed[i].value - float(weather_data['v-component_of_wind_height_above_ground'].sel(
-                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground2=10,
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground=10,
                 method='nearest', drop=False).to_numpy())) < 0.00001
         assert abs(
             ship_params.u_wind_speed[i].value - float(weather_data['u-component_of_wind_height_above_ground'].sel(
-                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground2=10,
+                latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground=10,
                 method='nearest', drop=False).to_numpy())) < 0.00001
         assert abs(
             ship_params.u_currents[i].value - float(weather_data['utotal'].sel(
