@@ -263,18 +263,43 @@ class DirectPowerBoat(Boat):
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
 
         angle_rad = np.radians(true_wind_angle.value)
-        apparent_wind_angle = np.where(
-            apparent_wind_speed > 0,
-            np.arcsin(true_wind_speed * np.sin(np.radians(true_wind_angle)) / apparent_wind_speed),
-            0)
-        # catch it if argument from arcsin > 90°, i.e. calculate true wind angle for which apparent wind angle is 90°
+        apparent_wind_angle = np.full(true_wind_angle.shape, - 99) * u.radian
+
         for iang in range(0, true_wind_speed.shape[0]):
+            arg_arcsin= true_wind_speed[iang] * np.sin(np.radians(true_wind_angle[iang])) / apparent_wind_speed[iang] * u.radian
+
+            # catch it if argument of arcsin is > 1 due to rounding issues but make sure to apply this only for
+            # rounding issues
+            diff_to_one = arg_arcsin - 1 * u.radian
+            if diff_to_one > 0:
+                assert diff_to_one < 0.000001 * u.radian
+                arg_arcsin = 1 * u.radian
+
+            if apparent_wind_speed[iang] > 0:
+                apparent_wind_angle[iang] = np.arcsin(arg_arcsin.value) * u.radian
+            else:
+                apparent_wind_angle[iang]= 0 * u.radian
+
+            # catch it if psi > 90° as arcsin is only defined for 0 < psi < 90°
+            # - calculate true wind angle 'true_ang_perp' for which apparent wind angle is 90°
+            # - if true wind angle is larger than 'true_ang_perp', subtract pi from apparent wind angle
+            # - apparent wind angle is always < 90° if boat speed > true wind speed; skip correction here
             arg_arccos = self.speed/true_wind_speed[iang]
-            if arg_arccos >1 or arg_arccos < -1:
+            if arg_arccos > 1:
                 continue
             true_ang_perp = np.pi * u.radian- np.arccos(self.speed/true_wind_speed[iang])
             if angle_rad[iang] * u.radian > true_ang_perp:
                 apparent_wind_angle[iang] = np.pi  * u.radian- apparent_wind_angle[iang]
+
+            if np.isnan(apparent_wind_angle[iang]):
+                print('true_wind_speed: ', true_wind_speed[iang])
+                print('apparent_wind_speed: ', apparent_wind_speed[iang])
+                print('true_wind_angle: ', true_wind_angle[iang])
+                print('true_ang_perp: ', true_ang_perp)
+                print('angle_rad: ', angle_rad[iang])
+                print('arg_arcsin: ', arg_arcsin)
+                print('arg_arccos: ', arg_arccos)
+                raise ValueError('Apparent wind angle is nan!')
 
         apparent_wind_angle = apparent_wind_angle.to(u.degree)
 
