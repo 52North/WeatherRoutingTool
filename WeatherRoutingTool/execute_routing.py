@@ -35,10 +35,6 @@ def execute_routing(config):
                                     default_map)
 
     # *******************************************
-    # initialise boat
-    boat = ShipFactory.get_ship(config)
-
-    # *******************************************
     # initialise constraints
     max_draught = max(config.BOAT_DRAUGHT_AFT, config.BOAT_DRAUGHT_FORE)
     water_depth = WaterDepth(config.DATA_MODE, max_draught + config.UNDER_KEEL_CLEARANCE,
@@ -48,6 +44,10 @@ def execute_routing(config):
         min_depth=max_draught + config.UNDER_KEEL_CLEARANCE,
         map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS,
         courses_path=config.COURSES_FILE)
+
+    # *******************************************
+    # initialise boat
+    boat = ShipFactory.get_ship(config)
 
     # *******************************************
     # initialise route

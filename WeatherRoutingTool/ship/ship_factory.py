@@ -25,5 +25,9 @@ class ShipFactory:
         if config.SHIP_TYPE == 'SAL':
             raise NotImplementedError('Ship type SAL is not yet supported!')
 
+        if not ship:
+            raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '
+                                                                                  'not implemented.')
+
         ship.print_init()
         return ship
