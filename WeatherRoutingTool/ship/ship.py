@@ -15,7 +15,7 @@ logger = logging.getLogger('WRT.ship')
 
 class Boat:
     speed: float  # boat speed in m/s
-    weather_path: str # path to netCDF containing weather data
+    weather_path: str  # path to netCDF containing weather data
 
     def __init__(self, config):
         self.speed = config.BOAT_SPEED * u.meter / u.second
@@ -55,12 +55,19 @@ class Boat:
                 self.approx_weather(weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_period.append(self.approx_weather(weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_height.append(self.approx_weather(weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
-            v_currents.append(self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord]))
-            u_currents.append(self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord]))
-            pressure.append(self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord], time[i_coord]))
-            water_temperature.append(self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord]))
-            salinity.append(self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord]))
-            air_temperature.append(self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
+            v_currents.append(
+                self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            u_currents.append(
+                self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            pressure.append(
+                self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord],
+                                    time[i_coord]))
+            water_temperature.append(
+                self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            salinity.append(
+                self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            air_temperature.append(
+                self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
             u_wind_speed.append(
                 self.approx_weather(weather_data['u-component_of_wind_height_above_ground'], lats[i_coord],
                                     lons[i_coord], time[i_coord], 10))
@@ -73,9 +80,9 @@ class Boat:
         ship_params.wave_height = np.array(wave_height, dtype='float32') * u.meter
         ship_params.u_wind_speed = np.array(u_wind_speed, dtype='float32') * u.meter / u.second
         ship_params.v_wind_speed = np.array(v_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter/u.second
-        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter/u.second
-        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second **2)
+        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter / u.second
+        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter / u.second
+        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second ** 2)
         ship_params.air_temperature = np.array(air_temperature, dtype='float32') * u.Kelvin
         ship_params.air_temperature = ship_params.air_temperature.to(u.deg_C, equivalencies=u.temperature())
         ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
@@ -83,10 +90,12 @@ class Boat:
 
         return ship_params
 
-    def approx_weather(self, var, lats, lons, time, height=None):
+    def approx_weather(self, var, lats, lons, time, height=None, depth=None):
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:
-            ship_var = ship_var.sel(height_above_ground2=height, method='nearest', drop=False)
+            ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)
+        if depth:
+            ship_var = ship_var.sel(depth=depth, method='nearest', drop=False)
         ship_var = ship_var.fillna(0).to_numpy()
 
         return ship_var

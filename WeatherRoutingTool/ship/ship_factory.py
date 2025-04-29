@@ -17,13 +17,17 @@ class ShipFactory:
 
         if config.ALGORITHM_TYPE == 'speedy_isobased':
             ship = ConstantFuelBoat(config)
-        if config.SHIP_TYPE == 'direct_power_method':
+        if config.BOAT_TYPE == 'direct_power_method':
             print('Using direct power method')
             ship = DirectPowerBoat(config)
-        if config.SHIP_TYPE == 'CBT':
+        if config.BOAT_TYPE == 'CBT':
             ship = Tanker(config)
-        if config.SHIP_TYPE == 'SAL':
+        if config.BOAT_TYPE == 'SAL':
             raise NotImplementedError('Ship type SAL is not yet supported!')
+
+        if not ship:
+            raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '
+                                                                                  'not implemented.')
 
         ship.print_init()
         return ship
