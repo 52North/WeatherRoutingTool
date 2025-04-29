@@ -27,31 +27,33 @@ OPTIONAL_CONFIG_VARIABLES = {
     'BOAT_PROPULSION_EFFICIENCY': 0.63,  # assuming n_H = 1.05, n_0 = 0.1, n_R = 1
 }
 
+
 class RequiredConfigError(RuntimeError):
     pass
+
 
 class ShipConfig:
 
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
-        self.AIR_MASS_DENSITY = None # mass density of air [kg/m^3]
+        self.AIR_MASS_DENSITY = None  # mass density of air [kg/m^3]
 
-        self.BOAT_BREADTH = None # ship breadth [m]
-        self.BOAT_FUEL_RATE = None # fuel rate at service propulsion point [g/kWh]
+        self.BOAT_BREADTH = None  # ship breadth [m]
+        self.BOAT_FUEL_RATE = None  # fuel rate at service propulsion point [g/kWh]
         self.BOAT_HBR = None  # height of top of superstructure (bridge etc.) [m]
-        self.BOAT_LENGTH = None # overall length [m]
+        self.BOAT_LENGTH = None  # overall length [m]
         self.BOAT_SMCR_POWER = None  # Specific Maximum Continuous Rating power [kWh]
 
-        self.BOAT_AOD = None # lateral projected area of superstructures etc. on deck [m]
-        self.BOAT_AXV = None # area of maximum transverse section exposed to the winds [m]
-        self.BOAT_AYV = None # projected lateral area above the waterline [m]
-        self.BOAT_BS1 = None # breadth of substructure 1 [m]
-        self.BOAT_CMC = None # horizontal distance from midship section to centre of lateral projected area AYV [m]
+        self.BOAT_AOD = None  # lateral projected area of superstructures etc. on deck [m]
+        self.BOAT_AXV = None  # area of maximum transverse section exposed to the winds [m]
+        self.BOAT_AYV = None  # projected lateral area above the waterline [m]
+        self.BOAT_BS1 = None  # breadth of substructure 1 [m]
+        self.BOAT_CMC = None  # horizontal distance from midship section to centre of lateral projected area AYV [m]
         self.BOAT_HC = None  # height of waterline to centre of lateral projected area Ayv [m]
-        self.BOAT_HS1 = None # height of substructure 1 [m]
-        self.BOAT_HS2 = None # height of substructure 2 [m]
-        self.BOAT_LS1 = None # length of substructure 1 [m]
-        self.BOAT_LS2 = None # length of substructure 2 [m]
+        self.BOAT_HS1 = None  # height of substructure 1 [m]
+        self.BOAT_HS2 = None  # height of substructure 2 [m]
+        self.BOAT_LS1 = None  # length of substructure 1 [m]
+        self.BOAT_LS2 = None  # length of substructure 2 [m]
 
         self.BOAT_OVERLOAD_FACTOR = None
         self.BOAT_PROPULSION_EFFICIENCY = None  # propulsion efficiency coefficient in ideal conditions
@@ -66,7 +68,6 @@ class ShipConfig:
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
             logger.error(msg)
             raise ValueError(msg)
-
 
     def print(self):
         # ToDo: prettify output
@@ -103,4 +104,3 @@ class ShipConfig:
                 setattr(self, optional_var, default_value)
             else:
                 setattr(self, optional_var, config_dict[optional_var])
-

@@ -26,7 +26,7 @@ logger = logging.getLogger('WRT.ship')
 
 class Boat:
     speed: float  # boat speed in m/s
-    weather_path: str # path to netCDF containing weather data
+    weather_path: str  # path to netCDF containing weather data
 
     def __init__(self, config):
         self.speed = config.BOAT_SPEED * u.meter / u.second
@@ -66,12 +66,19 @@ class Boat:
                 self.approx_weather(weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_period.append(self.approx_weather(weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_height.append(self.approx_weather(weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
-            v_currents.append(self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            u_currents.append(self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            pressure.append(self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord], time[i_coord]))
-            water_temperature.append(self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            salinity.append(self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            air_temperature.append(self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
+            v_currents.append(
+                self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            u_currents.append(
+                self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            pressure.append(
+                self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord],
+                                    time[i_coord]))
+            water_temperature.append(
+                self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            salinity.append(
+                self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
+            air_temperature.append(
+                self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
             u_wind_speed.append(
                 self.approx_weather(weather_data['u-component_of_wind_height_above_ground'], lats[i_coord],
                                     lons[i_coord], time[i_coord], 10))
@@ -84,9 +91,9 @@ class Boat:
         ship_params.wave_height = np.array(wave_height, dtype='float32') * u.meter
         ship_params.u_wind_speed = np.array(u_wind_speed, dtype='float32') * u.meter / u.second
         ship_params.v_wind_speed = np.array(v_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter/u.second
-        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter/u.second
-        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second **2)
+        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter / u.second
+        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter / u.second
+        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second ** 2)
         ship_params.air_temperature = np.array(air_temperature, dtype='float32') * u.Kelvin
         ship_params.air_temperature = ship_params.air_temperature.to(u.deg_C, equivalencies=u.temperature())
         ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
@@ -105,7 +112,6 @@ class Boat:
         return ship_var
 
 
-
 class DirectPowerBoat(Boat):
     """
         estimates power & fuel consumption based on the so-called Direct Power Method
@@ -121,13 +127,13 @@ class DirectPowerBoat(Boat):
                 ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
     """
 
-    ship_path: str      # path to ship configuration file
+    ship_path: str  # path to ship configuration file
 
     power_at_sp: float  # power at the service propulsion point
-    eta_prop: float     # propulsion efficiency
+    eta_prop: float  # propulsion efficiency
     overload_factor: float  # overload factor
     head_wind_coeff: float  # wind coefficient for head wind (psi = 0°)
-    fuel_rate: float    # fuel rate
+    fuel_rate: float  # fuel rate
 
     # ship geometry
     Axv: float
@@ -144,8 +150,7 @@ class DirectPowerBoat(Boat):
     hbr: float
     hc: float
 
-    air_mass_density: float     # air mass density
-
+    air_mass_density: float  # air mass density
 
     def __init__(self, config):
         super().__init__(config)
@@ -173,10 +178,10 @@ class DirectPowerBoat(Boat):
         self.cmc = config_obj.BOAT_CMC * u.meter
         self.hbr = config_obj.BOAT_HBR * u.meter
         self.hc = config_obj.BOAT_HC * u.meter
-        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram/(u.kiloWatt * u.hour)
+        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
-        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg/(u.meter * u.meter * u.meter)
+        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 
@@ -191,14 +196,14 @@ class DirectPowerBoat(Boat):
             'ls2': 0.3 * self.length,
             'cmc': -0.035 * self.length,
             'bs1': 0.9 * self.breadth,
-            'hc' : 10 * u.meter
+            'hc': 10 * u.meter
         }
-        if par<0:
+        if par < 0:
             par = approx_pars[par_string]
         return par
 
     def calculate_ship_geometry(self):
-        #check for provided parameters
+        # check for provided parameters
         self.hs1 = self.set_optional_parameter('hs1', self.hs1)
         self.ls1 = self.set_optional_parameter('ls1', self.ls1)
         self.hs2 = self.set_optional_parameter('hs2', self.hs2)
@@ -210,11 +215,10 @@ class DirectPowerBoat(Boat):
         if self.Axv < 0:
             self.Axv = self.hbr * self.breadth + self.hs1 * self.bs1 - self.hs1 * self.breadth
         if self.Ayv < 0:
-            self.Ayv = (self.hs1 * self.ls1 + self.hs2 * self.ls2 + self.hbr * self.length - 1/2 * self.hbr * self.hbr
+            self.Ayv = (self.hs1 * self.ls1 + self.hs2 * self.ls2 + self.hbr * self.length - 1 / 2 * self.hbr * self.hbr
                         - self.hs1 * self.length)
-        if self.Aod< 0:
+        if self.Aod < 0:
             self.Aod = self.hs1 * self.ls1 + self.hs2 * self.ls2
-
 
     def calculate_head_wind_coeff(self):
         """
@@ -236,7 +240,8 @@ class DirectPowerBoat(Boat):
         """
             calculate true wind direction in degree from u and v
         """
-        wind_dir = (180 * u.degree + 180 * u.degree/math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (360 * u.degree)
+        wind_dir = (180 * u.degree + 180 * u.degree / math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (
+                    360 * u.degree)
         return wind_dir
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
@@ -249,8 +254,8 @@ class DirectPowerBoat(Boat):
 
         delta_ang = ang_wind - ang_boat
 
-        delta_ang[delta_ang < 0*u.degree] = abs(delta_ang[delta_ang<0*u.degree])
-        delta_ang[delta_ang>180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang>180 * u.degree])
+        delta_ang[delta_ang < 0 * u.degree] = abs(delta_ang[delta_ang < 0 * u.degree])
+        delta_ang[delta_ang > 180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang > 180 * u.degree])
 
         return delta_ang
 
@@ -259,14 +264,15 @@ class DirectPowerBoat(Boat):
             calculate apparent wind speed from true wind and ship course
         """
         apparent_wind_speed = (self.speed * self.speed + true_wind_speed * true_wind_speed
-                         + 2.0 * self.speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
+                               + 2.0 * self.speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
 
         angle_rad = np.radians(true_wind_angle.value)
         apparent_wind_angle = np.full(true_wind_angle.shape, - 99) * u.radian
 
         for iang in range(0, true_wind_speed.shape[0]):
-            arg_arcsin= true_wind_speed[iang] * np.sin(np.radians(true_wind_angle[iang])) / apparent_wind_speed[iang] * u.radian
+            arg_arcsin = true_wind_speed[iang] * np.sin(np.radians(true_wind_angle[iang])) / apparent_wind_speed[
+                iang] * u.radian
 
             # catch it if argument of arcsin is > 1 due to rounding issues but make sure to apply this only for
             # rounding issues
@@ -278,18 +284,18 @@ class DirectPowerBoat(Boat):
             if apparent_wind_speed[iang] > 0:
                 apparent_wind_angle[iang] = np.arcsin(arg_arcsin.value) * u.radian
             else:
-                apparent_wind_angle[iang]= 0 * u.radian
+                apparent_wind_angle[iang] = 0 * u.radian
 
             # catch it if psi > 90° as arcsin is only defined for 0 < psi < 90°
             # - calculate true wind angle 'true_ang_perp' for which apparent wind angle is 90°
             # - if true wind angle is larger than 'true_ang_perp', subtract pi from apparent wind angle
             # - apparent wind angle is always < 90° if boat speed > true wind speed; skip correction here
-            arg_arccos = self.speed/true_wind_speed[iang]
+            arg_arccos = self.speed / true_wind_speed[iang]
             if arg_arccos > 1:
                 continue
-            true_ang_perp = np.pi * u.radian- np.arccos(self.speed/true_wind_speed[iang])
+            true_ang_perp = np.pi * u.radian - np.arccos(self.speed / true_wind_speed[iang])
             if angle_rad[iang] * u.radian > true_ang_perp:
-                apparent_wind_angle[iang] = np.pi  * u.radian- apparent_wind_angle[iang]
+                apparent_wind_angle[iang] = np.pi * u.radian - apparent_wind_angle[iang]
 
             if np.isnan(apparent_wind_angle[iang]):
                 print('true_wind_speed: ', true_wind_speed[iang])
@@ -303,7 +309,7 @@ class DirectPowerBoat(Boat):
 
         apparent_wind_angle = apparent_wind_angle.to(u.degree)
 
-        return {'app_wind_speed' : apparent_wind_speed, 'app_wind_angle' :apparent_wind_angle}
+        return {'app_wind_speed': apparent_wind_speed, 'app_wind_angle': apparent_wind_angle}
 
     def get_wind_factors_small_angle(self, psi):
         """
@@ -323,7 +329,7 @@ class DirectPowerBoat(Boat):
         CXLI = -99
         CALF = -99
 
-        CLF = beta10 + beta11 * self.Ayv / (self.length * self.breadth) + beta12 * self.cmc/self.length
+        CLF = beta10 + beta11 * self.Ayv / (self.length * self.breadth) + beta12 * self.cmc / self.length
         CXLI = delta10 + delta11 * self.Ayv / (self.length * self.hbr) + delta12 * self.Axv / (self.breadth * self.hbr)
         CALF = eta10 + eta11 * self.Aod / self.Ayv + eta12 * self.breadth / self.length
 
@@ -352,14 +358,13 @@ class DirectPowerBoat(Boat):
         CALF = -99
 
         CLF = beta20 + beta21 * self.breadth / self.length + beta22 * self.hc / self.length + beta23 * self.Aod / (
-                    self.length * self.length) + beta24 * self.Axv / (self.breadth * self.breadth)
-        CXLI = delta20 + delta21 * self.Ayv / (
-                    self.length * self.hbr) + delta22 * self.Axv / self.Ayv + delta23 * self.breadth / self.length + delta24 * self.Axv / (
-                           self.breadth * self.hbr)
+                self.length * self.length) + beta24 * self.Axv / (self.breadth * self.breadth)
+        CXLI = (delta20 + delta21 * self.Ayv / (
+                self.length * self.hbr) + delta22 * self.Axv / self.Ayv + delta23 * self.breadth / self.length + delta24
+                * self.Axv / (self.breadth * self.hbr))
         CALF = eta20 + eta21 * self.Aod / self.Ayv
 
         return {'CLF': CLF, 'CXLI': CXLI, 'CALF': CALF}
-
 
     def get_wind_coeff(self, psi_deg, CLF, CXLI, CALF):
         """
@@ -372,7 +377,7 @@ class DirectPowerBoat(Boat):
         cospsi = math.cos(psi)
 
         CAA = (CLF * cospsi +
-               CXLI * (sinpsi - 1/2 * sinpsi * cospsi * cospsi) *
+               CXLI * (sinpsi - 1 / 2 * sinpsi * cospsi * cospsi) *
                sinpsi * cospsi + CALF * sinpsi * cospsi * cospsi * cospsi)
 
         return CAA
@@ -385,7 +390,8 @@ class DirectPowerBoat(Boat):
         wind_fac = None
         wind_coeff_arr = []
 
-        true_wind_speed= np.sqrt(u_wind_speed.value*u_wind_speed.value + v_winds_speed.value*v_winds_speed.value) * u.meter / u.second
+        true_wind_speed = np.sqrt(
+            u_wind_speed.value * u_wind_speed.value + v_winds_speed.value * v_winds_speed.value) * u.meter / u.second
 
         true_wind_dir = self.get_wind_dir(u_wind_speed, v_winds_speed)
         true_wind_dir = self.get_relative_wind_dir(courses, true_wind_dir)
@@ -398,21 +404,22 @@ class DirectPowerBoat(Boat):
             if psi > 90 and psi <= 180:
                 wind_fac = self.get_wind_factors_large_angle(psi)
             if psi == 90:
-                wind_fac_small = self.get_wind_factors_small_angle(psi-10)
-                wind_fac_large = self.get_wind_factors_large_angle(psi+10)
-                wind_coeff = 1/2 * (
-                    self.get_wind_coeff(psi, wind_fac_small['CLF'], wind_fac_small['CXLI'], wind_fac_small['CALF'])+
-                    self.get_wind_coeff(psi, wind_fac_large['CLF'], wind_fac_large['CXLI'], wind_fac_large['CALF'])
+                wind_fac_small = self.get_wind_factors_small_angle(psi - 10)
+                wind_fac_large = self.get_wind_factors_large_angle(psi + 10)
+                wind_coeff = 1 / 2 * (
+                        self.get_wind_coeff(psi, wind_fac_small['CLF'], wind_fac_small['CXLI'],
+                                            wind_fac_small['CALF']) +
+                        self.get_wind_coeff(psi, wind_fac_large['CLF'], wind_fac_large['CXLI'], wind_fac_large['CALF'])
                 )
             else:
                 wind_coeff = self.get_wind_coeff(psi, wind_fac['CLF'], wind_fac['CXLI'], wind_fac['CALF'])
             wind_coeff_arr.append(wind_coeff)
 
         wind_coeff_arr = np.array(wind_coeff_arr)
-        r_wind = (1/2 * self.air_mass_density * wind_coeff_arr * self.Axv * apparent_wind['app_wind_speed']
+        r_wind = (1 / 2 * self.air_mass_density * wind_coeff_arr * self.Axv * apparent_wind['app_wind_speed']
                   * apparent_wind['app_wind_speed'])
 
-        return {"r_wind" : r_wind.to(u.Newton), "wind_coeff": wind_coeff_arr}
+        return {"r_wind": r_wind.to(u.Newton), "wind_coeff": wind_coeff_arr}
 
     def get_wave_resistance(self, ship_params, wave_height, wave_direction, wave_period):
         """
@@ -560,7 +567,7 @@ class Tanker(Boat):
     courses_path: str  # path to netCDF which contains the power estimation per course
     depth_path: str  # path to netCDF for depth data
     # FIXME: make separate weather path obsolete
-    weather_path_maripower: str    # path to weather data which is converted to maripower requirements
+    weather_path_maripower: str  # path to weather data which is converted to maripower requirements
 
     use_depth_data: bool
 
@@ -628,7 +635,6 @@ class Tanker(Boat):
         ds_cut.to_netcdf(self.weather_path_maripower)
         ds_cut.close()
         ds.close()
-
 
     def set_ship_property(self, variable, value):
         print('Setting ship property ' + variable + ' to ' + str(value))

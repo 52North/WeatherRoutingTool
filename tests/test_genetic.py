@@ -6,10 +6,12 @@ import pytest
 from WeatherRoutingTool.algorithms.genetic_utils import GridBasedMutation, GeneticCrossover
 from WeatherRoutingTool.utils import graphics
 
+
 def get_xy_from_tuples(route):
     x = [x[0] for x in route]
     y = [x[1] for x in route]
     return x, y
+
 
 @pytest.mark.parametrize(
     ("route"),
@@ -17,7 +19,6 @@ def get_xy_from_tuples(route):
         [(35.3, 16.1), (35.17, 17.2), (35.1, 18.2), (35.0, 19.1), (35.0, 20.3)]
     ],
 )
-
 @pytest.mark.genetic
 class TestGenetic:
 
@@ -25,8 +26,8 @@ class TestGenetic:
     def test_mutate_move(self, route):
         orig_route = copy.copy(route)
 
-        mut = GridBasedMutation(None)
-        res = mut.mutate_move(route)
+        # mut = GridBasedMutation(None)
+        # res = mut.mutate_move(route)
 
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         ax.axis('off')
@@ -43,7 +44,6 @@ class TestGenetic:
 
     @pytest.mark.manual
     def test_crossover_noint(self, route):
-
         route1 = [(35.3, 16.1), (36.17, 18.2), (36.1, 19.2), (36.0, 20.1), (35.0, 20.3)]
         route2 = route
 

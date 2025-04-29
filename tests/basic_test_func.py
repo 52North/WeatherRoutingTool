@@ -47,6 +47,7 @@ def create_dummy_Tanker_object():
     pol = Tanker(config)
     return pol
 
+
 def create_dummy_Direct_Power_Ship(ship_config_path):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
