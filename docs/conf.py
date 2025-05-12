@@ -10,23 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-from unittest.mock import MagicMock
+# import os
+# import sys
 
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-
-# Avoid warning when building the documentation by mocking libraries
-MOCK_MODULES = ['datacube']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
-
-sys.path.insert(0, os.path.abspath('..'))
+# sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -41,7 +28,7 @@ author = 'Katharina Demmich, Martin Pontius'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'sphinx.ext.autodoc'  # not working yet
+    'sphinx.ext.autodoc'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

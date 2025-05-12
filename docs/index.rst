@@ -4,7 +4,7 @@ Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!
 ========================================================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 6
    :caption: Contents:
 
    source/installation
@@ -14,7 +14,7 @@ Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!
    source/constraints/index
    source/consumption-models/index
    source/weather
-   source/api-documentation
+   source/api-documentation/index
    source/contributing
    source/references
 
