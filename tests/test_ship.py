@@ -4,15 +4,18 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as utils
+import WeatherRoutingTool.utils.graphics as graphics
 import tests.basic_test_func as basic_test_func
 
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.ship import DirectPowerBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 
@@ -78,6 +81,7 @@ def test_get_netCDF_courses():
 '''
 
 
+@pytest.mark.maripower
 def test_get_fuel_from_netCDF():
     lat = np.array([1.1, 2.2, 3.3, 4.4])
     it = np.array([1, 2])
@@ -157,8 +161,8 @@ def test_get_fuel_from_netCDF():
     message_test = ship_params.get_message()
 
     power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
-    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1/u.minute
-    fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg/u.second
+    rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1 / u.minute
+    fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg / u.second
     rcalm_ref = np.array([2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9]) * u.newton
     rwind_ref = np.array([3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]) * u.newton
     rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
@@ -167,15 +171,15 @@ def test_get_fuel_from_netCDF():
     wave_height_ref = np.array([4.1, 4.2, 4.11, 4.12, 4.21, 4.22, 4.31, 4.32]) * u.meter
     wave_direction_ref = np.array([4.4, 4.5, 4.41, 4.42, 4.51, 4.52, 4.61, 4.62]) * u.radian
     wave_period_ref = np.array([4.7, 4.8, 4.71, 4.72, 4.81, 4.82, 4.91, 4.92]) * u.second
-    u_currents_ref = np.array([5.1, 5.2, 5.11, 5.12, 5.21, 5.22, 5.31, 5.32]) * u.meter/u.second
-    v_currents_ref = np.array([5.4, 5.5, 5.41, 5.42, 5.51, 5.52, 5.61, 5.62]) * u.meter/u.second
-    u_wind_speed_ref = np.array([7.1, 7.2, 7.11, 7.12, 7.21, 7.22, 7.31, 7.32]) * u.meter/u.second
-    v_wind_speed_ref = np.array([7.4, 7.5, 7.41, 7.42, 7.51, 7.52, 7.61, 7.62]) * u.meter/u.second
-    pressure_ref = np.array([5.7, 5.8, 5.71, 5.72, 5.81, 5.82, 5.91, 5.92]) * u.kg/u.meter/u.second**2
+    u_currents_ref = np.array([5.1, 5.2, 5.11, 5.12, 5.21, 5.22, 5.31, 5.32]) * u.meter / u.second
+    v_currents_ref = np.array([5.4, 5.5, 5.41, 5.42, 5.51, 5.52, 5.61, 5.62]) * u.meter / u.second
+    u_wind_speed_ref = np.array([7.1, 7.2, 7.11, 7.12, 7.21, 7.22, 7.31, 7.32]) * u.meter / u.second
+    v_wind_speed_ref = np.array([7.4, 7.5, 7.41, 7.42, 7.51, 7.52, 7.61, 7.62]) * u.meter / u.second
+    pressure_ref = np.array([5.7, 5.8, 5.71, 5.72, 5.81, 5.82, 5.91, 5.92]) * u.kg / u.meter / u.second ** 2
     air_temperature_ref = np.array([6.1, 6.2, 6.11, 6.12, 6.21, 6.22, 6.31, 6.32]) * u.deg_C
     salinity_ref = np.array([6.4, 6.5, 6.41, 6.42, 6.51, 6.52, 6.61, 6.62]) * u.dimensionless_unscaled
     water_temperature_ref = np.array([6.7, 6.8, 6.71, 6.72, 6.81, 6.82, 6.91, 6.92]) * u.deg_C
-    status_ref = np.array([1, 2,  2, 3, 3, 2, 1, 3])
+    status_ref = np.array([1, 2, 2, 3, 3, 2, 1, 3])
     message_ref = np.array(['OK', 'OK', 'OK', 'ERROR', 'ERROR', 'OK', 'ERROR', 'ERROR'])
 
     fuel_test = fuel_test.value * 3.6
@@ -210,6 +214,7 @@ def test_get_fuel_from_netCDF():
 '''
 
 
+@pytest.mark.maripower
 def test_power_consumption_returned():
     # dummy weather file
     time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
@@ -222,7 +227,7 @@ def test_power_consumption_returned():
     # dummy course netCDF
     pol = basic_test_func.create_dummy_Tanker_object()
     pol.use_depth_data = False
-    pol.set_boat_speed(np.array([8]) * u.meter/u.second)
+    pol.set_boat_speed(np.array([8]) * u.meter / u.second)
 
     time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
@@ -230,15 +235,15 @@ def test_power_consumption_returned():
 
     power = ds['Power_brake'].to_numpy() * u.Watt
     rpm = ds['RotationRate'].to_numpy() * u.Hz
-    fuel = ds['Fuel_consumption_rate'].to_numpy() * u.kg/u.s
+    fuel = ds['Fuel_consumption_rate'].to_numpy() * u.kg / u.s
 
     assert np.all(power < 10000000 * u.Watt)
     assert np.all(rpm < 100 * u.Hz)
 
-    assert np.all(fuel < 1.5 * u.kg/u.s)
+    assert np.all(fuel < 1.5 * u.kg / u.s)
     assert np.all(power > 1000000 * u.Watt)
     assert np.all(rpm > 70 * u.Hz)
-    assert np.all(fuel > 0.5 * u.kg/u.s)
+    assert np.all(fuel > 0.5 * u.kg / u.s)
 
 
 '''
@@ -383,6 +388,7 @@ def test_shipparams_get_single():
 '''
 
 
+@pytest.mark.maripower
 def test_get_netCDF_courses_isobased():
     lat = np.array([1., 1., 1, 2, 2, 2])
     lon = np.array([4., 4., 4, 3, 3, 3])
@@ -430,6 +436,7 @@ def test_get_netCDF_courses_isobased():
 '''
 
 
+@pytest.mark.maripower
 def test_get_netCDF_courses_GA():
     lat_short = np.array([1, 2, 1])
     lon_short = np.array([4, 4, 1.5])
@@ -467,8 +474,9 @@ def test_get_netCDF_courses_GA():
 '''
 
 
+@pytest.mark.maripower
 def test_get_fuel_for_fixed_waypoints():
-    bs = 6 * u.meter/u.second
+    bs = 6 * u.meter / u.second
     start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
     route_lats = np.array([54.9, 54.7, 54.5, 54.2])
     route_lons = np.array([13.2, 13.4, 13.7, 13.9])
@@ -514,6 +522,7 @@ def test_get_fuel_for_fixed_waypoints():
 '''
 
 
+@pytest.mark.maripower
 def test_wind_force():
     lats = np.full(10, 54.9)  # 37
     lons = np.full(10, 13.2)
@@ -543,4 +552,386 @@ def test_wind_force():
     axes[0].set_title("Power", va='bottom')
     axes[1].set_title("Wind resistence", va='top')
 
+    plt.show()
+
+
+'''
+    DIRECT POWER METHOD: check whether values of weather data are correctly read from file
+'''
+
+
+def test_evaluate_weather_for_direct_power_method():
+    # dummy weather file
+    dirname = os.path.dirname(__file__)
+    weather_data = xr.open_dataset(os.path.join(dirname, 'data/reduced_testdata_weather.nc'))
+
+    time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
+
+    # courses test file
+    courses_test = np.array([0, 180, 0, 180, 180, 0]) * u.degree
+    lat_test = np.array([54.3, 54.3, 54.6, 55.6, 55.9, 55.9])
+    lon_test = np.array([13.3, 13.3, 13.6, 16., 16.9, 13.9])
+    time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
+
+    # dummy course netCDF
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+
+    ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
+    ship_params.print()
+
+    for i in range(0, 6):
+        ship_params.wave_direction[i] = np.nan_to_num(ship_params.wave_direction[i])
+        wavedir_data = weather_data['VMDR'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                                method='nearest', drop=False).fillna(0).to_numpy()
+
+        ship_params.wave_height[i] = np.nan_to_num(ship_params.wave_height[i])
+        waveheight_data = weather_data['VHM0'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                                   method='nearest', drop=False).fillna(0).to_numpy()
+        ship_params.wave_period[i] = np.nan_to_num(ship_params.wave_period[i])
+        waveperiod_data = weather_data['VTPK'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                                   method='nearest', drop=False).fillna(0).to_numpy()
+
+        assert abs(ship_params.wave_direction[i].value - wavedir_data) < 0.0001
+        assert abs(ship_params.wave_height[i].value - waveheight_data) < 0.0001
+        assert abs(ship_params.wave_period[i].value - waveperiod_data) < 0.0001
+
+        speed_test = float(weather_data['v-component_of_wind_height_above_ground'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground=10,
+            method='nearest', drop=False).to_numpy())
+        uwind_test = float(weather_data['u-component_of_wind_height_above_ground'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground=10,
+            method='nearest', drop=False).to_numpy())
+        utotal_test = float(weather_data['utotal'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).fillna(0).to_numpy()[0])
+        vtotal_test = float(weather_data['vtotal'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).fillna(0).to_numpy()[0])
+        pressure_test = float(weather_data['Pressure_reduced_to_MSL_msl'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).to_numpy())
+        thetao_test = float(weather_data['thetao'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).fillna(0).to_numpy()[0])
+        salinity_test = float(weather_data['so'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).fillna(0).to_numpy()[0])
+        salinity_test = salinity_test * 0.001
+        air_temp_test = float(weather_data['Temperature_surface'].sel(
+            latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+            method='nearest', drop=False).to_numpy())
+        air_temp_test = air_temp_test - 273.15
+
+        assert abs(ship_params.v_wind_speed[i].value - speed_test) < 0.00001
+        assert abs(ship_params.u_wind_speed[i].value - uwind_test) < 0.00001
+        assert abs(ship_params.u_currents[i].value - utotal_test) < 0.00001
+        assert abs(ship_params.v_currents[i].value - vtotal_test) < 0.00001
+        assert abs(ship_params.pressure[i].value - pressure_test) < 0.01
+        assert abs(ship_params.water_temperature[i].value - thetao_test) < 0.00001
+        assert abs(ship_params.salinity[i].value - salinity_test) < 0.00001
+        assert abs(ship_params.air_temperature[i].value - air_temp_test) < 0.0001
+
+
+'''
+    DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as
+    expected and correct power and corresponding unit are returned
+'''
+
+
+@pytest.mark.parametrize("DeltaR,speed,design_power", [(5000, 6, 6502000 * 0.75)])
+def test_get_power_for_direct_power_method(DeltaR, speed, design_power):
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+    P = DeltaR * speed / 0.63 + design_power
+
+    Ptest = pol.get_power(5000 * u.N)
+    assert P == Ptest.value
+    assert 'W' == Ptest.unit
+
+
+'''
+    DIRECT POWER METHOD: check whether relative angle between wind direction and course of the ship is correctly
+    calculated from u_wind and v_wind
+'''
+
+
+def test_get_wind_dir():
+    wind_dir = np.array([30, 120, 210, 300]) * u.degree
+    absv = 20
+    courses = np.array([10, 10, 20, 20]) * u.degree
+    rel_wind_dir = np.array([20, 110, 170, 70]) * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+
+    v_wind = -absv * np.cos(np.radians(wind_dir)) * u.meter / u.second
+    u_wind = -absv * np.sin(np.radians(wind_dir)) * u.meter / u.second
+
+    true_wind_dir = pol.get_wind_dir(u_wind, v_wind)
+    true_wind_dir = pol.get_relative_wind_dir(courses, true_wind_dir)
+
+    assert np.all((rel_wind_dir - true_wind_dir) < 0.0001 * u.degree)
+
+
+'''
+    DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single values of
+    wind speed and wind dir
+'''
+
+
+def test_get_apparent_wind():
+    wind_dir = np.array([0, 45, 90, 135, 180]) * u.degree
+    wind_speed = np.array([10, 10, 10, 10, 10]) * u.meter / u.second
+    wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter / u.second
+    wind_dir_test = np.array([0, 28.41, 59.04, 98.606, 180]) * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+    wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
+
+    for i in range(0, 4):
+        assert abs(wind_result['app_wind_speed'][i] - wind_speed_test[i]) < 0.01 * u.meter / u.second
+        assert abs(wind_result['app_wind_angle'][i] - wind_dir_test[i]) < 0.01 * u.degree
+
+
+'''
+    DIRECT POWER METHOD: check whether apparent wind speed and direction look fine on polar plot
+'''
+
+
+@pytest.mark.manual
+def test_get_apparent_wind_polar_plot():
+    wind_dir = np.linspace(0, 180, 19) * u.degree
+    wind_speed = np.full(19, 10) * u.meter / u.second
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+    wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
+
+    fig, axes = plt.subplots(subplot_kw={'projection': 'polar'})
+    axes.plot(np.radians(wind_dir), wind_speed, label="true wind")
+    axes.plot(np.radians(wind_result['app_wind_angle']), wind_result['app_wind_speed'], label="apparent wind")
+    axes.plot(np.radians(wind_result['app_wind_angle']), wind_speed, label="apparent wind dir, fixed speed")
+    axes.legend(loc="upper right")
+    axes.set_title("Wind direction", va='bottom')
+    plt.show()
+
+
+'''
+    DIRECT POWER METHOD: check whether ship geometry is approximated correctly if only mandatory parameters
+    are supplied
+'''
+
+
+def test_calculate_geometry_simple_method():
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+    hbr = 30 * u.meter
+    breadth = 32 * u.meter
+    length = 180 * u.meter
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = -0.035 * length
+    hc = 10 * u.meter
+    Axv = 940.8 * u.meter * u.meter
+    Ayv = 4248 * u.meter * u.meter
+    Aod = 378 * u.meter * u.meter
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
+
+
+def test_dpm_via_dict_config():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests_simpleship.json')
+
+    config = {
+        'BOAT_BREADTH': 32,
+        'BOAT_FUEL_RATE': 167,
+        'BOAT_HBR': 30,
+        'BOAT_LENGTH': 180,
+        'BOAT_SMCR_POWER': 6500,
+        'BOAT_SPEED': 6,
+        'WEATHER_DATA': "abc",
+        'CONFIG_PATH': configpath
+    }
+
+    pol = DirectPowerBoat(config)
+
+    hbr = 30 * u.meter
+    breadth = 32 * u.meter
+    length = 180 * u.meter
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = -0.035 * length
+    hc = 10 * u.meter
+    Axv = 940.8 * u.meter * u.meter
+    Ayv = 4248 * u.meter * u.meter
+    Aod = 378 * u.meter * u.meter
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
+
+
+'''
+    DIRECT POWER METHOD: check whether ship geometry parameters are set correctly if manual values are supplied
+'''
+
+
+def test_calculate_geometry_manual_method():
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
+    hbr = 30 * u.meter
+    breadth = 32 * u.meter
+    length = 180 * u.meter
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = 8.1 * u.meter
+    hc = 7.06 * u.meter
+    Axv = 716 * u.meter * u.meter
+    Ayv = 1910 * u.meter * u.meter
+    Aod = 529 * u.meter * u.meter
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
+
+
+'''
+    DIRECT POWER METHOD: check for reasonable behaviour of wind coefficient C_AA
+'''
+
+
+@pytest.mark.manual
+def test_wind_coeff():
+    u_wind_speed = 0 * u.meter / u.second
+    v_wind_speed = -10 * u.meter / u.second
+
+    courses = np.linspace(0, 180, 19) * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
+    r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
+
+    plt.rcParams['text.usetex'] = True
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
+    ax.set_xlabel('angle of attack (degrees)')
+    ax.set_ylabel(r'$C_{AA}$')
+    plt.show()
+
+
+'''
+    DIRECT POWER METHOD: check for reasonable behaviour of wind resistance on polar plot
+'''
+
+
+@pytest.mark.manual
+def test_wind_resistance():
+    u_wind_speed = 0 * u.meter / u.second
+    v_wind_speed = -10 * u.meter / u.second
+
+    courses = np.linspace(0, 180, 19)
+    courses_rad = np.radians(courses)
+    courses = courses * u.degree
+
+    pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
+    r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+
+    axes[0].plot(courses_rad, r_wind['r_wind'])
+    axes[0].legend()
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[1].plot(courses_rad, r_wind['r_wind'])
+    axes[0].set_title("Power", va='bottom')
+    axes[1].set_title("Wind resistence", va='top')
+
+    plt.show()
+
+
+'''
+    DIRECT POWER METHOD: compare wind resistance and power from the Direct Power Method to results from maripower.
+    - relative difference of wind direction and boat course is changing in steps of 10 degrees
+    - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
+'''
+
+
+@pytest.mark.manual
+def test_compare_wind_resistance_to_maripower():
+    lats = np.full(10, 54.9)  # 37
+    lons = np.full(10, 13.2)
+    courses = np.linspace(0, 360, 10) * u.degree
+    courses_rad = utils.degree_to_pmpi(courses)
+
+    time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
+    bs = 7.7 * u.meter / u.second
+
+    pol_maripower = basic_test_func.create_dummy_Tanker_object()
+    pol_maripower.set_ship_property('WaveForcesFactor', 0)
+
+    pol_maripower.use_depth_data = False
+    pol_maripower.set_boat_speed(bs)
+    ship_params_maripower = pol_maripower.get_ship_parameters(courses, lats, lons, time, None, True)
+    rwind_maripower = ship_params_maripower.get_rwind()
+    P_maripower = ship_params_maripower.get_power()
+
+    pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
+    pol_simple.set_boat_speed(bs)
+    ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
+    r_wind_simple = ship_params_simple.get_rwind()
+    P_simple = ship_params_simple.get_power()
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+
+    axes[0].plot(courses_rad, rwind_maripower, label="maripower")
+    axes[0].plot(courses_rad, r_wind_simple, label="Fujiwara")
+    axes[0].legend(loc="upper right")
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[0].set_title("Wind resistance", va='bottom')
+
+    axes[1].plot(courses_rad, P_maripower, label="maripower")
+    axes[1].plot(courses_rad, P_simple, label="DPM")
+    axes[1].set_title("Power", va='top')
+    axes[0].legend(loc="upper right")
     plt.show()

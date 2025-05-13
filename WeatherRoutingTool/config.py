@@ -20,6 +20,7 @@ RECOMMENDED_CONFIG_VARIABLES = {
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
+    'BOAT_TYPE': 'direct_power_method',
     'CONSTANT_FUEL_RATE': None,
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth', 'on_map'],
     'DELTA_FUEL': 3000,
@@ -43,7 +44,6 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'ROUTE_POSTPROCESSING': False,
-    'SHIP_TYPE': 'CBT',
     'TIME_FORECAST': 90,
     'UNDER_KEEL_CLEARANCE': 20
 }
@@ -63,6 +63,8 @@ class Config:
         self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SPEED = None  # in m/s
+        self.BOAT_TYPE = None  # options: 'CBT', 'SAL', 'speedy_isobased', 'direct_power_method'
+        self.CONFIG_PATH = None  # path to config file
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints', 'status_error'
         self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
@@ -94,13 +96,13 @@ class Config:
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written
         self.ROUTE_POSTPROCESSING = None  # Route is postprocessed with Traffic Separation Scheme
-        self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
         self.UNDER_KEEL_CLEARANCE = None  # vertical distance between keel and ground
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
         if init_mode == 'from_json':
             assert file_name
+            self.CONFIG_PATH = file_name
             self.read_from_json(file_name)
         elif init_mode == 'from_dict':
             assert config_dict
