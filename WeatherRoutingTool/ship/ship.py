@@ -121,7 +121,7 @@ class DirectPowerBoat(Boat):
         estimates power & fuel consumption based on the so-called Direct Power Method
 
         The following approximations are used:
-            - a fixed working point of 70% SMCR power and an average ship speed is assumed
+            - a fixed working point of 75% SMCR power and an average ship speed is assumed
               (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
             - additional power and fuel consumption is derived from added resistances of the environmental conditions
             - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
@@ -193,7 +193,7 @@ class DirectPowerBoat(Boat):
         self.calculate_head_wind_coeff()
 
         logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
-                                      'to 70% SMCR power.'))
+                                      'to 75% SMCR power.'))
 
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
