@@ -29,8 +29,12 @@ class Boat:
     weather_path: str  # path to netCDF containing weather data
 
     def __init__(self, config):
-        self.speed = config.BOAT_SPEED * u.meter / u.second
-        self.weather_path = config.WEATHER_DATA
+        if isinstance(config, dict):
+            self.speed = config["BOAT_SPEED"] * u.meter / u.second
+            self.weather_path = config["WEATHER_DATA"]
+        else:
+            self.speed = config.BOAT_SPEED * u.meter / u.second
+            self.weather_path = config.WEATHER_DATA
         pass
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
@@ -127,8 +131,6 @@ class DirectPowerBoat(Boat):
                 ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
     """
 
-    ship_path: str  # path to ship configuration file
-
     power_at_sp: float  # power at the service propulsion point
     eta_prop: float  # propulsion efficiency
     overload_factor: float  # overload factor
@@ -154,7 +156,12 @@ class DirectPowerBoat(Boat):
 
     def __init__(self, config):
         super().__init__(config)
-        config_obj = ShipConfig(file_name=config.CONFIG_PATH)
+
+        config_obj = None
+        if isinstance(config, dict):
+            config_obj = ShipConfig(file_name=config["CONFIG_PATH"])
+        else:
+            config_obj = ShipConfig(file_name=config.CONFIG_PATH)
         config_obj.print()
 
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin

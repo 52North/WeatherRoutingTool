@@ -15,6 +15,7 @@ import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.ship import DirectPowerBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 
@@ -74,6 +75,7 @@ def test_get_netCDF_courses():
 
     ds.close()
 '''
+
 
 '''
     test whether power is correctly extracted from courses netCDF
@@ -720,6 +722,51 @@ def test_get_apparent_wind_polar_plot():
 
 def test_calculate_geometry_simple_method():
     pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+    hbr = 30 * u.meter
+    breadth = 32 * u.meter
+    length = 180 * u.meter
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = -0.035 * length
+    hc = 10 * u.meter
+    Axv = 940.8 * u.meter * u.meter
+    Ayv = 4248 * u.meter * u.meter
+    Aod = 378 * u.meter * u.meter
+
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
+
+def test_dpm_via_dict_config():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests_simpleship.json')
+
+    config = {
+        'BOAT_BREADTH' : 32,
+        'BOAT_FUEL_RATE' : 167,
+        'BOAT_HBR' : 30,
+        'BOAT_LENGTH' : 180,
+        'BOAT_SMCR_POWER' : 6500,
+        'BOAT_SPEED' : 6,
+        'WEATHER_DATA' : "abc",
+        'CONFIG_PATH' : configpath
+    }
+
+    pol = DirectPowerBoat(config)
+
     hbr = 30 * u.meter
     breadth = 32 * u.meter
     length = 180 * u.meter
