@@ -88,7 +88,7 @@ class TestRoutePostprocessing:
         dummy = np.array([0, 0, 0, 0])
 
         sp = ShipParams(
-            fuel_rate=dummy * u.kg/u.second,
+            fuel_rate=dummy * u.kg / u.second,
             power=dummy * u.Watt,
             rpm=dummy * u.Hz,
             speed=dummy * u.m / u.s,
@@ -100,11 +100,11 @@ class TestRoutePostprocessing:
             wave_height=dummy * u.meter,
             wave_direction=dummy * u.radian,
             wave_period=dummy * u.second,
-            u_currents=dummy * u.meter/u.second,
-            v_currents=dummy * u.meter/u.second,
-            u_wind_speed=dummy * u.meter/u.second,
-            v_wind_speed=dummy * u.meter/u.second,
-            pressure=dummy * u.kg/u.meter/u.second**2,
+            u_currents=dummy * u.meter / u.second,
+            v_currents=dummy * u.meter / u.second,
+            u_wind_speed=dummy * u.meter / u.second,
+            v_wind_speed=dummy * u.meter / u.second,
+            pressure=dummy * u.kg / u.meter / u.second ** 2,
             air_temperature=dummy * u.deg_C,
             salinity=dummy * u.dimensionless_unscaled,
             water_temperature=dummy * u.deg_C,
@@ -135,8 +135,8 @@ class TestRoutePostprocessing:
     def test_create_route_segments(self):
         test_gdf = gpd.GeoDataFrame(columns=["timestamp", "geometry"],
                                     data=[[datetime(2024, 5, 17, 8), LineString([(1, 2), (2, 4)])],
-                                    [datetime(2024, 5, 17, 9), LineString([(2, 4), (3, 6)])],
-                                    [datetime(2024, 5, 17, 10), LineString([(3, 6), (4, 8)])]])
+                                          [datetime(2024, 5, 17, 9), LineString([(2, 4), (3, 6)])],
+                                          [datetime(2024, 5, 17, 10), LineString([(3, 6), (4, 8)])]])
 
         rpp = self.generate_test_route_postprocessing_obj()
         rpp.lats_per_step = [2, 4, 6, 8]
@@ -184,8 +184,8 @@ class TestRoutePostprocessing:
         route_gdf = gpd.GeoDataFrame(
             columns=["timestamp", "geometry"],
             data=[
-                  [datetime(2024, 5, 17, 10), LineString([(12, 7), (9, 10)])],
-                  [datetime(2024, 5, 17, 11), LineString([(9, 10), (5, 14)])]])
+                [datetime(2024, 5, 17, 10), LineString([(12, 7), (9, 10)])],
+                [datetime(2024, 5, 17, 11), LineString([(9, 10), (5, 14)])]])
         test_seamark_gdf.set_geometry('geometry', inplace=True)
         test_seamark_gdf.rename_geometry('geom', inplace=True)
 
@@ -301,7 +301,7 @@ class TestRoutePostprocessing:
             columns=["timestamp", "geometry"],
             data=[[datetime(2024, 5, 17, 10), LineString([(15, 5), (13, 10)])],
                   [datetime(2024, 5, 17, 9), LineString([(13, 10), (13, 2)])],
-                  [datetime(2024, 5, 17, 9), LineString([(13, 2), (11, 13)])],])
+                  [datetime(2024, 5, 17, 9), LineString([(13, 2), (11, 13)])], ])
 
         separation_lanes_dict = {'tags': {"seamark:type": "separation_lane"},
                                  'geom': LineString(
@@ -352,12 +352,12 @@ class TestRoutePostprocessing:
 
     def test_recalculate_starttime_per_node(self):
         final_route = gpd.GeoDataFrame(
-                columns=["timestamp", "geometry"],
-                data=[[datetime(2024, 5, 17, 9), LineString([(16, 1), (13, 2)])],
-                      [datetime(2024, 5, 17, 10), LineString([(13, 2), (12, 2)])]])
+            columns=["timestamp", "geometry"],
+            data=[[datetime(2024, 5, 17, 9), LineString([(16, 1), (13, 2)])],
+                  [datetime(2024, 5, 17, 10), LineString([(13, 2), (12, 2)])]])
 
         rpp = self.generate_test_route_postprocessing_obj()
-        rpp.ship_speed = 6 * u.meter/u.second
+        rpp.ship_speed = 6 * u.meter / u.second
         time_list = rpp.recalculate_starttime_per_node(final_route)
         # test_list = [(datetime(2024, 5, 17, 9), datetime(2024, 5, 18, 1, 16, 57), datetime(2024, 5, 18, 6, 26,  7))]
         # delta time 16:16:57, 05:09:10
@@ -408,7 +408,7 @@ class TestRoutePostprocessing:
     def test_calculate_angle_from_slope(self):
         test_angle = 90.0
         s1 = 2
-        s2 = (-1)/2
+        s2 = (-1) / 2
         rpp = self.generate_test_route_postprocessing_obj()
         angle1 = rpp.calculate_angle_from_slope(s1, s2)
 

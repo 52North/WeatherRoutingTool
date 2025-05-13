@@ -28,7 +28,15 @@ For users with access to mariPower:
 
 For users without access to mariPower:
 
-One way to quickly test the WRT without mariPower is to use the configuration ``ALGORITHM_TYPE='speedy_isobased'`` and specifying the config parameter ``'CONSTANT_FUEL_RATE'``. This will assume a constant fuel rate of the vessel in any condition (high waves, low waves, etc.) and at any time. Of course, results will be highly inaccurate, but it is a way to quickly try and test the code and get some first ideas of possible routes.
+One way to test the WRT without mariPower is to use the configuration ``SHIP_TYPE='direct_power_method'`` and specifying the mandatory config parameters
+
+- ``'BOAT_SMCR_POWER'``: power at maximum continuous rating (kWh)
+- ``'BOAT_FUEL_RATE'``: fuel rate at the working point (g/kWh)
+- ``'BOAT_LENGTH'``: boat length overall (m)
+- ``'BOAT_BREADTH'``: boat breadth (m)
+- ``'BOAT_HBR'``: boat height (m)
+
+This will estimate the power consumption based on several assumptions and a simple model. It is assumed, that the ship travels at a fixed working point of propeller power and ship speed. The value pair that is considered corresponds to 75 % of the SMCR power and the ship speed. Both, the SMCR power and the ship speed need to be provided by the user in the config file and it is left to the user to select sensible values for this working point. The power consumption is then calculated as the sum of 75 % SMCR power and the power consumption caused by the added resistance due to environmental conditions. The power consumption due to added resistance is estimated using the Direct Power Method  as described in the `ITTC - Recommended Procedures and Guidelines <https://www.ittc.info/media/9874/75-04-01-011.pdf>`_. Currently, only the added resistance due to wind is considered using the regression formula by `Fujiwara et al <https://www.nmri.go.jp/archives/institutes/marine_renewable_energy/marine_energy_research/staff/fujiwara/fujiwarapdf/2009-TPC-553.pdf>`_; the consideration of waves is planned for the future. Of course, results will only be rough estimates, but this simple model enables the user to quickly test functionality and performance of the code and get some first ideas of possible routes.
 
 New ships with their own power/fuel model can be integrated by implementing a new `ship class <https://github.com/52North/WeatherRoutingTool/blob/main/WeatherRoutingTool/ship/ship.py>`_ and using it in the config.
 
