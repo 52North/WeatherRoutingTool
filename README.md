@@ -4,6 +4,8 @@ A tool to perform optimization of ship routes based on fuel consumption in diffe
 
 Documentation: [WeatherRoutingTool/docs](https://github.com/52North/WeatherRoutingTool/tree/main/docs)
 
+Introduction: [WRT-sandbox](https://github.com/52North/WRT-sandbox) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/52North/WRT-sandbox.git/HEAD?urlpath=%2Fdoc%2Ftree%2FNotebooks/execute-WRT.ipynb)
+
 ## Funding
 
 |                                                                        Project/Logo                                                                         | Description                                                                                                                                                                                                                                                         |
