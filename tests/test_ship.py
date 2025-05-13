@@ -76,7 +76,6 @@ def test_get_netCDF_courses():
     ds.close()
 '''
 
-
 '''
     test whether power is correctly extracted from courses netCDF
 '''
@@ -750,19 +749,20 @@ def test_calculate_geometry_simple_method():
     assert pol.Ayv == Ayv
     assert pol.Aod == Aod
 
+
 def test_dpm_via_dict_config():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests_simpleship.json')
 
     config = {
-        'BOAT_BREADTH' : 32,
-        'BOAT_FUEL_RATE' : 167,
-        'BOAT_HBR' : 30,
-        'BOAT_LENGTH' : 180,
-        'BOAT_SMCR_POWER' : 6500,
-        'BOAT_SPEED' : 6,
-        'WEATHER_DATA' : "abc",
-        'CONFIG_PATH' : configpath
+        'BOAT_BREADTH': 32,
+        'BOAT_FUEL_RATE': 167,
+        'BOAT_HBR': 30,
+        'BOAT_LENGTH': 180,
+        'BOAT_SMCR_POWER': 6500,
+        'BOAT_SPEED': 6,
+        'WEATHER_DATA': "abc",
+        'CONFIG_PATH': configpath
     }
 
     pol = DirectPowerBoat(config)
