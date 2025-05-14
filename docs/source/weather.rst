@@ -1,0 +1,4 @@
+.. weather-data:
+
+Weather data
+=================
