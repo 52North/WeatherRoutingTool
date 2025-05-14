@@ -43,7 +43,7 @@ class IsoBased(RoutingAlg):
     start_temp: tuple  # changes if intermediate waypoints are used
     finish_temp: tuple  # changes if intermediate waypoints are used
     gcr_course_temp: tuple
-    
+
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
     course_per_step: np.ndarray  # course (0 - 360°)
