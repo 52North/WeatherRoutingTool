@@ -1,4 +1,13 @@
-"""Utility functions."""
+"""
+Utility functions for unit conversions and time operations.
+
+Includes functions to:
+- Convert between m/s and knots
+- Round datetime objects
+- Normalize angles
+- Handle numpy/pandas datetime formats
+- Check consistency of time or spatial datasets
+"""
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -16,24 +25,39 @@ u.add_enabled_units([knots])
 
 
 def mps_to_knots(vals):
-    """convert the Meters/second to knots.
-    knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h."""
+    """
+Convert speed from meters per second to knots.
+Args:
+    vals (float or ndarray): Speed in m/s.
+Returns:
+    float or ndarray: Speed in knots.
+    """
     return vals * 3600.0 / 1852.0
 
 
 def knots_to_mps(vals):
-    """convert the Meters/second to knots.
-        knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h."""
+    """
+Convert speed from knots to meters per second.
 
+Args:
+    vals (float or ndarray): Speed in knots.
+
+Returns:
+    float or ndarray: Speed in m/s.
+    """
     return vals * 1852.0 / 3600.0
 
 
 def round_time(dt=None, round_to=60):
     """
-        Round a datetime object to any time lapse in seconds.
-        ref: /questions/3463930/how-to-round-the-minute-of-a-datetime-object
-        dt : datetime.datetime object, default now.
-        round_to : Closest number of seconds to round to, default 1 minute.
+       Round a datetime object to the nearest interval in seconds.
+
+Args:
+    dt (datetime, optional): Datetime object. Defaults to now.
+    round_to (int, optional): Interval to round to, in seconds. Defaults to 60.
+
+Returns:
+    datetime: Rounded datetime object.
 
         """
 

@@ -1,4 +1,10 @@
-"""Utility functions."""
+"""
+Utility functions for formatting output and encoding data.
+
+Includes functions for printing steps, formatting logs, and 
+converting strings to geographic coordinates. Also includes a
+custom JSON encoder for NumPy arrays and datetime objects.
+"""
 import datetime
 import time
 from json import JSONEncoder
@@ -7,6 +13,12 @@ import numpy
 
 
 def get_line_string():
+    """
+    Returns a fixed horizontal line string for visual separation in logs or output.
+
+    Returns:
+        str: A line of hyphens.
+    """
     return '---------------------------------------------------'
 
 
