@@ -47,33 +47,95 @@ class MariPowerTanker(Boat):
     draught: float
 
     # additional information
-    environment_path: str  # path to netCDF for environmental data
     courses_path: str  # path to netCDF which contains the power estimation per course
     depth_path: str  # path to netCDF for depth data
+    # FIXME: make separate weather path obsolete
+    weather_path_maripower: str  # path to weather data which is converted to maripower requirements
 
     use_depth_data: bool
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.environment_path = config.WEATHER_DATA
-        self.courses_path = config.COURSES_FILE
-        self.depth_path = config.DEPTH_DATA
-        self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
+        super().__init__(init_mode, file_name, config_dict)
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        # mandatory variables for maripower
+        if not config_obj.COURSES_FILE:
+            raise Exception('COURSES_FILE is a mandatory parameter for the maripower tanker!')
+
+        self.courses_path = config_obj.COURSES_FILE
+        self.weather_path = config_obj.WEATHER_DATA
+
+        # optional variables for maripower
+        if not config_obj.DEPTH_DATA == " ":
+            self.use_depth_data = True
+            self.depth_path = config_obj.DEPTH_DATA
 
         self.hydro_model = mariPower.ship.CBT()
-        self.hydro_model.Draught_AP = np.array([config.BOAT_DRAUGHT_AFT])
-        self.hydro_model.Draught_FP = np.array([config.BOAT_DRAUGHT_FORE])
-        self.hydro_model.Roughness_Level = np.array([config.BOAT_ROUGHNESS_LEVEL])
-        self.hydro_model.Roughness_Distribution_Level = np.array([config.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
-        self.hydro_model.WindForcesFactor = config.FACTOR_WIND_FORCES
-        self.hydro_model.WaveForcesFactor = config.FACTOR_WAVE_FORCES
-        self.hydro_model.CalmWaterFactor = config.FACTOR_CALM_WATER
-        self.use_depth_data = True
+        self.hydro_model.Draught_AP = np.array([config_obj.BOAT_DRAUGHT_AFT])
+        self.hydro_model.Draught_FP = np.array([config_obj.BOAT_DRAUGHT_FORE])
+        self.hydro_model.Roughness_Level = np.array([config_obj.BOAT_ROUGHNESS_LEVEL])
+        self.hydro_model.Roughness_Distribution_Level = np.array([config_obj.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
+        self.hydro_model.WindForcesFactor = config_obj.BOAT_FACTOR_WIND_FORCES
+        self.hydro_model.WaveForcesFactor = config_obj.BOAT_FACTOR_WAVE_FORCES
+        self.hydro_model.CalmWaterFactor = config_obj.BOAT_FACTOR_CALM_WATER
+
         # Fine-tuning the following parameters might lead to a significant speedup of mariPower. However, they should
         # be set carefully because the accuracy of the predictions might also be affected
         # self.hydro_model.MaxIterations = 25  # mariPower default: 10
         # self.hydro_model.Tolerance = 0.000001  # mariPower default: 0.0
         # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
+
+    def load_data(self):
+        self.use_depth_data = False
+        if self.use_depth_data:
+            self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
+
+        self.weather_adapter()
+
+    # FIXME: make weather adapter obsolete
+    def weather_adapter(self):
+        debug = False
+
+        weather_str = self.weather_path.split('.nc')
+        self.weather_path_maripower = weather_str[0] + '_maripower.nc'
+
+        if os.path.isfile(self.weather_path_maripower):
+            return
+
+        if debug:
+            print('maripower weather adapter: reading weather data from ', self.weather_path)
+            print('writing converted data to ', self.weather_path_maripower)
+
+        ds = xr.open_dataset(self.weather_path)
+
+        thetao = ds['thetao']
+        so = ds['so']
+        ucurrent = ds['utotal']
+        vcurrent = ds['vtotal']
+
+        ds_cut = ds.drop_vars(['thetao', 'so', 'utotal', 'vtotal'])
+        ds_cut = ds_cut.drop_dims('depth')
+
+        thetao = thetao.isel(depth=0)
+        so = so.isel(depth=0)
+        ucurrent = ucurrent.isel(depth=0)
+        vcurrent = vcurrent.isel(depth=0)
+
+        ds_cut = xr.merge([ds_cut, thetao])
+        ds_cut = xr.merge([ds_cut, so])
+        ds_cut = xr.merge([ds_cut, ucurrent])
+        ds_cut = xr.merge([ds_cut, vcurrent])
+
+        if debug:
+            print('new data: ', ds_cut)
+
+        ds_cut.to_netcdf(self.weather_path_maripower)
+        ds_cut.close()
+        ds.close()
 
     def set_ship_property(self, variable, value):
         print('Setting ship property ' + variable + ' to ' + str(value))
@@ -81,7 +143,7 @@ class MariPowerTanker(Boat):
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
-        logger.info(form.get_log_step('path to weather data' + self.environment_path, 1))
+        logger.info(form.get_log_step('path to weather data' + self.weather_path, 1))
         logger.info(form.get_log_step('path to CoursesRoute.nc' + self.courses_path, 1))
         logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
 
@@ -116,7 +178,7 @@ class MariPowerTanker(Boat):
     #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
     def set_env_data_path(self, path):
-        self.environment_path = path
+        self.weather_path_maripower = path
 
     def set_courses_path(self, path):
         self.courses_path = path
@@ -404,10 +466,10 @@ class MariPowerTanker(Boat):
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
             status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
-                mariPower_ship, self.courses_path, self.environment_path, self.depth_data)
+                mariPower_ship, self.courses_path, self.weather_path_maripower, self.depth_data)
         else:
             status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
-                mariPower_ship, self.courses_path, self.environment_path)
+                mariPower_ship, self.courses_path, self.weather_path_maripower)
         # form.print_current_time('time for mariPower request:', start_time)
         # ToDo: read messages from netCDF and store them in ship_params (changes in mariPower necessary)
         # for idx in range(0, len(status.flatten())):
@@ -454,7 +516,7 @@ class MariPowerTanker(Boat):
                 form.print_step('courses_test' + str(courses_test.to_numpy()), 1)
                 form.print_step('speed' + str(ds_read_test['speed'].to_numpy()), 1)
             # start_time = time.time()
-            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False,
+            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.weather_path_maripower, None, False,
                                                         False)
             # form.print_current_time('time for mariPower request:', start_time)
 
