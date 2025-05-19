@@ -28,10 +28,10 @@ class Boat:
     speed: float  # boat speed in m/s
     weather_path: str  # path to netCDF containing weather data
 
-    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name = file_name)
+            config_obj = ShipConfig(file_name=file_name)
         else:
             config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
 
@@ -125,6 +125,7 @@ class Boat:
     def load_data(self):
         pass
 
+
 class DirectPowerBoat(Boat):
     """
         estimates power & fuel consumption based on the so-called Direct Power Method
@@ -163,7 +164,7 @@ class DirectPowerBoat(Boat):
 
     air_mass_density: float  # air mass density
 
-    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
@@ -260,7 +261,7 @@ class DirectPowerBoat(Boat):
             calculate true wind direction in degree from u and v
         """
         wind_dir = (180 * u.degree + 180 * u.degree / math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (
-                    360 * u.degree)
+                360 * u.degree)
         return wind_dir
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
@@ -500,14 +501,13 @@ class DirectPowerBoat(Boat):
 
         return ship_params
 
+
 # FIXME: Decide whether this consumption model is still needed.
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
     speed: float  # boat speed
 
-
-
-    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
@@ -599,17 +599,17 @@ class Tanker(Boat):
 
     use_depth_data: bool
 
-    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name = file_name)
+            config_obj = ShipConfig(file_name=file_name)
         else:
             config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
 
         # mandatory variables for maripower
-        if not config_obj.COURSES_FILE: raise Exception(
-            'COURSES_FILE is a mandatory parameter for the maripower tanker!')
+        if not config_obj.COURSES_FILE:
+            raise Exception('COURSES_FILE is a mandatory parameter for the maripower tanker!')
 
         self.courses_path = config_obj.COURSES_FILE
         self.weather_path = config_obj.WEATHER_DATA
@@ -634,14 +634,12 @@ class Tanker(Boat):
         # self.hydro_model.Tolerance = 0.000001  # mariPower default: 0.0
         # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
 
-
     def load_data(self):
         self.use_depth_data = False
         if self.use_depth_data:
             self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
 
         self.weather_adapter()
-
 
     # FIXME: make weather adapter obsolete
     def weather_adapter(self):

@@ -39,11 +39,11 @@ def create_dummy_Tanker_object():
     configpath = os.path.join(dirname, 'config.tests.json')
     dirname = os.path.dirname(__file__)
 
-    pol = Tanker(file_name = configpath)
+    pol = Tanker(file_name=configpath)
     pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
     pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
     pol.use_depth_data = True
-    pol.depth_path =  os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     pol.load_data()
     return pol
 
@@ -53,10 +53,10 @@ def create_dummy_Direct_Power_Ship(ship_config_path):
     configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
     dirname = os.path.dirname(__file__)
 
-    pol = DirectPowerBoat(file_name = configpath)
+    pol = DirectPowerBoat(file_name=configpath)
     pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
     pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-    pol.depth_path =  os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     return pol
 
 

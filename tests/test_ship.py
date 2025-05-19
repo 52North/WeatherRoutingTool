@@ -76,6 +76,7 @@ def test_get_netCDF_courses():
     ds.close()
 '''
 
+
 @pytest.mark.maripower
 def test_maripower_via_dict_config():
     dirname = os.path.dirname(__file__)
@@ -84,7 +85,7 @@ def test_maripower_via_dict_config():
     courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
     depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
-    speed = 6 * u.meter/u.second
+    speed = 6 * u.meter / u.second
     drought_aft = 10 * u.meter
     drought_fore = 10 * u.meter
     roughness_distr = 5
@@ -103,7 +104,7 @@ def test_maripower_via_dict_config():
         "BOAT_DRAUGHT_FORE": 10,
         'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 5,
         'BOAT_ROUGHNESS_LEVEL': 5.,
-        'BOAT_BREADTH' : -99
+        'BOAT_BREADTH': -99
     }
 
     pol = Tanker(config)
@@ -112,11 +113,11 @@ def test_maripower_via_dict_config():
     assert pol.depth_path == depth_path
     assert pol.weather_path == weather_path
     assert pol.courses_path == courses_path
-    assert (pol.hydro_model.Draught_AP==[drought_aft.value]).all()
+    assert (pol.hydro_model.Draught_AP == [drought_aft.value]).all()
     assert (pol.hydro_model.Draught_FP == [drought_fore.value]).all()
     assert pol.hydro_model.Roughness_Distribution_Level == roughness_distr
     assert pol.hydro_model.Roughness_Level == roughness_lev
-    assert pol.use_depth_data == True
+    assert pol.use_depth_data
 
 
 '''
@@ -805,7 +806,7 @@ def test_dpm_via_dict_config():
         'WEATHER_DATA': "abc"
     }
 
-    pol = DirectPowerBoat(init_mode = "from_dict", config_dict= config)
+    pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
     pol.load_data()
 
     hbr = 30 * u.meter

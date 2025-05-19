@@ -49,6 +49,7 @@ OPTIONAL_CONFIG_VARIABLES = {
 class RequiredConfigError(RuntimeError):
     pass
 
+
 class ShipConfig:
 
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
@@ -75,14 +76,14 @@ class ShipConfig:
         self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
         self.BOAT_SMCR_POWER = None  # Specific Maximum Continuous Rating power [kWh]
-        self.BOAT_SPEED = None # boat speed [m/s]
+        self.BOAT_SPEED = None  # boat speed [m/s]
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step
         self.DEPTH_DATA = None  # path to depth data
         self.BOAT_FACTOR_CALM_WATER = None  # multiplication factor for the calm water resistance model of maripower
-        self.BOAT_FACTOR_WAVE_FORCES = None  # multiplication factor for the added resistance in waves model of maripower
+        self.BOAT_FACTOR_WAVE_FORCES = None  # multiplication factor for added resistance in waves model of maripower
         self.BOAT_FACTOR_WIND_FORCES = None  # multiplication factor for the added resistance in wind model of maripower
         self.BOAT_UNDER_KEEL_CLEARANCE = None  # vertical distance between keel and ground
-        self.WEATHER_DATA = None # path to weather data
+        self.WEATHER_DATA = None  # path to weather data
 
         if init_mode == 'from_json':
             assert file_name
