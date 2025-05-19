@@ -15,20 +15,18 @@ logger = logging.getLogger('WRT.ship')
 
 class DirectPowerBoat(Boat):
     """
-        estimates power & fuel consumption based on the so-called Direct Power Method
+           estimates power & fuel consumption based on the so-called Direct Power Method
 
-        The following approximations are used:
-            - a fixed working point of 70% SMCR power and an average ship speed is assumed
-              (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
-            - additional power and fuel consumption is derived from added resistances of the environmental conditions
-            - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
-              the Fujiwara approximation
+           The following approximations are used:
+               - a fixed working point of 75% SMCR power and an average ship speed is assumed
+                 (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
+               - additional power and fuel consumption is derived from added resistances of the environmental conditions
+               - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
+                 the Fujiwara approximation
 
-            Returns:
-                ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
-    """
-
-    ship_path: str  # path to ship configuration file
+               Returns:
+                   ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
+       """
 
     power_at_sp: float  # power at the service propulsion point
     eta_prop: float  # propulsion efficiency
@@ -53,11 +51,16 @@ class DirectPowerBoat(Boat):
 
     air_mass_density: float  # air mass density
 
-    def __init__(self, config):
-        super().__init__(config)
-        config_obj = ShipConfig(file_name=config.CONFIG_PATH)
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
+        super().__init__(init_mode, file_name, config_dict)
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
         config_obj.print()
 
+        # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
         self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
@@ -82,12 +85,15 @@ class DirectPowerBoat(Boat):
         self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
+        self.weather_path = config_obj.WEATHER_DATA
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
+
+    def load_data(self):
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 
         logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
-                                      'to 70% SMCR power.'))
+                                      'to 75% SMCR power.'))
 
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
@@ -142,7 +148,7 @@ class DirectPowerBoat(Boat):
             calculate true wind direction in degree from u and v
         """
         wind_dir = (180 * u.degree + 180 * u.degree / math.pi * np.arctan2(u_wind_speed.value, v_wind_speed.value)) % (
-                    360 * u.degree)
+                360 * u.degree)
         return wind_dir
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
@@ -317,7 +323,7 @@ class DirectPowerBoat(Boat):
             wind_coeff_arr.append(wind_coeff)
 
         wind_coeff_arr = np.array(wind_coeff_arr)
-        r_wind = (1 / 2 * self.air_mass_density * wind_coeff_            arr * self.Axv * apparent_wind['app_wind_speed']
+        r_wind = (1 / 2 * self.air_mass_density * wind_coeff_arr * self.Axv * apparent_wind['app_wind_speed']
                   * apparent_wind['app_wind_speed'])
 
         return {"r_wind": r_wind.to(u.Newton), "wind_coeff": wind_coeff_arr}
@@ -351,7 +357,7 @@ class DirectPowerBoat(Boat):
             speed=speed_array * u.meter / u.second,
             r_wind=dummy_array * u.N,
             r_calm=dummy_array * u.N,
-r_waves=dummy_array * u.N,
+            r_waves=dummy_array * u.N,
             r_shallow=dummy_array * u.N,
             r_roughness=dummy_array * u.N,
             wave_height=dummy_array * u.meter,
