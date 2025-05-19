@@ -28,14 +28,21 @@ class Boat:
     speed: float  # boat speed in m/s
     weather_path: str  # path to netCDF containing weather data
 
-    def __init__(self, config):
-        if isinstance(config, dict):
-            self.speed = config["BOAT_SPEED"] * u.meter / u.second
-            self.weather_path = config["WEATHER_DATA"]
+    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name = file_name)
         else:
-            self.speed = config.BOAT_SPEED * u.meter / u.second
-            self.weather_path = config.WEATHER_DATA
-        pass
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        self.speed = config_obj.BOAT_SPEED * u.meter / u.second
+        self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
+        self.draught_aft = config_obj.BOAT_DRAUGHT_AFT * u.meter
+        self.draught_fore = config_obj.BOAT_DRAUGHT_FORE * u.meter
+
+    def get_required_water_depth(self):
+        needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
+        return needs_water_depth.value
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         pass
@@ -115,6 +122,8 @@ class Boat:
 
         return ship_var
 
+    def load_data(self):
+        pass
 
 class DirectPowerBoat(Boat):
     """
@@ -154,16 +163,16 @@ class DirectPowerBoat(Boat):
 
     air_mass_density: float  # air mass density
 
-    def __init__(self, config):
-        super().__init__(config)
-
+    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+        super().__init__(init_mode, file_name, config_dict)
         config_obj = None
-        if isinstance(config, dict):
-            config_obj = ShipConfig(file_name=config["CONFIG_PATH"])
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
         else:
-            config_obj = ShipConfig(file_name=config.CONFIG_PATH)
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
         config_obj.print()
 
+        # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
         self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
@@ -188,7 +197,10 @@ class DirectPowerBoat(Boat):
         self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
+        self.weather_path = config_obj.WEATHER_DATA
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
+
+    def load_data(self):
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
 
@@ -488,14 +500,23 @@ class DirectPowerBoat(Boat):
 
         return ship_params
 
-
+# FIXME: Decide whether this consumption model is still needed.
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
     speed: float  # boat speed
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.fuel_rate = config.CONSTANT_FUEL_RATE * u.kg / u.second
+
+
+    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+        super().__init__(init_mode, file_name, config_dict)
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        # mandatory variables
+        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.kg / u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
@@ -578,21 +599,34 @@ class Tanker(Boat):
 
     use_depth_data: bool
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.courses_path = config.COURSES_FILE
-        self.depth_path = config.DEPTH_DATA
-        self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
+    def __init__(self, init_mode = 'from_file', file_name=None, config_dict = None):
+        super().__init__(init_mode, file_name, config_dict)
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name = file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        # mandatory variables for maripower
+        if not config_obj.COURSES_FILE: raise Exception(
+            'COURSES_FILE is a mandatory parameter for the maripower tanker!')
+
+        self.courses_path = config_obj.COURSES_FILE
+        self.weather_path = config_obj.WEATHER_DATA
+
+        # optional variables for maripower
+        if not config_obj.DEPTH_DATA == " ":
+            self.use_depth_data = True
+            self.depth_path = config_obj.DEPTH_DATA
 
         self.hydro_model = mariPower.ship.CBT()
-        self.hydro_model.Draught_AP = np.array([config.BOAT_DRAUGHT_AFT])
-        self.hydro_model.Draught_FP = np.array([config.BOAT_DRAUGHT_FORE])
-        self.hydro_model.Roughness_Level = np.array([config.BOAT_ROUGHNESS_LEVEL])
-        self.hydro_model.Roughness_Distribution_Level = np.array([config.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
-        self.hydro_model.WindForcesFactor = config.FACTOR_WIND_FORCES
-        self.hydro_model.WaveForcesFactor = config.FACTOR_WAVE_FORCES
-        self.hydro_model.CalmWaterFactor = config.FACTOR_CALM_WATER
-        self.use_depth_data = True
+        self.hydro_model.Draught_AP = np.array([config_obj.BOAT_DRAUGHT_AFT])
+        self.hydro_model.Draught_FP = np.array([config_obj.BOAT_DRAUGHT_FORE])
+        self.hydro_model.Roughness_Level = np.array([config_obj.BOAT_ROUGHNESS_LEVEL])
+        self.hydro_model.Roughness_Distribution_Level = np.array([config_obj.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
+        self.hydro_model.WindForcesFactor = config_obj.BOAT_FACTOR_WIND_FORCES
+        self.hydro_model.WaveForcesFactor = config_obj.BOAT_FACTOR_WAVE_FORCES
+        self.hydro_model.CalmWaterFactor = config_obj.BOAT_FACTOR_CALM_WATER
 
         # Fine-tuning the following parameters might lead to a significant speedup of mariPower. However, they should
         # be set carefully because the accuracy of the predictions might also be affected
@@ -600,7 +634,14 @@ class Tanker(Boat):
         # self.hydro_model.Tolerance = 0.000001  # mariPower default: 0.0
         # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
 
+
+    def load_data(self):
+        self.use_depth_data = False
+        if self.use_depth_data:
+            self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
+
         self.weather_adapter()
+
 
     # FIXME: make weather adapter obsolete
     def weather_adapter(self):

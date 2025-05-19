@@ -37,28 +37,26 @@ def create_dummy_IsoFuel_object():
 def create_dummy_Tanker_object():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests.json')
-    config = Config(file_name=configpath)
-
     dirname = os.path.dirname(__file__)
-    config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
-    pol = Tanker(config)
+    pol = Tanker(file_name = configpath)
+    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+    pol.use_depth_data = True
+    pol.depth_path =  os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.load_data()
     return pol
 
 
 def create_dummy_Direct_Power_Ship(ship_config_path):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
-    config = Config(file_name=configpath)
-
     dirname = os.path.dirname(__file__)
-    config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
 
-    pol = DirectPowerBoat(config)
+    pol = DirectPowerBoat(file_name = configpath)
+    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+    pol.depth_path =  os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     return pol
 
 
