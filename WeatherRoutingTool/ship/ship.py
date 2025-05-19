@@ -6,6 +6,7 @@ from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 logger = logging.getLogger('WRT.ship')
 

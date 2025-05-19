@@ -11,22 +11,28 @@ import WeatherRoutingTool.utils.unit_conversion as utils
 
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.routeparams import RouteParams
 
 
 class TestMariPowerTanker:
+    def compare_times(self, time64, time):
+        time64 = (time64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+        time = (time - datetime(1970, 1, 1, 0, 0))
+        for iTime in range(0, time.shape[0]):
+            time[iTime] = time[iTime].total_seconds()
+        assert np.array_equal(time64, time)
 
     def create_dummy_Tanker_object(self):
         dirname = os.path.dirname(__file__)
         configpath = os.path.join(dirname, 'config.tests.json')
-        config = Config(file_name=configpath)
 
-        dirname = os.path.dirname(__file__)
-        config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-        config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-        config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-
-        pol = MariPowerTanker(config)
+        pol = MariPowerTanker(file_name=configpath)
+        pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+        pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+        pol.use_depth_data = True
+        pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+        pol.load_data()
         return pol
     '''
         test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
@@ -170,17 +176,17 @@ class TestMariPowerTanker:
         rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
         rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9]) * u.newton
         rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]) * u.newton
-        wave_height_ref = np.array([4.1, 4.2, 4.11, 4.12, 4.21, 4.22, 4.31, 4.32]) * u.meter
-        wave_direction_ref = np.array([4.4, 4.5, 4.41, 4.42, 4.51, 4.52, 4.61, 4.62]) * u.radian
-        wave_period_ref = np.array([4.7, 4.8, 4.71, 4.72, 4.81, 4.82, 4.91, 4.92]) * u.second
-        u_currents_ref = np.array([5.1, 5.2, 5.11, 5.12, 5.21, 5.22, 5.31, 5.32]) * u.meter/u.second
-        v_currents_ref = np.array([5.4, 5.5, 5.41, 5.42, 5.51, 5.52, 5.61, 5.62]) * u.meter/u.second
-        u_wind_speed_ref = np.array([7.1, 7.2, 7.11, 7.12, 7.21, 7.22, 7.31, 7.32]) * u.meter/u.second
-        v_wind_speed_ref = np.array([7.4, 7.5, 7.41, 7.42, 7.51, 7.52, 7.61, 7.62]) * u.meter/u.second
-        pressure_ref = np.array([5.7, 5.8, 5.71, 5.72, 5.81, 5.82, 5.91, 5.92]) * u.kg/u.meter/u.second**2
-        air_temperature_ref = np.array([6.1, 6.2, 6.11, 6.12, 6.21, 6.22, 6.31, 6.32]) * u.deg_C
-        salinity_ref = np.array([6.4, 6.5, 6.41, 6.42, 6.51, 6.52, 6.61, 6.62]) * u.dimensionless_unscaled
-        water_temperature_ref = np.array([6.7, 6.8, 6.71, 6.72, 6.81, 6.82, 6.91, 6.92]) * u.deg_C
+        wave_height_ref = -99
+        wave_direction_ref = -99
+        wave_period_ref = -99
+        u_currents_ref = -99
+        v_currents_ref = -99
+        u_wind_speed_ref = -99
+        v_wind_speed_ref = -99
+        pressure_ref = -99
+        air_temperature_ref = -99
+        salinity_ref = -99
+        water_temperature_ref = -99
         status_ref = np.array([1, 2,  2, 3, 3, 2, 1, 3])
         message_ref = np.array(['OK', 'OK', 'OK', 'ERROR', 'ERROR', 'OK', 'ERROR', 'ERROR'])
 
@@ -283,7 +289,7 @@ class TestMariPowerTanker:
 
         assert np.array_equal(lat, lat_read)
         assert np.array_equal(lon, lon_read)
-        compare_times(time_read, time)
+        self.compare_times(time_read, time)
 
         assert courses.shape[0] == courses_read.shape[0] * courses_read.shape[1]
         for ilat in range(0, courses_read.shape[0]):
@@ -319,7 +325,7 @@ class TestMariPowerTanker:
 
         assert np.array_equal(lat_short, lat_read)
         assert np.array_equal(lon_short, lon_read)
-        compare_times(time_read, time)
+        self.compare_times(time_read, time)
 
         assert courses.shape[0] == courses_read.shape[0] * courses_read.shape[1]
         for ilat in range(0, courses_read.shape[0]):
@@ -416,7 +422,7 @@ class TestMariPowerTanker:
         plt.show()
 
     @pytest.mark.maripower
-    def test_maripower_via_dict_config():
+    def test_maripower_via_dict_config(self):
         dirname = os.path.dirname(__file__)
 
         weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
@@ -445,7 +451,7 @@ class TestMariPowerTanker:
             'BOAT_BREADTH': -99
         }
 
-        pol = Tanker(config)
+        pol = MariPowerTanker(init_mode="from_dict", config_dict=config)
 
         assert pol.speed == speed
         assert pol.depth_path == depth_path

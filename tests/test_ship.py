@@ -14,58 +14,46 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
-def compare_times(time64, time):
-    time64 = (time64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-    time = (time - datetime(1970, 1, 1, 0, 0))
-    for iTime in range(0, time.shape[0]):
-        time[iTime] = time[iTime].total_seconds()
-    assert np.array_equal(time64, time)
-
-
 class TestShip:
 
     def create_dummy_Direct_Power_Ship(self, ship_config_path):
         dirname = os.path.dirname(__file__)
-        configpath = os.path.join(dirname, 'config.tests.json')
-        config = Config(file_name=configpath)
-
+        configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
         dirname = os.path.dirname(__file__)
-        config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-        config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-        config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-        config.BOAT_CONFIG = os.path.join(dirname, ship_config_path + '.json')
 
-        pol = DirectPowerBoat(config)
+        pol = DirectPowerBoat(file_name=configpath)
+        pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+        pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+        pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
         return pol
 
 
-
-'''
-    test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
-'''
-def test_shipparams_get_element():
-    fuel = np.array([1, 2, 3, 4])
-    speed = np.array([0.1, 0.2, 0.3, 0.4])
-    power = np.array([11, 21, 31, 41])
-    rpm = np.array([21, 22, 23, 24])
-    rwind = np.array([1.1, 1.2, 1.3, 1.4])
-    rcalm = np.array([2.1, 2.2, 2.3, 2.4])
-    rwaves = np.array([3.1, 3.2, 3.3, 3.4])
-    rshallow = np.array([4.1, 4.2, 4.3, 4.4])
-    rroughness = np.array([5.1, 5.2, 5.3, 5.4])
-    wave_height = np.array([4.1, 4.2, 4.11, 4.12])
-    wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
-    wave_period = np.array([4.7, 4.8, 4.71, 4.72])
-    u_currents = np.array([.1, 5.2, 5.11, 5.12])
-    v_currents = np.array([5.4, 5.5, 5.41, 5.42])
-    u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
-    v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
-    pressure = np.array([5.7, 5.8, 5.71, 5.72])
-    air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
-    salinity = np.array([6.4, 6.5, 6.41, 6.42])
-    water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
-    status = np.array([1, 2, 2, 3])
-    message = np.array(['OK', 'OK', 'Error' 'OK'])
+    '''
+        test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
+    '''
+    def test_shipparams_get_element(self):
+        fuel = np.array([1, 2, 3, 4])
+        speed = np.array([0.1, 0.2, 0.3, 0.4])
+        power = np.array([11, 21, 31, 41])
+        rpm = np.array([21, 22, 23, 24])
+        rwind = np.array([1.1, 1.2, 1.3, 1.4])
+        rcalm = np.array([2.1, 2.2, 2.3, 2.4])
+        rwaves = np.array([3.1, 3.2, 3.3, 3.4])
+        rshallow = np.array([4.1, 4.2, 4.3, 4.4])
+        rroughness = np.array([5.1, 5.2, 5.3, 5.4])
+        wave_height = np.array([4.1, 4.2, 4.11, 4.12])
+        wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
+        wave_period = np.array([4.7, 4.8, 4.71, 4.72])
+        u_currents = np.array([.1, 5.2, 5.11, 5.12])
+        v_currents = np.array([5.4, 5.5, 5.41, 5.42])
+        u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
+        v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
+        pressure = np.array([5.7, 5.8, 5.71, 5.72])
+        air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
+        salinity = np.array([6.4, 6.5, 6.41, 6.42])
+        water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
+        status = np.array([1, 2, 2, 3])
+        message = np.array(['OK', 'OK', 'Error' 'OK'])
 
 
 
@@ -202,7 +190,7 @@ def test_shipparams_get_element():
         assert sp_test.status == status[idx]
         assert sp_test.message == message[idx]
 
-   '''
+    '''
         DIRECT POWER METHOD: check whether values of weather data are correctly read from file
     '''
 
@@ -220,7 +208,7 @@ def test_shipparams_get_element():
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
 
         # dummy course netCDF
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
 
         ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
         ship_params.print()
@@ -283,7 +271,7 @@ def test_shipparams_get_element():
     '''
     @pytest.mark.parametrize("DeltaR,speed,design_power", [(5000,6,6502000 * 0.75)])
     def test_get_power_for_direct_power_method(self, DeltaR, speed, design_power):
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
         P = DeltaR * speed/0.63 + design_power
 
         Ptest = pol.get_power(5000 * u.N)
@@ -300,7 +288,7 @@ def test_shipparams_get_element():
         courses = np.array([10,10,20,20]) * u.degree
         rel_wind_dir = np.array([20, 110, 170, 70]) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
 
         v_wind = -absv * np.cos(np.radians(wind_dir)) * u.meter/u.second
         u_wind = -absv * np.sin(np.radians(wind_dir)) * u.meter/u.second
@@ -311,7 +299,7 @@ def test_shipparams_get_element():
         assert np.all((rel_wind_dir -true_wind_dir)<0.0001 * u.degree)
 
 
- '''
+    '''
         DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single values of
         wind speed and wind dir
     '''
@@ -321,7 +309,7 @@ def test_shipparams_get_element():
         wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter/u.second
         wind_dir_test = np.array([0, 28.41, 59.04, 98.606, 180]) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
         wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
         for i in range(0, 4):
@@ -337,7 +325,7 @@ def test_shipparams_get_element():
         wind_dir = np.linspace(0, 180, 19) * u.degree
         wind_speed = np.full(19,10) * u.meter/u.second
 
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
         wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
         fig, axes = plt.subplots(subplot_kw={'projection': 'polar'})
@@ -354,7 +342,9 @@ def test_shipparams_get_element():
         are supplied
     '''
     def test_calculate_geometry_simple_method(self):
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_simpleship')
+        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol.load_data()
+
         hbr = 30 * u.meter
         breadth = 32 * u.meter
         length = 180 * u.meter
@@ -387,7 +377,9 @@ def test_shipparams_get_element():
         DIRECT POWER METHOD: check whether ship geometry parameters are set correctly if manual values are supplied
     '''
     def test_calculate_geometry_manual_method(self):
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+        pol = self.create_dummy_Direct_Power_Ship('manualship')
+        pol.load_data()
+        
         hbr = 30 * u.meter
         breadth = 32 * u.meter
         length = 180 * u.meter
@@ -426,7 +418,7 @@ def test_shipparams_get_element():
 
         courses = np.linspace(0, 180, 19) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+        pol = self.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
         plt.rcParams['text.usetex'] = True
@@ -448,7 +440,7 @@ def test_shipparams_get_element():
         courses_rad = np.radians(courses)
         courses = courses * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+        pol = self.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
         fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
@@ -491,7 +483,7 @@ def test_shipparams_get_element():
         rwind_maripower = ship_params_maripower.get_rwind()
         P_maripower = ship_params_maripower.get_power()
 
-        pol_simple = self.create_dummy_Direct_Power_Ship('shipconfig_manualship')
+        pol_simple = self.create_dummy_Direct_Power_Ship('manualship')
         pol_simple.set_boat_speed(bs)
         ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
         r_wind_simple = ship_params_simple.get_rwind()
@@ -514,44 +506,44 @@ def test_shipparams_get_element():
         axes[0].legend(loc="upper right")
         plt.show()
 
-def test_dpm_via_dict_config():
-    config = {
-        'BOAT_BREADTH': 32,
-        'BOAT_FUEL_RATE': 167,
-        'BOAT_HBR': 30,
-        'BOAT_LENGTH': 180,
-        'BOAT_SMCR_POWER': 6500,
-        'BOAT_SPEED': 6,
-        'WEATHER_DATA': "abc"
-    }
+    def test_dpm_via_dict_config(self):
+        config = {
+            'BOAT_BREADTH': 32,
+            'BOAT_FUEL_RATE': 167,
+            'BOAT_HBR': 30,
+            'BOAT_LENGTH': 180,
+            'BOAT_SMCR_POWER': 6500,
+            'BOAT_SPEED': 6,
+            'WEATHER_DATA': "abc"
+        }
 
-    pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
-    pol.load_data()
+        pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+        pol.load_data()
 
-    hbr = 30 * u.meter
-    breadth = 32 * u.meter
-    length = 180 * u.meter
-    ls1 = 0.2 * length
-    ls2 = 0.3 * length
-    hs1 = 0.2 * hbr
-    hs2 = 0.1 * hbr
-    bs1 = 0.9 * breadth
-    cmc = -0.035 * length
-    hc = 10 * u.meter
-    Axv = 940.8 * u.meter * u.meter
-    Ayv = 4248 * u.meter * u.meter
-    Aod = 378 * u.meter * u.meter
+        hbr = 30 * u.meter
+        breadth = 32 * u.meter
+        length = 180 * u.meter
+        ls1 = 0.2 * length
+        ls2 = 0.3 * length
+        hs1 = 0.2 * hbr
+        hs2 = 0.1 * hbr
+        bs1 = 0.9 * breadth
+        cmc = -0.035 * length
+        hc = 10 * u.meter
+        Axv = 940.8 * u.meter * u.meter
+        Ayv = 4248 * u.meter * u.meter
+        Aod = 378 * u.meter * u.meter
 
-    assert pol.hbr == hbr
-    assert pol.breadth == breadth
-    assert pol.length == length
-    assert pol.ls1 == ls1
-    assert pol.ls2 == ls2
-    assert pol.bs1 == bs1
-    assert pol.hs1 == hs1
-    assert pol.hs2 == hs2
-    assert pol.cmc == cmc
-    assert pol.hc == hc
-    assert pol.Axv == Axv
-    assert pol.Ayv == Ayv
-    assert pol.Aod == Aod
+        assert pol.hbr == hbr
+        assert pol.breadth == breadth
+        assert pol.length == length
+        assert pol.ls1 == ls1
+        assert pol.ls2 == ls2
+        assert pol.bs1 == bs1
+        assert pol.hs1 == hs1
+        assert pol.hs2 == hs2
+        assert pol.cmc == cmc
+        assert pol.hc == hc
+        assert pol.Axv == Axv
+        assert pol.Ayv == Ayv
+        assert pol.Aod == Aod
