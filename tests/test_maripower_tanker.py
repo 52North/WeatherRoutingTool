@@ -414,3 +414,45 @@ class TestMariPowerTanker:
         axes[1].set_title("Wind resistence", va='top')
 
         plt.show()
+
+    @pytest.mark.maripower
+    def test_maripower_via_dict_config():
+        dirname = os.path.dirname(__file__)
+
+        weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+        courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+        depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+
+        speed = 6 * u.meter / u.second
+        drought_aft = 10 * u.meter
+        drought_fore = 10 * u.meter
+        roughness_distr = 5
+        roughness_lev = 5
+
+        config = {
+            "COURSES_FILE": courses_path,
+            "DEPTH_DATA": depth_path,
+            "WEATHER_DATA": weather_path,
+            'BOAT_FUEL_RATE': -99,
+            'BOAT_HBR': -99,
+            'BOAT_LENGTH': -99,
+            'BOAT_SMCR_POWER': -99,
+            'BOAT_SPEED': 6,
+            "BOAT_DRAUGHT_AFT": 10,
+            "BOAT_DRAUGHT_FORE": 10,
+            'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 5,
+            'BOAT_ROUGHNESS_LEVEL': 5.,
+            'BOAT_BREADTH': -99
+        }
+
+        pol = Tanker(config)
+
+        assert pol.speed == speed
+        assert pol.depth_path == depth_path
+        assert pol.weather_path == weather_path
+        assert pol.courses_path == courses_path
+        assert (pol.hydro_model.Draught_AP == [drought_aft.value]).all()
+        assert (pol.hydro_model.Draught_FP == [drought_fore.value]).all()
+        assert pol.hydro_model.Roughness_Distribution_Level == roughness_distr
+        assert pol.hydro_model.Roughness_Level == roughness_lev
+        assert pol.use_depth_data

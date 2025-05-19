@@ -17,10 +17,21 @@ class Boat:
     speed: float  # boat speed in m/s
     weather_path: str  # path to netCDF containing weather data
 
-    def __init__(self, config):
-        self.speed = config.BOAT_SPEED * u.meter / u.second
-        self.weather_path = config.WEATHER_DATA
-        pass
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        self.speed = config_obj.BOAT_SPEED * u.meter / u.second
+        self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
+        self.draught_aft = config_obj.BOAT_DRAUGHT_AFT * u.meter
+        self.draught_fore = config_obj.BOAT_DRAUGHT_FORE * u.meter
+
+    def get_required_water_depth(self):
+        needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
+        return needs_water_depth.value
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         pass
@@ -100,6 +111,9 @@ class Boat:
 
         return ship_var
 
+    def load_data(self):
+        pass
+
 
 
 
@@ -108,9 +122,16 @@ class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
     speed: float  # boat speed
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.fuel_rate = config.CONSTANT_FUEL_RATE * u.kg / u.second
+    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
+        super().__init__(init_mode, file_name, config_dict)
+        config_obj = None
+        if init_mode == "from_file":
+            config_obj = ShipConfig(file_name=file_name)
+        else:
+            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+
+        # mandatory variables
+        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.kg / u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))

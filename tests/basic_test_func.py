@@ -33,10 +33,6 @@ def create_dummy_IsoFuel_object():
     return ra
 
 
-
-
-
-
 def create_dummy_SeamarkCrossing_object(db_engine):
     seamark_obj = SeamarkCrossing(db_engine=db_engine)
     return seamark_obj

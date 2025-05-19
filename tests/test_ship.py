@@ -40,6 +40,35 @@ class TestShip:
 
 
 
+'''
+    test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
+'''
+def test_shipparams_get_element():
+    fuel = np.array([1, 2, 3, 4])
+    speed = np.array([0.1, 0.2, 0.3, 0.4])
+    power = np.array([11, 21, 31, 41])
+    rpm = np.array([21, 22, 23, 24])
+    rwind = np.array([1.1, 1.2, 1.3, 1.4])
+    rcalm = np.array([2.1, 2.2, 2.3, 2.4])
+    rwaves = np.array([3.1, 3.2, 3.3, 3.4])
+    rshallow = np.array([4.1, 4.2, 4.3, 4.4])
+    rroughness = np.array([5.1, 5.2, 5.3, 5.4])
+    wave_height = np.array([4.1, 4.2, 4.11, 4.12])
+    wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
+    wave_period = np.array([4.7, 4.8, 4.71, 4.72])
+    u_currents = np.array([.1, 5.2, 5.11, 5.12])
+    v_currents = np.array([5.4, 5.5, 5.41, 5.42])
+    u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
+    v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
+    pressure = np.array([5.7, 5.8, 5.71, 5.72])
+    air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
+    salinity = np.array([6.4, 6.5, 6.41, 6.42])
+    water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
+    status = np.array([1, 2, 2, 3])
+    message = np.array(['OK', 'OK', 'Error' 'OK'])
+
+
+
     '''
         test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
     '''
@@ -281,7 +310,8 @@ class TestShip:
 
         assert np.all((rel_wind_dir -true_wind_dir)<0.0001 * u.degree)
 
-    '''
+
+ '''
         DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single values of
         wind speed and wind dir
     '''
@@ -484,6 +514,44 @@ class TestShip:
         axes[0].legend(loc="upper right")
         plt.show()
 
+def test_dpm_via_dict_config():
+    config = {
+        'BOAT_BREADTH': 32,
+        'BOAT_FUEL_RATE': 167,
+        'BOAT_HBR': 30,
+        'BOAT_LENGTH': 180,
+        'BOAT_SMCR_POWER': 6500,
+        'BOAT_SPEED': 6,
+        'WEATHER_DATA': "abc"
+    }
 
+    pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+    pol.load_data()
 
+    hbr = 30 * u.meter
+    breadth = 32 * u.meter
+    length = 180 * u.meter
+    ls1 = 0.2 * length
+    ls2 = 0.3 * length
+    hs1 = 0.2 * hbr
+    hs2 = 0.1 * hbr
+    bs1 = 0.9 * breadth
+    cmc = -0.035 * length
+    hc = 10 * u.meter
+    Axv = 940.8 * u.meter * u.meter
+    Ayv = 4248 * u.meter * u.meter
+    Aod = 378 * u.meter * u.meter
 
+    assert pol.hbr == hbr
+    assert pol.breadth == breadth
+    assert pol.length == length
+    assert pol.ls1 == ls1
+    assert pol.ls2 == ls2
+    assert pol.bs1 == bs1
+    assert pol.hs1 == hs1
+    assert pol.hs2 == hs2
+    assert pol.cmc == cmc
+    assert pol.hc == hc
+    assert pol.Axv == Axv
+    assert pol.Ayv == Ayv
+    assert pol.Aod == Aod
