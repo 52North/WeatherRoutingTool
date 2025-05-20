@@ -13,6 +13,8 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from tests.test_maripower_tanker import TestMariPowerTanker
+
 
 class TestDPM:
 
@@ -26,6 +28,7 @@ class TestDPM:
         pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
         pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
         pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+        pol.load_data()
         return pol
 
     '''
@@ -180,8 +183,8 @@ class TestDPM:
 
     @pytest.mark.manual
     def test_wind_coeff(self):
-        u_wind_speed = 0 * u.meter / u.second
-        v_wind_speed = -10 * u.meter / u.second
+        u_wind_speed = np.full(19, 0) * u.meter / u.second
+        v_wind_speed = np.full(19, -10) * u.meter / u.second
 
         courses = np.linspace(0, 180, 19) * u.degree
 
@@ -201,8 +204,8 @@ class TestDPM:
 
     @pytest.mark.manual
     def test_wind_resistance(self):
-        u_wind_speed = 0 * u.meter / u.second
-        v_wind_speed = -10 * u.meter / u.second
+        u_wind_speed = np.full(19, 0) * u.meter / u.second
+        v_wind_speed = np.full(19, -10) * u.meter / u.second
 
         courses = np.linspace(0, 180, 19)
         courses_rad = np.radians(courses)
@@ -242,7 +245,7 @@ class TestDPM:
         time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
         bs = 7.7 * u.meter / u.second
 
-        pol_maripower = self.create_dummy_Tanker_object()
+        pol_maripower = TestMariPowerTanker.create_dummy_Tanker_object()
         pol_maripower.set_ship_property('WaveForcesFactor', 0)
 
         pol_maripower.use_depth_data = False

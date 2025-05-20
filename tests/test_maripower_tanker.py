@@ -9,9 +9,7 @@ from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as utils
 
-from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
-from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.routeparams import RouteParams
 
 
