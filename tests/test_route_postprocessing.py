@@ -8,6 +8,7 @@ from astropy import units as u
 from shapely.geometry import box, LineString, Point
 
 import tests.basic_test_func as basic_test_func
+from tests.test_maripower_tanker import TestMariPowerTanker
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -126,7 +127,7 @@ class TestRoutePostprocessing:
             starttime_per_step=start_time,
             ship_params_per_step=sp
         )
-        boat = basic_test_func.create_dummy_Tanker_object()
+        boat = TestMariPowerTanker.create_dummy_Tanker_object()
         boat.set_boat_speed(6)
         with engine.connect() as conn:
             postprocessed_route = RoutePostprocessing(rp, boat, db_engine=conn.connection)

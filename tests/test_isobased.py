@@ -6,6 +6,7 @@ from astropy import units as u
 from geovectorslib import geod
 
 import tests.basic_test_func as basic_test_func
+from tests.test_maripower_tanker import TestMariPowerTanker
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import LandCrossing, WaveHeight
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -195,7 +196,7 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    tk = basic_test_func.create_dummy_Tanker_object()
+    tk = TestMariPowerTanker.create_dummy_Tanker_object()
     tk.speed = boat_speed
     tk.use_depth_data = False
 

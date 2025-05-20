@@ -15,6 +15,7 @@ from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.routeparams import RouteParams
 
 
+@pytest.mark.maripower
 class TestMariPowerTanker:
     def compare_times(self, time64, time):
         time64 = (time64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
@@ -23,7 +24,8 @@ class TestMariPowerTanker:
             time[iTime] = time[iTime].total_seconds()
         assert np.array_equal(time64, time)
 
-    def create_dummy_Tanker_object(self):
+    @staticmethod
+    def create_dummy_Tanker_object():
         dirname = os.path.dirname(__file__)
         configpath = os.path.join(dirname, 'config.tests.json')
 
@@ -34,6 +36,7 @@ class TestMariPowerTanker:
         pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
         pol.load_data()
         return pol
+
     '''
         test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
          match properties of original array)
@@ -89,7 +92,7 @@ class TestMariPowerTanker:
 
 
 
-    @pytest.mark.maripower
+
     def test_get_fuel_from_netCDF(self):
         lat = np.array([1.1, 2.2, 3.3, 4.4])
         it = np.array([1, 2])
@@ -221,7 +224,6 @@ class TestMariPowerTanker:
         check return values by maripower: has there been renaming? Do the return values have a sensible order of magnitude?
     '''
 
-    @pytest.mark.maripower
     def test_power_consumption_returned(self):
         # dummy weather file
         time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
@@ -258,7 +260,6 @@ class TestMariPowerTanker:
          match properties of original array)
     '''
 
-    @pytest.mark.maripower
     def test_get_netCDF_courses_isobased(self):
         lat = np.array([1., 1., 1, 2, 2, 2])
         lon = np.array([4., 4., 4, 3, 3, 3])
@@ -305,7 +306,6 @@ class TestMariPowerTanker:
          match properties of original array) for the genetic algorithm
     '''
 
-    @pytest.mark.maripower
     def test_get_netCDF_courses_GA(self):
         lat_short = np.array([1, 2, 1])
         lon_short = np.array([4, 4, 1.5])
@@ -342,7 +342,6 @@ class TestMariPowerTanker:
         are correctly calculated
     '''
 
-    @pytest.mark.maripower
     def test_get_fuel_for_fixed_waypoints(self):
         bs = 6 * u.meter/u.second
         start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
@@ -389,7 +388,6 @@ class TestMariPowerTanker:
         east, ellipse generated needs to be shifted towards the left
     '''
 
-    @pytest.mark.maripower
     def test_wind_force(self):
         lats = np.full(10, 54.9)  # 37
         lons = np.full(10, 13.2)
@@ -421,7 +419,6 @@ class TestMariPowerTanker:
 
         plt.show()
 
-    @pytest.mark.maripower
     def test_maripower_via_dict_config(self):
         dirname = os.path.dirname(__file__)
 
