@@ -320,8 +320,21 @@ class WeatherCondFromFile(WeatherCond):
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
     def read_wind_vectors(self, time):
-        """Return u-v components for given rect for visualization."""
+        """Return u-v wind components for a specified rectangular region at a given time.
 
+    Extracts wind vector components at 10 meters above ground within the latitude and longitude bounds
+    defined by self.map_size.
+
+    Parameters:
+        time (datetime): The time for which to extract wind data.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'u' (np.ndarray): u-component of wind vectors.
+            - 'v' (np.ndarray): v-component of wind vectors.
+            - 'lats_u' (np.ndarray): 2D array of latitudes matching the shape of wind vectors.
+            - 'lons_u' (np.ndarray): 2D array of longitudes matching the shape of wind vectors.
+            - 'timestamp' (datetime): The time corresponding to the wind data."""
         lat1 = self.map_size.lat1
         lat2 = self.map_size.lat2
         lon1 = self.map_size.lon1
@@ -533,15 +546,17 @@ class WeatherCondFromFile(WeatherCond):
         return twa, tws
 
     def init_wind_vectors(self):
-        """Return wind vectors for given number of hours.
-            Parameters:
-                    model (dict): available forecast wind functions
-                    hours_ahead (int): number of hours looking ahead
-                    lats, lons: rectange defining forecast area
-            Returns:
-                    wind_vectors (dict):
-                        model: model timestamp
-                        hour: function for given forecast hour
+        """ Initialize and store wind vectors over the forecast period.
+
+    Iterates over time steps starting from self.time_start, at intervals of self.time_res,
+    and stores wind vector data for each step by calling read_wind_vectors.
+
+    Attributes updated:
+        self.wind_vectors (dict): Contains wind vector data keyed by forecast hour indices,
+            and 'start_time' key with the initial forecast time.
+
+    Returns:
+        None
             """
 
         wind_vectors = {}
@@ -658,7 +673,15 @@ class WeatherCondODC(WeatherCond):
         return filepath
 
     def _has_scaling(self, dataset):
-        """Check if any of the included data variables has a scale_factor or add_offset"""
+        """ Check whether any data variable in the dataset has a scaling attribute.
+
+    Specifically looks for 'scale_factor' or 'add_offset' attributes in dataset variables.
+
+    Parameters:
+        dataset (xarray.Dataset): The dataset to check.
+
+    Returns:
+        bool: True if any variable has 'scale_factor' or 'add_offset' attribute, False otherwise."""
         for var in dataset.data_vars:
             if 'scale_factor' in dataset[var].attrs or 'add_offset' in dataset[var].attrs:
                 return True
