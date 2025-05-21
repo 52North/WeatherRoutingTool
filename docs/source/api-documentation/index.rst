@@ -1,7 +1,7 @@
 .. _api_documentation:
 
-API documentation
-=================
+API documentation (still under construction!)
+=============================================
 
 .. toctree::
    :maxdepth: 4
