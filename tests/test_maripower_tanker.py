@@ -8,11 +8,16 @@ import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as utils
-
-from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.routeparams import RouteParams
 
+have_maripower = False
+try:
+    from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+    have_maripower = True
+except ModuleNotFoundError:
+    pass    # maripower installation is optional
 
+@pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
 @pytest.mark.maripower
 class TestMariPowerTanker:
     def compare_times(self, time64, time):
