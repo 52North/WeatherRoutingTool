@@ -16,7 +16,8 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 
 have_maripower = False
 try:
-    from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+    import mariPower
+    from tests.test_maripower_tanker import TestMariPowerTanker
     have_maripower = True
 except ModuleNotFoundError:
     pass    # maripower installation is optional
