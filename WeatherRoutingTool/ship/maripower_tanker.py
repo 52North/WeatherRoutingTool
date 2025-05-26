@@ -9,10 +9,16 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-import mariPower
+have_maripower = False
+try:
+    import mariPower
+    from mariPower import __main__
+    have_maripower = True
+except ModuleNotFoundError:
+    pass    # maripower installation is optional
+
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-from mariPower import __main__
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -58,6 +64,11 @@ class MariPowerTanker(Boat):
 
     def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
+
+        if not have_maripower:
+            raise ModuleNotFoundError('You are trying to use maripower to estimate the fuel consumption but maripower is'
+                                      ' not installed. Please install the necessary software.')
+
         config_obj = None
         if init_mode == "from_file":
             config_obj = ShipConfig(file_name=file_name)
