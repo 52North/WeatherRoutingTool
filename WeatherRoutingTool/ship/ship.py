@@ -116,9 +116,6 @@ class Boat:
         pass
 
 
-
-
-
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
     speed: float  # boat speed
@@ -176,5 +173,3 @@ class ConstantFuelBoat(Boat):
             form.print_step('fuel result' + str(ship_params.get_fuel_rate()))
 
         return ship_params
-
-

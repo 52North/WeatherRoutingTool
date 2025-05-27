@@ -15,9 +15,11 @@ have_maripower = False
 try:
     import mariPower
     from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+
     have_maripower = True
 except ModuleNotFoundError:
-    pass    # maripower installation is optional
+    pass  # maripower installation is optional
+
 
 @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
 @pytest.mark.maripower
@@ -30,60 +32,8 @@ class TestMariPowerTanker:
         assert np.array_equal(time64, time)
 
     '''
-        test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
-         match properties of original array)
-    '''
-
-    # FIXME: if this is redundant it can be deleted
-    '''
-    
-    def test_get_netCDF_courses():
-        lat = np.array([1., 1., 1, 2, 2, 2])
-        lon = np.array([4., 4., 4, 3, 3, 3])
-        courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-        # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
-    
-        pol = get_default_Tanker()
-        time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
-                         datetime(2022, 12, 19) + timedelta(days=360),
-                         datetime(2022, 12, 19) + timedelta(days=360),
-                         datetime(2022, 12, 19) + timedelta(days=360)])
-    
-        pol.write_netCDF_courses(courses, lat, lon, time)
-        ds = xr.open_dataset(pol.courses_path)
-    
-        lat_read = ds['lat'].to_numpy()
-        lon_read = ds['lon'].to_numpy()
-        courses_read = ds['courses'].to_numpy()
-        time_read = ds['time'].to_numpy()
-    
-        lat_ind = np.unique(lat, return_index=True)[1]
-        lon_ind = np.unique(lon, return_index=True)[1]
-        time_ind = np.unique(time, return_index=True)[1]
-        lat = [lat[index] for index in sorted(lat_ind)]
-        lon = [lon[index] for index in sorted(lon_ind)]
-        time = [time[index] for index in sorted(time_ind)]
-        time = np.array(time)
-    
-        assert np.array_equal(lat, lat_read)
-        assert np.array_equal(lon, lon_read)
-        compare_times(time_read, time)
-    
-        assert courses.shape[0] == courses_read.shape[0] * courses_read.shape[1]
-        for ilat in range(0, courses_read.shape[0]):
-            for iit in range(0, courses_read.shape[1]):
-                iprev = ilat * courses_read.shape[1] + iit
-                assert courses[iprev] == courses_read[ilat][iit]
-    
-        ds.close()
-    '''
-
-    '''
         test whether power is correctly extracted from courses netCDF
     '''
-
-
-
 
     def test_get_fuel_from_netCDF(self):
         lat = np.array([1.1, 2.2, 3.3, 4.4])
@@ -164,8 +114,8 @@ class TestMariPowerTanker:
         message_test = ship_params.get_message()
 
         power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
-        rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1/u.minute
-        fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg/u.second
+        rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1 / u.minute
+        fuel_ref = np.array([2, 3, 4, 5, 6, 7, 8, 9]) * u.kg / u.second
         rcalm_ref = np.array([2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9]) * u.newton
         rwind_ref = np.array([3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9]) * u.newton
         rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
@@ -182,7 +132,7 @@ class TestMariPowerTanker:
         air_temperature_ref = -99
         salinity_ref = -99
         water_temperature_ref = -99
-        status_ref = np.array([1, 2,  2, 3, 3, 2, 1, 3])
+        status_ref = np.array([1, 2, 2, 3, 3, 2, 1, 3])
         message_ref = np.array(['OK', 'OK', 'OK', 'ERROR', 'ERROR', 'OK', 'ERROR', 'ERROR'])
 
         fuel_test = fuel_test.value * 3.6
@@ -211,9 +161,9 @@ class TestMariPowerTanker:
         assert np.array_equal(message_test, message_ref)
         ds.close()
 
-
     '''
-        check return values by maripower: has there been renaming? Do the return values have a sensible order of magnitude?
+        check return values by maripower: has there been renaming? Do the return values have a sensible order
+        of magnitude?
     '''
 
     def test_power_consumption_returned(self):
@@ -228,7 +178,7 @@ class TestMariPowerTanker:
         # dummy course netCDF
         pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
-        pol.set_boat_speed(np.array([8]) * u.meter/u.second)
+        pol.set_boat_speed(np.array([8]) * u.meter / u.second)
 
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
         pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
@@ -236,20 +186,19 @@ class TestMariPowerTanker:
 
         power = ds['Power_brake'].to_numpy() * u.Watt
         rpm = ds['RotationRate'].to_numpy() * u.Hz
-        fuel = ds['Fuel_consumption_rate'].to_numpy() * u.kg/u.s
+        fuel = ds['Fuel_consumption_rate'].to_numpy() * u.kg / u.s
 
         assert np.all(power < 10000000 * u.Watt)
         assert np.all(rpm < 100 * u.Hz)
 
-        assert np.all(fuel < 1.5 * u.kg/u.s)
+        assert np.all(fuel < 1.5 * u.kg / u.s)
         assert np.all(power > 1000000 * u.Watt)
         assert np.all(rpm > 70 * u.Hz)
-        assert np.all(fuel > 0.5 * u.kg/u.s)
-
+        assert np.all(fuel > 0.5 * u.kg / u.s)
 
     '''
-        test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
-         match properties of original array)
+        test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from
+        netCDF match properties of original array)
     '''
 
     def test_get_netCDF_courses_isobased(self):
@@ -292,10 +241,9 @@ class TestMariPowerTanker:
 
         ds.close()
 
-
     '''
-        test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
-         match properties of original array) for the genetic algorithm
+        test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from
+        netCDF match properties of original array) for the genetic algorithm
     '''
 
     def test_get_netCDF_courses_GA(self):
@@ -327,7 +275,6 @@ class TestMariPowerTanker:
 
         ds.close()
 
-
     '''
         test whether lat, lon, time and courses are correctly written to course netCDF & wheather start_times_per_step
         and dist_per_step
@@ -335,7 +282,7 @@ class TestMariPowerTanker:
     '''
 
     def test_get_fuel_for_fixed_waypoints(self):
-        bs = 6 * u.meter/u.second
+        bs = 6 * u.meter / u.second
         start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
         route_lats = np.array([54.9, 54.7, 54.5, 54.2])
         route_lons = np.array([13.2, 13.4, 13.7, 13.9])
@@ -373,7 +320,6 @@ class TestMariPowerTanker:
         assert np.allclose(test_courses, ref_courses, 0.1)
         assert utils.compare_times(test_time_dt, ref_time) is True
         assert np.allclose(waypoint_dict['dist'], ref_dist, 0.1)
-
 
     '''
         test whether power and wind resistance that are returned by maripower lie on an ellipse. Wind is coming from the

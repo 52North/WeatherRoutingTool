@@ -13,6 +13,7 @@ from WeatherRoutingTool.ship.ship import Boat
 
 logger = logging.getLogger('WRT.ship')
 
+
 class DirectPowerBoat(Boat):
     """
            estimates power & fuel consumption based on the so-called Direct Power Method

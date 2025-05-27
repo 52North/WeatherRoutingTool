@@ -11,7 +11,8 @@ try:
     import mariPower
     from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 except ModuleNotFoundError:
-    pass    # maripower installation is optional
+    pass  # maripower installation is optional
+
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -60,6 +61,7 @@ def create_dummy_Tanker_object():
     pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
     pol.load_data()
     return pol
+
 
 def create_dummy_Direct_Power_Ship(ship_config_path):
     dirname = os.path.dirname(__file__)

@@ -15,15 +15,15 @@ have_maripower = False
 try:
     import mariPower
     from tests.test_maripower_tanker import TestMariPowerTanker
+
     have_maripower = True
 except ModuleNotFoundError:
-    pass    # maripower installation is optional
+    pass  # maripower installation is optional
 
 
 class TestDPM:
-
     '''
-        DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as 
+        DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as
         expected and correct power and corresponding unit are returned
     '''
 
@@ -37,7 +37,7 @@ class TestDPM:
         assert 'W' == Ptest.unit
 
     '''
-        DIRECT POWER METHOD: check whether relative angle between wind direction and course of the ship is correctly 
+        DIRECT POWER METHOD: check whether relative angle between wind direction and course of the ship is correctly
         calculated from u_wind and v_wind
     '''
 
@@ -58,8 +58,8 @@ class TestDPM:
         assert np.all((rel_wind_dir - true_wind_dir) < 0.0001 * u.degree)
 
     '''
-        DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single values of
-        wind speed and wind dir
+        DIRECT POWER METHOD: check whether apparent wind speed and direction are correctly calculated for single
+        values of wind speed and wind dir
     '''
 
     def test_get_apparent_wind(self):

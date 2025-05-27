@@ -8,40 +8,12 @@ from astropy import units as u
 import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
+
 class TestShip:
-
     '''
         test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
     '''
-    def test_shipparams_get_element(self):
-        fuel = np.array([1, 2, 3, 4])
-        speed = np.array([0.1, 0.2, 0.3, 0.4])
-        power = np.array([11, 21, 31, 41])
-        rpm = np.array([21, 22, 23, 24])
-        rwind = np.array([1.1, 1.2, 1.3, 1.4])
-        rcalm = np.array([2.1, 2.2, 2.3, 2.4])
-        rwaves = np.array([3.1, 3.2, 3.3, 3.4])
-        rshallow = np.array([4.1, 4.2, 4.3, 4.4])
-        rroughness = np.array([5.1, 5.2, 5.3, 5.4])
-        wave_height = np.array([4.1, 4.2, 4.11, 4.12])
-        wave_direction = np.array([4.4, 4.5, 4.41, 4.42])
-        wave_period = np.array([4.7, 4.8, 4.71, 4.72])
-        u_currents = np.array([.1, 5.2, 5.11, 5.12])
-        v_currents = np.array([5.4, 5.5, 5.41, 5.42])
-        u_wind_speed = np.array([7.1, 7.2, 7.11, 7.12])
-        v_wind_speed = np.array([7.4, 7.5, 7.41, 7.42])
-        pressure = np.array([5.7, 5.8, 5.71, 5.72])
-        air_temperature = np.array([6.1, 6.2, 6.11, 6.12])
-        salinity = np.array([6.4, 6.5, 6.41, 6.42])
-        water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
-        status = np.array([1, 2, 2, 3])
-        message = np.array(['OK', 'OK', 'Error' 'OK'])
 
-
-
-    '''
-        test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
-    '''
     def test_shipparams_get_element(self):
         fuel = np.array([1, 2, 3, 4])
         speed = np.array([0.1, 0.2, 0.3, 0.4])
@@ -67,17 +39,18 @@ class TestShip:
         message = np.array(['OK', 'OK', 'Error' 'OK'])
 
         sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
-                    r_shallow=rshallow, r_roughness=rroughness, wave_height=wave_height,
-                    wave_direction=wave_direction, wave_period=wave_period, u_currents=u_currents,
-                    v_currents=v_currents, u_wind_speed=u_wind_speed, v_wind_speed=v_wind_speed, pressure=pressure,
-                    air_temperature=air_temperature, salinity=salinity, water_temperature=water_temperature,
-                    status=status, message=message)
+                        r_shallow=rshallow, r_roughness=rroughness, wave_height=wave_height,
+                        wave_direction=wave_direction, wave_period=wave_period, u_currents=u_currents,
+                        v_currents=v_currents, u_wind_speed=u_wind_speed, v_wind_speed=v_wind_speed, pressure=pressure,
+                        air_temperature=air_temperature, salinity=salinity, water_temperature=water_temperature,
+                        status=status, message=message)
         idx = 2
 
-        fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test, \
-        rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test, \
-        u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test, air_temperature_test, \
-        salinity_test, water_temperature_test, status_test, message_test = sp.get_element(idx)
+        (fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test,
+            rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
+            u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
+            air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
+            = sp.get_element(idx)
 
         assert fuel[idx] == fuel_test
         assert speed[idx] == speed_test
@@ -102,11 +75,9 @@ class TestShip:
         assert status[idx] == status_test
         assert message[idx] == message_test
 
-
     '''
         test whether ShipParams object for single waypoint is correctly returned by ShipParams.get_single_object(idx)
     '''
-
 
     def test_shipparams_get_single(self):
         fuel = np.array([1, 2, 3, 4])
@@ -177,7 +148,7 @@ class TestShip:
     '''
 
     def test_evaluate_weather_for_direct_power_method(self):
-         # dummy weather file
+        # dummy weather file
         dirname = os.path.dirname(__file__)
         weather_data = xr.open_dataset(os.path.join(dirname, 'data/reduced_testdata_weather.nc'))
 
@@ -195,20 +166,21 @@ class TestShip:
         ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
         ship_params.print()
 
-        for i in range(0,6):
+        for i in range(0, 6):
             ship_params.wave_direction[i] = np.nan_to_num(ship_params.wave_direction[i])
-            wavedir_data = weather_data['VMDR'].sel(latitude = lat_test[i], longitude = lon_test[i], time = time_test[i],method='nearest', drop=False).fillna(0).to_numpy()
+            wavedir_data = weather_data['VMDR'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
+                                                    method='nearest', drop=False).fillna(0).to_numpy()
 
             ship_params.wave_height[i] = np.nan_to_num(ship_params.wave_height[i])
             waveheight_data = weather_data['VHM0'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
-                                                 method='nearest', drop=False).fillna(0).to_numpy()
+                                                       method='nearest', drop=False).fillna(0).to_numpy()
             ship_params.wave_period[i] = np.nan_to_num(ship_params.wave_period[i])
             waveperiod_data = weather_data['VTPK'].sel(latitude=lat_test[i], longitude=lon_test[i], time=time_test[i],
                                                        method='nearest', drop=False).fillna(0).to_numpy()
 
-            assert abs(ship_params.wave_direction[i].value-wavedir_data) < 0.0001
-            assert abs(ship_params.wave_height[i].value-waveheight_data) < 0.0001
-            assert abs(ship_params.wave_period[i].value-waveperiod_data) < 0.0001
+            assert abs(ship_params.wave_direction[i].value - wavedir_data) < 0.0001
+            assert abs(ship_params.wave_height[i].value - waveheight_data) < 0.0001
+            assert abs(ship_params.wave_period[i].value - waveperiod_data) < 0.0001
 
         speed_test = float(weather_data['v-component_of_wind_height_above_ground'].sel(
             latitude=lat_test[i], longitude=lon_test[i], time=time_test[i], height_above_ground=10,
@@ -245,4 +217,3 @@ class TestShip:
         assert abs(ship_params.water_temperature[i].value - thetao_test) < 0.00001
         assert abs(ship_params.salinity[i].value - salinity_test) < 0.00001
         assert abs(ship_params.air_temperature[i].value - air_temp_test) < 0.0001
-
