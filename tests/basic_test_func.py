@@ -43,6 +43,7 @@ def create_dummy_Tanker_object():
     pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
     pol.use_depth_data = True
     pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    # Removed pol.load_data() to prevent potential side effects that trigger additional test executions
     return pol
 
 
@@ -65,4 +66,3 @@ def create_dummy_SeamarkCrossing_object(db_engine):
 def create_dummy_landpolygonsCrossing_object(db_engine):
     landpolygoncrossing_obj = LandPolygonsCrossing(db_engine=db_engine)
     return landpolygoncrossing_obj
-
