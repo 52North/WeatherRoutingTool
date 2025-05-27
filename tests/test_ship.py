@@ -1,18 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 import xarray as xr
 from astropy import units as u
 
-import WeatherRoutingTool.utils.unit_conversion as utils
-import WeatherRoutingTool.utils.graphics as graphics
-
-from tests.test_direct_power_method import TestDPM
-from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 class TestShip:
@@ -197,7 +190,7 @@ class TestShip:
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
 
         # dummy course netCDF
-        pol = TestDPM.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
 
         ship_params = pol.get_ship_parameters(courses_test, lat_test, lon_test, time_test)
         ship_params.print()

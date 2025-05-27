@@ -7,6 +7,7 @@ import pytest
 import xarray as xr
 from astropy import units as u
 
+import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.unit_conversion as utils
 from WeatherRoutingTool.routeparams import RouteParams
 
@@ -27,19 +28,6 @@ class TestMariPowerTanker:
         for iTime in range(0, time.shape[0]):
             time[iTime] = time[iTime].total_seconds()
         assert np.array_equal(time64, time)
-
-    @staticmethod
-    def create_dummy_Tanker_object():
-        dirname = os.path.dirname(__file__)
-        configpath = os.path.join(dirname, 'config.tests.json')
-
-        pol = MariPowerTanker(file_name=configpath)
-        pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-        pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-        pol.use_depth_data = True
-        pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-        pol.load_data()
-        return pol
 
     '''
         test whether lat, lon, time and courses are correctly written to course netCDF (elements and shape read from netCDF
@@ -151,7 +139,7 @@ class TestMariPowerTanker:
         ds = xr.Dataset(data_vars, coords, attrs)
         print(ds)
 
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         ship_params = pol.extract_params_from_netCDF(ds)
         power_test = ship_params.get_power()
         rpm_test = ship_params.get_rpm()
@@ -238,7 +226,7 @@ class TestMariPowerTanker:
         lon_test = np.array([13.3, 13.3, 13.6, 13.6, 13.9, 13.9])
 
         # dummy course netCDF
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
         pol.set_boat_speed(np.array([8]) * u.meter/u.second)
 
@@ -270,7 +258,7 @@ class TestMariPowerTanker:
         courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]) * u.degree
         # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
                          datetime(2022, 12, 19) + timedelta(days=360),
                          datetime(2022, 12, 19) + timedelta(days=360),
@@ -315,7 +303,7 @@ class TestMariPowerTanker:
         lon_short = np.array([4, 4, 1.5])
         courses = np.array([0.1, 0.2, 0.3]) * u.degree
 
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=180),
                          datetime(2022, 12, 19) + timedelta(days=360)])
 
@@ -352,7 +340,7 @@ class TestMariPowerTanker:
         route_lats = np.array([54.9, 54.7, 54.5, 54.2])
         route_lons = np.array([13.2, 13.4, 13.7, 13.9])
 
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
         pol.set_boat_speed(bs)
 
@@ -401,7 +389,7 @@ class TestMariPowerTanker:
         time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
         bs = 6
 
-        pol = self.create_dummy_Tanker_object()
+        pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
         pol.set_boat_speed(bs)
 

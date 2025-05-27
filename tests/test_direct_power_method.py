@@ -1,18 +1,15 @@
-from datetime import datetime, timedelta
-import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import xarray as xr
 from astropy import units as u
 
+import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.unit_conversion as utils
 import WeatherRoutingTool.utils.graphics as graphics
 
-from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.ship.shipparams import ShipParams
 
 have_maripower = False
 try:
@@ -25,19 +22,6 @@ except ModuleNotFoundError:
 
 class TestDPM:
 
-    @staticmethod
-    def create_dummy_Direct_Power_Ship(ship_config_path):
-        dirname = os.path.dirname(__file__)
-        configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
-        dirname = os.path.dirname(__file__)
-
-        pol = DirectPowerBoat(file_name=configpath)
-        pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-        pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-        pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-        pol.load_data()
-        return pol
-
     '''
         DIRECT POWER METHOD: check whether class variables (speed, eta_prop, power_at_sp, overload_factor) are set as 
         expected and correct power and corresponding unit are returned
@@ -45,7 +29,7 @@ class TestDPM:
 
     @pytest.mark.parametrize("DeltaR,speed,design_power", [(5000, 6, 6502000 * 0.75)])
     def test_get_power_for_direct_power_method(self, DeltaR, speed, design_power):
-        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
         P = DeltaR * speed / 0.63 + design_power
 
         Ptest = pol.get_power(5000 * u.N)
@@ -63,7 +47,7 @@ class TestDPM:
         courses = np.array([10, 10, 20, 20]) * u.degree
         rel_wind_dir = np.array([20, 110, 170, 70]) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
 
         v_wind = -absv * np.cos(np.radians(wind_dir)) * u.meter / u.second
         u_wind = -absv * np.sin(np.radians(wind_dir)) * u.meter / u.second
@@ -84,7 +68,7 @@ class TestDPM:
         wind_speed_test = np.array([16, 14.86112, 11.66190, 7.15173, 4]) * u.meter / u.second
         wind_dir_test = np.array([0, 28.41, 59.04, 98.606, 180]) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
         wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
         for i in range(0, 4):
@@ -100,7 +84,7 @@ class TestDPM:
         wind_dir = np.linspace(0, 180, 19) * u.degree
         wind_speed = np.full(19, 10) * u.meter / u.second
 
-        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
         wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
 
         fig, axes = plt.subplots(subplot_kw={'projection': 'polar'})
@@ -117,7 +101,7 @@ class TestDPM:
     '''
 
     def test_calculate_geometry_simple_method(self):
-        pol = self.create_dummy_Direct_Power_Ship('simpleship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
         pol.load_data()
 
         hbr = 30 * u.meter
@@ -153,7 +137,7 @@ class TestDPM:
     '''
 
     def test_calculate_geometry_manual_method(self):
-        pol = self.create_dummy_Direct_Power_Ship('manualship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         pol.load_data()
 
         hbr = 30 * u.meter
@@ -195,7 +179,7 @@ class TestDPM:
 
         courses = np.linspace(0, 180, 19) * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('manualship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
         plt.rcParams['text.usetex'] = True
@@ -218,7 +202,7 @@ class TestDPM:
         courses_rad = np.radians(courses)
         courses = courses * u.degree
 
-        pol = self.create_dummy_Direct_Power_Ship('manualship')
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
         fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
@@ -253,7 +237,7 @@ class TestDPM:
         time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
         bs = 7.7 * u.meter / u.second
 
-        pol_maripower = TestMariPowerTanker.create_dummy_Tanker_object()
+        pol_maripower = basic_test_func.create_dummy_Tanker_object()
         pol_maripower.set_ship_property('WaveForcesFactor', 0)
 
         pol_maripower.use_depth_data = False
@@ -262,7 +246,7 @@ class TestDPM:
         rwind_maripower = ship_params_maripower.get_rwind()
         P_maripower = ship_params_maripower.get_power()
 
-        pol_simple = self.create_dummy_Direct_Power_Ship('manualship')
+        pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         pol_simple.set_boat_speed(bs)
         ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
         r_wind_simple = ship_params_simple.get_rwind()
