@@ -112,19 +112,19 @@ def plot_polar_power(curve_list, label_list, courses, figuredir, name, fuel_type
         plt.plot(courses_rad, curve, label=label_list[irp], color=graphics.get_colour(irp))
 
     axes.set_theta_direction(-1)
-    axes.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    axes.set_rlabel_position(-22.5)  
     axes.set_theta_zero_location("N")
     axes.grid(True)
 
     axes.set_title(ylabel, va='bottom')
     plt.legend(bbox_to_anchor=(0.5, -0.27), loc='lower center')
-    # plt.tight_layout()
     plt.savefig(os.path.join(figuredir, name + '_polar.png'))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
+    parser.add_argument('-s', '--scenario', help="Specific scenario to run (e.g., 'original', '95perc_calm')", type=str)
 
     args = parser.parse_args()
 
@@ -139,10 +139,10 @@ if __name__ == "__main__":
     departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
-    lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE  # lat_end and lon_end are not used
+    lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE  
     coord_res = 0.1
 
-    weather_type = 'calm_weather'  # rough_weather, calm_weather
+    weather_type = 'calm_weather' 
     wind_speed = -99
     VHMO = -99
     VTPK = -99
@@ -184,10 +184,8 @@ if __name__ == "__main__":
     wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE, file_path=windfile, departure_time=departure_time,
                                     time_forecast=time_forecast, time_resolution=time_resolution,
                                     default_map=default_map, var_dict=var_dict, coord_res=coord_res)
-    # fig, ax = plt.subplots(figsize=(12, 7))
-    # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
 
-    courses = np.linspace(0, 360, 37) * u.degree       # scan courses from 0 to 360° in steps of 10°
+    courses = np.linspace(0, 360, 37) * u.degree       
     start_lats = np.repeat(lat_start, courses.shape)
     start_lons = np.repeat(lon_start, courses.shape)
     time = np.repeat(datetime.now(), courses.shape)
@@ -203,32 +201,49 @@ if __name__ == "__main__":
     }
 
     shipparams_vec = {}
-    for key in maripower_test_scenarios_wind:
-        shipparams_vec[key] = run_maripower_test_scenario(
-            config,
-            maripower_test_scenarios_calm[key],
-            maripower_test_scenarios_wind[key],
-            maripower_test_scenarios_wave[key],
-            waypoint_dict,
-            key, weather_type)
+
+    if args.scenario:
+        key = args.scenario
+        if key in maripower_test_scenarios_wind:
+            shipparams_vec[key] = run_maripower_test_scenario(
+                config,
+                maripower_test_scenarios_calm[key],
+                maripower_test_scenarios_wind[key],
+                maripower_test_scenarios_wave[key],
+                waypoint_dict,
+                key, weather_type)
+        else:
+            print(f"Scenario '{key}' not found. Available scenarios: {', '.join(maripower_test_scenarios_wind.keys())}")
+            exit()
+    else:
+        for key in maripower_test_scenarios_wind:
+            shipparams_vec[key] = run_maripower_test_scenario(
+                config,
+                maripower_test_scenarios_calm[key],
+                maripower_test_scenarios_wind[key],
+                maripower_test_scenarios_wave[key],
+                waypoint_dict,
+                key, weather_type)
+
 
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
 
-    nominator_list = [
-        shipparams_vec['95perc_calm'],
-        shipparams_vec['105perc_calm'],
-        shipparams_vec['80perc_wind'],
-        shipparams_vec['120perc_wind'],
-        shipparams_vec['80perc_wave'],
-        shipparams_vec['120perc_wave']
-    ]
-    label_list = [
-        r'$\pm5\,\%$ calm water resistance',
-        '',
-        r'$\pm20\,\%$ added resistance in wind',
-        '',
-        r'$\pm20\,\%$ added resistance in waves',
-        ''
-    ]
-    plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
-                          'inclusive_' + weather_type, 'power', weather_type)
+    if not args.scenario or args.scenario in ['95perc_calm', '105perc_calm', '80perc_wind', '120perc_wind', '80perc_wave', '120perc_wave']:
+        nominator_list = [
+            shipparams_vec['95perc_calm'],
+            shipparams_vec['105perc_calm'],
+            shipparams_vec['80perc_wind'],
+            shipparams_vec['120perc_wind'],
+            shipparams_vec['80perc_wave'],
+            shipparams_vec['120perc_wave']
+        ]
+        label_list = [
+            r'$\pm5\,\%$ calm water resistance',
+            '',
+            r'$\pm20\,\%$ added resistance in wind',
+            '',
+            r'$\pm20\,\%$ added resistance in waves',
+            ''
+        ]
+        plot_power_vs_courses(nominator_list, label_list, shipparams_vec['original'], courses, figurepath,
+                              'inclusive_' + weather_type, 'power', weather_type)
