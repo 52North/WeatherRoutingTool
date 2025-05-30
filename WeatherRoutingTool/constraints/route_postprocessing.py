@@ -32,6 +32,7 @@ class RoutePostprocessing:
 
     def __init__(self, min_fuel_route, boat, db_engine=None):
         self.set_data(min_fuel_route, boat)
+        self.ship = boat  # Alias for compatibility with code/tests expecting 'ship'
 
         if db_engine is not None:
             self.engine = db_engine

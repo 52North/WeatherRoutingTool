@@ -11,10 +11,16 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-import mariPower
+# Only import mariPower if needed, otherwise raise an informative error
+try:
+    import mariPower
+    from mariPower import __main__
+except ImportError:
+    mariPower = None
+    __main__ = None
+
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-from mariPower import __main__
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
@@ -39,6 +45,8 @@ class Boat:
         self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
         self.draught_aft = config_obj.BOAT_DRAUGHT_AFT * u.meter
         self.draught_fore = config_obj.BOAT_DRAUGHT_FORE * u.meter
+        # Alias for compatibility with code/tests expecting 'ship'
+        self.ship = self
 
     def get_required_water_depth(self):
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
@@ -618,25 +626,33 @@ class Tanker(Boat):
         if not config_obj.DEPTH_DATA == " ":
             self.use_depth_data = True
             self.depth_path = config_obj.DEPTH_DATA
+        else:
+            self.use_depth_data = False
+            self.depth_path = None
 
-        self.hydro_model = mariPower.ship.CBT()
-        self.hydro_model.Draught_AP = np.array([config_obj.BOAT_DRAUGHT_AFT])
-        self.hydro_model.Draught_FP = np.array([config_obj.BOAT_DRAUGHT_FORE])
-        self.hydro_model.Roughness_Level = np.array([config_obj.BOAT_ROUGHNESS_LEVEL])
-        self.hydro_model.Roughness_Distribution_Level = np.array([config_obj.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
-        self.hydro_model.WindForcesFactor = config_obj.BOAT_FACTOR_WIND_FORCES
-        self.hydro_model.WaveForcesFactor = config_obj.BOAT_FACTOR_WAVE_FORCES
-        self.hydro_model.CalmWaterFactor = config_obj.BOAT_FACTOR_CALM_WATER
+        # Only instantiate mariPower if available
+        if mariPower is not None:
+            self.hydro_model = mariPower.ship.CBT()
+            self.hydro_model.Draught_AP = np.array([config_obj.BOAT_DRAUGHT_AFT])
+            self.hydro_model.Draught_FP = np.array([config_obj.BOAT_DRAUGHT_FORE])
+            self.hydro_model.Roughness_Level = np.array([config_obj.BOAT_ROUGHNESS_LEVEL])
+            self.hydro_model.Roughness_Distribution_Level = np.array([config_obj.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
+            self.hydro_model.WindForcesFactor = config_obj.BOAT_FACTOR_WIND_FORCES
+            self.hydro_model.WaveForcesFactor = config_obj.BOAT_FACTOR_WAVE_FORCES
+            self.hydro_model.CalmWaterFactor = config_obj.BOAT_FACTOR_CALM_WATER
+        else:
+            self.hydro_model = None
+            # Allow instantiation for dummy/test objects, but raise if mariPower methods are called
 
-        # Fine-tuning the following parameters might lead to a significant speedup of mariPower. However, they should
-        # be set carefully because the accuracy of the predictions might also be affected
-        # self.hydro_model.MaxIterations = 25  # mariPower default: 10
-        # self.hydro_model.Tolerance = 0.000001  # mariPower default: 0.0
-        # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
+    def _require_maripower(self):
+        if mariPower is None:
+            raise ImportError("mariPower is required for Tanker operations but is not installed. "
+                              "Install mariPower or use a different ship type for testing.")
 
     def load_data(self):
         self.use_depth_data = False
         if self.use_depth_data:
+            self._require_maripower()
             self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
 
         self.weather_adapter()
@@ -683,7 +699,8 @@ class Tanker(Boat):
         ds.close()
 
     def set_ship_property(self, variable, value):
-        print('Setting ship property ' + variable + ' to ' + str(value))
+        if self.hydro_model is None:
+            self._require_maripower()
         setattr(self.hydro_model, variable, value)
 
     def print_init(self):
@@ -693,6 +710,7 @@ class Tanker(Boat):
         logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
 
     def init_hydro_model_single_pars(self):
+        self._require_maripower()
         self.hydro_model = mariPower.ship.CBT()
         # shipSpeed = 13 * 1852 / 3600
         self.hydro_model.WindDirection = math.radians(90)
@@ -993,7 +1011,7 @@ class Tanker(Boat):
         power = power.reshape(ds['lat'].shape[0], ds['it'].shape[0])
         ds["power"] = (['lat', 'it'], power)
         if (debug):
-            form.print_step('power new shape' + str(power.shape), 1)
+            form.print_step('power new shape' + str(power.shape))
             form.print_step('ds' + str(ds), 1)
 
         ds.to_netcdf(self.courses_path)
@@ -1008,6 +1026,7 @@ class Tanker(Boat):
     # Is not yet working as explained for Tanker.get_fuel_netCDF_loop
     #
     def get_fuel_netCDF(self):
+        self._require_maripower()
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
             status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
@@ -1037,6 +1056,7 @@ class Tanker(Boat):
     # requests with several
     # courses per space-time point and will then be replaced by Tanker.get_fuel_netCDF()
     def get_fuel_netCDF_loop(self):
+        self._require_maripower()
         debug = False
         filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
         # filename_single = 'C:/Users/Maneesha/Documents/GitHub/MariGeoRoute/WeatherRoutingTool/CoursesRouteSingle.nc'
@@ -1061,8 +1081,7 @@ class Tanker(Boat):
                 form.print_step('courses_test' + str(courses_test.to_numpy()), 1)
                 form.print_step('speed' + str(ds_read_test['speed'].to_numpy()), 1)
             # start_time = time.time()
-            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.weather_path_maripower, None, False,
-                                                        False)
+            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.weather_path_maripower, None, False, False)
             # form.print_current_time('time for mariPower request:', start_time)
 
             ds_temp = xr.load_dataset(filename_single)
