@@ -11,7 +11,7 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 
-# Only import mariPower if needed, otherwise raise an informative error
+
 try:
     import mariPower
     from mariPower import __main__
@@ -1016,7 +1016,6 @@ class Tanker(Boat):
 
         ds.to_netcdf(self.courses_path)
         ds_read = xr.open_dataset(self.courses_path)
-        # ToDo: use logger.debug and args.debug
         if (debug):
             print('read data set', ds_read)
 
@@ -1034,13 +1033,6 @@ class Tanker(Boat):
         else:
             status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
                 mariPower_ship, self.courses_path, self.weather_path_maripower)
-        # form.print_current_time('time for mariPower request:', start_time)
-        # ToDo: read messages from netCDF and store them in ship_params (changes in mariPower necessary)
-        # for idx in range(0, len(status.flatten())):
-        #     if status.flatten()[idx] != 1:
-        #         logger.warning(f"{idx}: status.shape={status.shape}, status={status.flatten()[idx]}, "
-        #                        f"message={message.flatten()[idx]}")
-
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
 
@@ -1059,7 +1051,6 @@ class Tanker(Boat):
         self._require_maripower()
         debug = False
         filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
-        # filename_single = 'C:/Users/Maneesha/Documents/GitHub/MariGeoRoute/WeatherRoutingTool/CoursesRouteSingle.nc'
         ds = xr.load_dataset(self.courses_path)
         n_vars = ds['it'].shape[0]
         ds_merged = xr.Dataset()
@@ -1080,10 +1071,7 @@ class Tanker(Boat):
                 courses_test = ds_read_test['courses']
                 form.print_step('courses_test' + str(courses_test.to_numpy()), 1)
                 form.print_step('speed' + str(ds_read_test['speed'].to_numpy()), 1)
-            # start_time = time.time()
             mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.weather_path_maripower, None, False, False)
-            # form.print_current_time('time for mariPower request:', start_time)
-
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]
             if ivar == 1:
