@@ -8,7 +8,6 @@ from geovectorslib import geod
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import LandCrossing, WaveHeight
-from WeatherRoutingTool.ship.ship import Tanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 '''
@@ -196,7 +195,7 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
-    tk = basic_test_func.create_dummy_Tanker_object()
+    tk = basic_test_func.create_dummy_Direct_Power_Ship("simpleship")
     tk.speed = boat_speed
     tk.use_depth_data = False
 

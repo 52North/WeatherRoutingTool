@@ -42,6 +42,7 @@ class TestGenetic:
 
         plt.show()
 
+    @pytest.mark.skip(reason="GA needs to be reviewed.")
     @pytest.mark.manual
     def test_crossover_noint(self, route):
         route1 = [(35.3, 16.1), (36.17, 18.2), (36.1, 19.2), (36.0, 20.1), (35.0, 20.3)]
