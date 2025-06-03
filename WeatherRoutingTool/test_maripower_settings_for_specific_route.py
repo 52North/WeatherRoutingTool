@@ -5,25 +5,29 @@ from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy import units as u
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.ship import DirectPowerBoat
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
-                                weather_scenario, draught_fp, draught_ap):
-    boat = Tanker(config)
-    boat.set_ship_property('Draught_FP', draught_fp.mean())
-    boat.set_ship_property('Draught_AP', draught_ap.mean())
-    boat.set_ship_property('WindForcesFactor', windfactor)
-    boat.set_ship_property('WaveForcesFactor', wavefactor)
-    boat.set_ship_property('CalmWaterFactor', calmfactor)
+                                draught_fp, draught_ap, sog):
+    boat = Tanker(file_name = config.CONFIG_PATH)
+    boat.set_maripower_ship_property('Draught_FP', draught_fp.mean())
+    boat.set_maripower_ship_property('Draught_AP', draught_ap.mean())
+    boat.set_maripower_ship_property('WindForcesFactor', windfactor)
+    boat.set_maripower_ship_property('WaveForcesFactor', wavefactor)
+    boat.set_maripower_ship_property('CalmWaterFactor', calmfactor)
+    boat.speed = sog
+    boat.load_data()
 
-    print('Running scenario for ' + weather_scenario + ' with maripower setting ' + maripower_scenario)
+    print('Running maripower setting ' + maripower_scenario)
 
     ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
                                            waypoint_dict['start_lons'], time[:-1], sog)
@@ -46,7 +50,39 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
         ship_params_per_step=ship_params)
 
     if geojsondir:
-        filename = os.path.join(geojsondir, 'route_' + weather_scenario + '_' + maripower_scenario + '.json')
+        filename = os.path.join(geojsondir, 'route_' + maripower_scenario + '.json')
+        print('Writing file: ', filename)
+        rp.return_route_to_API(filename)
+
+def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
+    boat = DirectPowerBoat(file_name = config.CONFIG_PATH)
+    boat.speed = sog
+    boat.load_data()
+
+    print('Running direct power boat setting ' + maripower_scenario)
+
+    ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
+                                           waypoint_dict['start_lons'], time[:-1], sog)
+
+    start = (lat[0], lon[0])
+    finish = (lat[-1], lon[-1])
+
+    rp = RouteParams(
+        count=lat.shape[0] - 2,
+        start=start,
+        finish=finish,
+        gcr=None,
+        route_type='read_from_csv',
+        time=waypoint_dict['travel_times'],
+        lats_per_step=lat,
+        lons_per_step=lon,
+        course_per_step=waypoint_dict['courses'],
+        dists_per_step=waypoint_dict['dist'],
+        starttime_per_step=time,
+        ship_params_per_step=ship_params)
+
+    if geojsondir:
+        filename = os.path.join(geojsondir, 'route_' + maripower_scenario + '.json')
         print('Writing file: ', filename)
         rp.return_route_to_API(filename)
 
@@ -84,8 +120,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
     parser.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
+    parser.add_argument('-n', '--name',help="Route file name (absolute path)", required=True, type=str)
+
     parser.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
                         type=str, default='False')
+    parser.add_argument('-wave', '--wave_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
+    parser.add_argument('-wind', '--wind_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
+    parser.add_argument('-calm', '--calm_water_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
+    parser.add_argument('-bt', '--boat_type', help="<maripower|direct_power_method>. Defaults to 'direct_power_method' ", required=False,
+                        type=str, default='direct_power_method')
 
     set_up_logging()
 
@@ -94,9 +137,8 @@ if __name__ == "__main__":
     config = Config(file_name=args.file)
     config.print()
 
-    routename = 'original_resistances_calm_weather'
-    # cut_route = [37.5057, 12.3046, 33.827, 34.311]    # MedSea
-    # cut_route = [48.634715, -6.081798333333333, 43.53411833333333, -10.028818333333334]     # Ärmelkanal
+    scenario_name = args.name
+
     windfile = config.WEATHER_DATA
     depthfile = config.DEPTH_DATA
     if str(args.write_geojson).lower() == 'true':
@@ -111,57 +153,9 @@ if __name__ == "__main__":
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    weather_type = 'real_weather'  # rough_weather, calm_weather
-    wind_speed = -99
-    VHMO = -99
-
-    if weather_type == 'rough_weather':
-        wind_speed = 12.5
-        VHMO = 2
-    if weather_type == 'calm_weather':
-        wind_speed = 2.5
-        VHMO = 1
-
-    if (wind_speed == -99 or VHMO == -99) and (weather_type != 'real_weather'):
-        raise ValueError('windspeed or VHM0 not set!')
-
-    u_comp = - math.sin(math.radians(45)) * wind_speed
-    v_comp = - math.cos(math.radians(45)) * wind_speed
-
-    # currents = 0.1
-    # utotal = math.sin(math.radians(45)) * currents
-    # vtotal = - math.cos(math.radians(45)) * currents
-
-    var_dict = {
-        'thetao': 20,  # °C
-        'so': 33.5,
-        'Temperature_surface': 283,  # K
-        'Pressure_reduced_to_MSL_msl': 101325,
-        'u-component_of_wind_height_above_ground': u_comp,
-        'v-component_of_wind_height_above_ground': v_comp,
-        # 'utotal': utotal,
-        # 'vtotal': vtotal,
-        'VHM0': VHMO,
-        'VMDR': 45,
-        'VTPK': 10
-    }
-
-    maripower_test_scenarios_calm = {'original': 1., '95perc_calm': 0.95, '105perc_calm': 1.05, '80perc_wind': 1.,
-                                     '120perc_wind': 1., '80perc_wave': 1., '120perc_wave': 1.}
-    maripower_test_scenarios_wind = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 0.8,
-                                     '120perc_wind': 1.2, '80perc_wave': 1., '120perc_wave': 1.}
-    maripower_test_scenarios_wave = {'original': 1., '95perc_calm': 1., '105perc_calm': 1., '80perc_wind': 1.,
-                                     '120perc_wind': 1., '80perc_wave': 0.8, '120perc_wave': 1.2}
-
-    wt = WeatherFactory.get_weather(data_mode=config.DATA_MODE,
-                                    file_path=windfile,
-                                    departure_time=departure_time,
-                                    time_forecast=time_forecast,
-                                    time_resolution=time_resolution,
-                                    default_map=default_map,
-                                    var_dict=var_dict)
-    fig, ax = plt.subplots(figsize=(12, 7))
-    # wt.plot_weather_map(fig, ax, "2023-08-16T12:00:00", "wind")
+    maripower_test_scenarios_calm = args.calm_water_scenario
+    maripower_test_scenarios_wind = args.wind_scenario
+    maripower_test_scenarios_wave = args.wave_scenario
 
     lat, lon, time, sog, fore_draught, aft_draught = RouteParams.from_gzip_file(args.route)
     # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
@@ -169,15 +163,28 @@ if __name__ == "__main__":
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
-    for key in maripower_test_scenarios_wind:
-        run_maripower_test_scenario(
-            maripower_test_scenarios_calm[key],
-            maripower_test_scenarios_wind[key],
-            maripower_test_scenarios_wave[key],
+    if str(args.boat_type) == 'direct_power_method':
+        # sog = np.average(sog)
+        sog = 7.7 * u.meter/ u.second
+        run_dpm_test_scenario(
             waypoint_dict,
             routepath,
-            key,
-            weather_type,
+            scenario_name,
+            sog
+        )
+
+    if str(args.boat_type) == 'maripower':
+        # sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
+        sog =  np.full(len(lon) - 1, 7.7) * u.meter / u.second
+
+        run_maripower_test_scenario(
+            maripower_test_scenarios_calm,
+            maripower_test_scenarios_wind,
+            maripower_test_scenarios_wave,
+            waypoint_dict,
+            routepath,
+            scenario_name,
             fore_draught,
-            aft_draught
+            aft_draught,
+            sog
         )

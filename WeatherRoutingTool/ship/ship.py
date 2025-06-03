@@ -682,7 +682,7 @@ class Tanker(Boat):
         ds_cut.close()
         ds.close()
 
-    def set_ship_property(self, variable, value):
+    def set_maripower_ship_property(self, variable, value):
         print('Setting ship property ' + variable + ' to ' + str(value))
         setattr(self.hydro_model, variable, value)
 

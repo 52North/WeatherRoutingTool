@@ -58,13 +58,15 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
         else:
             rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(colour),
                                                    rp_str_list[irp], power_type)
+            colour = colour + 1
+
 
     ax.legend(loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.1, frameon=False)
     ax.tick_params(top=True, right=True)
-    ax.text(0.98, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
+    ax.text(0.8, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
 
-    ax.text(0.11, 0.76, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
+    ax.text(0.2, 0.76, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes)
     # plt.axhline(y=1, color='gainsboro', linestyle='-')
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
@@ -83,29 +85,36 @@ if __name__ == "__main__":
 
     figurefile = args.figure_dir
 
-    filename1 = ("/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes"
-                 "/route_real_weather_original.json")
-    filename2 = "/home/kdemmich/MariData/IMDC_paper/Find_alternative_route_24_02_06/MedSea/Routes/min_time_route.json"
+    filename1 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_original_maripower.json"
+    filename2 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_maripower_no_wind.json"
+    filename3 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_maripower_only_wind.json"
+    filename4 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_dpm.json"
 
     rp_read1 = RouteParams.from_file(filename1)
-    rp_read2 = RouteParams.from_file(filename2)
+    rp_read2 = RouteParams.from_file(filename1)
+    rp_read3 = RouteParams.from_file(filename2)
+    rp_read4 = RouteParams.from_file(filename3)
+    rp_read5 = RouteParams.from_file(filename4)
 
-    rp_1_str = 'original route'
-    rp_2_str = 'Isofuel routing'
+    rp_1_str = 'original maripower'
+    rp_2_str = 'original maripower'
+    rp_3_str = 'maripower no wind'
+    rp_4_str = 'maripower only wind'
+    rp_5_str = 'dpm'
 
     scenario_str = 'scenario: Mediterranean Sea'
 
-    rp_list = [rp_read1, rp_read2]
-    rp_str_list = [rp_1_str, rp_2_str]
+    rp_list = [rp_read1, rp_read2, rp_read3, rp_read4, rp_read5]
+    rp_str_list = [rp_1_str, rp_2_str, rp_3_str, rp_4_str, rp_read5]
 
-    windfile = "/home/kdemmich/MariData/IMDC_paper/weather_imdc_route_16.nc"
+    windfile = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/weather_imdc_route_16.nc"
     depth_data = ""
     set_up_logging()
 
-    do_plot_weather = True
+    do_plot_weather = False
     do_plot_route = False
-    do_plot_power_vs_dist = False
-    do_plot_fuel_vs_dist = False
+    do_plot_power_vs_dist = True
+    do_plot_fuel_vs_dist = True
     do_plot_acc_fuel_vs_dist = False
 
     do_plot_power_vs_lon = False
@@ -114,8 +123,8 @@ if __name__ == "__main__":
     do_plot_fuel_vs_lat = False
 
     do_plot_power_vs_dist_showing_weather = False
-    do_plot_power_vs_dist_ratios = False
-    do_plot_fuel_vs_dist_ratios = False
+    do_plot_power_vs_dist_ratios = True
+    do_plot_fuel_vs_dist_ratios = True
     do_write_fuel = False
 
     ##
