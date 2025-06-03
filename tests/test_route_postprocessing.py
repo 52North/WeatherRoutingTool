@@ -126,7 +126,7 @@ class TestRoutePostprocessing:
             starttime_per_step=start_time,
             ship_params_per_step=sp
         )
-        boat = basic_test_func.create_dummy_Tanker_object()
+        boat = basic_test_func.create_dummy_Direct_Power_Ship("simpleship")
         boat.set_boat_speed(6)
         with engine.connect() as conn:
             postprocessed_route = RoutePostprocessing(rp, boat, db_engine=conn.connection)
