@@ -636,6 +636,8 @@ class RouteParams():
         sog = sog_data['SOG'].values
         sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s
         sog = sog.to(u.meter/u.second)
+        power = sog_data['ME_LOAD'].values
+        fuel_rate = sog_data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].values * u.kg/u.h
 
         # draught = 0.25 * (sog_data['AFTER_DRAUGHT_LEVEL'] + sog_data['FORE_DRAUGHT_LEVEL']
         #                   + sog_data['MIDDRAUGHT_LEVELS'] + sog_data['MIDDRAUGHT_LEVELP'])
@@ -659,4 +661,4 @@ class RouteParams():
         logger.info('fore draught: ' + str(fore_draught))
         logger.info('aft draught: ' + str(aft_draught))
 
-        return lat, lon, time_converted, sog, fore_draught, aft_draught
+        return lat, lon, time_converted, sog, fore_draught, aft_draught, power, fuel_rate
