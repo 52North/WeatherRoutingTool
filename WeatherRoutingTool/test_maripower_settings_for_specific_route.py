@@ -9,21 +9,22 @@ from astropy import units as u
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.ship.ship import Tanker
-from WeatherRoutingTool.ship.ship import DirectPowerBoat
+from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
                                 draught_fp, draught_ap, sog):
-    boat = Tanker(file_name = config.CONFIG_PATH)
-    boat.set_maripower_ship_property('Draught_FP', draught_fp.mean())
-    boat.set_maripower_ship_property('Draught_AP', draught_ap.mean())
-    boat.set_maripower_ship_property('WindForcesFactor', windfactor)
-    boat.set_maripower_ship_property('WaveForcesFactor', wavefactor)
-    boat.set_maripower_ship_property('CalmWaterFactor', calmfactor)
+    boat = MariPowerTanker(file_name = config.CONFIG_PATH)
+    boat.set_ship_property('Draught_FP', draught_fp.mean())
+    boat.set_ship_property('Draught_AP', draught_ap.mean())
+    boat.set_ship_property('WindForcesFactor', windfactor)
+    boat.set_ship_property('WaveForcesFactor', wavefactor)
+    boat.set_ship_property('CalmWaterFactor', calmfactor)
     boat.speed = sog
     boat.load_data()
 
@@ -157,15 +158,19 @@ if __name__ == "__main__":
     maripower_test_scenarios_wind = args.wind_scenario
     maripower_test_scenarios_wave = args.wave_scenario
 
-    lat, lon, time, sog, fore_draught, aft_draught = RouteParams.from_gzip_file(args.route)
+    lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
     # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
     #                                                               aft_draught, cut_route)
+
+    # calculate power
+    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
+    power = power * boat.power_at_sp * 0.01 * 4/3 # power_at_sp is 75% of SMCR power
 
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     if str(args.boat_type) == 'direct_power_method':
-        # sog = np.average(sog)
-        sog = 7.7 * u.meter/ u.second
+        sog = np.average(sog)
+        #sog = 7.7 * u.meter/ u.second
         run_dpm_test_scenario(
             waypoint_dict,
             routepath,
@@ -174,8 +179,8 @@ if __name__ == "__main__":
         )
 
     if str(args.boat_type) == 'maripower':
-        # sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
-        sog =  np.full(len(lon) - 1, 7.7) * u.meter / u.second
+        sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
+        # sog =  np.full(len(lon) - 1, 7.7) * u.meter / u.second
 
         run_maripower_test_scenario(
             maripower_test_scenarios_calm,
@@ -188,3 +193,31 @@ if __name__ == "__main__":
             aft_draught,
             sog
         )
+
+    if str(args.boat_type) == 'data':
+        ship_params = ShipParams.set_default_array_1D(len(lon))
+        ship_params.fuel_rate = fuel_rate
+        ship_params.power = power
+
+        start = (lat[0], lon[0])
+        finish = (lat[-1], lon[-1])
+
+        rp = RouteParams(
+            count=lat.shape[0] - 2,
+            start=start,
+            finish=finish,
+            gcr=None,
+            route_type='read_from_gzip',
+            time=waypoint_dict['travel_times'],
+            lats_per_step=lat,
+            lons_per_step=lon,
+            course_per_step=waypoint_dict['courses'],
+            dists_per_step=waypoint_dict['dist'],
+            starttime_per_step=time,
+            ship_params_per_step=ship_params,
+        )
+
+        if routepath:
+            filename = os.path.join(routepath, 'route_' + scenario_name + '.json')
+            print('Writing file: ', filename)
+            rp.return_route_to_API(filename)
