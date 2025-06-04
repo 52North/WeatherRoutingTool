@@ -16,7 +16,7 @@ import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.algorithms.genetic_utils import (CrossoverFactory, MutationFactory, PopulationFactory,
-                                                         RoutingProblem, RouteDuplicateElimination)
+                                                         RoutingProblem, RouteDuplicateElimination, RepairInfeasibles)
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -67,6 +67,8 @@ class Genetic(RoutingAlg):
         mutation = MutationFactory.get_mutation(self.mutation_type, grid=wave_height)
         crossover = CrossoverFactory.get_crossover()
         duplicates = RouteDuplicateElimination()
+
+        # TODO: verify starting point and ending point are not in violation of a constraint.
         res = self.optimize(problem, initial_population, crossover, mutation, duplicates)
 
         result = self.terminate(result_object=res, problem=problem)
@@ -146,7 +148,7 @@ class Genetic(RoutingAlg):
         # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
         algorithm = NSGA2(pop_size=self.pop_size, sampling=initial_population, crossover=crossover,
                           n_offsprings=self.n_offsprings, mutation=mutation, eliminate_duplicates=duplicates,
-                          return_least_infeasible=False)
+                          repair=RepairInfeasibles(), return_least_infeasible=False, )
         termination = get_termination("n_gen", self.ncount)
 
         res = minimize(problem, algorithm, termination, save_history=True, verbose=True)

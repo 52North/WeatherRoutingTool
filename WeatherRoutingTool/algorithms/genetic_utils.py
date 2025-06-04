@@ -11,6 +11,7 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from pymoo.core.mutation import Mutation
 from pymoo.core.problem import ElementwiseProblem
 from pymoo.core.sampling import Sampling
+from pymoo.core.repair import Repair
 from skimage.graph import route_through_array
 
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
@@ -45,6 +46,11 @@ class GridBasedPopulation(GridMixin, Sampling):
                                            fully_connected=True, geometric=False)
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
+
+            # set initial and final points from the config file, to reach exact points
+            route[0] = self.src
+            route[-1] = self.dest
+
             routes[i][0] = np.array(route)
 
         plot_genetic_algorithm_initial_population(self.src, self.dest, routes)
@@ -277,9 +283,21 @@ class RoutingProblem(ElementwiseProblem):
         # print(is_constrained)
         return 0 if not is_constrained else 1
 
+    def get_constraints_array(self, route: np.ndarray) -> np.ndarray:
+        """
+        Return constraint violation per waypoint in route
+
+        :param route: Candidate array of waypoints
+        :type route: np.ndarray
+        :return: Array of constraint violations
+        """
+
+        constraints = np.array([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
+        return constraints
+
     def get_constraints(self, route):
         # ToDo: what about time?
-        constraints = np.sum([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
+        constraints = np.sum(self.get_constraints_array(route))
         return constraints
 
     def get_power(self, route):
@@ -297,3 +315,54 @@ class RouteDuplicateElimination(ElementwiseDuplicateElimination):
 
     def is_equal(self, a, b):
         return np.array_equal(a.X[0], b.X[0])
+
+
+## Repair Class
+
+class RepairInfeasibles(Repair):
+    """
+    Repairs infeasible candidates of a population
+    """
+
+    def _repair_candidate(self, route: np.ndarray, constraints: np.ndarray) -> np.ndarray:
+        """
+        Repair the waypoints of a route when a constraint violation is found.
+
+        NOTE: Currently replaces the waypoint with the previous one in the
+        route, which is not feasible at all; need to incorporate a closest
+        feasible waypoint finding method
+
+        :param route: Candidate solution array
+        :type route: np.ndarray
+        :param constraints: Constraints array indicating violations with waypoints
+        :type constraints: np.ndarray
+        :return: Updated Candidate array
+        """
+
+        for i, c in enumerate(constraints):
+            if i == 0:
+                continue
+
+            # TODO: Adjust to replace waypoint with a feasible one instead of the previous one
+            if c != 0:
+                route[i] = route[i - 1]
+        return route
+
+    def _do(self, problem: RoutingProblem, Z: np.ndarray, **kw) -> np.ndarray:
+        """
+        Fix routes when waypoints do not meet the constraints
+
+        :param problem: Problem being solved by the algorithm
+        :type problem: RoutingProblem
+        :param Z: Candidate solution array
+        :type Z: np.ndarray
+        :return: Array of updated population
+        """
+
+        constraints = [problem.get_constraints_array(r[0]) for r in Z]
+
+        for i, c in enumerate(constraints):
+            # if any constraint is broken in the route
+            if c.any():
+                Z[i, 0] = self._repair_candidate(Z[i, 0].copy(), c)
+        return Z
