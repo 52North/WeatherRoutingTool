@@ -3,8 +3,8 @@ import logging
 import numpy as np
 from geovectorslib import geod  # TODO: change to geopy?
 
-from algorithms.isobased import IsoBased
-from routeparams import RouteParams
+from WeatherRoutingTool.algorithms.isobased import IsoBased
+from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger('WRT.Isochrone')
 

@@ -28,7 +28,18 @@ author = 'Katharina Demmich, Martin Pontius'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.inheritance_diagram'
+]
+
+# Configuration for UML diagram output
+
+graphviz_output_format = 'svg'  
+
+graphviz_dot_args = [
+    "-Granksep=1",   
+    "-Gsplines=true",
+    "-Gnodesep=1", 
 ]
 
 # Add any paths that contain templates here, relative to this directory.
