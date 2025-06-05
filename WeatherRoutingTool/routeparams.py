@@ -403,8 +403,8 @@ class RouteParams():
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
         else:
-            # plt.ylabel(power["label"] + ' (t/km)')
-            plt.ylabel(power["label"])
+            plt.ylabel(power["label"] + ' (t/km)')
+            #plt.ylabel(power["label"])
             plt.bar(
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne/u.kilometer).value,
@@ -474,7 +474,7 @@ class RouteParams():
         plt.axhline(y=mean_dev, color=color, linestyle='dashed')
 
         plt.xlabel('travel distance (km)')
-        plt.ylabel(power_nom["label"] + ' modified/standard')
+        plt.ylabel(power_nom["label"] + ' data/model')
         plt.xticks()
 
     def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
@@ -631,7 +631,7 @@ class RouteParams():
         mean_engine_load = data['ME_LOAD'].mean()
 
         # select every interval's element from dataset
-        interval = 10
+        interval = 100
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
         sog = sog_data['SOG'].values
         sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s

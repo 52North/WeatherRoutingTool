@@ -169,7 +169,7 @@ if __name__ == "__main__":
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
     if str(args.boat_type) == 'direct_power_method':
-        sog = np.average(sog)
+        # sog = np.average(sog)
         #sog = 7.7 * u.meter/ u.second
         run_dpm_test_scenario(
             waypoint_dict,
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         )
 
     if str(args.boat_type) == 'maripower':
-        sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
+        # sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
         # sog =  np.full(len(lon) - 1, 7.7) * u.meter / u.second
 
         run_maripower_test_scenario(

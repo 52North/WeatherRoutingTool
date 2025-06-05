@@ -15,6 +15,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    ax.set_ylim(0, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
@@ -47,7 +48,7 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
 
 def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.95, 1.08)
+    ax.set_ylim(0.7, 1.3)
     colour = 0
 
     for irp in range(1, len(rp_list)):
@@ -63,10 +64,10 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
 
     ax.legend(loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.1, frameon=False)
     ax.tick_params(top=True, right=True)
-    ax.text(0.8, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
+    ax.text(0.8, 0.8, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
 
-    ax.text(0.2, 0.76, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
+    ax.text(0.2, 1.2, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes)
     # plt.axhline(y=1, color='gainsboro', linestyle='-')
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
