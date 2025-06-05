@@ -317,7 +317,7 @@ class RouteDuplicateElimination(ElementwiseDuplicateElimination):
         return np.array_equal(a.X[0], b.X[0])
 
 
-## Repair Class
+# Repair Population
 
 class RepairInfeasibles(Repair):
     """
