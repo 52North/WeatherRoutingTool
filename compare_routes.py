@@ -19,8 +19,8 @@ def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
     ax.legend(loc='upper left', frameon=False)
-    # ax.tick_params(top=True, right=True)
-    ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
+    ax.tick_params(top=True, right=True)
+    # ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
     ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
@@ -80,34 +80,30 @@ if __name__ == "__main__":
                         required=True, type=str)
     parser.add_argument('--figure-dir', help="Figure directory (absolute path)",
                         required=True, type=str)
+    parser.add_argument('--file-list', nargs="*", required=True, type=str)
+    parser.add_argument('--name-list', nargs="*", required=True, type=str)
+    parser.add_argument('--scenario-str', required=False, default=' ', type=str)
+    parser.add_argument('--wind-file', required=False, default=' ', type=str)
 
     args = parser.parse_args()
 
     figurefile = args.figure_dir
 
-    filename1 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_original_maripower.json"
-    filename2 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_maripower_no_wind.json"
-    filename3 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_maripower_only_wind.json"
-    filename4 = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/Routes/route_dpm.json"
+    filelist = args.file_list
+    rp_str_list = args.name_list
 
-    rp_read1 = RouteParams.from_file(filename1)
-    rp_read2 = RouteParams.from_file(filename1)
-    rp_read3 = RouteParams.from_file(filename2)
-    rp_read4 = RouteParams.from_file(filename3)
-    rp_read5 = RouteParams.from_file(filename4)
+    rp_list=[]
+    for path in filelist:
+        rp_list.append(RouteParams.from_file(path))
 
-    rp_1_str = 'original maripower'
-    rp_2_str = 'original maripower'
-    rp_3_str = 'maripower no wind'
-    rp_4_str = 'maripower only wind'
-    rp_5_str = 'dpm'
+    if len(rp_list) != len(rp_str_list):
+        raise ValueError('Every histogram needs a name for the legend.')
+    if len(rp_list) < 2:
+        raise ValueError('You need to pass at least two histograms.')
 
-    scenario_str = 'scenario: Mediterranean Sea'
+    scenario_str = args.scenario_str
 
-    rp_list = [rp_read1, rp_read2, rp_read3, rp_read4, rp_read5]
-    rp_str_list = [rp_1_str, rp_2_str, rp_3_str, rp_4_str, rp_read5]
-
-    windfile = "/home/kdemmich/1_Projekte/TwinShip/5_Results/Maripower-DPM-Comparison/250604/weather_imdc_route_16.nc"
+    windfile = args.wind_file
     depth_data = ""
     set_up_logging()
 
@@ -125,7 +121,7 @@ if __name__ == "__main__":
     do_plot_power_vs_dist_showing_weather = False
     do_plot_power_vs_dist_ratios = True
     do_plot_fuel_vs_dist_ratios = True
-    do_write_fuel = False
+    do_write_fuel = True
 
     ##
     # init weather
@@ -147,7 +143,7 @@ if __name__ == "__main__":
         fig, ax = plt.subplots(figsize=(12, 7))
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_read1.start, rp_read1.finish, '', False)
+        fig, ax = graphics.generate_basemap(fig, None, rp_list[0].start, rp_list[0].finish, '', False)
         wt.plot_weather_map(fig, ax, plot_time, "wind")
         plt.show()
 
@@ -161,7 +157,7 @@ if __name__ == "__main__":
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_read1.start, rp_read1.finish, '', False)
+        fig, ax = graphics.generate_basemap(fig, None, rp_list[0].start, rp_list[0].finish, '', False)
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):
@@ -217,19 +213,13 @@ if __name__ == "__main__":
     # write full fuel
     if do_write_fuel:
         print('Full fuel consumption:')
-        print(rp_1_str + ': ' + str(rp_read1.get_full_fuel()))
-        print(rp_2_str + ': ' + str(rp_read2.get_full_fuel()))
-        # print(rp_3_str + ': ' + str(rp_read3.get_full_fuel()))
-        # print(rp_4_str + ': ' + str(rp_read4.get_full_fuel()))
+        for irp in range(0, len(rp_list)):
+            print(rp_str_list[irp] + ': ' + str(rp_list[irp].get_full_fuel()))
 
         print('Full travel dist:')
-        print(rp_1_str + ': ' + str(rp_read1.get_full_dist()))
-        print(rp_2_str + ': ' + str(rp_read2.get_full_dist()))
-        # print(rp_3_str + ': ' + str(rp_read3.get_full_dist()))
-        # print(rp_4_str + ': ' + str(rp_read4.get_full_dist()))
+        for irp in range(0, len(rp_list)):
+            print(rp_str_list[irp] + ': ' + str(rp_list[irp].get_full_dist()))
 
         print('Full travel time:')
-        print(rp_1_str + ': ' + str(rp_read1.get_full_travel_time()))
-        print(rp_2_str + ': ' + str(rp_read2.get_full_travel_time()))
-        # print(rp_3_str + ': ' + str(rp_read3.get_full_travel_time('datetime')))
-        # print(rp_4_str + ': ' + str(rp_read4.get_full_travel_time('datetime')))
+        for irp in range(0, len(rp_list)):
+            print(rp_str_list[irp] + ': ' + str(rp_list[irp].get_full_travel_time()))
