@@ -29,7 +29,9 @@ author = 'Katharina Demmich, Martin Pontius'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.inheritance_diagram'
+    'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.viewcode',     
+    'sphinx.ext.napoleon' 
 ]
 
 # Configuration for UML diagram output
