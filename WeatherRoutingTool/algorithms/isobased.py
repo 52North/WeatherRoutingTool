@@ -292,6 +292,11 @@ class IsoBased(RoutingAlg):
                 self.update_fig('p')
                 self.count += 1
 
+        # if routing steps runs out without reaching destination,
+        # then the last step count isn't executed
+        if not self.route_reached_destination:
+            self.count -= 1
+
         if self.pruning_error and self.count > 0:
             self.count = self.count - 1
             self.revert_to_previous_step()
