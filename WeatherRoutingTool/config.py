@@ -5,28 +5,20 @@ import sys
 
 logger = logging.getLogger('WRT.Config')
 
-MANDATORY_CONFIG_VARIABLES = ['COURSES_FILE', 'DEFAULT_MAP', 'DEFAULT_ROUTE', 'DEPARTURE_TIME', 'DEPTH_DATA',
-                              'ROUTE_PATH', 'WEATHER_DATA']
+MANDATORY_CONFIG_VARIABLES = ['DEFAULT_MAP', 'DEFAULT_ROUTE', 'DEPARTURE_TIME', 'DEPTH_DATA', 'ROUTE_PATH',
+                              'WEATHER_DATA']
 
 RECOMMENDED_CONFIG_VARIABLES = {
-    'BOAT_DRAUGHT_AFT': 10,
-    'BOAT_DRAUGHT_FORE': 10,
-    'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 1,
-    'BOAT_ROUGHNESS_LEVEL': 1,
-    'BOAT_SPEED': 6,
-    'DATA_MODE': 'automatic'
+    'BOAT_TYPE': 'direct_power_method',
 }
 
 # optional variables with default values
 OPTIONAL_CONFIG_VARIABLES = {
     'ALGORITHM_TYPE': 'isofuel',
-    'CONSTANT_FUEL_RATE': None,
     'CONSTRAINTS_LIST': ['land_crossing_global_land_mask', 'water_depth', 'on_map'],
+    'DATA_MODE': 'automatic',
     'DELTA_FUEL': 3000,
     'DELTA_TIME_FORECAST': 3,
-    'FACTOR_CALM_WATER': 1.0,
-    'FACTOR_WAVE_FORCES': 1.0,
-    'FACTOR_WIND_FORCES': 1.0,
     'GENETIC_MUTATION_TYPE': 'grid_based',
     'GENETIC_NUMBER_GENERATIONS': 20,
     'GENETIC_NUMBER_OFFSPRINGS': 2,
@@ -43,9 +35,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'ROUTER_HDGS_INCREMENTS_DEG': 6,
     'ROUTER_HDGS_SEGMENTS': 30,
     'ROUTE_POSTPROCESSING': False,
-    'SHIP_TYPE': 'CBT',
     'TIME_FORECAST': 90,
-    'UNDER_KEEL_CLEARANCE': 20
 }
 
 
@@ -58,14 +48,10 @@ class Config:
     def __init__(self, init_mode='from_json', file_name=None, config_dict=None):
         # Details in README
         self.ALGORITHM_TYPE = None  # options: 'isofuel', 'genetic', 'speedy_isobased'
-        self.BOAT_DRAUGHT_AFT = None  # aft draught (draught at rudder) in m
-        self.BOAT_DRAUGHT_FORE = None  # fore draught (draught at forward perpendicular) in m
-        self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
-        self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
-        self.BOAT_SPEED = None  # in m/s
+        self.BOAT_TYPE = None  # options: 'CBT', 'SAL', 'speedy_isobased', 'direct_power_method
+        self.CONFIG_PATH = None  # path to config file
         self.CONSTRAINTS_LIST = None  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         # 'water_depth', 'on_map', 'via_waypoints', 'status_error'
-        self.CONSTANT_FUEL_RATE = None  # constant fuel rate passed from ConstantFuelBoat for 'speedy_isobased'
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step
         self.DATA_MODE = None  # options: 'automatic', 'from_file', 'odc'
         self.DEFAULT_MAP = None  # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
@@ -74,9 +60,6 @@ class Config:
         self.DELTA_TIME_FORECAST = None  # time resolution of weather forecast (hours)
         self.DEPARTURE_TIME = None  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
         self.DEPTH_DATA = None  # path to depth data
-        self.FACTOR_CALM_WATER = None  # multiplication factor for the calm water resistance model
-        self.FACTOR_WAVE_FORCES = None  # multiplication factor for the added resistance in waves model
-        self.FACTOR_WIND_FORCES = None  # multiplication factor for the added resistance in wind model
         self.GENETIC_MUTATION_TYPE = None  # type for mutation (options: 'grid_based')
         self.GENETIC_NUMBER_GENERATIONS = None  # number of generations for genetic algorithm
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
@@ -94,13 +77,12 @@ class Config:
         self.ROUTER_HDGS_SEGMENTS = None  # total number of headings (put even number!!)
         self.ROUTE_PATH = None  # path to json file to which the route will be written
         self.ROUTE_POSTPROCESSING = None  # Route is postprocessed with Traffic Separation Scheme
-        self.SHIP_TYPE = None  # options: 'CBT', 'SAL'
-        self.UNDER_KEEL_CLEARANCE = None  # vertical distance between keel and ground
         self.TIME_FORECAST = None  # forecast hours weather
         self.WEATHER_DATA = None  # path to weather data
 
         if init_mode == 'from_json':
             assert file_name
+            self.CONFIG_PATH = file_name
             self.read_from_json(file_name)
         elif init_mode == 'from_dict':
             assert config_dict
@@ -119,10 +101,6 @@ class Config:
             logger.warning("No complete database configuration provided! Note that it is needed for some "
                            "constraint modules.")
 
-        if self.ALGORITHM_TYPE == 'speedy_isobased':
-            if self.CONSTANT_FUEL_RATE is None:
-                raise ValueError('Need to initialise CONSTANT_FUEL_RATE when running with algorithm type '
-                                 'speedy_isobased')
             figurepath = os.getenv('WRT_FIGURE_PATH')
             if figurepath and os.path.isdir(figurepath) and os.access(figurepath, os.W_OK):
                 logger.warning("For speedy execution of isobased algorithms, figures should be deactivated")

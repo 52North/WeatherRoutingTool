@@ -40,12 +40,11 @@ def execute_routing(config):
 
     # *******************************************
     # initialise constraints
-    max_draught = max(config.BOAT_DRAUGHT_AFT, config.BOAT_DRAUGHT_FORE)
-    water_depth = WaterDepth(config.DATA_MODE, max_draught + config.UNDER_KEEL_CLEARANCE,
+    water_depth = WaterDepth(config.DATA_MODE, boat.get_required_water_depth(),
                              default_map, depthfile)
     constraint_list = ConstraintsListFactory.get_constraints_list(
         constraints_string_list=config.CONSTRAINTS_LIST, data_mode=config.DATA_MODE,
-        min_depth=max_draught + config.UNDER_KEEL_CLEARANCE,
+        min_depth=boat.get_required_water_depth(),
         map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS,
         courses_path=config.COURSES_FILE)
 

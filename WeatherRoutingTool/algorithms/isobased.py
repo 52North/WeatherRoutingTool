@@ -22,6 +22,18 @@ logger = logging.getLogger('WRT.Isobased')
 
 
 class IsoBased(RoutingAlg):
+    """
+    All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
+    courses (plus 1) and M corresponds to the number of routing steps.
+    At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
+    correspond to properties of the point of departure of the respective routing step. This means that
+    for 'count = 0' the elements of lats_per_step and lons_per_step correspond to the coordinates of the
+    departure point of the whole route. The first elements of the attributes
+     - course_per_step
+     - dist_per_step
+     - speed_per_step
+    are 0 to satisfy this definition.
+    """
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
@@ -31,24 +43,6 @@ class IsoBased(RoutingAlg):
     start_temp: tuple  # changes if intermediate waypoints are used
     finish_temp: tuple  # changes if intermediate waypoints are used
     gcr_course_temp: tuple
-
-    '''
-       All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
-       courses (plus 1) and
-       M corresponds to the number of routing steps.
-
-       At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
-       correspond to
-       properties of the point of departure of the respective routing step. This means that for 'count = 0' the
-       elements of
-       lats_per_step and lons_per_step correspond to the coordinates of the departure point of the whole route.
-       The first
-       elements of the attributes
-           - course_per_step
-           - dist_per_step
-           - speed_per_step
-       are 0 to satisfy this definition.
-   '''
 
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
@@ -383,7 +377,7 @@ class IsoBased(RoutingAlg):
         'dist' is the distance that could be travelled with available amount of fuel.
         'dist_dest' is the distance from origin point to the destination.
         'st_index' is storing the same index order of other nd arrays such as self.lats_per_step
-         before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
+        before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
         (acts as a key from the dataframe to other arrays such as self.lats_per_step )
 
         Routes from the current step reaching the destination are stored in 'current_step_routes' dataframe.

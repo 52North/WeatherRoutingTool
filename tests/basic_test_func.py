@@ -5,7 +5,13 @@ from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
     SeamarkCrossing, LandPolygonsCrossing
-from WeatherRoutingTool.ship.ship import Tanker
+from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+
+try:
+    import mariPower
+    from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
+except ModuleNotFoundError:
+    pass  # maripower installation is optional
 
 
 def generate_dummy_constraint_list():
@@ -34,20 +40,6 @@ def create_dummy_IsoFuel_object():
     return ra
 
 
-def create_dummy_Tanker_object():
-    dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
-    config = Config(file_name=configpath)
-
-    dirname = os.path.dirname(__file__)
-    config.WEATHER_DATA = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-    config.COURSES_FILE = os.path.join(dirname, 'data/CoursesRoute.nc')
-    config.DEPTH_DATA = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
-
-    pol = Tanker(config)
-    return pol
-
-
 def create_dummy_SeamarkCrossing_object(db_engine):
     seamark_obj = SeamarkCrossing(db_engine=db_engine)
     return seamark_obj
@@ -56,3 +48,29 @@ def create_dummy_SeamarkCrossing_object(db_engine):
 def create_dummy_landpolygonsCrossing_object(db_engine):
     landpolygoncrossing_obj = LandPolygonsCrossing(db_engine=db_engine)
     return landpolygoncrossing_obj
+
+
+def create_dummy_Tanker_object():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests.json')
+
+    pol = MariPowerTanker(file_name=configpath)
+    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+    pol.use_depth_data = True
+    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.load_data()
+    return pol
+
+
+def create_dummy_Direct_Power_Ship(ship_config_path):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.tests_' + ship_config_path + '.json')
+    dirname = os.path.dirname(__file__)
+
+    pol = DirectPowerBoat(file_name=configpath)
+    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
+    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.load_data()
+    return pol

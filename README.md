@@ -1,14 +1,8 @@
 # Weather Routing Tool (WRT)
 
-## Installation instructions
+A tool to perform optimization of ship routes based on fuel consumption in different weather conditions.
 
-Steps:
-- clone the repository: `git clone https://github.com/52North/WeatherRoutingTool.git`
-- change to the folder: `cd WeatherRoutingTool`
-- [recommended] create and activate a virtual environment, e.g.
-  - `python3 -m venv "venv"`
-  - `source venv/bin/activate`
-- install the WRT: `pip install .` or in editable mode (recommended for development) `pip install -e .`
+Documentation: [WeatherRoutingTool/docs](https://github.com/52North/WeatherRoutingTool/tree/main/docs)
 
 **Power/fuel consumption framework**
 
@@ -494,9 +488,13 @@ This is a reStructuredText style.
 - Walther et. al. (2016): "Modeling and Optimization Algorithms in Ship Weather Routing", [doi:10.1016/j.enavi.2016.06.004](https://doi.org/10.1016/j.enavi.2016.06.004)
 - Kuhlemann & Tierney (2020): "A genetic algorithm for finding realistic sea routes considering the weather", [doi:10.1007/s10732-020-09449-7](https://doi.org/10.1007/s10732-020-09449-7)
 - Deb et. al. (2002): "A Fast and Elitist Multiobjective Genetic Algorithm: NSGA-II", [doi:10.1109/4235.996017](https://doi.org/10.1109/4235.996017)
+  
+Introduction: [WRT-sandbox](https://github.com/52North/WRT-sandbox) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/52North/WRT-sandbox.git/HEAD?urlpath=%2Fdoc%2Ftree%2FNotebooks/execute-WRT.ipynb)
+  
 
 ## Funding
 
-| Project/Logo | Description |
-| :-------------: | :------------- |
-| [<img alt="MariData" align="middle" width="267" height="50" src="https://52north.org/delivery/MariData/img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="https://52north.org/delivery/MariData/img/bmwi_logo_en.png" style="float:right"/>](https://www.bmvi.de/) |
+|                                                                        Project/Logo                                                                         | Description                                                                                                                                                                                                                                                         |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [<img alt="MariData" align="middle" width="267" height="50" src="https://github.com/52North/WeatherRoutingTool/blob/documentation/docs/_static/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="https://github.com/52North/WeatherRoutingTool/blob/documentation/docs/_static/bmwi_logo_en.png" style="float:right"/>](https://www.bmvi.de/)    |
+|  [<img alt="TwinShip" align="middle" src="https://github.com/52North/WeatherRoutingTool/blob/documentation/docs/_static/twinship_logo.png"/>](https://twin-ship.eu/)   | Co-funded by the European Union’s Horizon Europe programme under grant agreement No. 101192583 |
