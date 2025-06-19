@@ -26,7 +26,7 @@ def execute_routing(config):
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = config.DEPARTURE_TIME #datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
     # *******************************************

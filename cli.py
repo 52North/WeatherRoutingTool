@@ -1,8 +1,12 @@
 import argparse
 import warnings
+from pydantic import ValidationError
+from pathlib import Path
+import sys
 
 from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.config import Config, set_up_logging
+from WeatherRoutingTool.config_pydantic import ConfigModel
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
@@ -32,15 +36,16 @@ if __name__ == "__main__":
     # initialise logging
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
-    ##
-    # create config object
-    config_obj = Config(file_name=args.file)
-    config_obj.print()
+    # Validate config with pydantic and run route optimization
+    try:
+        config = ConfigModel.validate_config(Path(args.file))
+        print(config.CONFIG_PATH)
+        execute_routing(config)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    
 
     ##
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
-
-    ##
-    # run route optimization
-    execute_routing(config_obj)

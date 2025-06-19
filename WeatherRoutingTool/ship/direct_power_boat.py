@@ -1,5 +1,6 @@
 import logging
 import math
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,7 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship_config_pydantic import ShipConfigModel
 
 logger = logging.getLogger('WRT.ship')
 
@@ -56,10 +58,11 @@ class DirectPowerBoat(Boat):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name=file_name)
+            config_obj = ShipConfigModel.validate_config(Path(file_name))
         else:
             config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
-        config_obj.print()
+        print(config_obj.model_dump(exclude_unset=True))
+
 
         # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
