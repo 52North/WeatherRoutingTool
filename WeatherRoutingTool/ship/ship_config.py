@@ -104,11 +104,32 @@ class ShipConfig:
         self._set_mandatory_config(config_dict)
         self._set_recommended_config(config_dict)
         self._set_optional_config(config_dict)
+        self._validate_config()
 
     def read_from_json(self, json_file):
         with open(json_file) as f:
             config_dict = json.load(f)
             self.read_from_dict(config_dict)
+
+    def _validate_config(self):
+        """
+        Validates the ship configuration attributes after they have been set.
+        Raises ValueError if any attribute has an invalid value.
+        """
+        positive_attrs = [
+            'BOAT_BREADTH',
+            'BOAT_FUEL_RATE',
+            'BOAT_LENGTH',
+            'BOAT_SMCR_POWER',
+            'BOAT_SPEED'
+        ]
+        for attr in positive_attrs:
+            value = getattr(self, attr)
+            if not (isinstance(value, (int, float)) and value > 0):
+                raise ValueError(f"{attr} must be a positive number, but got {value}.")
+        
+        if not (0 <= self.BOAT_PROPULSION_EFFICIENCY <= 1):
+             raise ValueError(f"BOAT_PROPULSION_EFFICIENCY must be between 0 and 1, but got {self.BOAT_PROPULSION_EFFICIENCY}.")
 
     def _set_mandatory_config(self, config_dict):
         for mandatory_var in MANDATORY_CONFIG_VARIABLES:

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime
 
 logger = logging.getLogger('WRT.Config')
 
@@ -116,11 +117,60 @@ class Config:
         self._set_mandatory_config(config_dict)
         self._set_recommended_config(config_dict)
         self._set_optional_config(config_dict)
+        self._validate_config()
 
     def read_from_json(self, json_file):
         with open(json_file) as f:
             config_dict = json.load(f)
             self.read_from_dict(config_dict)
+
+    def _validate_config(self):
+        """
+        Validates the configuration attributes after they have been set.
+        Raises ValueError if any attribute has an invalid value.
+        """
+        # Validate DEFAULT_MAP
+        if not (isinstance(self.DEFAULT_MAP, list) and len(self.DEFAULT_MAP) == 4):
+            raise ValueError("DEFAULT_MAP must be a list of four numbers [lat_min, lon_min, lat_max, lon_max].")
+        lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
+        if not (-90 <= lat_min <= 90 and -90 <= lat_max <= 90):
+            raise ValueError("Latitudes in DEFAULT_MAP must be between -90 and 90.")
+        if not (-180 <= lon_min <= 180 and -180 <= lon_max <= 180):
+            raise ValueError("Longitudes in DEFAULT_MAP must be between -180 and 180.")
+        if lat_min >= lat_max:
+            raise ValueError("In DEFAULT_MAP, lat_min must be smaller than lat_max.")
+
+        # Validate DEFAULT_ROUTE
+        if not (isinstance(self.DEFAULT_ROUTE, list) and len(self.DEFAULT_ROUTE) == 4):
+            raise ValueError("DEFAULT_ROUTE must be a list of four numbers [lat_start, lon_start, lat_end, lon_end].")
+        lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
+        if not (-90 <= lat_start <= 90 and -90 <= lat_end <= 90):
+            raise ValueError("Latitudes in DEFAULT_ROUTE must be between -90 and 90.")
+        if not (-180 <= lon_start <= 180 and -180 <= lon_end <= 180):
+            raise ValueError("Longitudes in DEFAULT_ROUTE must be between -180 and 180.")
+
+        # Validate DEPARTURE_TIME
+        try:
+            datetime.strptime(self.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+        except ValueError:
+            raise ValueError("DEPARTURE_TIME must be in the format 'yyyy-mm-ddThh:mmZ'.")
+
+        # Validate numeric values
+        if not (isinstance(self.DELTA_FUEL, (int, float)) and self.DELTA_FUEL > 0):
+            raise ValueError("DELTA_FUEL must be a positive number.")
+        if not (isinstance(self.TIME_FORECAST, (int, float)) and self.TIME_FORECAST > 0):
+            raise ValueError("TIME_FORECAST must be a positive number.")
+        if not (isinstance(self.ROUTER_HDGS_INCREMENTS_DEG, (int, float)) and self.ROUTER_HDGS_INCREMENTS_DEG > 0):
+            raise ValueError("ROUTER_HDGS_INCREMENTS_DEG must be a positive number.")
+        if not (isinstance(self.ROUTER_HDGS_SEGMENTS, int) and self.ROUTER_HDGS_SEGMENTS > 0 and self.ROUTER_HDGS_SEGMENTS % 2 == 0):
+            raise ValueError("ROUTER_HDGS_SEGMENTS must be a positive even integer.")
+        if not (isinstance(self.ISOCHRONE_MAX_ROUTING_STEPS, int) and self.ISOCHRONE_MAX_ROUTING_STEPS > 0):
+            raise ValueError("ISOCHRONE_MAX_ROUTING_STEPS must be a positive integer.")
+
+        # Validate algorithm types
+        allowed_algos = ['isofuel', 'genetic', 'speedy_isobased']
+        if self.ALGORITHM_TYPE not in allowed_algos:
+            raise ValueError(f"ALGORITHM_TYPE '{self.ALGORITHM_TYPE}' is not valid. Choose from {allowed_algos}.")
 
     def _set_mandatory_config(self, config_dict):
         for mandatory_var in MANDATORY_CONFIG_VARIABLES:
