@@ -1,3 +1,8 @@
+##
+# Functionality to estimate the fuel consumption for a specific route via different fuel consumption models ('maripower'
+# and 'direct_power_method') or from data. 
+##
+
 import argparse
 import os
 from datetime import datetime

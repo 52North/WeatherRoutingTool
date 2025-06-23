@@ -1,3 +1,7 @@
+##
+# Functionality to read json-files for different routes and visualise or compare them with varying focus.
+##
+
 import argparse
 import datetime as dt
 import logging

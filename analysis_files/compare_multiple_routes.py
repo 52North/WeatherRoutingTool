@@ -1,3 +1,7 @@
+##
+# Functionality to read json-files for different routes from Multiple-Routes approach of Isofuel algorithm.
+##
+
 import os
 import matplotlib.pyplot as plt
 import matplotlib.colors as color

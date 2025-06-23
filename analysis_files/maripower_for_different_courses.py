@@ -1,3 +1,9 @@
+##
+# Functionality to compare the fuel consumption model 'maripower' for different settings in an idealised envirnoment.
+# No specific routes are analysed, but different angles between ship and wind/waves are scanned.
+# Two artifical weather scenarios are available: 'calm weather' and 'rough weather'.
+##
+
 import argparse
 import matplotlib.image as image
 import matplotlib.pyplot as plt
