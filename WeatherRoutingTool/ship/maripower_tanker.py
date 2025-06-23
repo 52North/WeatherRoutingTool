@@ -13,9 +13,8 @@ from astropy import units as u
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.ship_config_pydantic import ShipConfigModel
+from WeatherRoutingTool.ship.ship_config import ShipConfigModel
 
 
 have_maripower = False
@@ -77,9 +76,9 @@ class MariPowerTanker(Boat):
 
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfigModel.validate_config(Path(file_name))
+            config_obj = ShipConfigModel.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfigModel.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         # mandatory variables for maripower
         if not config_obj.COURSES_FILE:

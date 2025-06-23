@@ -1,0 +1,44 @@
+{
+  "DEFAULT_ROUTE": [37.416, -123.607, 48.760, -131.494],
+  "DEPARTURE_TIME": "2023-11-11T11:11Z",
+  "DEFAULT_MAP": [30, -155, 65, -115],
+  "BOAT_DRAUGHT_AFT": 10,
+  "BOAT_DRAUGHT_FORE": 10,
+  "INTERMEDIATE_WAYPOINTS": [[43.171, -132.077], [55.483, -141.686]],
+  "CONSTRAINTS_LIST": ["land_crossing_global_land_mask", "water_depth", "via_waypoints"],
+
+  "TIME_FORECAST": 90,
+  "ROUTING_STEPS": 60,
+  "DELTA_TIME_FORECAST": 3,
+  "DELTA_FUEL": 3000,
+
+  "COURSES_FILE": "tests",
+  "DEPTH_DATA": "tests/data/reduced_testdata_depth.nc",
+  "WEATHER_DATA": "tests/data/reduced_testdata_weather.nc",
+  "ROUTE_PATH": "tests",
+
+  "DATA_MODE": "from_file",
+
+  "ROUTER_HDGS_SEGMENTS": 30,
+  "ROUTER_HDGS_INCREMENTS_DEG": 6,
+  "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
+  "ISOCHRONE_PRUNE_SEGMENTS": 20,
+
+  "ISOCHRONE_PRUNE_GCR_CENTERED": true,
+  "ISOCHRONE_PRUNE_BEARING": false,
+  "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest",
+  "ISOCHRONE_NUMBER_OF_ROUTES": 1,
+
+  "GENETIC_NUMBER_GENERATIONS": 20,
+  "GENETIC_NUMBER_OFFSPRINGS": 2,
+  "GENETIC_POPULATION_SIZE": 20,
+  "GENETIC_POPULATION_TYPE": "grid_based",
+
+  "BOAT_TYPE": "direct_power_method",
+  "BOAT_BREADTH": 32,
+  "BOAT_FUEL_RATE": 167,
+  "BOAT_HBR": 30,
+  "BOAT_LENGTH": 180,
+  "BOAT_SMCR_POWER" : 6502,
+  "BOAT_SPEED": 6
+}

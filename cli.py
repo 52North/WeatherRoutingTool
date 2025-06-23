@@ -5,8 +5,7 @@ from pathlib import Path
 import sys
 
 from WeatherRoutingTool.execute_routing import execute_routing
-from WeatherRoutingTool.config import Config, set_up_logging
-from WeatherRoutingTool.config_pydantic import ConfigModel
+from WeatherRoutingTool.config import ConfigModel, set_up_logging
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
@@ -38,13 +37,11 @@ if __name__ == "__main__":
 
     # Validate config with pydantic and run route optimization
     try:
-        config = ConfigModel.validate_config(Path(args.file))
-        print(config.CONFIG_PATH)
+        config = ConfigModel.assign_config(Path(args.file))
         execute_routing(config)
     except Exception as e:
         print(e)
         sys.exit(1)
-    
 
     ##
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
