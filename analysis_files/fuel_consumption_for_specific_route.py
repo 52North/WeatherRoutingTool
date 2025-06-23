@@ -1,6 +1,6 @@
 ##
 # Functionality to estimate the fuel consumption for a specific route via different fuel consumption models ('maripower'
-# and 'direct_power_method') or from data. 
+# and 'direct_power_method') or from data.
 ##
 
 import argparse
@@ -130,17 +130,18 @@ if __name__ == "__main__":
     required_args.add_argument('-n', '--name', help="Name string for output json file", required=True, type=str)
 
     optional_args.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
-                        type=str, default='False')
+                               type=str, default='False')
     optional_args.add_argument('-wave', '--wave_scenario', help="Weight for wave resistance (maripower only)",
-                        required=False, type=float, default=1.)
+                               required=False, type=float, default=1.)
     optional_args.add_argument('-wind', '--wind_scenario', help="Weight for wind resistance (maripower only)",
-                        required=False, type=float, default=1.)
+                               required=False, type=float, default=1.)
     optional_args.add_argument('-calm', '--calm_water_scenario', help="Weight for calm water resistance "
-                                                               "(maripower only)",
-                        required=False, type=float, default=1.)
+                                                                      "(maripower only)",
+                               required=False, type=float, default=1.)
     optional_args.add_argument('-bt', '--boat_type',
-                        help="<maripower|direct_power_method>. Defaults to 'direct_power_method' ", required=False,
-                        type=str, default='direct_power_method')
+                               help="<maripower|direct_power_method>. Defaults to 'direct_power_method' ",
+                               required=False,
+                               type=str, default='direct_power_method')
 
     set_up_logging()
 

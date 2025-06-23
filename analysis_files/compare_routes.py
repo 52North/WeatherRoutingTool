@@ -65,7 +65,6 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
                                                    rp_str_list[irp], power_type)
             colour = colour + 1
 
-
     ax.legend(loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.1, frameon=False)
     ax.tick_params(top=True, right=True)
     ax.text(0.8, 0.8, scenario_str, verticalalignment='top', horizontalalignment='right',
@@ -99,14 +98,24 @@ if __name__ == "__main__":
     required_args = parser.add_argument_group('required arguments')
     optional_args = parser.add_argument_group('optional arguments')
     required_args.add_argument('--base-dir', help="Base directory of route geojson files (absolute path).",
-                        required=True, type=str)
+                               required=True, type=str)
     required_args.add_argument('--figure-dir', help="Figure directory (absolute path).",
-                        required=True, type=str)
-    required_args.add_argument('--file-list', help="List of input route files (absolute paths).", nargs="*", required=True, type=str)
-    required_args.add_argument('--name-list', help="List of legend entries for individual routes. Same ordering as for flag --file-list.", nargs="*", required=True, type=str)
-    required_args.add_argument('--hist-list', help="List of histograms that shall be plotted. The following types are supported: " + str(hist_dict.keys()), nargs="*", required=True, type=str)
-    optional_args.add_argument('--scenario-str', help="String that can be added to the final plot for further description.", required=False, default=' ', type=str)
-    optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ', type=str)
+                               required=True, type=str)
+    required_args.add_argument('--file-list', help="List of input route files (absolute paths).", nargs="*",
+                               required=True, type=str)
+    required_args.add_argument('--name-list',
+                               help="List of legend entries for individual routes. "
+                                    "Same ordering as for flag --file-list.",
+                               nargs="*", required=True, type=str)
+    required_args.add_argument('--hist-list',
+                               help="List of histograms that shall be plotted. "
+                                    "The following types are supported: "
+                                    + str(hist_dict.keys()), nargs="*", required=True, type=str)
+    optional_args.add_argument('--scenario-str',
+                               help="String that can be added to the final plot for further description.",
+                               required=False, default=' ', type=str)
+    optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ',
+                               type=str)
 
     # read arguments
     args = parser.parse_args()
@@ -115,7 +124,7 @@ if __name__ == "__main__":
     rp_str_list = args.name_list
     hist_list = args.hist_list
 
-    rp_list=[]
+    rp_list = []
     for path in filelist:
         rp_list.append(RouteParams.from_file(path))
 

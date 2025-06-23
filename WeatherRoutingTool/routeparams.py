@@ -404,7 +404,7 @@ class RouteParams():
             ax.set_xlim(-100, right)
         else:
             plt.ylabel(power["label"] + ' (t/km)')
-            #plt.ylabel(power["label"])
+            # plt.ylabel(power["label"])
             plt.bar(
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne/u.kilometer).value,
