@@ -1,5 +1,4 @@
 import argparse
-import math
 import os
 from datetime import datetime
 
@@ -14,12 +13,11 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
                                 draught_fp, draught_ap, sog):
-    boat = MariPowerTanker(file_name = config.CONFIG_PATH)
+    boat = MariPowerTanker(file_name=config.CONFIG_PATH)
     boat.set_ship_property('Draught_FP', draught_fp.mean())
     boat.set_ship_property('Draught_AP', draught_ap.mean())
     boat.set_ship_property('WindForcesFactor', windfactor)
@@ -55,8 +53,9 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
         print('Writing file: ', filename)
         rp.return_route_to_API(filename)
 
+
 def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
-    boat = DirectPowerBoat(file_name = config.CONFIG_PATH)
+    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
     boat.speed = sog
     boat.load_data()
 
@@ -119,20 +118,28 @@ def cut_indices(lat, lon, time, sog, fore_draught, aft_draught, cut_route):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
-    parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
-    parser.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
-    parser.add_argument('-n', '--name',help="Route file name (absolute path)", required=True, type=str)
+    required_args = parser.add_argument_group('required arguments')
+    optional_args = parser.add_argument_group('optional arguments')
+    required_args.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
+    required_args.add_argument('-r', '--route', help="Route file name (absolute path)", required=True, type=str)
+    required_args.add_argument('-n', '--name', help="Name string for output json file", required=True, type=str)
 
-    parser.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
+    optional_args.add_argument('--write-geojson', help="<True|False>. Defaults to 'False'", required=False,
                         type=str, default='False')
-    parser.add_argument('-wave', '--wave_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
-    parser.add_argument('-wind', '--wind_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
-    parser.add_argument('-calm', '--calm_water_scenario', help="Route file name (absolute path)", required=False, type=float, default=1.)
-    parser.add_argument('-bt', '--boat_type', help="<maripower|direct_power_method>. Defaults to 'direct_power_method' ", required=False,
+    optional_args.add_argument('-wave', '--wave_scenario', help="Weight for wave resistance (maripower only)",
+                        required=False, type=float, default=1.)
+    optional_args.add_argument('-wind', '--wind_scenario', help="Weight for wind resistance (maripower only)",
+                        required=False, type=float, default=1.)
+    optional_args.add_argument('-calm', '--calm_water_scenario', help="Weight for calm water resistance "
+                                                               "(maripower only)",
+                        required=False, type=float, default=1.)
+    optional_args.add_argument('-bt', '--boat_type',
+                        help="<maripower|direct_power_method>. Defaults to 'direct_power_method' ", required=False,
                         type=str, default='direct_power_method')
 
     set_up_logging()
 
+    # read arguments
     args = parser.parse_args()
 
     config = Config(file_name=args.file)
@@ -159,18 +166,16 @@ if __name__ == "__main__":
     maripower_test_scenarios_wave = args.wave_scenario
 
     lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
+
+    # possibility to analyse only single parts of the route
     # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
     #                                                               aft_draught, cut_route)
 
-    # calculate power
-    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
-    power = power * boat.power_at_sp * 0.01 * 4/3 # power_at_sp is 75% of SMCR power
-
+    # obtain position, time and courses for every waypoint
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
 
+    # obtain RouteParams object for different models or for gzip data
     if str(args.boat_type) == 'direct_power_method':
-        # sog = np.average(sog)
-        #sog = 7.7 * u.meter/ u.second
         run_dpm_test_scenario(
             waypoint_dict,
             routepath,
@@ -179,9 +184,6 @@ if __name__ == "__main__":
         )
 
     if str(args.boat_type) == 'maripower':
-        # sog = np.full(len(lon) - 1, np.average(sog)) * u.meter / u.second
-        # sog =  np.full(len(lon) - 1, 7.7) * u.meter / u.second
-
         run_maripower_test_scenario(
             maripower_test_scenarios_calm,
             maripower_test_scenarios_wind,
@@ -195,6 +197,9 @@ if __name__ == "__main__":
         )
 
     if str(args.boat_type) == 'data':
+        boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
+        power = power * boat.power_at_sp * 0.01 * 4 / 3  # power_at_sp is 75% of SMCR power
+
         ship_params = ShipParams.set_default_array_1D(len(lon))
         ship_params.fuel_rate = fuel_rate
         ship_params.power = power
