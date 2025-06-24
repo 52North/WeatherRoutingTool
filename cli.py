@@ -43,6 +43,5 @@ if __name__ == "__main__":
         print(e)
         sys.exit(1)
 
-    ##
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)

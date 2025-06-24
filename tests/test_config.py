@@ -31,7 +31,7 @@ def test_assign_config_from_dict():
 
 def test_invalid_time_raises_error():
     config_data, _ = load_example_config()
-    config_data["DEPARTURE_TIME"]="2023-11-11T1111Z"
+    config_data["DEPARTURE_TIME"] = "2023-11-11T1111Z"
     with pytest.raises(ValueError) as excinfo:
         ConfigModel.assign_config(init_mode="from_dict", config_dict=config_data)
 

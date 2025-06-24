@@ -12,30 +12,31 @@ logger = logging.getLogger('WRT.Config')
 
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
                    log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'):
-            formatter = logging.Formatter(log_format)
-            logging.basicConfig(stream=stream, format=log_format)
-            logger = logging.getLogger('WRT')
-            if debug:
-                logger.setLevel(logging.DEBUG)
-            else:
-                logger.setLevel(logging.INFO)
-            if info_log_file:
-                if os.path.isdir(os.path.dirname(info_log_file)):
-                    fh_info = logging.FileHandler(info_log_file, mode='w')
-                    fh_info.setLevel(logging.INFO)
-                    fh_info.setFormatter(formatter)
-                    logger.addHandler(fh_info)
-                else:
-                    logger.warning(f"Logging file '{info_log_file}' doesn't exist and cannot be created.")
-            if warnings_log_file:
-                if os.path.isdir(os.path.dirname(warnings_log_file)):
-                    fh_warnings = logging.FileHandler(warnings_log_file, mode='w')
-                    fh_warnings.setLevel(logging.WARNING)
-                    fh_warnings.setFormatter(formatter)
-                    logger.addHandler(fh_warnings)
-                else:
-                    logger.warning(f"Logging file '{warnings_log_file}' doesn't exist and cannot be created.")
-            return logger
+    formatter = logging.Formatter(log_format)
+    logging.basicConfig(stream=stream, format=log_format)
+    logger = logging.getLogger('WRT')
+    if debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    if info_log_file:
+        if os.path.isdir(os.path.dirname(info_log_file)):
+            fh_info = logging.FileHandler(info_log_file, mode='w')
+            fh_info.setLevel(logging.INFO)
+            fh_info.setFormatter(formatter)
+            logger.addHandler(fh_info)
+        else:
+            logger.warning(f"Logging file '{info_log_file}' doesn't exist and cannot be created.")
+    if warnings_log_file:
+        if os.path.isdir(os.path.dirname(warnings_log_file)):
+            fh_warnings = logging.FileHandler(warnings_log_file, mode='w')
+            fh_warnings.setLevel(logging.WARNING)
+            fh_warnings.setFormatter(formatter)
+            logger.addHandler(fh_warnings)
+        else:
+            logger.warning(f"Logging file '{warnings_log_file}' doesn't exist and cannot be created.")
+    return logger
+
 
 class ConfigModel(BaseModel):
 
@@ -110,8 +111,10 @@ class ConfigModel(BaseModel):
 
     CONSTRAINTS_LIST: List[Literal['land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
               'water_depth', 'on_map', 'via_waypoints', 'status_error']]  # options: 'land_crossing_global_land_mask',
-                    #  'land_crossing_polygons', 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
-    # CONSTANT_FUEL_RATE:0.1 wo wird das benutzt?
+                                                                          # 'land_crossing_polygons', 'seamarks',
+                                                                          # 'water_depth', 'on_map', 'via_waypoints',
+                                                                          # 'status_error'
+    CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
 
     DATA_MODE: Literal['automatic', 'from_file', 'odc'] = 'automatic'  # options: 'automatic', 'from_file', 'odc'
     DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
