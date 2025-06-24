@@ -42,7 +42,7 @@ class RoutingAlg:
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
         self.start = (lat_start, lon_start)
         self.finish = (lat_end, lon_end)
-        self.departure_time = config.DEPARTURE_TIME #datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+        self.departure_time = config.DEPARTURE_TIME
 
         gcr = self.calculate_gcr(self.start, self.finish)
         self.current_course = gcr * u.degree

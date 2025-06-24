@@ -30,18 +30,18 @@ author = 'Katharina Demmich, Martin Pontius'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.viewcode',     
-    'sphinx.ext.napoleon' 
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon'
 ]
 
 # Configuration for UML diagram output
 
-graphviz_output_format = 'svg'  
+graphviz_output_format = 'svg'
 
 graphviz_dot_args = [
-    "-Granksep=1",   
+    "-Granksep=1",
     "-Gsplines=true",
-    "-Gnodesep=1", 
+    "-Gnodesep=1",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

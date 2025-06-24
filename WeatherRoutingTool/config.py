@@ -9,6 +9,7 @@ import sys
 
 logger = logging.getLogger('WRT.Config')
 
+
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
                    log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'):
             formatter = logging.Formatter(log_format)
@@ -54,7 +55,7 @@ class ConfigModel(BaseModel):
         except Exception as e:
             print(f"Could not read config file: {e}")
             raise
-        
+
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
         if init_mode == 'from_json':
@@ -84,7 +85,8 @@ class ConfigModel(BaseModel):
         return str(path)
 
     # Other configuration
-    ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'  # options: 'isofuel', 'genetic', 'speedy_isobased'
+    ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
+    # options: 'isofuel', 'genetic', 'speedy_isobased'
 
     BOAT_BREADTH: float  # ship breadth [m]
     BOAT_DRAUGHT_AFT: float = 10  # aft draught (draught at rudder) in m
@@ -94,28 +96,28 @@ class ConfigModel(BaseModel):
     BOAT_LENGTH: float  # overall length [m]
     BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
     BOAT_SPEED: float  # boat speed [m/s]
-    BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'  # options: 'CBT', 'SAL',
-    # 'speedy_isobased', 'direct_power_method
+    BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
+    # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
 
     @model_validator(mode='after')
     def check_boat_algorithm_compatibility(self) -> 'ConfigModel':
         if (
-            (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased') 
+            (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
             and self.BOAT_TYPE != self.ALGORITHM_TYPE
         ):
             raise ValueError("If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased', so must be the other one.")
         return self
 
     CONSTRAINTS_LIST: List[Literal['land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
-              'water_depth', 'on_map', 'via_waypoints', 'status_error']]  # options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
-    # 'water_depth', 'on_map', 'via_waypoints', 'status_error'
+              'water_depth', 'on_map', 'via_waypoints', 'status_error']]  # options: 'land_crossing_global_land_mask',
+                    #  'land_crossing_polygons', 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
     # CONSTANT_FUEL_RATE:0.1 wo wird das benutzt?
 
     DATA_MODE: Literal['automatic', 'from_file', 'odc'] = 'automatic'  # options: 'automatic', 'from_file', 'odc'
-    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]  # start and end point
-    # of the route (lat_start, lon_start, lat_end, lon_end)
-    DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]  # bbox in which route
-    # optimization is performed (lat_min, lon_min, lat_max, lon_max)
+    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
+    # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
+    DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
+    # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
     DELTA_FUEL: float = 3000  # amount of fuel per routing step (kg)
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
@@ -157,5 +159,4 @@ class ConfigModel(BaseModel):
     ROUTER_HDGS_INCREMENTS_DEG: int = 6  # increment of headings
     ROUTE_POSTPROCESSING: bool = False  # Route is postprocessed with Traffic Separation Scheme
     ROUTING_STEPS: int = 60
-
     TIME_FORECAST: float = 90  # forecast hours weather
