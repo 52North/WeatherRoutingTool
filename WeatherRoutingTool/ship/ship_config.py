@@ -38,39 +38,39 @@ class ShipConfigModel(BaseModel):
     
 
     # Filepaths
-    WEATHER_DATA: Path
-    DEPTH_DATA: Path = None
-    COURSES_FILE: Path = None
+    WEATHER_DATA: Path  # path to weather data
+    DEPTH_DATA: Path = None  # path to depth data
+    COURSES_FILE: Path = None  # path to file that acts as intermediate storage for courses per routing step
 
     # Mandatory configuration
-    BOAT_BREADTH: float
-    BOAT_FUEL_RATE: float
-    BOAT_HBR: float
-    BOAT_LENGTH: float
-    BOAT_SMCR_POWER: float
-    BOAT_SPEED: float
+    BOAT_BREADTH: float  # ship breadth [m]
+    BOAT_FUEL_RATE: float  # fuel rate at service propulsion point [g/kWh]
+    BOAT_HBR: float  # height of top of superstructure (bridge etc.) [m]
+    BOAT_LENGTH: float  # overall length [m]
+    BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
+    BOAT_SPEED: float  # boat speed [m/s]
 
     # Recommended configuration
-    BOAT_ROUGHNESS_DISTRIBUTION_LEVEL: float = 1
-    BOAT_ROUGHNESS_LEVEL: float = 1.
+    BOAT_ROUGHNESS_DISTRIBUTION_LEVEL: float = 1  # numeric value
+    BOAT_ROUGHNESS_LEVEL: float = 1.  # level of hull roughness, numeric value
 
     # Optional configuration
-    AIR_MASS_DENSITY: float = 1.2225
-    BOAT_AOD: float = -99
-    BOAT_AXV: float = -99
-    BOAT_AYV: float = -99
-    BOAT_BS1: float = -99
-    BOAT_CMC: float = -99
-    BOAT_DRAUGHT_AFT: float = 10
-    BOAT_DRAUGHT_FORE: float = 10
-    BOAT_HC: float = -99
-    BOAT_HS1: float = -99
-    BOAT_HS2: float = -99
-    BOAT_LS1: float = -99
-    BOAT_LS2: float = -99
+    AIR_MASS_DENSITY: float = 1.2225  # mass density of air [kg/m^3]
+    BOAT_AOD: float = -99  # lateral projected area of superstructures etc. on deck [m]
+    BOAT_AXV: float = -99  # area of maximum transverse section exposed to the winds [m]
+    BOAT_AYV: float = -99  # projected lateral area above the waterline [m]
+    BOAT_BS1: float = -99  # breadth of substructure 1 [m]
+    BOAT_CMC: float = -99  # horizontal distance from midship section to centre of lateral projected area AYV [m]
+    BOAT_DRAUGHT_AFT: float = 10  # aft draught (draught at rudder) in m
+    BOAT_DRAUGHT_FORE: float = 10  # fore draught (draught at forward perpendicular) in m
+    BOAT_HC: float = -99  # height of waterline to centre of lateral projected area Ayv [m]
+    BOAT_HS1: float = -99  # height of substructure 1 [m]
+    BOAT_HS2: float = -99  # height of substructure 2 [m]
+    BOAT_LS1: float = -99  # length of substructure 1 [m]
+    BOAT_LS2: float = -99  # length of substructure 2 [m]
     BOAT_OVERLOAD_FACTOR: float = 0
-    BOAT_PROPULSION_EFFICIENCY: float = 0.63  # assuming n_H = 1.05 n_0 = 0.1 n_R = 1
-    BOAT_FACTOR_CALM_WATER: float = 1.0
-    BOAT_FACTOR_WAVE_FORCES: float = 1.0
-    BOAT_FACTOR_WIND_FORCES: float = 1.0
-    BOAT_UNDER_KEEL_CLEARANCE: float = 20
+    BOAT_PROPULSION_EFFICIENCY: float = 0.63  # propulsion efficiency coefficient in ideal conditions; assuming n_H = 1.05 n_0 = 0.1 n_R = 1
+    BOAT_FACTOR_CALM_WATER: float = 1.0  # multiplication factor for the calm water resistance model of maripower
+    BOAT_FACTOR_WAVE_FORCES: float = 1.0  # multiplication factor for added resistance in waves model of maripower
+    BOAT_FACTOR_WIND_FORCES: float = 1.0  # multiplication factor for the added resistance in wind model of maripower
+    BOAT_UNDER_KEEL_CLEARANCE: float = 20  # vertical distance between keel and ground
