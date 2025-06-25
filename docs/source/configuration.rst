@@ -119,7 +119,7 @@ Credentials for the Copernicus Marine Environment Monitoring Service (CMEMS) to 
 
 If not provided ``DATA_MODE='automatic'`` cannot be used.
 
-Configuration parameters for the database which stores OpenSeaMap data:
+Configuration parameters for the database which stores OpenSeaMap data (optional):
 
 - ``WRT_DB_HOST``
 - ``WRT_DB_PORT``
@@ -183,3 +183,33 @@ The following parameters are downloaded automatically or need to be prepared:
    :alt: sequence_diagram_installation_workflow
 
    Fig. 1: Basic installation workflow for the WeatherRoutingTool.
+
+Output data
+-----------
+
+The characteristics of the most optimal route(s) that has been/have been found by the routing algorithm are written to a json file. Thereby, a route is a collection of individual route segments for which the ship is assumed to travel under constant environmental conditions as well as constant ship parameters. The characteristics of a route segment are always tied to the starting coordinates of the route segment when written to json file. Therefore, all parameters but time and coordinates are set to arbitrary values (-99) for the last entry in the output file. The following parameters are written to file:
+
+- coordinates; format: [lon, lat]
+- time; format: 'yyyy-mm-dd hh:mm:ss'
+- speed (m/s)
+- engine power (kW)
+- fuel consumption (mt/h)
+- fuel_type 
+- propeller revolution (Hz)
+- calm water resistance (N)
+- wind resistance (N)
+- wave resistance (N)
+- shallow water resistance (N)
+- hull roughness resistance (N)
+- status; potential status code for validity of hydrodynamic modelling 
+- wave height (m)
+- wave direction (radian)
+- wave period (s)
+- u component of ocean currents (m/s)
+- v component of ocean currents (m/s)
+- u component of wind speed (m/s)
+- v component of wind speed (m/s)
+- air pressure (Pa)
+- air temperature (°C)
+- water temperature (°C)
+- salinity 
