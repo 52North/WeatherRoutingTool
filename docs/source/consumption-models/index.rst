@@ -7,7 +7,7 @@ Consumption models
 Fuel estimation -- The communication between mariPower and the WRT
 ------------------------------------------------------------------
 
-Information is transferred via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
+Information is transferred via a netCDF file between the WRT and mariPower of which the file path can be set via the config variable ``COURSES_FILE``. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 .. code-block:: shell
 
