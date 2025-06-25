@@ -110,10 +110,9 @@ class ConfigModel(BaseModel):
         return self
 
     CONSTRAINTS_LIST: List[Literal['land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
-              'water_depth', 'on_map', 'via_waypoints', 'status_error']]  # options: 'land_crossing_global_land_mask',
-                                                                          # 'land_crossing_polygons', 'seamarks',
-                                                                          # 'water_depth', 'on_map', 'via_waypoints',
-                                                                          # 'status_error'
+              'water_depth', 'on_map', 'via_waypoints', 'status_error']]
+    # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
+    # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
     CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
 
     DATA_MODE: Literal['automatic', 'from_file', 'odc'] = 'automatic'  # options: 'automatic', 'from_file', 'odc'
@@ -162,4 +161,6 @@ class ConfigModel(BaseModel):
     ROUTER_HDGS_INCREMENTS_DEG: int = 6  # increment of headings
     ROUTE_POSTPROCESSING: bool = False  # Route is postprocessed with Traffic Separation Scheme
     ROUTING_STEPS: int = 60
+
     TIME_FORECAST: float = 90  # forecast hours weather
+    
