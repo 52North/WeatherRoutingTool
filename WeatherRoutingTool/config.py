@@ -109,8 +109,10 @@ class ConfigModel(BaseModel):
             raise ValueError("If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased', so must be the other one.")
         return self
 
-    CONSTRAINTS_LIST: List[Literal['land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
-              'water_depth', 'on_map', 'via_waypoints', 'status_error']]
+    CONSTRAINTS_LIST: List[Literal[
+        'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
+        'water_depth', 'on_map', 'via_waypoints', 'status_error'
+        ]]
     # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
     CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
@@ -163,4 +165,3 @@ class ConfigModel(BaseModel):
     ROUTING_STEPS: int = 60
 
     TIME_FORECAST: float = 90  # forecast hours weather
-    

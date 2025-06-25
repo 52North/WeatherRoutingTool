@@ -45,4 +45,3 @@ if __name__ == "__main__":
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
-    
