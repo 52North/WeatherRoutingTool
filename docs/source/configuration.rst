@@ -38,7 +38,7 @@ Some variables have to be set using environment variables (see below).
 Config file
 -----------
 
-The following lists contain information on each variable which can be set.
+The following lists contain information on each variable which can be set. The categorisation into required, recommended and optional variables has been chosen such that the requirements of the default settings for the algorithm type (Isofuel algorithm) and the fuel consumption model (Direct Power Method) are met. 
 
 **Required variables** (no default values provided):
 
@@ -53,7 +53,8 @@ The following lists contain information on each variable which can be set.
 - ``BOAT_FUEL_RATE``: fuel rate at service propulsion point (g/kWh)
 - ``BOAT_HBR``: height of top superstructure (bridge etc.) (m)
 - ``BOAT_LENGTH``: overall length (m)
-- ``BOAT_SMCR_POWER``:  Specific Maximum Continuous Rating power (kWh)
+- ``BOAT_SMCR_POWER``: Specific Maximum Continuous Rating power (kWh)
+- ``BOAT_SMCR_SPEED``: average speed at SMCR power (m/s)
 - ``BOAT_SPEED``: boat speed (m/s)
 
 **Recommended variables**:
@@ -194,7 +195,7 @@ The characteristics of the most optimal route(s) that has been/have been found b
 - speed (m/s)
 - engine power (kW)
 - fuel consumption (mt/h)
-- fuel_type 
+- fuel type 
 - propeller revolution (Hz)
 - calm water resistance (N)
 - wind resistance (N)
