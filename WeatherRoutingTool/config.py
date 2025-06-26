@@ -162,7 +162,8 @@ class Config:
             raise ValueError("TIME_FORECAST must be a positive number.")
         if not (isinstance(self.ROUTER_HDGS_INCREMENTS_DEG, (int, float)) and self.ROUTER_HDGS_INCREMENTS_DEG > 0):
             raise ValueError("ROUTER_HDGS_INCREMENTS_DEG must be a positive number.")
-        if not (isinstance(self.ROUTER_HDGS_SEGMENTS, int) and self.ROUTER_HDGS_SEGMENTS > 0 and self.ROUTER_HDGS_SEGMENTS % 2 == 0):
+        if not (isinstance(self.ROUTER_HDGS_SEGMENTS,
+                           int) and self.ROUTER_HDGS_SEGMENTS > 0 and self.ROUTER_HDGS_SEGMENTS % 2 == 0):
             raise ValueError("ROUTER_HDGS_SEGMENTS must be a positive even integer.")
         if not (isinstance(self.ISOCHRONE_MAX_ROUTING_STEPS, int) and self.ISOCHRONE_MAX_ROUTING_STEPS > 0):
             raise ValueError("ISOCHRONE_MAX_ROUTING_STEPS must be a positive integer.")

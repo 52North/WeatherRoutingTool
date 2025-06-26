@@ -129,9 +129,10 @@ class ShipConfig:
             value = getattr(self, attr)
             if not (isinstance(value, (int, float)) and value > 0):
                 raise ValueError(f"{attr} must be a positive number, but got {value}.")
-        
+
         if not (0 <= self.BOAT_PROPULSION_EFFICIENCY <= 1):
-             raise ValueError(f"BOAT_PROPULSION_EFFICIENCY must be between 0 and 1, but got {self.BOAT_PROPULSION_EFFICIENCY}.")
+            raise ValueError(
+                f"BOAT_PROPULSION_EFFICIENCY must be between 0 and 1, but got {self.BOAT_PROPULSION_EFFICIENCY}.")
 
     def _set_mandatory_config(self, config_dict):
         for mandatory_var in MANDATORY_CONFIG_VARIABLES:
