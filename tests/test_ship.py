@@ -50,9 +50,9 @@ class TestShip:
         idx = 2
 
         (fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test,
-            rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
-            u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
-            air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
+         rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
+         u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
+         air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
             = sp.get_element(idx)
 
         assert fuel[idx] == fuel_test
@@ -221,6 +221,7 @@ class TestShip:
         assert abs(ship_params.salinity[i].value - salinity_test) < 0.00001
         assert abs(ship_params.air_temperature[i].value - air_temp_test) < 0.0001
 
+
 # A minimal valid ship config to use as a base
 VALID_SHIP_CONFIG = {
     "BOAT_BREADTH": 20,
@@ -232,12 +233,14 @@ VALID_SHIP_CONFIG = {
     "WEATHER_DATA": "path/to/weather_data"
 }
 
+
 def test_valid_ship_config_initialization():
     """Tests that a valid ship config does not raise an exception."""
     try:
         ShipConfig(init_mode='from_dict', config_dict=VALID_SHIP_CONFIG)
     except ValueError as e:
         pytest.fail(f"Valid ship config raised an unexpected ValueError: {e}")
+
 
 def test_negative_boat_speed_raises_error():
     """Tests that a negative BOAT_SPEED raises ValueError."""
@@ -246,10 +249,11 @@ def test_negative_boat_speed_raises_error():
     with pytest.raises(ValueError, match="BOAT_SPEED must be a positive number"):
         ShipConfig(init_mode='from_dict', config_dict=invalid_config)
 
+
 def test_invalid_propulsion_efficiency_raises_error():
     """Tests that an out-of-range BOAT_PROPULSION_EFFICIENCY raises ValueError."""
     invalid_config = VALID_SHIP_CONFIG.copy()
     # This optional variable has a default, so we add it for the test
-    invalid_config["BOAT_PROPULSION_EFFICIENCY"] = 1.1 # > 1
+    invalid_config["BOAT_PROPULSION_EFFICIENCY"] = 1.1  # > 1
     with pytest.raises(ValueError, match="BOAT_PROPULSION_EFFICIENCY must be between 0 and 1"):
         ShipConfig(init_mode='from_dict', config_dict=invalid_config)

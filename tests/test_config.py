@@ -1,6 +1,7 @@
 import pytest
 from WeatherRoutingTool.config import Config
 
+
 class TestConfig:
     @pytest.fixture(scope="class")
     def minimal_config(self):
