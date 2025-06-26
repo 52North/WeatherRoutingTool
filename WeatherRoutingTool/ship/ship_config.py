@@ -127,7 +127,7 @@ class ShipConfig:
         ]
         for attr in positive_attrs:
             value = getattr(self, attr)
-            if not (isinstance(value, (int, float)) and value > 0):
+            if not (isinstance(value, (int, float)) and ((value > 0) or (value == -99))):
                 raise ValueError(f"{attr} must be a positive number, but got {value}.")
 
         if not (0 <= self.BOAT_PROPULSION_EFFICIENCY <= 1):

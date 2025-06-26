@@ -276,6 +276,7 @@ class TestDPM:
             'BOAT_HBR': 30,
             'BOAT_LENGTH': 180,
             'BOAT_SMCR_POWER': 6500,
+            'BOAT_SMCR_SPEED': 6,
             'BOAT_SPEED': 6,
             'WEATHER_DATA': "abc"
         }

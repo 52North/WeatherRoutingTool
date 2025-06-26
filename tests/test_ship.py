@@ -230,6 +230,7 @@ VALID_SHIP_CONFIG = {
     "BOAT_LENGTH": 100,
     "BOAT_SMCR_POWER": 5000,
     "BOAT_SPEED": 10,
+    "BOAT_SMCR_SPEED": 6,
     "WEATHER_DATA": "path/to/weather_data"
 }
 
