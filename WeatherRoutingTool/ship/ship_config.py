@@ -12,6 +12,7 @@ MANDATORY_CONFIG_VARIABLES = [
     'BOAT_LENGTH',
     'BOAT_SMCR_POWER',
     'BOAT_SPEED',
+    'BOAT_SMCR_SPEED',
     'WEATHER_DATA'
 ]
 
@@ -75,6 +76,7 @@ class ShipConfig:
         self.BOAT_PROPULSION_EFFICIENCY = None  # propulsion efficiency coefficient in ideal conditions
         self.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL = None  # numeric value
         self.BOAT_ROUGHNESS_LEVEL = None  # level of hull roughness, numeric value
+        self.BOAT_SMCR_SPEED = None  # average speed for maximum continuous rating [m/s]
         self.BOAT_SMCR_POWER = None  # Specific Maximum Continuous Rating power [kWh]
         self.BOAT_SPEED = None  # boat speed [m/s]
         self.COURSES_FILE = None  # path to file that acts as intermediate storage for courses per routing step

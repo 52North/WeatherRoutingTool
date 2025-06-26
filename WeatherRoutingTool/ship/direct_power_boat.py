@@ -65,6 +65,7 @@ class DirectPowerBoat(Boat):
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
         self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
+        self.speed_at_sp = config_obj.BOAT_SMCR_SPEED * u.meter/u.second
 
         self.eta_prop = config_obj.BOAT_PROPULSION_EFFICIENCY
         self.overload_factor = config_obj.BOAT_OVERLOAD_FACTOR
@@ -88,6 +89,11 @@ class DirectPowerBoat(Boat):
 
         self.weather_path = config_obj.WEATHER_DATA
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
+
+    def interpolate_to_true_speed(self, power):
+        const = power/(self.speed_at_sp**(3))
+        power_interpolated = const * self.speed**(3)
+        return power_interpolated
 
     def load_data(self):
         self.calculate_ship_geometry()
@@ -171,8 +177,8 @@ class DirectPowerBoat(Boat):
         """
             calculate apparent wind speed from true wind and ship course
         """
-        apparent_wind_speed = (self.speed * self.speed + true_wind_speed * true_wind_speed
-                               + 2.0 * self.speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
+        apparent_wind_speed = (self.speed_at_sp * self.speed_at_sp + true_wind_speed * true_wind_speed
+                               + 2.0 * self.speed_at_sp * true_wind_speed * np.cos(np.radians(true_wind_angle)))
         apparent_wind_speed = np.sqrt(apparent_wind_speed)
 
         angle_rad = np.radians(true_wind_angle.value)
@@ -198,10 +204,10 @@ class DirectPowerBoat(Boat):
             # - calculate true wind angle 'true_ang_perp' for which apparent wind angle is 90°
             # - if true wind angle is larger than 'true_ang_perp', subtract pi from apparent wind angle
             # - apparent wind angle is always < 90° if boat speed > true wind speed; skip correction here
-            arg_arccos = self.speed / true_wind_speed[iang]
+            arg_arccos = self.speed_at_sp / true_wind_speed[iang]
             if arg_arccos > 1:
                 continue
-            true_ang_perp = np.pi * u.radian - np.arccos(self.speed / true_wind_speed[iang])
+            true_ang_perp = np.pi * u.radian - np.arccos(self.speed_at_sp / true_wind_speed[iang])
             if angle_rad[iang] * u.radian > true_ang_perp:
                 apparent_wind_angle[iang] = np.pi * u.radian - apparent_wind_angle[iang]
 
@@ -339,7 +345,7 @@ class DirectPowerBoat(Boat):
         return dummy_array * u.Newton
 
     def get_power(self, deltaR):
-        Plin = deltaR * self.speed / self.eta_prop
+        Plin = deltaR * self.speed_at_sp / self.eta_prop
         P = self.power_at_sp * (Plin + self.power_at_sp) / (Plin * self.overload_factor + self.power_at_sp)
         return P
 
@@ -349,7 +355,7 @@ class DirectPowerBoat(Boat):
 
         # initialise clean ship params object
         dummy_array = np.full(n_requests, -99)
-        speed_array = np.full(n_requests, self.speed)
+        speed_array = np.full(n_requests, self.speed_at_sp)
 
         ship_params = ShipParams(
             fuel_rate=dummy_array * u.kg / u.s,
@@ -381,6 +387,8 @@ class DirectPowerBoat(Boat):
         added_resistance = ship_params.r_wind + ship_params.r_waves
 
         P = self.get_power(added_resistance)
+        P = self.interpolate_to_true_speed(P)
+
         ship_params.power = P
         ship_params.fuel_rate = self.fuel_rate * P
 
