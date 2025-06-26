@@ -7,7 +7,7 @@ from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.ship.ship_config import ShipConfigModel
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 logger = logging.getLogger('WRT.ship')
 
@@ -22,9 +22,9 @@ class Boat:
     def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfigModel.assign_config(Path(file_name))
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfigModel.assign_config(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         self.speed = config_obj.BOAT_SPEED * u.meter / u.second
         self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
@@ -125,9 +125,9 @@ class ConstantFuelBoat(Boat):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfigModel.assign_config(Path(file_name))
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfigModel.assign_config(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         # mandatory variables
         self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.kg / u.second

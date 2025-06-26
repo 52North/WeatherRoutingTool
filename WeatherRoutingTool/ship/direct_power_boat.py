@@ -10,7 +10,7 @@ from astropy import units as u
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.ship.ship_config import ShipConfigModel
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 logger = logging.getLogger('WRT.ship')
 
@@ -28,7 +28,7 @@ class DirectPowerBoat(Boat):
 
                Returns:
                    ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
-       """
+    """
 
     power_at_sp: float  # power at the service propulsion point
     eta_prop: float  # propulsion efficiency
@@ -57,9 +57,9 @@ class DirectPowerBoat(Boat):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfigModel.assign_config(Path(file_name))
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfigModel.assign_config(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
         print(config_obj.model_dump(exclude_unset=True))
 
         # mandatory parameters for direct power method

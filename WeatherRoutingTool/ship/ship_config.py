@@ -3,38 +3,12 @@ from typing import Optional, List, Annotated, Union, Literal
 from datetime import datetime
 from pathlib import Path
 import json
+import logging
+
+logger = logging.getLogger('WRT.ShipConfig')
 
 
-class ShipConfigModel(BaseModel):
-
-    @classmethod
-    def validate_config(cls, config_data):
-        try:
-            config = cls(**config_data)
-            print("ShipConfig is valid!")
-            return config
-        except ValidationError as e:
-            for err in e.errors():
-                print("Config-Validation failed:")
-                loc = err['loc']
-                loc_str = f"'{loc[0]}'" if loc else "<model-level>"
-                print(f" Field: {loc_str},  Error: {err['msg']}")
-                raise
-        except Exception as e:
-            print(f"Could not read config file: {e}")
-            raise
-
-    @classmethod
-    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json':
-            with path.open("r") as f:
-                config_data = json.load(f)
-            return cls.validate_config(config_data)
-        elif init_mode == 'from_dict':
-            return cls.validate_config(config_dict)
-        else:
-            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
-            raise ValueError(msg)
+class ShipConfig(BaseModel):
 
     # Filepaths
     WEATHER_DATA: Path  # path to weather data
@@ -74,3 +48,32 @@ class ShipConfigModel(BaseModel):
     BOAT_FACTOR_WAVE_FORCES: float = 1.0  # multiplication factor for added resistance in waves model of maripower
     BOAT_FACTOR_WIND_FORCES: float = 1.0  # multiplication factor for the added resistance in wind model of maripower
     BOAT_UNDER_KEEL_CLEARANCE: float = 20  # vertical distance between keel and ground
+
+    @classmethod
+    def validate_config(cls, config_data):
+        try:
+            config = cls(**config_data)
+            logger.info("ShipConfig is valid!")
+            return config
+        except ValidationError as e:
+            for err in e.errors():
+                logger.info("Config-Validation failed:")
+                loc = err['loc']
+                loc_str = f"'{loc[0]}'" if loc else "<model-level>"
+                logger.info(f" Field: {loc_str},  Error: {err['msg']}")
+                raise
+        except Exception as e:
+            logger.info(f"Could not read config file: {e}")
+            raise
+
+    @classmethod
+    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
+        if init_mode == 'from_json':
+            with path.open("r") as f:
+                config_data = json.load(f)
+            return cls.validate_config(config_data)
+        elif init_mode == 'from_dict':
+            return cls.validate_config(config_dict)
+        else:
+            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
+            raise ValueError(msg)

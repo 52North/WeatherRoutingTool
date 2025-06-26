@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
 from typing import Optional, List, Annotated, Union, Literal
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 import json
 import logging
 import os
 import sys
+import xarray as xr
+import pandas as pd
 
 logger = logging.getLogger('WRT.Config')
 
@@ -38,38 +40,7 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
     return logger
 
 
-class ConfigModel(BaseModel):
-
-    @classmethod
-    def validate_config(cls, config_data):
-        try:
-            config = cls(**config_data)
-            print("Config is valid!")
-            return config
-        except ValidationError as e:
-            for err in e.errors():
-                print("Config-Validation failed:")
-                loc = err['loc']
-                loc_str = f"'{loc[0]}'" if loc else "<model-level>"
-                print(f" Field: {loc_str},  Error: {err['msg']}")
-                raise
-        except Exception as e:
-            print(f"Could not read config file: {e}")
-            raise
-
-    @classmethod
-    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json':
-            with path.open("r") as f:
-                config_data = json.load(f)
-                config = cls.validate_config(config_data)
-                config.CONFIG_PATH = path
-            return config
-        elif init_mode == 'from_dict':
-            return cls.validate_config(config_dict)
-        else:
-            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
-            raise ValueError(msg)
+class Config(BaseModel):
 
     # Filepaths
     COURSES_FILE: str = None  # path to file that acts as intermediate storage for courses per routing step
@@ -77,13 +48,6 @@ class ConfigModel(BaseModel):
     WEATHER_DATA: str  # path to weather data
     ROUTE_PATH: str  # path to json file to which the route will be written
     CONFIG_PATH: str = None  # path to config file
-
-    @field_validator('COURSES_FILE', 'DEPTH_DATA', 'WEATHER_DATA', 'ROUTE_PATH', 'CONFIG_PATH')
-    def validate_path_exists(cls, v):
-        path = Path(v)
-        if not path.exists():
-            raise ValueError(f"Path doesn't exist: {v}")
-        return str(path)
 
     # Other configuration
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
@@ -100,15 +64,7 @@ class ConfigModel(BaseModel):
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
 
-    @model_validator(mode='after')
-    def check_boat_algorithm_compatibility(self) -> 'ConfigModel':
-        if (
-            (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
-            and self.BOAT_TYPE != self.ALGORITHM_TYPE
-        ):
-            raise ValueError("If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased', so must be the other one.")
-        return self
-
+    CHECK_WEATHER: bool = True
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -125,14 +81,6 @@ class ConfigModel(BaseModel):
     DELTA_FUEL: float = 3000  # amount of fuel per routing step (kg)
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
-
-    @field_validator('DEPARTURE_TIME', mode='before')
-    def parse_and_validate_datetime(cls, v):
-        try:
-            dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
-            return dt
-        except ValueError:
-            raise ValueError("DEPARTURE_TIME must be in format YYYY-MM-DDTHH:MMZ")
 
     GENETIC_MUTATION_TYPE: Literal['grid_based'] = 'grid_based'  # type for mutation (options: 'grid_based')
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
@@ -165,3 +113,150 @@ class ConfigModel(BaseModel):
     ROUTING_STEPS: int = 60
 
     TIME_FORECAST: float = 90  # forecast hours weather
+
+    @classmethod
+    def validate_config(cls, config_data):
+        try:
+            config = cls(**config_data)
+            logger.info("Config is valid!")
+            return config
+        except ValidationError as e:
+            for err in e.errors():
+                logger.info("Config-Validation failed:")
+                loc = err['loc']
+                loc_str = f"'{loc[0]}'" if loc else "<model-level>"
+                logger.info(f" Field: {loc_str},  Error: {err['msg']}")
+                raise
+        except Exception as e:
+            logger.info(f"Could not read config file: {e}")
+            raise
+
+    @classmethod
+    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
+        if init_mode == 'from_json':
+            with path.open("r") as f:
+                config_data = json.load(f)
+                config = cls.validate_config(config_data)
+                config.CONFIG_PATH = path
+            return config
+        elif init_mode == 'from_dict':
+            return cls.validate_config(config_dict)
+        else:
+            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
+            raise ValueError(msg)
+
+    @field_validator('DEPARTURE_TIME', mode='before')
+    def parse_and_validate_datetime(cls, v):
+        try:
+            dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
+            return dt
+        except ValueError:
+            raise ValueError("DEPARTURE_TIME must be in format YYYY-MM-DDTHH:MMZ")
+
+    @field_validator('COURSES_FILE', 'DEPTH_DATA', 'WEATHER_DATA', 'ROUTE_PATH', 'CONFIG_PATH')
+    def validate_path_exists(cls, v):
+        path = Path(v)
+        if not path.exists():
+            raise ValueError(f"Path doesn't exist: {v}")
+        return str(path)
+
+    @field_validator('DEFAULT_ROUTE', mode='before')
+    def validate_route_coordinates(cls, v):
+        if len(v) != 4:
+            raise ValueError("Coordinate list must contain exactly 4 values: [lat_start, lon_start, lat_end, lon_end]")
+
+        lat_start, lon_start, lat_end, lon_end = v
+
+        if not -90 <= lat_start <= 90:
+            raise ValueError(f"lat_start must be between -90 and 90, got {lat_start}")
+        if not -90 <= lat_end <= 90:
+            raise ValueError(f"lat_end must be between -90 and 90, got {lat_end}")
+        if not -180 <= lon_start <= 180:
+            raise ValueError(f"lon_start must be between -180 and 180, got {lon_start}")
+        if not -180 <= lon_end <= 180:
+            raise ValueError(f"lon_end must be between -180 and 180, got {lon_end}")
+
+        return v
+
+    @field_validator('DEFAULT_MAP', mode='before')
+    def validate_map_coordinates(cls, v):
+        if len(v) != 4:
+            raise ValueError("Coordinate list must contain exactly 4 values: [lat_min, lon_max, lat_end, lon_end]")
+
+        lat_start, lon_start, lat_end, lon_end = v
+
+        if not -90 <= lat_start <= 90:
+            raise ValueError(f"lat_start must be between -90 and 90, got {lat_start}")
+        if not -90 <= lat_end <= 90:
+            raise ValueError(f"lat_end must be between -90 and 90, got {lat_end}")
+        if not -180 <= lon_start <= 180:
+            raise ValueError(f"lon_start must be between -180 and 180, got {lon_start}")
+        if not -180 <= lon_end <= 180:
+            raise ValueError(f"lon_end must be between -180 and 180, got {lon_end}")
+
+        return v
+
+    @field_validator('CONSTRAINTS_LIST')
+    def check_constraint_list(cls, v):
+        if 'land_crossing_global_land_mask' not in v:
+            raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
+        return v
+
+    @field_validator('BOAT_SPEED')
+    def check_boat_speed(cls, v):
+        if v < 10:
+            logger.info("Your 'BOAT_SPEED' is lower than 10 m/s. Have you considered that this program works with m/s?")
+        return v
+
+    @model_validator(mode='after')
+    def check_route_on_map(self) -> 'Config':
+        lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
+        lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
+
+        for lat, lon, name in [(lat_start, lon_start, "start"), (lat_end, lon_end, "end")]:
+            if not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
+                raise ValueError(f"{name} point ({lat}, {lon}) is outside the defined map bounds")
+
+        return self
+
+    @model_validator(mode='after')
+    def check_boat_algorithm_compatibility(self) -> 'Config':
+        if (
+            (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
+            and self.BOAT_TYPE != self.ALGORITHM_TYPE
+        ):
+            raise ValueError("If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased', so must be the other one.")
+        return self
+
+    @model_validator(mode='after')
+    def check_route_weather_data_compatibility(self) -> 'Config':
+        if self.CHECK_WEATHER:
+            try:
+                ds = xr.open_dataset(self.WEATHER_DATA)
+
+                # Check lat/lon bounds
+                lat = ds['latitude'].values
+                lon = ds['longitude'].values
+                map_coords = self.DEFAULT_MAP
+                if map_coords:
+                    lat_min, lon_min, lat_max, lon_max = map_coords
+                    if not (lat.min() <= lat_min <= lat.max() and
+                            lat.min() <= lat_max <= lat.max() and
+                            lon.min() <= lon_min <= lon.max() and
+                            lon.min() <= lon_max <= lon.max()):
+                        raise ValueError("Weather data does not cover the map region.")
+
+                # Check time coverage
+                if 'time' in ds:
+                    start = self.DEPARTURE_TIME
+                    end = start + timedelta(hours=self.TIME_FORECAST)
+                    times = pd.to_datetime(ds['time'].values)
+                    if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
+                        raise ValueError("Weather data does not cover the full routing time range.")
+                else:
+                    raise ValueError("Weather data missing time dimension.")
+
+            except Exception as e:
+                raise ValueError(f"Failed to validate weather data: {e}")
+
+        return self

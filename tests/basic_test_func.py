@@ -1,8 +1,9 @@
 import os
+from pathlib import Path
 
 from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
-from WeatherRoutingTool.config import ConfigModel
+from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
     SeamarkCrossing, LandPolygonsCrossing
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
@@ -25,7 +26,7 @@ def generate_dummy_constraint_list():
 def create_dummy_IsoBased_object():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests.json')
-    config = ConfigModel.assign_config(file_name=configpath)
+    config = Config.assign_config(Path(configpath))
 
     ra = IsoBased(config)
     return ra
@@ -34,7 +35,7 @@ def create_dummy_IsoBased_object():
 def create_dummy_IsoFuel_object():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.tests.json')
-    config = ConfigModel.assign_config(file_name=configpath)
+    config = Config.assign_config(Path(configpath))
 
     ra = IsoFuel(config)
     return ra
