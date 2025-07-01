@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>WeatherRoutingTool.algorithms package &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="WeatherRoutingTool.constraints package" href="WeatherRoutingTool.constraints.html" />
+    <link rel="prev" title="WeatherRoutingTool package" href="WeatherRoutingTool.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="weatherroutingtool-algorithms-package">
+<h1>WeatherRoutingTool.algorithms package<a class="headerlink" href="#weatherroutingtool-algorithms-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-WeatherRoutingTool.algorithms.data_utils">
+<span id="weatherroutingtool-algorithms-data-utils-module"></span><h2>WeatherRoutingTool.algorithms.data_utils module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.data_utils" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.GridMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.data_utils.</span></span><span class="sig-name descname"><span class="pre">GridMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#GridMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.GridMixin.coords_to_index">
+<span class="sig-name descname"><span class="pre">coords_to_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points_as_coords</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#GridMixin.coords_to_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin.coords_to_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.GridMixin.get_shuffled_cost">
+<span class="sig-name descname"><span class="pre">get_shuffled_cost</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#GridMixin.get_shuffled_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin.get_shuffled_cost" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.GridMixin.grid">
+<span class="sig-name descname"><span class="pre">grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dataset</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin.grid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.GridMixin.index_to_coords">
+<span class="sig-name descname"><span class="pre">index_to_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points_as_indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#GridMixin.index_to_coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin.index_to_coords" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.distance">
+<span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.data_utils.</span></span><span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.distance" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.get_closest">
+<span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.data_utils.</span></span><span class="sig-name descname"><span class="pre">get_closest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#get_closest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.get_closest" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.data_utils.time_diffs">
+<span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.data_utils.</span></span><span class="sig-name descname"><span class="pre">time_diffs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">speed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/data_utils.html#time_diffs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.data_utils.time_diffs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.genetic">
+<span id="weatherroutingtool-algorithms-genetic-module"></span><h2>WeatherRoutingTool.algorithms.genetic module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.genetic" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic.</span></span><span class="sig-name descname"><span class="pre">Genetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg" title="WeatherRoutingTool.algorithms.routingalg.RoutingAlg"><code class="xref py py-class docutils literal notranslate"><span class="pre">RoutingAlg</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.check_destination">
+<span class="sig-name descname"><span class="pre">check_destination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.check_destination"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.check_destination" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.check_positive_power">
+<span class="sig-name descname"><span class="pre">check_positive_power</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.check_positive_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.check_positive_power" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.default_map">
+<span class="sig-name descname"><span class="pre">default_map</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="WeatherRoutingTool.utils.html#WeatherRoutingTool.utils.maps.Map" title="WeatherRoutingTool.utils.maps.Map"><span class="pre">Map</span></a></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.default_map" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.execute_routing">
+<span class="sig-name descname"><span class="pre">execute_routing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.Boat" title="WeatherRoutingTool.ship.ship.Boat"><span class="pre">Boat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">wt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCond" title="WeatherRoutingTool.weather.WeatherCond"><span class="pre">WeatherCond</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList" title="WeatherRoutingTool.constraints.constraints.ConstraintsList"><span class="pre">ConstraintsList</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.execute_routing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.execute_routing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.fig">
+<span class="sig-name descname"><span class="pre">fig</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">&lt;module</span> <span class="pre">'matplotlib.figure'</span> <span class="pre">from</span> <span class="pre">'C:\\Users\\JBA\\anaconda3\\Lib\\site-packages\\matplotlib\\figure.py'&gt;</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.n_offsprings">
+<span class="sig-name descname"><span class="pre">n_offsprings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.n_offsprings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.optimize">
+<span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_population</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.optimize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.path_to_route_folder">
+<span class="sig-name descname"><span class="pre">path_to_route_folder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.path_to_route_folder" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.plot_population_per_generation">
+<span class="sig-name descname"><span class="pre">plot_population_per_generation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.plot_population_per_generation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.plot_population_per_generation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.plot_running_metric">
+<span class="sig-name descname"><span class="pre">plot_running_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.plot_running_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.plot_running_metric" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.pop_size">
+<span class="sig-name descname"><span class="pre">pop_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.pop_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.print_current_status">
+<span class="sig-name descname"><span class="pre">print_current_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.print_current_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.print_current_status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.print_init">
+<span class="sig-name descname"><span class="pre">print_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.print_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.print_init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.terminate">
+<span class="sig-name descname"><span class="pre">terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic.html#Genetic.terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.terminate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic.Genetic.weather_path">
+<span class="sig-name descname"><span class="pre">weather_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic.Genetic.weather_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.genetic_utils">
+<span id="weatherroutingtool-algorithms-genetic-utils-module"></span><h2>WeatherRoutingTool.algorithms.genetic_utils module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.genetic_utils" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.CrossoverFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">CrossoverFactory</span></span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#CrossoverFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.CrossoverFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.CrossoverFactory.get_crossover">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_crossover</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#CrossoverFactory.get_crossover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.CrossoverFactory.get_crossover" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">FromGeojsonPopulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_route_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_type=&lt;class</span> <span class="pre">'numpy.float64'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#FromGeojsonPopulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></p>
+<p>Make initial population for genetic algorithm based on the isofuel algorithm with a ConstantFuelBoat</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation.get_great_circle_route">
+<span class="sig-name descname"><span class="pre">get_great_circle_route</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#FromGeojsonPopulation.get_great_circle_route"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation.get_great_circle_route" title="Link to this definition">¶</a></dt>
+<dd><p>Get equidistant route along great circle in the form [[lat1, lon1], [lat12, lon2], …]
+:param distance: distance in m
+:return: route as list of lat/lon points</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation.read_route_from_file">
+<span class="sig-name descname"><span class="pre">read_route_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route_absolute_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#FromGeojsonPopulation.read_route_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation.read_route_from_file" title="Link to this definition">¶</a></dt>
+<dd><p>Read route from geojson file and return the coordinates in the form [[lat1, lon1], [lat12, lon2], …]
+:param route_absolute_path: absolute path to geojson file
+:return: route as list of lat/lon points</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.GeneticCrossover">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">GeneticCrossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prob</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#GeneticCrossover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.GeneticCrossover" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Crossover</span></code></p>
+<p>Custom class to define genetic crossover for routes</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.GeneticCrossover.cross_over">
+<span class="sig-name descname"><span class="pre">cross_over</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#GeneticCrossover.cross_over"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.GeneticCrossover.cross_over" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.GridBasedMutation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">GridBasedMutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#GridBasedMutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.GridBasedMutation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin" title="WeatherRoutingTool.algorithms.data_utils.GridMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mutation</span></code></p>
+<p>Custom class to define genetic mutation for routes</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.GridBasedMutation.mutate">
+<span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#GridBasedMutation.mutate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.GridBasedMutation.mutate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.GridBasedPopulation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">GridBasedPopulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_type=&lt;class</span> <span class="pre">'numpy.float64'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#GridBasedPopulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.GridBasedPopulation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin" title="WeatherRoutingTool.algorithms.data_utils.GridMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Sampling</span></code></p>
+<p>Make initial population for genetic algorithm based on a grid and associated cost values</p>
+<dl class="simple">
+<dt>Notes on the inheritance:</dt><dd><ul class="simple">
+<li><p>GridMixin has to be inherited first because Sampling isn’t designed for multiple inheritance</p></li>
+<li><p>implemented approach: <a class="reference external" href="https://stackoverflow.com/a/50465583">https://stackoverflow.com/a/50465583</a>, scenario 2</p></li>
+<li><p>call print(GridBasedPopulation.mro()) to see the method resolution order</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.MutationFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">MutationFactory</span></span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#MutationFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.MutationFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.MutationFactory.get_mutation">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_mutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mutation_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#MutationFactory.get_mutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.MutationFactory.get_mutation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.PopulationFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">PopulationFactory</span></span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#PopulationFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.PopulationFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.PopulationFactory.get_population">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_route_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#PopulationFactory.get_population"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.PopulationFactory.get_population" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RepairInfeasibles">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">RepairInfeasibles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repair</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RepairInfeasibles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RepairInfeasibles" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Repair</span></code></p>
+<p>Repairs infeasible candidates of a population</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RouteDuplicateElimination">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">RouteDuplicateElimination</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmp_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RouteDuplicateElimination"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RouteDuplicateElimination" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ElementwiseDuplicateElimination</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RouteDuplicateElimination.is_equal">
+<span class="sig-name descname"><span class="pre">is_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RouteDuplicateElimination.is_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RouteDuplicateElimination.is_equal" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.genetic_utils.</span></span><span class="sig-name descname"><span class="pre">RoutingProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">departure_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RoutingProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ElementwiseProblem</span></code></p>
+<p>Class definition of the weather routing problem</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.boat">
+<span class="sig-name descname"><span class="pre">boat</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.boat" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.constraint_list">
+<span class="sig-name descname"><span class="pre">constraint_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.constraint_list" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.departure_time">
+<span class="sig-name descname"><span class="pre">departure_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.departure_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_constraints">
+<span class="sig-name descname"><span class="pre">get_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RoutingProblem.get_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_constraints_array">
+<span class="sig-name descname"><span class="pre">get_constraints_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RoutingProblem.get_constraints_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_constraints_array" title="Link to this definition">¶</a></dt>
+<dd><p>Return constraint violation per waypoint in route</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>route</strong> (<em>np.ndarray</em>) – Candidate array of waypoints</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of constraint violations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_power">
+<span class="sig-name descname"><span class="pre">get_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RoutingProblem.get_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.get_power" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.is_neg_constraints">
+<span class="sig-name descname"><span class="pre">is_neg_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/genetic_utils.html#RoutingProblem.is_neg_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem.is_neg_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.isobased">
+<span id="weatherroutingtool-algorithms-isobased-module"></span><h2>WeatherRoutingTool.algorithms.isobased module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.isobased" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.isobased.</span></span><span class="sig-name descname"><span class="pre">IsoBased</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg" title="WeatherRoutingTool.algorithms.routingalg.RoutingAlg"><code class="xref py py-class docutils literal notranslate"><span class="pre">RoutingAlg</span></code></a></p>
+<p>All variables that are named <a href="#id1"><span class="problematic" id="id2">*</span></a>_per_step constitute (M,N) arrays, whereby N corresponds to the number of
+courses (plus 1) and M corresponds to the number of routing steps.
+At the start of each routing step ‘count’, the element(s) at the position ‘count’ of the following arrays
+correspond to properties of the point of departure of the respective routing step. This means that
+for ‘count = 0’ the elements of lats_per_step and lons_per_step correspond to the coordinates of the
+departure point of the whole route. The first elements of the attributes</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>course_per_step</p></li>
+<li><p>dist_per_step</p></li>
+<li><p>speed_per_step</p></li>
+</ul>
+</div></blockquote>
+<p>are 0 to satisfy this definition.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.absolutefuel_per_step">
+<span class="sig-name descname"><span class="pre">absolutefuel_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.absolutefuel_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.branch_based_pruning">
+<span class="sig-name descname"><span class="pre">branch_based_pruning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.branch_based_pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.branch_based_pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_bearing">
+<span class="sig-name descname"><span class="pre">check_bearing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_bearing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_bearing" title="Link to this definition">¶</a></dt>
+<dd><p>ToDo: add description
+:param dist:
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_constraints">
+<span class="sig-name descname"><span class="pre">check_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_course_def">
+<span class="sig-name descname"><span class="pre">check_course_def</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_course_def"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_course_def" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_destination">
+<span class="sig-name descname"><span class="pre">check_destination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_destination"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_destination" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_for_positive_constraints">
+<span class="sig-name descname"><span class="pre">check_for_positive_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_for_positive_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_for_positive_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_positive_power">
+<span class="sig-name descname"><span class="pre">check_positive_power</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_positive_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_positive_power" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_settings">
+<span class="sig-name descname"><span class="pre">check_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_settings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.check_status">
+<span class="sig-name descname"><span class="pre">check_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shipparams_per_step_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">route_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.check_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.check_status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.count">
+<span class="sig-name descname"><span class="pre">count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.count" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.course_increments_deg">
+<span class="sig-name descname"><span class="pre">course_increments_deg</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.course_increments_deg" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.course_per_step">
+<span class="sig-name descname"><span class="pre">course_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.course_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.course_segments">
+<span class="sig-name descname"><span class="pre">course_segments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.course_segments" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.courses_based_pruning">
+<span class="sig-name descname"><span class="pre">courses_based_pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.courses_based_pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.courses_based_pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.current_course">
+<span class="sig-name descname"><span class="pre">current_course</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.current_course" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.current_number_of_routes">
+<span class="sig-name descname"><span class="pre">current_number_of_routes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.current_number_of_routes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.current_position">
+<span class="sig-name descname"><span class="pre">current_position</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.current_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.current_position" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.current_step_routes">
+<span class="sig-name descname"><span class="pre">current_step_routes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.current_step_routes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.define_courses">
+<span class="sig-name descname"><span class="pre">define_courses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.define_courses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.define_courses" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.define_courses_per_step">
+<span class="sig-name descname"><span class="pre">define_courses_per_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.define_courses_per_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.define_courses_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.define_initial_variants">
+<span class="sig-name descname"><span class="pre">define_initial_variants</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.define_initial_variants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.define_initial_variants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.desired_number_of_routes">
+<span class="sig-name descname"><span class="pre">desired_number_of_routes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.desired_number_of_routes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.dist_per_step">
+<span class="sig-name descname"><span class="pre">dist_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.dist_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.execute_routing">
+<span class="sig-name descname"><span class="pre">execute_routing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.Boat" title="WeatherRoutingTool.ship.ship.Boat"><span class="pre">Boat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">wt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCond" title="WeatherRoutingTool.weather.WeatherCond"><span class="pre">WeatherCond</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList" title="WeatherRoutingTool.constraints.constraints.ConstraintsList"><span class="pre">ConstraintsList</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.execute_routing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.execute_routing" title="Link to this definition">¶</a></dt>
+<dd><p>Progress one isochrone with pruning/optimising route for specific time segment</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Parameters:</dt><dd><p>iso1 (Isochrone) - starting isochrone
+start_point (tuple) - starting point of the route
+end_point (tuple) - end point of the route
+x1_coords (tuple) - tuple of arrays (lats, lons)
+x2_coords (tuple) - tuple of arrays (lats, lons)
+boat (dict) - boat profile
+winds (dict) - wind functions
+start_time (datetime) - start time
+delta_time (float) - time to move in seconds
+params (dict) - isochrone calculation parameters</p>
+</dd>
+<dt>Returns:</dt><dd><p>iso (Isochrone) - next isochrone</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.expand_axis_for_intermediate">
+<span class="sig-name descname"><span class="pre">expand_axis_for_intermediate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.expand_axis_for_intermediate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.expand_axis_for_intermediate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.final_pruning">
+<span class="sig-name descname"><span class="pre">final_pruning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.final_pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.final_pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.find_every_route_reaching_destination">
+<span class="sig-name descname"><span class="pre">find_every_route_reaching_destination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.find_every_route_reaching_destination"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.find_every_route_reaching_destination" title="Link to this definition">¶</a></dt>
+<dd><p>This function finds routes reaching the destination in the current last step of routing.
+First, it creates a dataframe with origin point of the current route segments.
+The route segments are grouped according to the origin point.
+‘dist’ is the distance that could be travelled with available amount of fuel.
+‘dist_dest’ is the distance from origin point to the destination.
+‘st_index’ is storing the same index order of other nd arrays such as self.lats_per_step
+before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
+(acts as a key from the dataframe to other arrays such as self.lats_per_step )</p>
+<p>Routes from the current step reaching the destination are stored in ‘current_step_routes’ dataframe.
+Only the one route segment per branch originating from the same origin point that minimize the fuel is stored
+in current_step_routes. Routes which are not reaching the destination in the current step are stored in
+‘next_step_routes’ dataframe. In this case, all routes originating from the same origin point are stored in
+the dataframe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.find_routes_reaching_destination_in_current_step">
+<span class="sig-name descname"><span class="pre">find_routes_reaching_destination_in_current_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remaining_routes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.find_routes_reaching_destination_in_current_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.find_routes_reaching_destination_in_current_step" title="Link to this definition">¶</a></dt>
+<dd><p>In this function, different routes obtained from ‘find_every_route_reaching_destination’
+and stored in current_step_routes dataframe are sorted by minimum fuel.
+The number of routes that are selected is specified by the variable remaining_routes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.finish_temp">
+<span class="sig-name descname"><span class="pre">finish_temp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.finish_temp" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.full_dist_traveled">
+<span class="sig-name descname"><span class="pre">full_dist_traveled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.full_dist_traveled" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.full_time_traveled">
+<span class="sig-name descname"><span class="pre">full_time_traveled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.full_time_traveled" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.gcr_course_temp">
+<span class="sig-name descname"><span class="pre">gcr_course_temp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.gcr_course_temp" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_course">
+<span class="sig-name descname"><span class="pre">get_current_course</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_current_course"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_course" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_lats">
+<span class="sig-name descname"><span class="pre">get_current_lats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_current_lats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_lats" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_lons">
+<span class="sig-name descname"><span class="pre">get_current_lons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_current_lons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_lons" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_speed">
+<span class="sig-name descname"><span class="pre">get_current_speed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_current_speed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_current_speed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_delta_variables">
+<span class="sig-name descname"><span class="pre">get_delta_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_delta_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_delta_variables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_delta_variables_netCDF_last_step">
+<span class="sig-name descname"><span class="pre">get_delta_variables_netCDF_last_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_delta_variables_netCDF_last_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_delta_variables_netCDF_last_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_final_index">
+<span class="sig-name descname"><span class="pre">get_final_index</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_final_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_final_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_pruned_indices_statistics">
+<span class="sig-name descname"><span class="pre">get_pruned_indices_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bin_stat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_pruned_indices_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_pruned_indices_statistics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.get_wind_functions">
+<span class="sig-name descname"><span class="pre">get_wind_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.get_wind_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.get_wind_functions" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.init_fig">
+<span class="sig-name descname"><span class="pre">init_fig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">water_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showDepth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.init_fig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.init_fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.larger_direction_based_pruning">
+<span class="sig-name descname"><span class="pre">larger_direction_based_pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.larger_direction_based_pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.larger_direction_based_pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.lats_per_step">
+<span class="sig-name descname"><span class="pre">lats_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.lats_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.lons_per_step">
+<span class="sig-name descname"><span class="pre">lons_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.lons_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.make_route_object">
+<span class="sig-name descname"><span class="pre">make_route_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.make_route_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.make_route_object" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.minimisation_criterion">
+<span class="sig-name descname"><span class="pre">minimisation_criterion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.minimisation_criterion" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.move_boat_direct">
+<span class="sig-name descname"><span class="pre">move_boat_direct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCond" title="WeatherRoutingTool.weather.WeatherCond"><span class="pre">WeatherCond</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">boat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.Boat" title="WeatherRoutingTool.ship.ship.Boat"><span class="pre">Boat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList" title="WeatherRoutingTool.constraints.constraints.ConstraintsList"><span class="pre">ConstraintsList</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.move_boat_direct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.move_boat_direct" title="Link to this definition">¶</a></dt>
+<dd><p>calculate new boat position for current time step based on wind and boat function</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.ncount">
+<span class="sig-name descname"><span class="pre">ncount</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.ncount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.next_step_routes">
+<span class="sig-name descname"><span class="pre">next_step_routes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.next_step_routes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.plot_routes">
+<span class="sig-name descname"><span class="pre">plot_routes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.plot_routes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.plot_routes" title="Link to this definition">¶</a></dt>
+<dd><p>Plot every complete individual route that is reaching the destination</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.print_current_status">
+<span class="sig-name descname"><span class="pre">print_current_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.print_current_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.print_current_status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.print_init">
+<span class="sig-name descname"><span class="pre">print_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.print_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.print_init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.print_shape">
+<span class="sig-name descname"><span class="pre">print_shape</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.print_shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.print_shape" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.prune_groups">
+<span class="sig-name descname"><span class="pre">prune_groups</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.prune_groups" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.prune_sector_deg_half">
+<span class="sig-name descname"><span class="pre">prune_sector_deg_half</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.prune_sector_deg_half" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.prune_segments">
+<span class="sig-name descname"><span class="pre">prune_segments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.prune_segments" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.prune_symmetry_axis">
+<span class="sig-name descname"><span class="pre">prune_symmetry_axis</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.prune_symmetry_axis" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.pruning">
+<span class="sig-name descname"><span class="pre">pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_error">
+<span class="sig-name descname"><span class="pre">pruning_error</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_error" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_gcr_centered">
+<span class="sig-name descname"><span class="pre">pruning_gcr_centered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.pruning_gcr_centered"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_gcr_centered" title="Link to this definition">¶</a></dt>
+<dd><p>For every pruning segment, select the route that maximises the distance towards the starting point (or last
+intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is defined
+based on the gcr
+of the current ‘mean’ position towards the (temporary) destination.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_headings_centered">
+<span class="sig-name descname"><span class="pre">pruning_headings_centered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.pruning_headings_centered"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_headings_centered" title="Link to this definition">¶</a></dt>
+<dd><p>For every pruning segment, select the route that maximises the distance towards the starting point (or last
+intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
+the median of all considered courses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_per_step">
+<span class="sig-name descname"><span class="pre">pruning_per_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.pruning_per_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.pruning_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.revert_to_previous_step">
+<span class="sig-name descname"><span class="pre">revert_to_previous_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.revert_to_previous_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.revert_to_previous_step" title="Link to this definition">¶</a></dt>
+<dd><p>In this function, when all routes are constrained, the arrays are set
+back to previous step to provide meaningful error message.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.route_list">
+<span class="sig-name descname"><span class="pre">route_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.route_list" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.route_reached_destination">
+<span class="sig-name descname"><span class="pre">route_reached_destination</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.route_reached_destination" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.route_reached_waypoint">
+<span class="sig-name descname"><span class="pre">route_reached_waypoint</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.route_reached_waypoint" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.routes_from_previous_step">
+<span class="sig-name descname"><span class="pre">routes_from_previous_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.routes_from_previous_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.routes_from_previous_step" title="Link to this definition">¶</a></dt>
+<dd><p>When all routes are constrained, unique routes until the current constrained
+routing step are found here. Then, the unique routes are written into json files
+and plotted.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.set_course_segments">
+<span class="sig-name descname"><span class="pre">set_course_segments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.set_course_segments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.set_course_segments" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.set_minimisation_criterion">
+<span class="sig-name descname"><span class="pre">set_minimisation_criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.set_minimisation_criterion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.set_minimisation_criterion" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.set_next_step_routes">
+<span class="sig-name descname"><span class="pre">set_next_step_routes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.set_next_step_routes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.set_next_step_routes" title="Link to this definition">¶</a></dt>
+<dd><p>Updating all arrays according to the indices of the routes that need to be further
+processed in the next routing step</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.set_pruning_settings">
+<span class="sig-name descname"><span class="pre">set_pruning_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sector_deg_half</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_symmetry_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gcr'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.set_pruning_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.set_pruning_settings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.shipparams_per_step">
+<span class="sig-name descname"><span class="pre">shipparams_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.shipparams.ShipParams" title="WeatherRoutingTool.ship.shipparams.ShipParams"><span class="pre">ShipParams</span></a></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.shipparams_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.start_temp">
+<span class="sig-name descname"><span class="pre">start_temp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.start_temp" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.starttime_per_step">
+<span class="sig-name descname"><span class="pre">starttime_per_step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.starttime_per_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.terminate">
+<span class="sig-name descname"><span class="pre">terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.terminate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.time">
+<span class="sig-name descname"><span class="pre">time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_dist">
+<span class="sig-name descname"><span class="pre">update_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_dist" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_fig">
+<span class="sig-name descname"><span class="pre">update_fig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_fig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_fuel">
+<span class="sig-name descname"><span class="pre">update_fuel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_fuel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fuel_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_fuel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_fuel" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_position">
+<span class="sig-name descname"><span class="pre">update_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">move</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_constrained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_position" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_shipparams">
+<span class="sig-name descname"><span class="pre">update_shipparams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ship_params_single_step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_shipparams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_shipparams" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isobased.IsoBased.update_time">
+<span class="sig-name descname"><span class="pre">update_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isobased.html#IsoBased.update_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isobased.IsoBased.update_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.isochrone">
+<span id="weatherroutingtool-algorithms-isochrone-module"></span><h2>WeatherRoutingTool.algorithms.isochrone module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.isochrone" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isochrone.IsoChrone">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.isochrone.</span></span><span class="sig-name descname"><span class="pre">IsoChrone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">finish</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isochrone.html#IsoChrone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.isobased.IsoBased" title="WeatherRoutingTool.algorithms.isobased.IsoBased"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoBased</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isochrone.IsoChrone.check_isochrones">
+<span class="sig-name descname"><span class="pre">check_isochrones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.routeparams.RouteParams" title="WeatherRoutingTool.routeparams.RouteParams"><span class="pre">RouteParams</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isochrone.html#IsoChrone.check_isochrones"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone.check_isochrones" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isochrone.IsoChrone.delta_time">
+<span class="sig-name descname"><span class="pre">delta_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone.delta_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isochrone.IsoChrone.get_delta_variables">
+<span class="sig-name descname"><span class="pre">get_delta_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isochrone.html#IsoChrone.get_delta_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone.get_delta_variables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isochrone.IsoChrone.get_dist">
+<span class="sig-name descname"><span class="pre">get_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isochrone.html#IsoChrone.get_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone.get_dist" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.isofuel">
+<span id="weatherroutingtool-algorithms-isofuel-module"></span><h2>WeatherRoutingTool.algorithms.isofuel module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.isofuel" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.isofuel.</span></span><span class="sig-name descname"><span class="pre">IsoFuel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#WeatherRoutingTool.algorithms.isobased.IsoBased" title="WeatherRoutingTool.algorithms.isobased.IsoBased"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoBased</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.check_isochrones">
+<span class="sig-name descname"><span class="pre">check_isochrones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.routeparams.RouteParams" title="WeatherRoutingTool.routeparams.RouteParams"><span class="pre">RouteParams</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.check_isochrones"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.check_isochrones" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.delta_fuel">
+<span class="sig-name descname"><span class="pre">delta_fuel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.delta_fuel" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.determine_timespread">
+<span class="sig-name descname"><span class="pre">determine_timespread</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.determine_timespread"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.determine_timespread" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.final_pruning">
+<span class="sig-name descname"><span class="pre">final_pruning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.final_pruning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.final_pruning" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables">
+<span class="sig-name descname"><span class="pre">get_delta_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.get_delta_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables_netCDF">
+<span class="sig-name descname"><span class="pre">get_delta_variables_netCDF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ship_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.get_delta_variables_netCDF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables_netCDF" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables_netCDF_last_step">
+<span class="sig-name descname"><span class="pre">get_delta_variables_netCDF_last_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ship_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.get_delta_variables_netCDF_last_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_delta_variables_netCDF_last_step" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_dist">
+<span class="sig-name descname"><span class="pre">get_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.get_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_dist" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_time">
+<span class="sig-name descname"><span class="pre">get_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.get_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.get_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.print_init">
+<span class="sig-name descname"><span class="pre">print_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.print_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.print_init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.isofuel.IsoFuel.update_time">
+<span class="sig-name descname"><span class="pre">update_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/isofuel.html#IsoFuel.update_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel.update_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.routingalg">
+<span id="weatherroutingtool-algorithms-routingalg-module"></span><h2>WeatherRoutingTool.algorithms.routingalg module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.routingalg" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.routingalg.</span></span><span class="sig-name descname"><span class="pre">RoutingAlg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="simple">
+<dt>Isochrone data structure with typing.</dt><dd><dl class="simple">
+<dt>Parameters:</dt><dd><p>count: int  (routing step)
+start: tuple    (lat,long at start)
+finish: tuple   (lat,lon and end)
+gcr_course: float (initial course)
+lats1, lons1, azi1, s12: (M, N) arrays, N=headings+1, M=number of steps+1 (decreasing step number)
+azi0, s0: (M, 1) vectors without history
+time1: current datetime
+elapsed: complete elapsed timedelta</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.calculate_gcr">
+<span class="sig-name descname"><span class="pre">calculate_gcr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">finish</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.calculate_gcr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.calculate_gcr" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_destination">
+<span class="sig-name descname"><span class="pre">check_destination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.check_destination"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_destination" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_for_positive_constraints">
+<span class="sig-name descname"><span class="pre">check_for_positive_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.check_for_positive_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_for_positive_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_positive_power">
+<span class="sig-name descname"><span class="pre">check_positive_power</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.check_positive_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.check_positive_power" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.departure_time">
+<span class="sig-name descname"><span class="pre">departure_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.departure_time" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.execute_routing">
+<span class="sig-name descname"><span class="pre">execute_routing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.Boat" title="WeatherRoutingTool.ship.ship.Boat"><span class="pre">Boat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">wt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCond" title="WeatherRoutingTool.weather.WeatherCond"><span class="pre">WeatherCond</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList" title="WeatherRoutingTool.constraints.constraints.ConstraintsList"><span class="pre">ConstraintsList</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.execute_routing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.execute_routing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.fig">
+<span class="sig-name descname"><span class="pre">fig</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">&lt;module</span> <span class="pre">'matplotlib.figure'</span> <span class="pre">from</span> <span class="pre">'C:\\Users\\JBA\\anaconda3\\Lib\\site-packages\\matplotlib\\figure.py'&gt;</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.figure_path">
+<span class="sig-name descname"><span class="pre">figure_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.figure_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.finish">
+<span class="sig-name descname"><span class="pre">finish</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.finish" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.gcr_course">
+<span class="sig-name descname"><span class="pre">gcr_course</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.gcr_course" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.init_fig">
+<span class="sig-name descname"><span class="pre">init_fig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.init_fig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.init_fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.print_current_status">
+<span class="sig-name descname"><span class="pre">print_current_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.print_current_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.print_current_status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.print_init">
+<span class="sig-name descname"><span class="pre">print_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.print_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.print_init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.route_ensemble">
+<span class="sig-name descname"><span class="pre">route_ensemble</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.route_ensemble" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.start">
+<span class="sig-name descname"><span class="pre">start</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></em><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.start" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.terminate">
+<span class="sig-name descname"><span class="pre">terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.terminate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg.RoutingAlg.update_fig">
+<span class="sig-name descname"><span class="pre">update_fig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg.html#RoutingAlg.update_fig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg.update_fig" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms.routingalg_factory">
+<span id="weatherroutingtool-algorithms-routingalg-factory-module"></span><h2>WeatherRoutingTool.algorithms.routingalg_factory module<a class="headerlink" href="#module-WeatherRoutingTool.algorithms.routingalg_factory" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">WeatherRoutingTool.algorithms.routingalg_factory.</span></span><span class="sig-name descname"><span class="pre">RoutingAlgFactory</span></span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg_factory.html#RoutingAlgFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory.get_routing_alg">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_routing_alg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/WeatherRoutingTool/algorithms/routingalg_factory.html#RoutingAlgFactory.get_routing_alg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory.get_routing_alg" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-WeatherRoutingTool.algorithms">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-WeatherRoutingTool.algorithms" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../algorithms/index.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../constraints/index.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../weather.html">Weather data</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API documentation (still under construction!)</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="WeatherRoutingTool.html">WeatherRoutingTool package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="WeatherRoutingTool.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">WeatherRoutingTool.algorithms package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.data_utils">WeatherRoutingTool.algorithms.data_utils module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.GridMixin"><code class="docutils literal notranslate"><span class="pre">GridMixin</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.distance"><code class="docutils literal notranslate"><span class="pre">distance()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.get_closest"><code class="docutils literal notranslate"><span class="pre">get_closest()</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.data_utils.time_diffs"><code class="docutils literal notranslate"><span class="pre">time_diffs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.genetic">WeatherRoutingTool.algorithms.genetic module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic.Genetic"><code class="docutils literal notranslate"><span class="pre">Genetic</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.genetic_utils">WeatherRoutingTool.algorithms.genetic_utils module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.CrossoverFactory"><code class="docutils literal notranslate"><span class="pre">CrossoverFactory</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.FromGeojsonPopulation"><code class="docutils literal notranslate"><span class="pre">FromGeojsonPopulation</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.GeneticCrossover"><code class="docutils literal notranslate"><span class="pre">GeneticCrossover</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.GridBasedMutation"><code class="docutils literal notranslate"><span class="pre">GridBasedMutation</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.GridBasedPopulation"><code class="docutils literal notranslate"><span class="pre">GridBasedPopulation</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.MutationFactory"><code class="docutils literal notranslate"><span class="pre">MutationFactory</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.PopulationFactory"><code class="docutils literal notranslate"><span class="pre">PopulationFactory</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.RepairInfeasibles"><code class="docutils literal notranslate"><span class="pre">RepairInfeasibles</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.RouteDuplicateElimination"><code class="docutils literal notranslate"><span class="pre">RouteDuplicateElimination</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.genetic_utils.RoutingProblem"><code class="docutils literal notranslate"><span class="pre">RoutingProblem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.isobased">WeatherRoutingTool.algorithms.isobased module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.isobased.IsoBased"><code class="docutils literal notranslate"><span class="pre">IsoBased</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.isochrone">WeatherRoutingTool.algorithms.isochrone module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.isochrone.IsoChrone"><code class="docutils literal notranslate"><span class="pre">IsoChrone</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.isofuel">WeatherRoutingTool.algorithms.isofuel module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.isofuel.IsoFuel"><code class="docutils literal notranslate"><span class="pre">IsoFuel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.routingalg">WeatherRoutingTool.algorithms.routingalg module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.routingalg.RoutingAlg"><code class="docutils literal notranslate"><span class="pre">RoutingAlg</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms.routingalg_factory">WeatherRoutingTool.algorithms.routingalg_factory module</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory"><code class="docutils literal notranslate"><span class="pre">RoutingAlgFactory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#module-WeatherRoutingTool.algorithms">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="WeatherRoutingTool.constraints.html">WeatherRoutingTool.constraints package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="WeatherRoutingTool.ship.html">WeatherRoutingTool.ship package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="WeatherRoutingTool.utils.html">WeatherRoutingTool.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool.config">WeatherRoutingTool.config module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool.execute_routing">WeatherRoutingTool.execute_routing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool.routeparams">WeatherRoutingTool.routeparams module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#weatherroutingtool-test-maripower-settings-for-different-courses-module">WeatherRoutingTool.test_maripower_settings_for_different_courses module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#weatherroutingtool-test-maripower-settings-for-specific-route-module">WeatherRoutingTool.test_maripower_settings_for_specific_route module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool.weather">WeatherRoutingTool.weather module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool.weather_factory">WeatherRoutingTool.weather_factory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="WeatherRoutingTool.html#module-WeatherRoutingTool">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API documentation (still under construction!)</a><ul>
+  <li><a href="WeatherRoutingTool.html">WeatherRoutingTool package</a><ul>
+      <li>Previous: <a href="WeatherRoutingTool.html" title="previous chapter">WeatherRoutingTool package</a></li>
+      <li>Next: <a href="WeatherRoutingTool.constraints.html" title="next chapter">WeatherRoutingTool.constraints package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/source/api-documentation/WeatherRoutingTool.algorithms.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

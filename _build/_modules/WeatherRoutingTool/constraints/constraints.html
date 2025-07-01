@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeatherRoutingTool.constraints.constraints &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for WeatherRoutingTool.constraints.constraints</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">cartopy.crs</span> <span class="k">as</span> <span class="nn">ccrs</span>
+<span class="kn">import</span> <span class="nn">cartopy.feature</span> <span class="k">as</span> <span class="nn">cf</span>
+<span class="kn">import</span> <span class="nn">datacube</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">from</span> <span class="nn">global_land_mask</span> <span class="kn">import</span> <span class="n">globe</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">box</span>
+<span class="kn">from</span> <span class="nn">shapely.strtree</span> <span class="kn">import</span> <span class="n">STRtree</span>
+
+<span class="kn">import</span> <span class="nn">WeatherRoutingTool.utils.graphics</span> <span class="k">as</span> <span class="nn">graphics</span>
+<span class="kn">import</span> <span class="nn">WeatherRoutingTool.utils.formatting</span> <span class="k">as</span> <span class="nn">form</span>
+<span class="kn">from</span> <span class="nn">maridatadownloader</span> <span class="kn">import</span> <span class="n">DownloaderFactory</span>
+<span class="kn">from</span> <span class="nn">WeatherRoutingTool.routeparams</span> <span class="kn">import</span> <span class="n">RouteParams</span>
+<span class="kn">from</span> <span class="nn">WeatherRoutingTool.utils.maps</span> <span class="kn">import</span> <span class="n">Map</span>
+<span class="kn">from</span> <span class="nn">WeatherRoutingTool.weather</span> <span class="kn">import</span> <span class="n">WeatherCond</span>
+
+<span class="c1"># Load the environment variables from the .env file</span>
+<span class="n">parent</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;WRT.Constraints&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># Constraint: Main class for handling of constraints</span>
+<span class="c1"># PositiveConstraint: handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)</span>
+<span class="c1"># NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth,</span>
+<span class="c1"># too high waves, danger areas...)</span>
+<span class="c1"># NegativeConstraintFrom weather: negative constraint which needs information from the weather (this includes depth</span>
+<span class="c1"># information which are stored in the netCDF weather file)</span>
+<span class="c1"># ConstraintPars: class that initialises ConstraintList</span>
+<span class="c1"># ConstraintList: list of constraints</span>
+<span class="c1">#</span>
+<span class="c1"># constraints implemented so far: LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with</span>
+<span class="c1"># too low water depth), StayOnMap (prohibit leaving the area</span>
+<span class="c1">#           for which the weather data has been obtained</span>
+<span class="c1">#</span>
+<span class="c1"># Inclusion in routing algorithm:</span>
+<span class="c1">#       1) initialise all individual constraints that shall be considered (for example check</span>
+<span class="c1">#       Isochrones/execute_routing.py)</span>
+<span class="c1">#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check</span>
+<span class="c1">#       Isochrones/execute_routing.py)</span>
+<span class="c1">#       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start,</span>
+<span class="c1">#       lon_end, time) which looks for constraints in</span>
+<span class="c1">#           between starting point and destination;</span>
+<span class="c1">#           alternatively it can also be checked for a single point whether a constraint is hit via</span>
+<span class="c1">#           ConstraintList.safe_endpoint(lat, lon, time)</span>
+
+
+<div class="viewcode-block" id="Constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint">[docs]</a>
+<span class="k">class</span> <span class="nc">Constraint</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+
+    <span class="c1"># resource_type: int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="c1"># def get_resource_type(self):</span>
+    <span class="c1">#    return self.resource_type</span>
+
+<div class="viewcode-block" id="Constraint.print_constraint_message">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.print_constraint_message">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_constraint_message</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Constraint.constraint_on_point">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.constraint_on_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">constraint_on_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Constraint.print_debug">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.print_debug">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Constraint.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Constraint.plot_route_in_constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.plot_route_in_constraint">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_route_in_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">:</span> <span class="n">RouteParams</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_constraint</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
+        <span class="n">route</span><span class="o">.</span><span class="n">plot_route</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">graphics</span><span class="o">.</span><span class="n">get_colour</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="Constraint.plot_constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint.plot_constraint">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PositiveConstraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraint">[docs]</a>
+<span class="k">class</span> <span class="nc">PositiveConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">Constraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PositiveConstraint.get_points">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraint.get_points">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PositiveConstraintPoint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraintPoint">[docs]</a>
+<span class="k">class</span> <span class="nc">PositiveConstraintPoint</span><span class="p">(</span><span class="n">PositiveConstraint</span><span class="p">):</span>
+    <span class="n">coord</span><span class="p">:</span> <span class="nb">tuple</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;OverWaypoint&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PositiveConstraintPoint.get_points">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraintPoint.get_points">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord</span></div>
+
+
+<div class="viewcode-block" id="PositiveConstraintPoint.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraintPoint.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;intermediate waypoints activated for: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NegativeContraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.NegativeContraint">[docs]</a>
+<span class="k">class</span> <span class="nc">NegativeContraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">Constraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;At least one point discarded as &quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NegativeConstraintFromWeather">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.NegativeConstraintFromWeather">[docs]</a>
+<span class="k">class</span> <span class="nc">NegativeConstraintFromWeather</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+    <span class="n">wt</span><span class="p">:</span> <span class="n">WeatherCond</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">weather</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wt</span> <span class="o">=</span> <span class="n">weather</span>
+
+<div class="viewcode-block" id="NegativeConstraintFromWeather.check_weather">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.NegativeConstraintFromWeather.check_weather">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_weather</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConstraintPars">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintPars">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstraintPars</span><span class="p">:</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">bCheckEndPoints</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">bCheckCrossing</span><span class="p">:</span> <span class="nb">bool</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bCheckEndPoints</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bCheckCrossing</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="ConstraintPars.print">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintPars.print">[docs]</a>
+    <span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Print settings of Constraint Pars:&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;resolution=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;bCheckEndPoints=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bCheckEndPoints</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConstraintsListFactory">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsListFactory">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstraintsListFactory</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="ConstraintsListFactory.get_constraints_list">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsListFactory.get_constraints_list">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_constraints_list</span><span class="p">(</span><span class="n">constraints_string_list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="n">ConstraintPars</span><span class="p">()</span>
+        <span class="n">constraints_list</span> <span class="o">=</span> <span class="n">ConstraintsList</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+        <span class="n">is_stay_on_map</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="s1">&#39;land_crossing_global_land_mask&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="n">land_crossing</span> <span class="o">=</span> <span class="n">LandCrossing</span><span class="p">()</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">land_crossing</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;land_crossing_polygons&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="n">map_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;map_size&#39;</span><span class="p">)</span>
+            <span class="n">land_crossing_polygons</span> <span class="o">=</span> <span class="n">LandPolygonsCrossing</span><span class="p">(</span><span class="n">map_size</span><span class="p">)</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">land_crossing_polygons</span><span class="p">,</span> <span class="s1">&#39;continuous&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;water_depth&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;data_mode&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;min_depth&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;depthfile&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="s1">&#39;map_size&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;To use the depth constraint module, you need to provide the data mode for the download, &#39;</span>
+                    <span class="s1">&#39;the boat draught, the map size and the path to the depth file.&#39;</span><span class="p">)</span>
+            <span class="n">data_mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;data_mode&#39;</span><span class="p">)</span>
+            <span class="n">min_depth</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;min_depth&#39;</span><span class="p">)</span>
+            <span class="n">map_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;map_size&#39;</span><span class="p">)</span>
+            <span class="n">depthfile</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;depthfile&#39;</span><span class="p">)</span>
+            <span class="n">water_depth</span> <span class="o">=</span> <span class="n">WaterDepth</span><span class="p">(</span><span class="n">data_mode</span><span class="p">,</span> <span class="n">min_depth</span><span class="p">,</span> <span class="n">map_size</span><span class="p">,</span> <span class="n">depthfile</span><span class="p">)</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">water_depth</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;status_error&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="n">courses_path</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;courses_path&#39;</span><span class="p">)</span>
+            <span class="n">status_error</span> <span class="o">=</span> <span class="n">StatusCodeError</span><span class="p">(</span><span class="n">courses_path</span><span class="p">)</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">status_error</span><span class="p">,</span> <span class="s1">&#39;continuous&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;on_map&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;map_size&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;To use the on-map constraint module, you need to providethe map size.&#39;</span><span class="p">)</span>
+            <span class="n">map_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;map_size&#39;</span><span class="p">)</span>
+            <span class="n">on_map</span> <span class="o">=</span> <span class="n">StayOnMap</span><span class="p">()</span>
+            <span class="n">on_map</span><span class="o">.</span><span class="n">set_map</span><span class="p">(</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span><span class="p">,</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span><span class="p">,</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">,</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">)</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">on_map</span><span class="p">)</span>
+            <span class="n">is_stay_on_map</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="s1">&#39;seamarks&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_stay_on_map</span><span class="p">:</span>
+                <span class="n">seamarks</span> <span class="o">=</span> <span class="n">SeamarkCrossing</span><span class="p">(</span><span class="n">is_stay_on_map</span><span class="p">,</span> <span class="n">map_size</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seamarks</span> <span class="o">=</span> <span class="n">SeamarkCrossing</span><span class="p">()</span>
+            <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_neg_constraint</span><span class="p">(</span><span class="n">seamarks</span><span class="p">,</span> <span class="s1">&#39;continuous&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;via_waypoints&#39;</span> <span class="ow">in</span> <span class="n">constraints_string_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;waypoints&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;To use the waypoints constraint module, you need to provide the waypoints.&#39;</span><span class="p">)</span>
+            <span class="n">waypoints</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;waypoints&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span> <span class="ow">in</span> <span class="n">waypoints</span><span class="p">:</span>
+                <span class="n">wp</span> <span class="o">=</span> <span class="n">PositiveConstraintPoint</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span>
+                <span class="n">constraints_list</span><span class="o">.</span><span class="n">add_pos_constraint</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span>
+
+        <span class="n">constraints_list</span><span class="o">.</span><span class="n">print_settings</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">constraints_list</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConstraintsList">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstraintsList</span><span class="p">:</span>
+    <span class="n">pars</span><span class="p">:</span> <span class="n">ConstraintPars</span>
+    <span class="n">positive_constraints</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">negative_constraints_discrete</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">negative_constraints_continuous</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">neg_dis_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">neg_cont_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">pos_size</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="n">positive_point_dict</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">current_positive</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="n">constraints_crossed</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">weather</span><span class="p">:</span> <span class="n">WeatherCond</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pars</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pars</span> <span class="o">=</span> <span class="n">pars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">positive_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_discrete</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_continuous</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_crossed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">neg_dis_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">neg_cont_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_size</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="ConstraintsList.print_constraints_crossed">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.print_constraints_crossed">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_constraints_crossed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Discarding point as:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">iConst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_crossed</span><span class="p">)):</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">print_step</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_crossed</span><span class="p">[</span><span class="n">iConst</span><span class="p">]),</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.print_settings">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.print_settings">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">print</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_active_constraints</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.print_active_constraints">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.print_active_constraints">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_active_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">Const</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_continuous</span><span class="p">:</span>
+            <span class="n">Const</span><span class="o">.</span><span class="n">print_info</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">Const</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_discrete</span><span class="p">:</span>
+            <span class="n">Const</span><span class="o">.</span><span class="n">print_info</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">Const</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_constraints</span><span class="p">:</span>
+            <span class="n">Const</span><span class="o">.</span><span class="n">print_info</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.have_positive">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.have_positive">[docs]</a>
+    <span class="k">def</span> <span class="nf">have_positive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.have_negative">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.have_negative">[docs]</a>
+    <span class="k">def</span> <span class="nf">have_negative</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">neg_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.init_positive_lists">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.init_positive_lists">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_positive_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">finish</span><span class="p">):</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">lon</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">iconst</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_constraints</span><span class="p">:</span>
+            <span class="n">lat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iconst</span><span class="o">.</span><span class="n">get_points</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">lon</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iconst</span><span class="o">.</span><span class="n">get_points</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">lat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">finish</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">lon</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">finish</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Tuple of positive constraints:&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;lat:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;lon:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">positive_point_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">lat</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">lon</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.reached_positive">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.reached_positive">[docs]</a>
+    <span class="k">def</span> <span class="nf">reached_positive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.get_current_destination">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.get_current_destination">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_current_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">finish_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_point_dict</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">finish_lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_point_dict</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">finish_lat</span><span class="p">,</span> <span class="n">finish_lon</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.get_current_start">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.get_current_start">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_current_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_point_dict</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span><span class="p">]</span>
+        <span class="n">start_lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positive_point_dict</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_positive</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">start_lat</span><span class="p">,</span> <span class="n">start_lon</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.shall_I_pass">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.shall_I_pass">[docs]</a>
+    <span class="k">def</span> <span class="nf">shall_I_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="n">is_constrained</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">bCheckCrossing</span><span class="p">:</span>
+            <span class="n">is_constrained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_crossing</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">bCheckEndPoints</span><span class="p">:</span>
+            <span class="n">is_constrained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_endpoint</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_constrained</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">print_constraints_crossed</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.split_route">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.split_route">[docs]</a>
+    <span class="k">def</span> <span class="nf">split_route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.safe_endpoint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.safe_endpoint">[docs]</a>
+    <span class="k">def</span> <span class="nf">safe_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops</span>
+<span class="sd">        over all Constraints added to the ConstraintList</span>
+<span class="sd">        :param lat:</span>
+<span class="sd">        :param lon:</span>
+<span class="sd">        :param current_time:</span>
+<span class="sd">        :param is_constrained:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">iConst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">neg_dis_size</span><span class="p">):</span>
+            <span class="n">is_constrained_temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_discrete</span><span class="p">[</span><span class="n">iConst</span><span class="p">]</span><span class="o">.</span><span class="n">constraint_on_point</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">current_time</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_constrained_temp</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constraints_crossed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_discrete</span><span class="p">[</span><span class="n">iConst</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">is_constrained</span> <span class="o">+=</span> <span class="n">is_constrained_temp</span>
+        <span class="k">return</span> <span class="n">is_constrained</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.safe_crossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.safe_crossing">[docs]</a>
+    <span class="k">def</span> <span class="nf">safe_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">):</span>
+        <span class="n">is_constrained_discrete</span> <span class="o">=</span> <span class="n">is_constrained</span>
+        <span class="n">is_constrained_continuous</span> <span class="o">=</span> <span class="n">is_constrained</span>
+        <span class="n">is_constrained_discrete</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_crossing_discrete</span><span class="p">(</span><span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span>
+                                                              <span class="n">is_constrained</span><span class="p">)</span>
+        <span class="n">is_constrained_continuous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_crossing_continuous</span><span class="p">(</span><span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span>
+                                                                  <span class="n">is_constrained</span><span class="p">)</span>
+
+        <span class="c1"># TO BE UPDATED</span>
+        <span class="n">is_constrained_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained_discrete</span><span class="p">)</span> \
+                                                        <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained_continuous</span><span class="p">)</span>
+        <span class="n">is_constrained</span> <span class="o">=</span> <span class="n">is_constrained_array</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">is_constrained</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.safe_crossing_continuous">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.safe_crossing_continuous">[docs]</a>
+    <span class="k">def</span> <span class="nf">safe_crossing_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">):</span>
+        <span class="n">is_constrained</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Entering continuous checks&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Length of latitudes: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lat_start</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">constr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_continuous</span><span class="p">:</span>
+            <span class="n">is_constrained_temp</span> <span class="o">=</span> <span class="n">constr</span><span class="o">.</span><span class="n">check_crossing</span><span class="p">(</span><span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">)</span>
+            <span class="n">is_constrained</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">is_constrained_temp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">is_constrained</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.safe_crossing_discrete">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.safe_crossing_discrete">[docs]</a>
+    <span class="k">def</span> <span class="nf">safe_crossing_discrete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination</span>
+<span class="sd">        (lat_end, lon_end).</span>
+<span class="sd">        To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and</span>
+<span class="sd">        loops through all these steps calling ConstraintList.safe_endpoint()</span>
+<span class="sd">        :param lat_start:</span>
+<span class="sd">        :param lon_start:</span>
+<span class="sd">        :param lat_end:</span>
+<span class="sd">        :param lon_end:</span>
+<span class="sd">        :param current_time:</span>
+<span class="sd">        :param is_constrained:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">delta_lats</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat_end</span> <span class="o">-</span> <span class="n">lat_start</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">resolution</span>
+        <span class="n">delta_lons</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon_end</span> <span class="o">-</span> <span class="n">lon_start</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">resolution</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">lat_start</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">lon_start</span>
+
+        <span class="c1"># if (debug):</span>
+        <span class="c1"># form.print_step(&#39;Constraints: Moving from (&#39; + str(lat_start) + &#39;,&#39; + str(lon_start) + &#39;) to (&#39; + str(</span>
+        <span class="c1">#        lat_end) + &#39;,&#39; + str(lon_end), 0)</span>
+
+        <span class="n">nSteps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">iStep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nSteps</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">+</span> <span class="n">delta_lats</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">delta_lons</span>
+
+            <span class="n">is_constrained</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_endpoint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">is_constrained</span><span class="p">)</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">y0</span> <span class="o">=</span> <span class="n">y</span>
+
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">lat_start_constrained</span> <span class="o">=</span> <span class="n">lat_start</span><span class="p">[</span><span class="n">is_constrained</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">lon_start_constrained</span> <span class="o">=</span> <span class="n">lon_start</span><span class="p">[</span><span class="n">is_constrained</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">lat_end_constrained</span> <span class="o">=</span> <span class="n">lat_end</span><span class="p">[</span><span class="n">is_constrained</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">lon_end_constrained</span> <span class="o">=</span> <span class="n">lon_end</span><span class="p">[</span><span class="n">is_constrained</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">lat_start_constrained</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">form</span><span class="o">.</span><span class="n">print_step</span><span class="p">(</span><span class="s2">&quot;transitions constrained:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lat_start_constrained</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">form</span><span class="o">.</span><span class="n">print_step</span><span class="p">(</span>
+                    <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lat_start_constrained</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lon_start_constrained</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;] to [&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span>
+                        <span class="n">lat_end_constrained</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lon_end_constrained</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">)</span>
+
+        <span class="c1"># if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):</span>
+        <span class="c1">#    exc = &#39;Did not check destination, only checked lat=&#39; + str(x0) + &#39;, lon=&#39; + str(y0)</span>
+        <span class="c1">#    raise ValueError(exc)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Constraints.land_crossing(): did not reach latitude of destination!&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Constraints.land_crossing(): did not reach longitude of destination!&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">is_constrained</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.add_pos_constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.add_pos_constraint">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_pos_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">positive_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_size</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.add_neg_constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.add_neg_constraint">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_neg_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">option</span><span class="o">=</span><span class="s1">&#39;discrete&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;discrete&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_discrete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">neg_dis_size</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;continuous&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">negative_constraints_continuous</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">neg_cont_size</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;You chose to add a negetive constraint with option &#39;</span> <span class="o">+</span> <span class="n">option</span> <span class="o">+</span> <span class="s1">&#39;. However only options -discrete- and &#39;</span>
+                                                                             <span class="s1">&#39;-continuous- are implemented &#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConstraintsList.check_weather">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList.check_weather">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_weather</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LandCrossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandCrossing">[docs]</a>
+<span class="k">class</span> <span class="nc">LandCrossing</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;LandCrossing&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s2">&quot;crossing land!&quot;</span>  <span class="c1"># self.resource_type = 0</span>
+
+<div class="viewcode-block" id="LandCrossing.constraint_on_point">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandCrossing.constraint_on_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">constraint_on_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="c1"># self.print_debug(&#39;checking point: &#39; + str(lat) + &#39;,&#39; + str(lon))</span>
+        <span class="k">return</span> <span class="n">globe</span><span class="o">.</span><span class="n">is_land</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LandCrossing.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandCrossing.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;no land crossing&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StatusCodeError">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StatusCodeError">[docs]</a>
+<span class="k">class</span> <span class="nc">StatusCodeError</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Negative constraint for points where mariPower returns a status code of 3 (=error).</span>
+<span class="sd">    FIXME: currently, this constraint is added as &#39;continuous&#39; constraint, but a &#39;discrete&#39; constraint would</span>
+<span class="sd">        be more suitable/intuitive. However, this cannot be used at the moment because discrete constraints are checked</span>
+<span class="sd">        on intermediate points between two consecutive routing points and the status code is not available for these.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">courses_path</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">courses_path</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;StatusErrorCode&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;At least one point discarded as routes have error status! &#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">courses_path</span> <span class="o">=</span> <span class="n">courses_path</span>
+
+<div class="viewcode-block" id="StatusCodeError.load_data_from_file">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StatusCodeError.load_data_from_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">courses_path</span><span class="p">):</span>
+        <span class="n">routeData</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">courses_path</span><span class="p">)</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">routeData</span><span class="p">[</span><span class="s1">&#39;Status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">lats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">routeData</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">routeData</span><span class="o">.</span><span class="n">it_course</span><span class="p">))</span>
+        <span class="n">lons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">routeData</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">routeData</span><span class="o">.</span><span class="n">it_course</span><span class="p">))</span>
+        <span class="n">routeData</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">status</span><span class="p">,</span> <span class="n">lats</span><span class="p">,</span> <span class="n">lons</span></div>
+
+
+<div class="viewcode-block" id="StatusCodeError.check_crossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StatusCodeError.check_crossing">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lon_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lat_end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lon_end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">current_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">status</span><span class="p">,</span> <span class="n">lats_netcdf</span><span class="p">,</span> <span class="n">lon_netcdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">courses_path</span><span class="p">)</span>
+        <span class="c1"># Double-check coordinates</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">lats_netcdf</span> <span class="o">==</span> <span class="n">lat_start</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">lon_netcdf</span> <span class="o">==</span> <span class="n">lon_start</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="c1"># status error = 3, warning = 2, OK = 1</span>
+        <span class="n">is_status_error</span> <span class="o">=</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">is_status_error</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WaveHeight">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaveHeight">[docs]</a>
+<span class="k">class</span> <span class="nc">WaveHeight</span><span class="p">(</span><span class="n">NegativeConstraintFromWeather</span><span class="p">):</span>
+    <span class="n">current_wave_height</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">max_wave_height</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;WaveHeight&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s2">&quot;waves are to high!&quot;</span>
+        <span class="c1"># self.resource_type = 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_wave_height</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">99</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_wave_height</span> <span class="o">=</span> <span class="mi">10</span>
+
+<div class="viewcode-block" id="WaveHeight.constraint_on_point">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaveHeight.constraint_on_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">constraint_on_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="c1"># self.print_debug(&#39;checking point: &#39; + str(lat) + &#39;,&#39; + str(lon))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_weather</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="c1"># logger.info(&#39;current_wave_height:&#39;, self.current_wave_height)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_wave_height</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_wave_height</span></div>
+
+
+<div class="viewcode-block" id="WaveHeight.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaveHeight.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;maximum wave height=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_wave_height</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WaterDepth">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth">[docs]</a>
+<span class="k">class</span> <span class="nc">WaterDepth</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+    <span class="n">map_size</span><span class="p">:</span> <span class="n">Map</span>
+    <span class="n">depth_data</span><span class="p">:</span> <span class="n">xr</span>  <span class="c1"># the xarray.Dataset is expected to have a variable called &quot;z&quot; (as in the original ETOPO dataset)</span>
+    <span class="n">current_depth</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">min_depth</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_mode</span><span class="p">,</span> <span class="n">min_depth</span><span class="p">,</span> <span class="n">map_size</span><span class="p">,</span> <span class="n">depth_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;WaterDepth&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;water not deep enough!&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">99</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_depth</span> <span class="o">=</span> <span class="n">min_depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span> <span class="o">=</span> <span class="n">map_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;odc&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data_ODC</span><span class="p">(</span><span class="n">depth_path</span><span class="p">,</span> <span class="s1">&#39;global_relief&#39;</span><span class="p">,</span> <span class="n">measurements</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;automatic&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data_automatic</span><span class="p">(</span><span class="n">depth_path</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;from_file&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data_from_file</span><span class="p">(</span><span class="n">depth_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Option &quot;&#39;</span> <span class="o">+</span> <span class="n">data_mode</span> <span class="o">+</span> <span class="s1">&#39;&quot; not implemented for download of depth data!&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WaterDepth.load_data_ODC">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.load_data_ODC">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data_ODC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth_path</span><span class="p">,</span> <span class="n">product_name</span><span class="p">,</span> <span class="n">measurements</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Obtaining depth data from ODC&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">dc</span> <span class="o">=</span> <span class="n">datacube</span><span class="o">.</span><span class="n">Datacube</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">product_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">list_products</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2"> is not known in the Open Data Cube instance&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">measurements</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">measurements</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">list_measurements</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">product_name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Check if requested measurements are available in ODC (measurements or aliases)</span>
+            <span class="n">measurements_odc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">list_measurements</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">product_name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">aliases_odc</span> <span class="o">=</span> <span class="p">[</span><span class="n">alias</span> <span class="k">for</span> <span class="n">aliases_per_var</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">list_measurements</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">product_name</span><span class="p">][</span><span class="s1">&#39;aliases&#39;</span><span class="p">])</span> <span class="k">for</span>
+                           <span class="n">alias</span> <span class="ow">in</span> <span class="n">aliases_per_var</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">measurement</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">measurements_odc</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">measurement</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">aliases_odc</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">measurement</span><span class="si">}</span><span class="s2"> is not a valid measurement for odc product </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">res_x</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">/</span> <span class="mi">3600</span>  <span class="c1"># 30 arc seconds to degrees</span>
+        <span class="n">res_y</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">/</span> <span class="mi">3600</span>  <span class="c1"># 30 arc seconds to degrees</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;resolution&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">res_x</span><span class="p">,</span> <span class="n">res_y</span><span class="p">),</span> <span class="s1">&#39;align&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">res_x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">res_y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+                 <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">),</span>
+                 <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">),</span> <span class="s1">&#39;output_crs&#39;</span><span class="p">:</span> <span class="s1">&#39;EPSG:4326&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;measurements&#39;</span><span class="p">:</span> <span class="n">measurements</span><span class="p">}</span>
+        <span class="n">ds_datacube</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_name</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_scaling</span><span class="p">(</span><span class="n">ds_datacube</span><span class="p">):</span>
+            <span class="n">ds_datacube</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span><span class="p">(</span><span class="n">ds_datacube</span><span class="p">)</span>
+        <span class="c1"># Note: if depth_path already exists, the file will be overwritten!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to_netcdf</span><span class="p">(</span><span class="n">ds_datacube</span><span class="p">,</span> <span class="n">depth_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds_datacube</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.load_data_automatic">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.load_data_automatic">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data_automatic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth_path</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Automatic download of depth data&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">downloader</span> <span class="o">=</span> <span class="n">DownloaderFactory</span><span class="o">.</span><span class="n">get_downloader</span><span class="p">(</span><span class="n">downloader_type</span><span class="o">=</span><span class="s1">&#39;xarray&#39;</span><span class="p">,</span> <span class="n">platform</span><span class="o">=</span><span class="s1">&#39;etoponcei&#39;</span><span class="p">)</span>
+        <span class="n">depth_data</span> <span class="o">=</span> <span class="n">downloader</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+        <span class="n">depth_data_chunked</span> <span class="o">=</span> <span class="n">depth_data</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="s2">&quot;100MB&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="s2">&quot;100MB&quot;</span><span class="p">})</span>
+        <span class="n">depth_data_chunked</span> <span class="o">=</span> <span class="n">depth_data_chunked</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">latitude</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">),</span>
+                                                    <span class="n">longitude</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">))</span>
+        <span class="c1"># Note: if depth_path already exists, the file will be overwritten!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to_netcdf</span><span class="p">(</span><span class="n">depth_data_chunked</span><span class="p">,</span> <span class="n">depth_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">depth_data_chunked</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.load_data_from_file">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.load_data_from_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth_path</span><span class="p">):</span>
+        <span class="c1"># FIXME: if this loads the whole file into memory, apply subsetting already here</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Downloading data from file: &#39;</span> <span class="o">+</span> <span class="n">depth_path</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">ds_depth</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">graphics</span><span class="o">.</span><span class="n">get_figure_path</span><span class="p">():</span>
+            <span class="n">ds_depth</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">depth_path</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="s2">&quot;500MB&quot;</span><span class="p">},</span> <span class="n">decode_times</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds_depth</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">depth_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds_depth</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.set_draught">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.set_draught">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_draught</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_depth</span> <span class="o">=</span> <span class="n">depth</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.constraint_on_point">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.constraint_on_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">constraint_on_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_depth</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_depth</span> <span class="o">&gt;</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">min_depth</span>
+        <span class="c1"># form.print_step(&#39;current_depth:&#39; + str(self.current_depth), 1)</span>
+        <span class="k">return</span> <span class="n">return_value</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.check_depth">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.check_depth">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="n">lat_da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">)</span>
+        <span class="n">lon_da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">)</span>
+        <span class="n">rounded_ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">latitude</span><span class="o">=</span><span class="n">lat_da</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="n">lon_da</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_depth</span> <span class="o">=</span> <span class="n">rounded_ds</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;minimum water depth=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_depth</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.get_current_depth">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.get_current_depth">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_current_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_depth</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_depth</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.plot_depth_map_from_file">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.plot_depth_map_from_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_depth_map_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">level_diff</span> <span class="o">=</span> <span class="mi">10</span>
+
+        <span class="n">ds_depth</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="n">ds_depth</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">ds_depth</span><span class="o">.</span><span class="n">lat</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ds_depth</span><span class="o">.</span><span class="n">lat</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                <span class="n">ds_depth</span><span class="o">.</span><span class="n">lon</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ds_depth</span><span class="o">.</span><span class="n">lon</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ds_depth</span><span class="o">.</span><span class="n">z</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">),</span>
+                                    <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="p">)</span>
+
+        <span class="c1"># depth = ds_depth[&#39;deptho&#39;].where((ds_depth.latitude &gt; lat_start) &amp; (ds_depth.latitude &lt; lat_end) &amp; (</span>
+        <span class="c1"># ds_depth.longitude &gt; lon_start) &amp; (ds_depth.longitude &lt; lon_end),drop=True) #.where((ds_depth.deptho&gt;-100)</span>
+        <span class="c1"># &amp; (ds_depth.deptho&lt;0) )</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">())</span>
+        <span class="n">depth</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>  <span class="c1"># extend=&#39;max&#39;,</span>
+                            <span class="c1"># levels=np.arange(-60, 0, 0.1),  high-resolution contours</span>
+                            <span class="n">levels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">level_diff</span><span class="p">),</span> <span class="n">transform</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">(),</span> <span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="n">LAND</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="n">COASTLINE</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">gridlines</span><span class="p">(</span><span class="n">draw_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="WaterDepth.plot_constraint">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth.plot_constraint">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="n">level_diff</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+
+        <span class="n">ds_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span><span class="o">.</span><span class="n">coarsen</span><span class="p">(</span><span class="n">latitude</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">boundary</span><span class="o">=</span><span class="s2">&quot;exact&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">ds_depth_coarsened</span> <span class="o">=</span> <span class="n">ds_depth</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span> <span class="o">=</span> <span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">latitude</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">latitude</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">longitude</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">longitude</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ds_depth_coarsened</span><span class="o">.</span><span class="n">z</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">),</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="p">)</span>
+
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">())</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_data</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">level_diff</span><span class="p">),</span>
+                                                <span class="n">transform</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">())</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Wassertiefe (m)&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="n">LAND</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="n">COASTLINE</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">gridlines</span><span class="p">(</span><span class="n">draw_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_has_scaling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if any of the included data variables has a scale_factor or add_offset&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;scale_factor&#39;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="ow">or</span> <span class="s1">&#39;add_offset&#39;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="c1"># FIXME: decode_cf also scales the nodata values, e.g. -32767 -&gt; -327.67</span>
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">decode_cf</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">file_out</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Customized method to fix &#39;AttributeError: NetCDF: String match to name in use&#39; error</span>
+<span class="sd">        References:</span>
+<span class="sd">            - https://github.com/pydata/xarray/issues/2822</span>
+<span class="sd">            - https://github.com/Unidata/netcdf4-python/issues/1020</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;_NCProperties&#39;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">dataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;_NCProperties&#39;</span><span class="p">]</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">file_out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="StayOnMap">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StayOnMap">[docs]</a>
+<span class="k">class</span> <span class="nc">StayOnMap</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+    <span class="n">lat1</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">lon1</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">lat2</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">lon2</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;StayOnMap&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s2">&quot;leaving wheather map!&quot;</span>  <span class="c1"># self.resource_type = 0</span>
+
+<div class="viewcode-block" id="StayOnMap.constraint_on_point">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StayOnMap.constraint_on_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">constraint_on_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="c1"># self.print_debug(&#39;checking point: &#39; + str(lat) + &#39;,&#39; + str(lon))</span>
+        <span class="n">is_on_map</span> <span class="o">=</span> <span class="p">((</span><span class="n">lat</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">lat</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">lon</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lon2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">lon</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lon1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">is_on_map</span></div>
+
+
+<div class="viewcode-block" id="StayOnMap.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StayOnMap.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;stay on wheather map&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="StayOnMap.set_map">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StayOnMap.set_map">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat1</span> <span class="o">=</span> <span class="n">lat1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lon1</span> <span class="o">=</span> <span class="n">lon1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat2</span> <span class="o">=</span> <span class="n">lat2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lon2</span> <span class="o">=</span> <span class="n">lon2</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ContinuousCheck">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ContinuousCheck">[docs]</a>
+<span class="k">class</span> <span class="nc">ContinuousCheck</span><span class="p">(</span><span class="n">NegativeContraint</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Contains various functions to test data connection,</span>
+<span class="sd">    gathering and use for obtaining spatial relations</span>
+<span class="sd">    for the continuous check in the negative constraints</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    host : str</span>
+<span class="sd">    database : str</span>
+<span class="sd">    user : str</span>
+<span class="sd">    password : str</span>
+<span class="sd">    port : str</span>
+<span class="sd">        returns values from .env  to be passed in the engine of the db</span>
+
+<span class="sd">    predicates : list</span>
+<span class="sd">        Possible spatial relations to be tested when considering the constraints</span>
+
+<span class="sd">    tags : list</span>
+<span class="sd">        Values of the seamark tags that need to be considered</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ContinuousChecks&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_engine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">db_engine</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;WRT_DB_HOST&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;WRT_DB_DATABASE&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;WRT_DB_USERNAME&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;WRT_DB_PASSWORD&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;POSTGRES_SCHEMA&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;WRT_DB_PORT&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect_database</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ContinuousCheck.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ContinuousCheck.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;no seamarks crossing&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ContinuousCheck.connect_database">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ContinuousCheck.connect_database">[docs]</a>
+    <span class="k">def</span> <span class="nf">connect_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connect to the database</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        No arguments</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Engine of PostgreSQL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Connect to the PostgreSQL database using SQLAlchemy</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
+            <span class="s2">&quot;postgresql://</span><span class="si">{user}</span><span class="s2">:</span><span class="si">{pwd}</span><span class="s2">@</span><span class="si">{host}</span><span class="s2">:</span><span class="si">{port}</span><span class="s2">/</span><span class="si">{db}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span>
+                                                                  <span class="n">db</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">engine</span></div>
+
+
+<div class="viewcode-block" id="ContinuousCheck.set_map_bbox">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ContinuousCheck.set_map_bbox">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_map_bbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_size</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span> <span class="o">&lt;=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span><span class="p">:</span>
+            <span class="n">min_lon</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span>
+            <span class="n">max_lon</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">min_lon</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon2</span>
+            <span class="n">max_lon</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lon1</span>
+
+        <span class="k">if</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span> <span class="o">&lt;=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span><span class="p">:</span>
+            <span class="n">min_lat</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span>
+            <span class="n">max_lat</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">min_lat</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat2</span>
+            <span class="n">max_lat</span> <span class="o">=</span> <span class="n">map_size</span><span class="o">.</span><span class="n">lat1</span>
+
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">min_lon</span><span class="p">,</span> <span class="n">min_lat</span><span class="p">,</span> <span class="n">max_lon</span><span class="p">,</span> <span class="n">max_lat</span><span class="p">)</span>
+        <span class="n">bbox_wkt</span> <span class="o">=</span> <span class="n">bbox</span><span class="o">.</span><span class="n">wkt</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;BBox in WKT: &#39;</span><span class="p">,</span> <span class="n">bbox_wkt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bbox_wkt</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RunTestContinuousChecks">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.RunTestContinuousChecks">[docs]</a>
+<span class="k">class</span> <span class="nc">RunTestContinuousChecks</span><span class="p">(</span><span class="n">ContinuousCheck</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_dict</span><span class="p">):</span>
+        <span class="n">NegativeContraint</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ContinuousChecks&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_result_dict</span> <span class="o">=</span> <span class="n">test_dict</span>
+
+<div class="viewcode-block" id="RunTestContinuousChecks.print_info">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.RunTestContinuousChecks.print_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s2">&quot;adding test module for ContinuousChecks&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RunTestContinuousChecks.connect_database">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.RunTestContinuousChecks.connect_database">[docs]</a>
+    <span class="k">def</span> <span class="nf">connect_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="RunTestContinuousChecks.check_crossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.RunTestContinuousChecks.check_crossing">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">result_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat_start</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">ires</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">result_length</span><span class="p">):</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_result_dict</span><span class="p">[</span><span class="n">ires</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SeamarkCrossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing">[docs]</a>
+<span class="k">class</span> <span class="nc">SeamarkCrossing</span><span class="p">(</span><span class="n">ContinuousCheck</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Contains various functions to test data connection,</span>
+<span class="sd">    gathering and use for obtaining spatial relations</span>
+<span class="sd">    for the continuous check in the negative constraints</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    host : str</span>
+<span class="sd">    database : str</span>
+<span class="sd">    user : str</span>
+<span class="sd">    password : str</span>
+<span class="sd">    port : str</span>
+<span class="sd">        returns values from .env  to be passed in the engine of the db</span>
+
+<span class="sd">    predicates : list</span>
+<span class="sd">        Possible spatial relations to be tested when considering the constraints</span>
+
+<span class="sd">    tags : list</span>
+<span class="sd">        Values of the seamark tags that need to be considered</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">concat_tree</span><span class="p">:</span> <span class="n">STRtree</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_stay_on_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">map_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_engine</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">db_engine</span><span class="o">=</span><span class="n">db_engine</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">db_engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">seamark_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_seamark_query</span><span class="p">(</span><span class="n">is_stay_on_map</span><span class="p">,</span> <span class="n">map_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">concat_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_STRTree</span><span class="p">(</span><span class="n">db_engine</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">seamark_query</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SeamarkCrossing.build_seamark_query">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.build_seamark_query">[docs]</a>
+    <span class="k">def</span> <span class="nf">build_seamark_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_stay_on_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">map_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="s2">&quot;&#39;seamark:type&#39;=&#39;restricted_area&#39;&quot;</span>
+        <span class="n">tags_category</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;safety&#39;</span><span class="p">,</span> <span class="s1">&#39;nature_reserve&#39;</span><span class="p">,</span> <span class="s1">&#39;bird_sanctuary&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;game_reserve&#39;</span><span class="p">,</span> <span class="s1">&#39;seal_sanctuary&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;degaussing_range&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;military&#39;</span><span class="p">,</span> <span class="s1">&#39;historic_wreck&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;navigational_aid_safety&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;minefield&#39;</span><span class="p">,</span> <span class="s1">&#39;swimming&#39;</span><span class="p">,</span> <span class="s1">&#39;waiting&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;research&#39;</span><span class="p">,</span> <span class="s1">&#39;dredging&#39;</span><span class="p">,</span> <span class="s1">&#39;fish_sanctuary&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;ecological_reserve&#39;</span><span class="p">,</span> <span class="s1">&#39;no_wake&#39;</span><span class="p">,</span> <span class="s1">&#39;swinging&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;water_skiing&#39;</span><span class="p">,</span> <span class="s1">&#39;essa&#39;</span><span class="p">,</span> <span class="s1">&#39;pssa&#39;</span><span class="p">]</span>
+
+        <span class="n">category_clause</span> <span class="o">=</span> <span class="s2">&quot; OR &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;tags -&gt; &#39;seamark:restricted_area:category&#39;=&#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">value</span>
+                                       <span class="ow">in</span> <span class="n">tags_category</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">is_stay_on_map</span><span class="p">:</span>
+            <span class="n">bbox_wkt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_map_bbox</span><span class="p">(</span><span class="n">map_size</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SELECT * FROM &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">+</span> <span class="s2">&quot;.nodes &quot;</span>
+                     <span class="s2">&quot;WHERE ST_Intersects(geom, ST_GeomFromText(&#39;</span><span class="si">{}</span><span class="s2">&#39;, 4326))&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bbox_wkt</span><span class="p">)</span>
+                     <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; AND (</span><span class="si">{</span><span class="n">category_clause</span><span class="si">}</span><span class="s2"> OR tags -&gt; &quot;</span> <span class="o">+</span> <span class="n">tags</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+                     <span class="s2">&quot;SELECT *, linestring AS geom FROM &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">+</span> <span class="s2">&quot;.ways &quot;</span>
+                     <span class="s2">&quot;WHERE ST_Intersects(linestring, ST_GeomFromText(&#39;</span><span class="si">{}</span><span class="s2">&#39;, 4326))&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bbox_wkt</span><span class="p">)</span>
+                     <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; AND (</span><span class="si">{</span><span class="n">category_clause</span><span class="si">}</span><span class="s2"> OR tags -&gt; &quot;</span> <span class="o">+</span> <span class="n">tags</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SELECT * FROM &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">+</span> <span class="s2">&quot;.nodes &quot;</span>
+                     <span class="sa">f</span><span class="s2">&quot;WHERE (</span><span class="si">{</span><span class="n">category_clause</span><span class="si">}</span><span class="s2"> OR tags -&gt; &quot;</span> <span class="o">+</span> <span class="n">tags</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+                     <span class="s2">&quot;SELECT *, linestring AS geom FROM &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">+</span> <span class="s2">&quot;.ways &quot;</span>
+                     <span class="sa">f</span><span class="s2">&quot;WHERE (</span><span class="si">{</span><span class="n">category_clause</span><span class="si">}</span><span class="s2"> OR tags -&gt; &quot;</span> <span class="o">+</span> <span class="n">tags</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span></div>
+
+
+<div class="viewcode-block" id="SeamarkCrossing.set_STRTree">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.set_STRTree">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_STRTree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">concat_gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">concat_nodes_ways</span><span class="p">(</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="n">concat_tree</span> <span class="o">=</span> <span class="n">STRtree</span><span class="p">(</span><span class="n">concat_gdf</span><span class="p">[</span><span class="s2">&quot;geom&quot;</span><span class="p">])</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PRINT CONCAT DF </span><span class="si">{</span><span class="n">concat_gdf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">concat_tree</span></div>
+
+
+<div class="viewcode-block" id="SeamarkCrossing.query_nodes">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.query_nodes">[docs]</a>
+    <span class="k">def</span> <span class="nf">query_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create new GeoDataFrame using public.nodes table in the query</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        engine : sqlalchemy engine</span>
+<span class="sd">            engine object</span>
+
+<span class="sd">        query : str</span>
+<span class="sd">            sql query for table nodes</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gdf : GeoDataFrame</span>
+<span class="sd">            gdf including all the features from public.nodes table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Define SQL query to retrieve list of tables</span>
+        <span class="c1"># sql_query = &quot;SELECT table_name FROM information_schema.tables WHERE table_schema = &#39;public&#39;&quot;</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_postgis</span><span class="p">(</span><span class="n">con</span><span class="o">=</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">sql</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">geom_col</span><span class="o">=</span><span class="s2">&quot;geom&quot;</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;epsg:4326&quot;</span><span class="p">)</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geom&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">gdf</span></div>
+
+
+<div class="viewcode-block" id="SeamarkCrossing.query_ways">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.query_ways">[docs]</a>
+    <span class="k">def</span> <span class="nf">query_ways</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create new GeoDataFrame using public.ways table in the query</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        engine : sqlalchemy engine</span>
+<span class="sd">            engine object</span>
+
+<span class="sd">        query : str</span>
+<span class="sd">            sql query for table ways</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gdf : GeoDataFrame</span>
+<span class="sd">            gdf including all the features from public.ways table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_postgis</span><span class="p">(</span><span class="n">con</span><span class="o">=</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">sql</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">geom_col</span><span class="o">=</span><span class="s2">&quot;geom&quot;</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;epsg:4326&quot;</span><span class="p">)</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geom&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">gdf</span></div>
+
+
+<div class="viewcode-block" id="SeamarkCrossing.concat_nodes_ways">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.concat_nodes_ways">[docs]</a>
+    <span class="k">def</span> <span class="nf">concat_nodes_ways</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">         Create new GeoDataFrame using public.ways and public.nodes table together in the query</span>
+
+<span class="sd">         Parameters</span>
+<span class="sd">         ----------</span>
+<span class="sd">         query : list</span>
+<span class="sd">             sql query for table ways</span>
+
+<span class="sd">        engine : sqlalchemy engine</span>
+<span class="sd">             engine object</span>
+
+<span class="sd">         Returns</span>
+<span class="sd">         ----------</span>
+<span class="sd">         combined_gdf : GeoDataFrame</span>
+<span class="sd">             gdf including all the features from public.ways and public.nodes table</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;nodes&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="s2">&quot;ways&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">gdf_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_nodes</span><span class="p">(</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">gdf_ways</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_ways</span><span class="p">(</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">gdf_nodes</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="ow">not</span> <span class="n">gdf_ways</span><span class="o">.</span><span class="n">empty</span><span class="p">):</span>
+                <span class="n">gdf_nodes</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">gdf_ways</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="n">combined_gdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf_nodes</span><span class="p">,</span> <span class="n">gdf_ways</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">combined_gdf</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="ow">not</span> <span class="n">gdf_nodes</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">gdf_ways</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">gdf_nodes</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">gdf_ways</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;false query passed&quot;</span></div>
+
+
+<div class="viewcode-block" id="SeamarkCrossing.check_crossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing.check_crossing">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">         Check if certain route crosses specified seamark objects</span>
+
+<span class="sd">         Parameters</span>
+<span class="sd">         ----------</span>
+<span class="sd">         lat_start : np.array</span>
+<span class="sd">            array of all origin latitudes of routing segments</span>
+
+<span class="sd">        lon_start : np.array</span>
+<span class="sd">        lon_start : np.array</span>
+<span class="sd">            array of all origin longitudes of routing segments</span>
+
+<span class="sd">         lat_end : np.array</span>
+<span class="sd">            array of all destination latitudes of routing segments</span>
+
+<span class="sd">        lon_end : np.array</span>
+<span class="sd">            array of all destination longitudes of routing segments</span>
+
+<span class="sd">         Returns</span>
+<span class="sd">         ----------</span>
+<span class="sd">         query_tree : list</span>
+<span class="sd">             bool of spatial relation result (True or False)</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+
+        <span class="n">query_tree</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">concat_tree</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lat_start</span><span class="p">)):</span>
+                <span class="n">start_point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">lon_start</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat_start</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">end_point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">lon_end</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat_end</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">LineString</span><span class="p">([</span><span class="n">start_point</span><span class="p">,</span> <span class="n">end_point</span><span class="p">])</span>
+                <span class="n">route_df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span><span class="n">line</span><span class="p">])</span>
+
+                <span class="n">geom_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">concat_tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">route_df</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">predicate</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">geom_object</span> <span class="o">==</span> <span class="p">[[],</span> <span class="p">[]]</span> <span class="ow">or</span> <span class="n">geom_object</span> <span class="o">==</span> <span class="p">[]:</span>
+                    <span class="c1"># if route is not constrained</span>
+                    <span class="n">query_tree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NO CROSSING for  </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s1"> in the query tree: </span><span class="si">{</span><span class="n">query_tree</span><span class="si">}</span><span class="s1"> &#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># if route is constrained</span>
+                    <span class="n">query_tree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;CROSSING for  </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s1"> in the query tree: </span><span class="si">{</span><span class="n">query_tree</span><span class="si">}</span><span class="s1"> &#39;</span><span class="p">)</span>
+
+            <span class="c1"># returns a list bools (spatial relation)</span>
+            <span class="k">return</span> <span class="n">query_tree</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LandPolygonsCrossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing">[docs]</a>
+<span class="k">class</span> <span class="nc">LandPolygonsCrossing</span><span class="p">(</span><span class="n">ContinuousCheck</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use the &#39;LandPolygonsCrossing&#39; constraint cautiously.</span>
+<span class="sd">    This class is yet to be tested.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">land_polygon_STRTree</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_engine</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">db_engine</span><span class="o">=</span><span class="n">db_engine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_size</span> <span class="o">=</span> <span class="n">map_size</span>
+
+        <span class="k">if</span> <span class="n">db_engine</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">landpolygon_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_landpolygon_query</span><span class="p">(</span><span class="n">map_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">land_polygon_STRTree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_landpolygon_STRTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">landpolygon_query</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LandPolygonsCrossing.build_landpolygon_query">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing.build_landpolygon_query">[docs]</a>
+    <span class="k">def</span> <span class="nf">build_landpolygon_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_size</span><span class="p">):</span>
+        <span class="n">bbox_wkt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_map_bbox</span><span class="p">(</span><span class="n">map_size</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT *,wkb_geometry as geom FROM public.land_polygons &quot;</span> \
+                <span class="s2">&quot;WHERE ST_Intersects(wkb_geometry, ST_GeomFromText(&#39;</span><span class="si">{}</span><span class="s2">&#39;, 4326))&quot;</span><span class="o">.</span>\
+                <span class="nb">format</span><span class="p">(</span><span class="n">bbox_wkt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span></div>
+
+
+<div class="viewcode-block" id="LandPolygonsCrossing.set_landpolygon_STRTree">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing.set_landpolygon_STRTree">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_landpolygon_STRTree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">land_polygon_gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_land_polygons</span><span class="p">(</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="n">land_STRTree</span> <span class="o">=</span> <span class="n">STRtree</span><span class="p">(</span><span class="n">land_polygon_gdf</span><span class="p">[</span><span class="s2">&quot;geom&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">land_STRTree</span></div>
+
+
+<div class="viewcode-block" id="LandPolygonsCrossing.query_land_polygons">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing.query_land_polygons">[docs]</a>
+    <span class="k">def</span> <span class="nf">query_land_polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_engine</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create new GeoDataFrame using public.ways table in the query</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        engine : sqlalchemy engine</span>
+<span class="sd">            engine object</span>
+
+<span class="sd">        query : str</span>
+<span class="sd">            sql query for table ways</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gdf : GeoDataFrame</span>
+<span class="sd">            gdf including all the features from public.ways table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_postgis</span><span class="p">(</span><span class="n">sql</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">con</span><span class="o">=</span><span class="n">db_engine</span><span class="p">,</span> <span class="n">geom_col</span><span class="o">=</span><span class="s2">&quot;geom&quot;</span><span class="p">)</span>  <span class="c1"># .drop(columns=[&quot;GEOMETRY&quot;])</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geom&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">gdf</span></div>
+
+
+<div class="viewcode-block" id="LandPolygonsCrossing.check_crossing">
+<a class="viewcode-back" href="../../../source/api-documentation/WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing.check_crossing">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_crossing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat_start</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if certain route crosses specified seamark objects</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lat_start : np.array</span>
+<span class="sd">            array of all origin latitudes of routing segments</span>
+
+<span class="sd">        lon_start : np.array</span>
+<span class="sd">            array of all origin longitudes of routing segments</span>
+
+<span class="sd">        lat_end : np.array</span>
+<span class="sd">            array of all destination latitudes of routing segments</span>
+
+<span class="sd">        lon_end : np.array</span>
+<span class="sd">            array of all destination longitudes of routing segments</span>
+
+<span class="sd">        time : datetime.datetime (optional argument)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        query_tree : list</span>
+<span class="sd">            bool of spatial relation result (True or False)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">query_tree</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">land_polygon_STRTree</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># generating the LineString geometry from start and end point</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lat_start</span><span class="p">)):</span>
+                <span class="n">start_point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">lon_start</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat_start</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">end_point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">lon_end</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat_end</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">LineString</span><span class="p">([</span><span class="n">start_point</span><span class="p">,</span> <span class="n">end_point</span><span class="p">])</span>
+
+                <span class="n">route_df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span><span class="n">line</span><span class="p">])</span>
+                <span class="n">geom_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">land_polygon_STRTree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">route_df</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;intersects&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                <span class="c1"># checks if there is spatial relation between routes and seamarks objects</span>
+                <span class="k">if</span> <span class="n">geom_object</span> <span class="o">==</span> <span class="p">[[],</span> <span class="p">[]]</span> <span class="ow">or</span> <span class="n">geom_object</span> <span class="o">==</span> <span class="p">[]:</span>
+                    <span class="c1"># if route is not constrained</span>
+                    <span class="n">query_tree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># if route is constrained</span>
+                    <span class="n">query_tree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># returns a list bools (spatial relation)</span>
+            <span class="k">return</span> <span class="n">query_tree</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/algorithms/index.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/constraints/index.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/weather.html">Weather data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/api-documentation/index.html">API documentation (still under construction!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

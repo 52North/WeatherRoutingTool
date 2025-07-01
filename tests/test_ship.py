@@ -50,9 +50,9 @@ class TestShip:
         idx = 2
 
         (fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test,
-         rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
-         u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
-         air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
+            rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
+            u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
+            air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
             = sp.get_element(idx)
 
         assert fuel[idx] == fuel_test

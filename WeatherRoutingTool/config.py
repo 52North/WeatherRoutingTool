@@ -273,3 +273,4 @@ class Config(BaseModel):
             raise ValueError(f"Failed to validate weather data: {e}")
 
         return self
+

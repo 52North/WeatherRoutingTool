@@ -1,0 +1,434 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="567pt" height="864pt" viewBox="0.00 0.00 567.35 864.00">
+<ns0:g id="graph0" class="graph" transform="scale(0.736573 0.736573) rotate(0) translate(4 1169)">
+<ns0:title>inheritancea653140e7b</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>Boat</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.Boat" ns1:title="Boat" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="84.5,-112 30.5,-112 30.5,-92 84.5,-92 84.5,-112" />
+<ns0:text text-anchor="middle" x="57.5" y="-98.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Boat</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>ConstantFuelBoat</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.ship.html#WeatherRoutingTool.ship.ship.ConstantFuelBoat" ns1:title="ConstantFuelBoat" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="302.75,-204 208,-204 208,-184 302.75,-184 302.75,-204" />
+<ns0:text text-anchor="middle" x="255.38" y="-190.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConstantFuelBoat</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>Boat-&gt;ConstantFuelBoat</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M80.59,-112.37C116.44,-129.22 187.25,-162.47 226.51,-180.91" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="226.11,-182.66 231.38,-183.2 227.6,-179.49 226.11,-182.66" />
+</ns0:g>
+
+<ns0:g id="node9" class="node">
+<ns0:title>DirectPowerBoat</ns0:title>
+<ns0:g id="a_node9"><ns0:a ns1:title="estimates power &amp; fuel consumption based on the so-called Direct Power Method">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="300.5,-112 210.25,-112 210.25,-92 300.5,-92 300.5,-112" />
+<ns0:text text-anchor="middle" x="255.38" y="-98.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">DirectPowerBoat</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>Boat-&gt;DirectPowerBoat</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M84.92,-102C115.22,-102 165.62,-102 203.59,-102" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="204.29,-103.75 209.29,-102 204.29,-100.25 204.29,-103.75" />
+</ns0:g>
+
+<ns0:g id="node19" class="node">
+<ns0:title>MariPowerTanker</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="301.25,-20 209.5,-20 209.5,0 301.25,0 301.25,-20" />
+<ns0:text text-anchor="middle" x="255.38" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">MariPowerTanker</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge11" class="edge">
+<ns0:title>Boat-&gt;MariPowerTanker</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M80.59,-91.63C116.44,-74.78 187.25,-41.53 226.51,-23.09" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="227.6,-24.51 231.38,-20.8 226.11,-21.34 227.6,-24.51" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>Constraint</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.Constraint" ns1:title="Constraint" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="88,-365 27,-365 27,-345 88,-345 88,-365" />
+<ns0:text text-anchor="middle" x="57.5" y="-351.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Constraint</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>NegativeContraint</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.NegativeContraint" ns1:title="NegativeContraint" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="302.75,-478 208,-478 208,-458 302.75,-458 302.75,-478" />
+<ns0:text text-anchor="middle" x="255.38" y="-464.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">NegativeContraint</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge13" class="edge">
+<ns0:title>Constraint-&gt;NegativeContraint</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M76.58,-365.43C112.14,-385.95 191.18,-431.55 230.79,-454.4" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="230.48,-456.24 235.69,-457.22 232.23,-453.2 230.48,-456.24" />
+</ns0:g>
+
+<ns0:g id="node21" class="node">
+<ns0:title>PositiveConstraint</ns0:title>
+<ns0:g id="a_node21"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraint" ns1:title="PositiveConstraint" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="303.5,-296 207.25,-296 207.25,-276 303.5,-276 303.5,-296" />
+<ns0:text text-anchor="middle" x="255.38" y="-282.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">PositiveConstraint</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge14" class="edge">
+<ns0:title>Constraint-&gt;PositiveConstraint</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M88.25,-344.52C123.3,-332.17 181.47,-311.68 218.85,-298.51" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="219.82,-300.03 223.95,-296.72 218.66,-296.73 219.82,-300.03" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>ConstraintPars</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintPars" ns1:title="ConstraintPars" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="98.12,-491 16.88,-491 16.88,-471 98.12,-471 98.12,-491" />
+<ns0:text text-anchor="middle" x="57.5" y="-477.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConstraintPars</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>ConstraintsList</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsList" ns1:title="ConstraintsList" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="98.5,-600 16.5,-600 16.5,-580 98.5,-580 98.5,-600" />
+<ns0:text text-anchor="middle" x="57.5" y="-586.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConstraintsList</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>ConstraintsListFactory</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ConstraintsListFactory" ns1:title="ConstraintsListFactory" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="115,-701 0,-701 0,-681 115,-681 115,-701" />
+<ns0:text text-anchor="middle" x="57.5" y="-687.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConstraintsListFactory</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>ContinuousCheck</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.ContinuousCheck" ns1:title="Contains various functions to test data connection," target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="522,-754 428,-754 428,-734 522,-734 522,-754" />
+<ns0:text text-anchor="middle" x="475" y="-740.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ContinuousCheck</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node18" class="node">
+<ns0:title>LandPolygonsCrossing</ns0:title>
+<ns0:g id="a_node18"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandPolygonsCrossing" ns1:title="Use the 'LandPolygonsCrossing' constraint cautiously." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="752.5,-846 636,-846 636,-826 752.5,-826 752.5,-846" />
+<ns0:text text-anchor="middle" x="694.25" y="-832.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">LandPolygonsCrossing</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge10" class="edge">
+<ns0:title>ContinuousCheck-&gt;LandPolygonsCrossing</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M500.5,-754.37C540.35,-771.25 619.12,-804.61 662.61,-823.03" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="662.52,-824.89 667.81,-825.23 663.89,-821.67 662.52,-824.89" />
+</ns0:g>
+
+<ns0:g id="node24" class="node">
+<ns0:title>RunTestContinuousChecks</ns0:title>
+<ns0:g id="a_node24"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.RunTestContinuousChecks" ns1:title="RunTestContinuousChecks" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="762.25,-754 626.25,-754 626.25,-734 762.25,-734 762.25,-754" />
+<ns0:text text-anchor="middle" x="694.25" y="-740.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RunTestContinuousChecks</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge16" class="edge">
+<ns0:title>ContinuousCheck-&gt;RunTestContinuousChecks</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M522.34,-744C550.61,-744 587.39,-744 619.58,-744" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="620.19,-745.75 625.19,-744 620.19,-742.25 620.19,-745.75" />
+</ns0:g>
+
+<ns0:g id="node25" class="node">
+<ns0:title>SeamarkCrossing</ns0:title>
+<ns0:g id="a_node25"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.SeamarkCrossing" ns1:title="Contains various functions to test data connection," target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="741.25,-662 647.25,-662 647.25,-642 741.25,-642 741.25,-662" />
+<ns0:text text-anchor="middle" x="694.25" y="-648.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">SeamarkCrossing</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge17" class="edge">
+<ns0:title>ContinuousCheck-&gt;SeamarkCrossing</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M500.5,-733.63C540.35,-716.75 619.12,-683.39 662.61,-664.97" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="663.89,-666.33 667.81,-662.77 662.52,-663.11 663.89,-666.33" />
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>NegativeContraint-&gt;ContinuousCheck</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M261.84,-478.5C282.88,-518.65 359.28,-662.01 395.75,-698 409.64,-711.7 428.39,-722.91 444.06,-730.83" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="443.74,-732.62 449,-733.26 445.29,-729.48 443.74,-732.62" />
+</ns0:g>
+
+<ns0:g id="node17" class="node">
+<ns0:title>LandCrossing</ns0:title>
+<ns0:g id="a_node17"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.LandCrossing" ns1:title="LandCrossing" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="513,-662 437,-662 437,-642 513,-642 513,-662" />
+<ns0:text text-anchor="middle" x="475" y="-648.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">LandCrossing</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge9" class="edge">
+<ns0:title>NegativeContraint-&gt;LandCrossing</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M265.09,-478.23C285.98,-502.38 341.24,-564.05 395.75,-606 411.99,-618.5 431.92,-630.17 447.6,-638.63" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="447.27,-640.43 452.5,-641.24 448.91,-637.34 447.27,-640.43" />
+</ns0:g>
+
+<ns0:g id="node20" class="node">
+<ns0:title>NegativeConstraintFromWeather</ns0:title>
+<ns0:g id="a_node20"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.NegativeConstraintFromWeather" ns1:title="NegativeConstraintFromWeather" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="554.25,-570 395.75,-570 395.75,-550 554.25,-550 554.25,-570" />
+<ns0:text text-anchor="middle" x="475" y="-556.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">NegativeConstraintFromWeather</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge12" class="edge">
+<ns0:title>NegativeContraint-&gt;NegativeConstraintFromWeather</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.92,-478.37C320.84,-495.25 399.74,-528.61 443.31,-547.03" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="443.23,-548.89 448.52,-549.23 444.59,-545.67 443.23,-548.89" />
+</ns0:g>
+
+<ns0:g id="node26" class="node">
+<ns0:title>StatusCodeError</ns0:title>
+<ns0:g id="a_node26"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StatusCodeError" ns1:title="Negative constraint for points where mariPower returns a status code of 3 (=error)." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="519.38,-478 430.62,-478 430.62,-458 519.38,-458 519.38,-478" />
+<ns0:text text-anchor="middle" x="475" y="-464.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">StatusCodeError</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge18" class="edge">
+<ns0:title>NegativeContraint-&gt;StatusCodeError</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M303.06,-468C338.72,-468 387.76,-468 424.17,-468" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="424.6,-469.75 429.6,-468 424.6,-466.25 424.6,-469.75" />
+</ns0:g>
+
+<ns0:g id="node27" class="node">
+<ns0:title>StayOnMap</ns0:title>
+<ns0:g id="a_node27"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.StayOnMap" ns1:title="StayOnMap" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="508.88,-386 441.12,-386 441.12,-366 508.88,-366 508.88,-386" />
+<ns0:text text-anchor="middle" x="475" y="-372.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">StayOnMap</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge19" class="edge">
+<ns0:title>NegativeContraint-&gt;StayOnMap</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.92,-457.63C320.84,-440.75 399.74,-407.39 443.31,-388.97" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="444.59,-390.33 448.52,-386.77 443.23,-387.11 444.59,-390.33" />
+</ns0:g>
+
+<ns0:g id="node28" class="node">
+<ns0:title>WaterDepth</ns0:title>
+<ns0:g id="a_node28"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaterDepth" ns1:title="WaterDepth" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="508.88,-294 441.12,-294 441.12,-274 508.88,-274 508.88,-294" />
+<ns0:text text-anchor="middle" x="475" y="-280.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WaterDepth</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge20" class="edge">
+<ns0:title>NegativeContraint-&gt;WaterDepth</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M265.09,-457.77C285.98,-433.62 341.24,-371.95 395.75,-330 411.99,-317.5 431.92,-305.83 447.6,-297.37" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="448.91,-298.66 452.5,-294.76 447.27,-295.57 448.91,-298.66" />
+</ns0:g>
+
+<ns0:g id="node10" class="node">
+<ns0:title>FakeWeather</ns0:title>
+<ns0:g id="a_node10"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.html#WeatherRoutingTool.weather.FakeWeather" ns1:title="FakeWeather" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="292.25,-935 218.5,-935 218.5,-915 292.25,-915 292.25,-935" />
+<ns0:text text-anchor="middle" x="255.38" y="-921.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">FakeWeather</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node11" class="node">
+<ns0:title>WeatherCond</ns0:title>
+<ns0:g id="a_node11"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCond" ns1:title="WeatherCond" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="95.12,-797 19.88,-797 19.88,-777 95.12,-777 95.12,-797" />
+<ns0:text text-anchor="middle" x="57.5" y="-783.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WeatherCond</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>WeatherCond-&gt;FakeWeather</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M72.69,-797.31C96.29,-814.44 145.18,-849.76 187,-879 202.58,-889.89 220.33,-902 233.71,-911.06" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="233.04,-912.72 238.16,-914.08 235,-909.83 233.04,-912.72" />
+</ns0:g>
+
+<ns0:g id="node30" class="node">
+<ns0:title>WeatherCondEnvAutomatic</ns0:title>
+<ns0:g id="a_node30"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCondEnvAutomatic" ns1:title="WeatherCondEnvAutomatic" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="323.75,-843 187,-843 187,-823 323.75,-823 323.75,-843" />
+<ns0:text text-anchor="middle" x="255.38" y="-829.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WeatherCondEnvAutomatic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge22" class="edge">
+<ns0:title>WeatherCond-&gt;WeatherCondEnvAutomatic</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M95.34,-795.65C125.91,-802.83 169.7,-813.11 203.59,-821.07" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="203.8,-822.92 209.06,-822.36 204.6,-819.51 203.8,-822.92" />
+</ns0:g>
+
+<ns0:g id="node31" class="node">
+<ns0:title>WeatherCondFromFile</ns0:title>
+<ns0:g id="a_node31"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCondFromFile" ns1:title="WeatherCondFromFile" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="312.12,-751 198.62,-751 198.62,-731 312.12,-731 312.12,-751" />
+<ns0:text text-anchor="middle" x="255.38" y="-737.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WeatherCondFromFile</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge23" class="edge">
+<ns0:title>WeatherCond-&gt;WeatherCondFromFile</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M95.34,-778.35C125.91,-771.17 169.7,-760.89 203.59,-752.93" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="204.6,-754.49 209.06,-751.64 203.8,-751.08 204.6,-754.49" />
+</ns0:g>
+
+<ns0:g id="node32" class="node">
+<ns0:title>WeatherCondODC</ns0:title>
+<ns0:g id="a_node32"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.html#WeatherRoutingTool.weather.WeatherCondODC" ns1:title="WeatherCondODC" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="304.25,-659 206.5,-659 206.5,-639 304.25,-639 304.25,-659" />
+<ns0:text text-anchor="middle" x="255.38" y="-645.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WeatherCondODC</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge24" class="edge">
+<ns0:title>WeatherCond-&gt;WeatherCondODC</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M72.69,-776.69C96.29,-759.56 145.18,-724.24 187,-695 202.58,-684.11 220.33,-672 233.71,-662.94" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="235,-664.17 238.16,-659.92 233.04,-661.28 235,-664.17" />
+</ns0:g>
+
+<ns0:g id="node12" class="node">
+<ns0:title>Genetic</ns0:title>
+<ns0:g id="a_node12"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.genetic.Genetic" ns1:title="Genetic" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="282.38,-1119 228.38,-1119 228.38,-1099 282.38,-1099 282.38,-1119" />
+<ns0:text text-anchor="middle" x="255.38" y="-1105.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Genetic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node13" class="node">
+<ns0:title>RoutingAlg</ns0:title>
+<ns0:g id="a_node13"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.routingalg.RoutingAlg" ns1:title="Isochrone data structure with typing." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="89.5,-1073 25.5,-1073 25.5,-1053 89.5,-1053 89.5,-1073" />
+<ns0:text text-anchor="middle" x="57.5" y="-1059.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RoutingAlg</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>RoutingAlg-&gt;Genetic</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M89.97,-1070.39C126.16,-1078.89 185.27,-1092.77 221.89,-1101.37" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="222,-1103.19 227.27,-1102.63 222.8,-1099.79 222,-1103.19" />
+</ns0:g>
+
+<ns0:g id="node14" class="node">
+<ns0:title>IsoBased</ns0:title>
+<ns0:g id="a_node14"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.isobased.IsoBased" ns1:title="All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="284,-1027 226.75,-1027 226.75,-1007 284,-1007 284,-1027" />
+<ns0:text text-anchor="middle" x="255.38" y="-1013.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">IsoBased</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>RoutingAlg-&gt;IsoBased</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M89.97,-1055.61C125.65,-1047.23 183.61,-1033.62 220.32,-1025" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="221.27,-1026.57 225.74,-1023.73 220.47,-1023.17 221.27,-1026.57" />
+</ns0:g>
+
+<ns0:g id="node15" class="node">
+<ns0:title>IsoChrone</ns0:title>
+<ns0:g id="a_node15"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.isochrone.IsoChrone" ns1:title="IsoChrone" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="505.5,-1073 444.5,-1073 444.5,-1053 505.5,-1053 505.5,-1073" />
+<ns0:text text-anchor="middle" x="475" y="-1059.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">IsoChrone</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>IsoBased-&gt;IsoChrone</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M284.38,-1022.92C323.55,-1031.2 394.73,-1046.24 437.86,-1055.36" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="438.02,-1057.18 443.27,-1056.5 438.74,-1053.76 438.02,-1057.18" />
+</ns0:g>
+
+<ns0:g id="node16" class="node">
+<ns0:title>IsoFuel</ns0:title>
+<ns0:g id="a_node16"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.isofuel.IsoFuel" ns1:title="IsoFuel" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="502,-981 448,-981 448,-961 502,-961 502,-981" />
+<ns0:text text-anchor="middle" x="475" y="-967.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">IsoFuel</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge8" class="edge">
+<ns0:title>IsoBased-&gt;IsoFuel</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M284.38,-1011.08C324.67,-1002.56 398.83,-986.89 441.49,-977.87" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="442.53,-979.44 447.06,-976.69 441.81,-976.02 442.53,-979.44" />
+</ns0:g>
+
+<ns0:g id="node29" class="node">
+<ns0:title>WaveHeight</ns0:title>
+<ns0:g id="a_node29"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.WaveHeight" ns1:title="WaveHeight" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="728.88,-570 659.62,-570 659.62,-550 728.88,-550 728.88,-570" />
+<ns0:text text-anchor="middle" x="694.25" y="-556.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">WaveHeight</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge21" class="edge">
+<ns0:title>NegativeConstraintFromWeather-&gt;WaveHeight</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M554.74,-560C588.02,-560 625.35,-560 652.86,-560" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="653.53,-561.75 658.53,-560 653.53,-558.25 653.53,-561.75" />
+</ns0:g>
+
+<ns0:g id="node22" class="node">
+<ns0:title>PositiveConstraintPoint</ns0:title>
+<ns0:g id="a_node22"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.constraints.html#WeatherRoutingTool.constraints.constraints.PositiveConstraintPoint" ns1:title="PositiveConstraintPoint" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="534.38,-202 415.62,-202 415.62,-182 534.38,-182 534.38,-202" />
+<ns0:text text-anchor="middle" x="475" y="-188.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">PositiveConstraintPoint</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge15" class="edge">
+<ns0:title>PositiveConstraint-&gt;PositiveConstraintPoint</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.5,-275.58C320.45,-258.32 400.27,-223.85 443.87,-205.02" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="445.18,-206.35 449.08,-202.77 443.79,-203.14 445.18,-206.35" />
+</ns0:g>
+
+<ns0:g id="node23" class="node">
+<ns0:title>RoutingAlgFactory</ns0:title>
+<ns0:g id="a_node23"><ns0:a ns1:href="..\source\api-documentation\WeatherRoutingTool.algorithms.html#WeatherRoutingTool.algorithms.routingalg_factory.RoutingAlgFactory" ns1:title="RoutingAlgFactory" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="106,-1165 9,-1165 9,-1145 106,-1145 106,-1165" />
+<ns0:text text-anchor="middle" x="57.5" y="-1151.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RoutingAlgFactory</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+</ns0:g>
+</ns0:svg>

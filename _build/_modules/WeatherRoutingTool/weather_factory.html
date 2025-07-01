@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeatherRoutingTool.weather_factory &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for WeatherRoutingTool.weather_factory</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">WeatherRoutingTool.utils.formatting</span> <span class="k">as</span> <span class="nn">form</span>
+<span class="kn">from</span> <span class="nn">WeatherRoutingTool.weather</span> <span class="kn">import</span> <span class="n">WeatherCondFromFile</span><span class="p">,</span> <span class="n">WeatherCondEnvAutomatic</span><span class="p">,</span> <span class="n">WeatherCondODC</span><span class="p">,</span> <span class="n">FakeWeather</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;WRT.weather&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="WeatherFactory">
+<a class="viewcode-back" href="../../source/api-documentation/WeatherRoutingTool.html#WeatherRoutingTool.weather_factory.WeatherFactory">[docs]</a>
+<span class="k">class</span> <span class="nc">WeatherFactory</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="WeatherFactory.get_weather">
+<a class="viewcode-back" href="../../source/api-documentation/WeatherRoutingTool.html#WeatherRoutingTool.weather_factory.WeatherFactory.get_weather">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_weather</span><span class="p">(</span><span class="n">data_mode</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">,</span> <span class="n">default_map</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;from_file&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Reading weather data from file:  &#39;</span> <span class="o">+</span> <span class="n">file_path</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">WeatherCondFromFile</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">set_map_size</span><span class="p">(</span><span class="n">default_map</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;automatic&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Automatic download from weather data.&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">wt_download</span> <span class="o">=</span> <span class="n">WeatherCondEnvAutomatic</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">set_map_size</span><span class="p">(</span><span class="n">default_map</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">()</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">write_data</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">WeatherCondFromFile</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;odc&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Loading data with OpenDataCube.&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">wt_download</span> <span class="o">=</span> <span class="n">WeatherCondODC</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">set_map_size</span><span class="p">(</span><span class="n">default_map</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">()</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">write_data</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">WeatherCondFromFile</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_mode</span> <span class="o">==</span> <span class="s1">&#39;fake&#39;</span><span class="p">:</span>
+            <span class="n">var_dict</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;var_dict&#39;</span><span class="p">)</span>
+            <span class="n">coord_res</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;coord_res&#39;</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">get_log_step</span><span class="p">(</span><span class="s1">&#39;Faking weather data.&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">wt_download</span> <span class="o">=</span> <span class="n">FakeWeather</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">,</span> <span class="n">coord_res</span><span class="p">,</span> <span class="n">var_dict</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">set_map_size</span><span class="p">(</span><span class="n">default_map</span><span class="p">)</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">()</span>
+            <span class="n">wt_download</span><span class="o">.</span><span class="n">write_data</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">WeatherCondFromFile</span><span class="p">(</span><span class="n">departure_time</span><span class="p">,</span> <span class="n">time_forecast</span><span class="p">,</span> <span class="n">time_resolution</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">set_map_size</span><span class="p">(</span><span class="n">default_map</span><span class="p">)</span>
+            <span class="n">wt</span><span class="o">.</span><span class="n">read_dataset</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="n">wt</span><span class="o">.</span><span class="n">check_units</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">wt</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/algorithms/index.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/constraints/index.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/weather.html">Weather data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/api-documentation/index.html">API documentation (still under construction!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

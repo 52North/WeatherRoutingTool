@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Isofuel Algorithm &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Constraints" href="../constraints/index.html" />
+    <link rel="prev" title="Genetic Algorithm" href="genetic.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="isofuel-algorithm">
+<h1>Isofuel Algorithm<a class="headerlink" href="#isofuel-algorithm" title="Link to this heading">¶</a></h1>
+<section id="general-concept">
+<h2>General concept<a class="headerlink" href="#general-concept" title="Link to this heading">¶</a></h2>
+<p>The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is referred to as <em>pruning</em>. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is referred to as <em>route segment</em>.</p>
+<p>The algorithm is the following:</p>
+<ol class="arabic simple">
+<li><p>Define the amount of fuel <span class="math notranslate nohighlight">\(f_{max}\)</span> that the ship can consume for every single routing step.</p></li>
+<li><p>Consider a selection of courses outgoing from the start coordinate pair. For every course, calculate the fuel rate <em>f/t</em> (the amount of fuel consumed per time interval) that is necessary to keep the ship speed and course.</p></li>
+<li><p>Based on <span class="math notranslate nohighlight">\(f/t\)</span>, <span class="math notranslate nohighlight">\(f_{max}\)</span> and the ship speed, calculate the distance that is traveled for every route segment.</p></li>
+<li><p>Divide the angular region into equally-sized segments – the <em>pruning segments</em>. For every pruning segment, the end point of the route segment that maximises the distance is passed as a new starting point to the next routing step.</p></li>
+<li><p>Repeat steps 2. to 4. until the distance of any route from the starting coordinates towards the destination is smaller than the length of the route segment from the current routing step.</p></li>
+</ol>
+<p>Obviously, the amount of fuel <span class="math notranslate nohighlight">\(f_{max}\)</span> that is provided to the algorithm determines the step width of the final route: the larger <span class="math notranslate nohighlight">\(f_{max}\)</span>, the longer the route segments and the more edgy the final route. The number <span class="math notranslate nohighlight">\(n_{courses}\)</span> of courses that is considered for every coordinate pair defines the resolution with which the area is searched for optimal routes. Thus, the smaller <span class="math notranslate nohighlight">\(n_{courses}\)</span>, the larger the likelihood that more optimal routes exist than the final route provided. On the other hand, the larger <span class="math notranslate nohighlight">\(n_{courses}\)</span> the larger is the calculation power. Further settings that can be defined are the area that is considered for the pruning as well as the number <span class="math notranslate nohighlight">\(n_{prune}\)</span> of pruning segments. The later specifies the number of end points that are passed from one routing step to the next. The relation of <span class="math notranslate nohighlight">\(n_{courses}\)</span> and <span class="math notranslate nohighlight">\(n_{prune}\)</span> defines the degree of optimisation.</p>
+</section>
+<section id="parameter-and-variable-definitions">
+<h2>Parameter and variable definitions<a class="headerlink" href="#parameter-and-variable-definitions" title="Link to this heading">¶</a></h2>
+<figure class="align-default" id="id1">
+<img alt="isofuel_definitions" src="../../_images/isofuel_definitions.jpg" />
+<figcaption>
+<p><span class="caption-text">Fig.2: Schema for the definition of the most important parameters names for the isofuel algorithm.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">ISOCHRONE_PRUNE_SEGMENTS</span></code> = number of segments that are used for the pruning process</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">ISOCHRONE_PRUNE_SECTOR_DEG_HALF</span></code> = angular range of azimuth angle that is considered for pruning (only one half of it!)</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">ROUTER_HDGS_SEGMENTS</span></code> = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">ROUTER_HDGS_INCREMENTS_DEG</span></code> = angular distance between two adjacent routing segments</div>
+</div>
+<div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">heading/course/azimuth/variants</span></code> = the angular distance towards North on the grand circle route</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">lats_per_step</span></code>: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">lons_per_step</span></code>: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</div>
+</div>
+</section>
+<section id="pruning-methods">
+<h2>Pruning methods<a class="headerlink" href="#pruning-methods" title="Link to this heading">¶</a></h2>
+<p>The pruning is the basis of the optimisation process for the isofuel algorithm. There exist three major concepts that can be used to adjust the pruning:</p>
+<ol class="arabic simple">
+<li><p>The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered – in the following refered to as <em>symmetry axis</em></p></li>
+<li><p>The choice of how route segments are grouped for the pruning.</p></li>
+<li><p>The minimisation criterion that is used as basis for the pruning.</p></li>
+</ol>
+</section>
+<section id="the-definition-of-the-symmetry-axis">
+<h2>The Definition of the Symmetry Axis<a class="headerlink" href="#the-definition-of-the-symmetry-axis" title="Link to this heading">¶</a></h2>
+<p>Two methods for the definition of the symmetry axis can be selected:</p>
+<ol class="arabic simple">
+<li><p>The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.</p></li>
+<li><p>The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.</p></li>
+</ol>
+<figure class="align-default" id="id2">
+<img alt="gcr_centered_pruning" src="../../_images/gcr_centered_pruning.png" />
+<figcaption>
+<p><span class="caption-text">Fig.3: The symmetry axis of the pruning is given by the grand circle distance between global start and end point.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id3">
+<img alt="headings_centered_pruning" src="../../_images/headings_centered_pruning.png" />
+<figcaption>
+<p><span class="caption-text">Fig.4: The symmetry axis of the pruning is given by the median of the angles of the connecting lines between the end of the route segments and the destination.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="grouping-route-segments">
+<h2>Grouping Route Segments<a class="headerlink" href="#grouping-route-segments" title="Link to this heading">¶</a></h2>
+<p>Route segments are organised in groups before the pruning is performed. Segments that lie outside of the pruning sector (shaded pink area in figures below) are exclueded from the pruning (dashed grey lines). The segment of one group that performs best regarding the minimisation criterion, survives the pruning process (solid pink lines). Three possibilities are available for grouping the route segments for the pruning:</p>
+<ol class="arabic simple">
+<li><p><em>courses-based</em>:  Route segments are grouped according to their courses.</p></li>
+</ol>
+<figure class="align-default">
+<img alt="bearings_based_pruning" src="../../_images/bearings_based_pruning.png" />
+</figure>
+<ol class="arabic simple" start="2">
+<li><p><em>larger-direction-based</em>: Route segments are grouped accoding to the angle of the connecting line between the global start point and the end of the route segment.</p></li>
+</ol>
+<figure class="align-default">
+<img alt="larger_direction_based_pruning" src="../../_images/larger_direction_based_pruning.png" />
+</figure>
+<ol class="arabic simple" start="4">
+<li><p><em>branch-based</em>: Route segments of one <em>branch</em> form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.</p></li>
+</ol>
+<figure class="align-default">
+<img alt="branch_based_pruning" src="../../_images/branch_based_pruning.png" />
+</figure>
+</section>
+<section id="the-minimisation-criterion">
+<h2>The Minimisation Criterion<a class="headerlink" href="#the-minimisation-criterion" title="Link to this heading">¶</a></h2>
+<p><em>to be continued</em></p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Algorithms</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="genetic.html">Genetic Algorithm</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Isofuel Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-concept">General concept</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-and-variable-definitions">Parameter and variable definitions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pruning-methods">Pruning methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-definition-of-the-symmetry-axis">The Definition of the Symmetry Axis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grouping-route-segments">Grouping Route Segments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-minimisation-criterion">The Minimisation Criterion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../constraints/index.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../weather.html">Weather data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/index.html">API documentation (still under construction!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Algorithms</a><ul>
+      <li>Previous: <a href="genetic.html" title="previous chapter">Genetic Algorithm</a></li>
+      <li>Next: <a href="../constraints/index.html" title="next chapter">Constraints</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/source/algorithms/isofuel.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

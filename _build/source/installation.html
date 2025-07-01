@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Installation &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<p>Steps:</p>
+<ul class="simple">
+<li><p>clone the repository: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/52North/WeatherRoutingTool.git</span></code></p></li>
+<li><p>change to the folder: <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">WeatherRoutingTool</span></code></p></li>
+<li><p>[recommended] create and activate a virtual environment, e.g.
+- <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">venv</span> <span class="pre">&quot;venv&quot;</span></code>
+- <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">venv/bin/activate</span></code></p></li>
+<li><p>install the WRT: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> or in editable mode (recommended for development) <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code></p></li>
+</ul>
+<p><strong>Power/fuel consumption framework</strong></p>
+<p>In order to get high-quality results, a suitable power/fuel modelling framework should be used as it is the core of any weather routing optimization.</p>
+<p>The WRT was originally implemented within the research project <a class="reference external" href="https://maridata.org/en/start_en">MariData</a>. Within this project the power/fuel modelling framework <strong>mariPower</strong> was developed by project partners from the <a class="reference external" href="https://www.tuhh.de/fds/home">Institute of Fluid Dynamics and Ship Theory</a> of the Hamburg University of Technology.
+The mariPower package allows to predict engine power and fuel consumption under various environmental conditions for specific ships investigated in the project. More details about the package and the project as a whole can be found in the following publication: <a class="reference external" href="https://proceedings.open.tudelft.nl/imdc24/article/view/875">https://proceedings.open.tudelft.nl/imdc24/article/view/875</a>.
+The mariPower package is closed source software and this will most likely not change in the future. However, as power demand varies from ship to ship users have to provide code for making power predictions on their own suitable to the use case.</p>
+<p>For users with access to mariPower:</p>
+<ul class="simple">
+<li><p>clone the repository</p></li>
+<li><p>change to the folder: <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">maripower</span></code></p></li>
+<li><p>install mariPower: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code></p></li>
+</ul>
+<p>For users without access to mariPower:</p>
+<p>One way to test the WRT without mariPower is to use the configuration <code class="docutils literal notranslate"><span class="pre">SHIP_TYPE='direct_power_method'</span></code> and specifying the mandatory config parameters</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'BOAT_SMCR_POWER'</span></code>: power at maximum continuous rating (kWh)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'BOAT_FUEL_RATE'</span></code>: fuel rate at the working point (g/kWh)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'BOAT_LENGTH'</span></code>: boat length overall (m)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'BOAT_BREADTH'</span></code>: boat breadth (m)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'BOAT_HBR'</span></code>: boat height (m)</p></li>
+</ul>
+<p>This will estimate the power consumption based on several assumptions and a simple model. It is assumed, that the ship travels at a fixed working point of propeller power and ship speed. The value pair that is considered corresponds to 75 % of the SMCR power and the ship speed. Both, the SMCR power and the ship speed need to be provided by the user in the config file and it is left to the user to select sensible values for this working point. The power consumption is then calculated as the sum of 75 % SMCR power and the power consumption caused by the added resistance due to environmental conditions. The power consumption due to added resistance is estimated using the Direct Power Method  as described in the <a class="reference external" href="https://www.ittc.info/media/9874/75-04-01-011.pdf">ITTC - Recommended Procedures and Guidelines</a>. Currently, only the added resistance due to wind is considered using the regression formula by <a class="reference external" href="https://www.nmri.go.jp/archives/institutes/marine_renewable_energy/marine_energy_research/staff/fujiwara/fujiwarapdf/2009-TPC-553.pdf">Fujiwara et al</a>; the consideration of waves is planned for the future. Of course, results will only be rough estimates, but this simple model enables the user to quickly test functionality and performance of the code and get some first ideas of possible routes.</p>
+<p>New ships with their own power/fuel model can be integrated by implementing a new <a class="reference external" href="https://github.com/52North/WeatherRoutingTool/blob/main/WeatherRoutingTool/ship/ship.py">ship class</a> and using it in the config.</p>
+<p>In the future, it would be interesting to integrate general empirical formulas for power demand which provide reasonable results based on a small set of general ship parameters provided by the user like length and draft of the ship. However, for optimal results it is necessary to have a power prediction framework specifically designed for the ship(s) investigated. This could be based, e.g., on physical laws or data driven.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/index.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="constraints/index.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="weather.html">Weather data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-documentation/index.html">API documentation (still under construction!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!</a></li>
+      <li>Next: <a href="configuration.html" title="next chapter">Configuration</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/source/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Constraints &#8212; WeatherRoutingTool  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Consumption models" href="../consumption-models/index.html" />
+    <link rel="prev" title="Isofuel Algorithm" href="../algorithms/isofuel.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="constraints">
+<h1>Constraints<a class="headerlink" href="#constraints" title="Link to this heading">¶</a></h1>
+<section id="the-constraints-module">
+<h2>The constraints module<a class="headerlink" href="#the-constraints-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="the-input-parameters">
+<h2>The input parameters<a class="headerlink" href="#the-input-parameters" title="Link to this heading">¶</a></h2>
+<figure class="align-default" id="id1">
+<img alt="constraint_arguments" src="../../_images/constraint_arguments.png" />
+<figcaption>
+<p><span class="caption-text">Fig.4: Figure for illustrating the concept of passing the information on the routing segments that are to be checked by the constraint module to the respective function. Variable names printed in orange correspond to the naming scheme for the first routing step while variables printed in blue correspond to the naming scheme for the second routing step.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Thereby, several routing segments can be processed in only one request. This means that for the genetic algorithm, only one request needs to be performed for every route that is considered in a single generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">safe_crossing</span><span class="p">(</span><span class="n">lat_start</span><span class="p">,</span> <span class="n">lat_end</span><span class="p">,</span> <span class="n">lon_start</span><span class="p">,</span> <span class="n">lon_end</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>then, the arguments <code class="docutils literal notranslate"><span class="pre">lat_start</span></code>, <code class="docutils literal notranslate"><span class="pre">lat_end</span></code>, <code class="docutils literal notranslate"><span class="pre">lon_start</span></code> and <code class="docutils literal notranslate"><span class="pre">lon_end</span></code> correspond to arrays for which every element characterises a different routing segment. Thus the length of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following.</p>
+<p>Let’s consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that are passed to the constraints module for the first routing step are the latitudes and longitudes of start and end points for the routing segments <cite>a</cite> to <cite>e</cite> which are</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(lat\_start = (lat\_start_{abcde}, lat\_start_{abcde}, lat\_start_{abcde}, lat\_start_{abcde}, lat\_start_{abcde})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lat\_end = (lat\_end_{a}, lat\_end_{b}, lat\_end_{c}, lat\_end_{d}, lat\_end_{e})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lon\_start = (lon\_start_{abcde}, lon\_start_{abcde}, lon\_start_{abcde}, lon\_start_{abcde}, lon\_start_{abcde})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lon\_end = (lon\_end_{a}, lon\_end_{b}, lon\_end_{c}, lon\_end_{d}, lon\_end_{e})\)</span></p></li>
+</ul>
+<p>i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.&lt;br&gt;
+The arguments that are passed for the second routing step are the start and end coordinates of the routing segments <span class="math notranslate nohighlight">\(\alpha\)</span> to <span class="math notranslate nohighlight">\(\zeta\)</span>:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(lat\_start = (lat\_start_{\alpha\beta\gamma}, lat\_start_{\alpha\beta\gamma}, lat\_start_{\alpha\beta\gamma}, lat\_start_{\delta\epsilon\zeta}, lat\_start_{\delta\epsilon\zeta}, lat\_start_{\delta\epsilon\zeta})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lat\_end = (lat\_end_{\alpha}, lat\_end_{\beta}, lat\_end_{\gamma}, lat\_end_{\delta}, lat\_end_{\epsilon}, lat\_end_{\zeta})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lon\_start = (lon\_start_{\alpha\beta\gamma}, lon\_start_{\alpha\beta\gamma}, lon\_start_{\alpha\beta\gamma}, lon\_start_{\delta\epsilon\zeta}, lon\_start_{\delta\epsilon\zeta},lon\_start_{\delta\epsilon\zeta})\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(lon\_end =  (lon\_end_{\alpha}, lon\_end_{\beta}, lon\_end_{\gamma}, lon\_end_{\delta}, lon\_end_{\epsilon}, lon\_end_{\zeta})\)</span></p></li>
+</ul>
+<p>i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.</p>
+</section>
+<section id="route-postprocessing">
+<h2>Route Postprocessing<a class="headerlink" href="#route-postprocessing" title="Link to this heading">¶</a></h2>
+<p>When the optional config variable <code class="docutils literal notranslate"><span class="pre">ROUTE_POSTPROCESSING</span></code> is enabled, the route is forwarded for postprocessing to follow Traffic Separation Scheme (TSS) rules.
+Pgsnapshot schema with Osmosis were used to import OpenSeaMap data into the PostGIS+PostgreSQL database to retrieve TSS related data. The key OpenSeaMap TSS tags considered for route postprocessing are <code class="docutils literal notranslate"><span class="pre">inshore_traffic_zone</span></code>, <code class="docutils literal notranslate"><span class="pre">separation_boundary</span></code>, <code class="docutils literal notranslate"><span class="pre">separation_lane</span></code>, <code class="docutils literal notranslate"><span class="pre">separation_boundary</span></code> and <code class="docutils literal notranslate"><span class="pre">separation_line</span></code>.
+The primary TSS rules have been addressed in the current development phase are:
+1. If the current route is crossing any Inshore Traffic Zone or other TTS element, then the route should enter and leave the nearest separation lane which is heading to the direction of destination.</p>
+<figure class="align-default">
+<img alt="follow_separation_lane" src="../../_images/follow_separation_lane.png" />
+</figure>
+<ol class="arabic simple" start="2">
+<li><p>If the current route is intersecting the Traffic Separation Lanes and the angle between the route nodes before the intersection and after the intersection is between 60° to 120°, the new route segment is introduced as it is perpendicular to the separation lane and extends towards the last route segment, perpendicularly.</p></li>
+</ol>
+<figure class="align-default">
+<img alt="right_angle_crossing" src="../../_images/right_angle_crossing.png" />
+</figure>
+<p>Furthermore, if the starting node or the ending node is located inside a traffic separation zone, route postprocessing is not further executed.</p>
+</section>
+<section id="useful-links">
+<h2>Useful links:<a class="headerlink" href="#useful-links" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Traffic_separation_scheme">https://en.wikipedia.org/wiki/Traffic_separation_scheme</a></p></li>
+<li><p><a class="reference external" href="https://wiki.openstreetmap.org/wiki/Seamarks/Seamark_Objects">https://wiki.openstreetmap.org/wiki/Seamarks/Seamark_Objects</a></p></li>
+<li><p>Szlapczynski, Rafal. (2012). Evolutionary approach to ship’s trajectory planning within Traffic Separation Schemes. Polish Maritime Research. 19. DOI: <a class="reference external" href="https://www.researchgate.net/publication/271052992_Evolutionary_approach_to_ship's_trajectory_planning_within_Traffic_Separation_Schemes">10.2478/v10012-012-0002-x</a></p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">WeatherRoutingTool</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../algorithms/index.html">Algorithms</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Constraints</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-constraints-module">The constraints module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-input-parameters">The input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#route-postprocessing">Route Postprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#useful-links">Useful links:</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../consumption-models/index.html">Consumption models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../weather.html">Weather data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/index.html">API documentation (still under construction!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../uml.html">UML Class diagrams</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../algorithms/isofuel.html" title="previous chapter">Isofuel Algorithm</a></li>
+      <li>Next: <a href="../consumption-models/index.html" title="next chapter">Consumption models</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, 52°North Spatial Information Research GmbH.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/source/constraints/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
