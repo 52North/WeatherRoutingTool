@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import warnings
 
 import geopandas as gpd
 import numpy as np
@@ -11,6 +12,10 @@ import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.shipparams import ShipParams
+
+# Filter warnings
+warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
+warnings.filterwarnings("ignore", category=UserWarning, module="geopandas")
 
 test_seamark_gdf = gpd.GeoDataFrame(
     columns=["tags", "geometry"],

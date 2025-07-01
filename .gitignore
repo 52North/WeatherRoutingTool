@@ -53,6 +53,13 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+# Test output files
+tests/data/min_fuel_route_test.json
+
+# Test-generated plot files
+test_*.png
+# But keep documentation images
+!docs/_static/*.png
 
 # Translations
 *.mo

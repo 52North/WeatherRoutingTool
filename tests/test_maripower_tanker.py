@@ -343,9 +343,12 @@ class TestMariPowerTanker:
         power = ship_params.get_power()
         rwind = ship_params.get_rwind()
 
+        plt.rcParams['text.usetex'] = False
+        
         fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
 
         axes[0].plot(courses_rad, power)
+        axes[0].plot([], [], label='Power')
         axes[0].legend()
         for ax in axes.flatten():
             ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
@@ -355,7 +358,9 @@ class TestMariPowerTanker:
         axes[0].set_title("Power", va='bottom')
         axes[1].set_title("Wind resistence", va='top')
 
-        plt.show()
+        #to avoid warning in tests
+        plt.savefig("test_wind_force.png")
+        plt.close()
 
     def test_maripower_via_dict_config(self):
         dirname = os.path.dirname(__file__)

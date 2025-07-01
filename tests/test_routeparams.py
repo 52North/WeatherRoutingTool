@@ -61,11 +61,17 @@ def test_get_acc_variables():
         starttime_per_step=start_time,
         ship_params_per_step=sp
     )
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, 'data/min_fuel_route_test.json')
-
-    rp.return_route_to_API(filename)
-    rp_test = RouteParams.from_file(filename)
+    import tempfile
+    
+    # Use a temporary file that will be automatically deleted after the test
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as temp_file:
+        temp_filename = temp_file.name
+    try:
+        rp.return_route_to_API(temp_filename)
+        rp_test = RouteParams.from_file(temp_filename)
+    finally:
+        if os.path.exists(temp_filename):
+            os.unlink(temp_filename)
 
     test_fuel = (1.12 + 1.13 + 1.15) * 3600 * u.kg
     test_dist = 3344981 * u.meter

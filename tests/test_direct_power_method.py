@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -93,7 +94,12 @@ class TestDPM:
         axes.plot(np.radians(wind_result['app_wind_angle']), wind_speed, label="apparent wind dir, fixed speed")
         axes.legend(loc="upper right")
         axes.set_title("Wind direction", va='bottom')
-        plt.show()
+        
+        from WeatherRoutingTool.utils.graphics import get_figure_path
+        figure_path = get_figure_path() or os.getcwd()
+        output_file = os.path.join(figure_path, "test_apparent_wind.png")
+        plt.savefig(output_file)
+        plt.close()
 
     '''
         DIRECT POWER METHOD: check whether ship geometry is approximated correctly if only mandatory parameters
@@ -182,12 +188,15 @@ class TestDPM:
         pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
-        plt.rcParams['text.usetex'] = True
+        plt.rcParams['text.usetex'] = False
         fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
         ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
         ax.set_xlabel('angle of attack (degrees)')
-        ax.set_ylabel(r'$C_{AA}$')
-        plt.show()
+        ax.set_ylabel('C_AA') 
+        figure_path = graphics.get_figure_path() or os.getcwd()
+        output_file = os.path.join(figure_path, "test_wind_coeff.png")
+        plt.savefig(output_file)
+        plt.close()
 
     '''
         DIRECT POWER METHOD: check for reasonable behaviour of wind resistance on polar plot
@@ -205,9 +214,12 @@ class TestDPM:
         pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
+        plt.rcParams['text.usetex'] = False
+        
         fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
 
         axes[0].plot(courses_rad, r_wind['r_wind'])
+        axes[0].plot([], [], label='Wind resistance')
         axes[0].legend()
         for ax in axes.flatten():
             ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
@@ -217,7 +229,10 @@ class TestDPM:
         axes[0].set_title("Power", va='bottom')
         axes[1].set_title("Wind resistence", va='top')
 
-        plt.show()
+        figure_path = graphics.get_figure_path() or os.getcwd()
+        output_file = os.path.join(figure_path, "test_wind_resistance.png")
+        plt.savefig(output_file)
+        plt.close()
 
     '''
         DIRECT POWER METHOD: compare wind resistance and power from the Direct Power Method to results from maripower.
@@ -311,3 +326,49 @@ class TestDPM:
         assert pol.Axv == Axv
         assert pol.Ayv == Ayv
         assert pol.Aod == Aod
+
+    def test_validate_parameters(self):
+        """
+        Test that the validate_parameters method directly identifies and raises an error for dummy values (-99).
+        """
+        # Create a boat object with dummy values
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+        pol.Axv = -99 * u.meter * u.meter
+        pol.hs1 = -99 * u.meter
+        
+        with pytest.raises(ValueError) as excinfo:
+            pol.validate_parameters()
+        
+        assert "dummy values (-99)" in str(excinfo.value)
+        assert "Axv" in str(excinfo.value)
+        
+    def test_valid_parameters(self):
+        """
+        Test that valid parameters pass validation.
+        """
+        config = {
+            "BOAT_TYPE": "direct_power_method",
+            "BOAT_BREADTH": 32,
+            "BOAT_FUEL_RATE": 167,
+            "BOAT_HBR": 30,
+            "BOAT_LENGTH": 180,
+            "BOAT_SMCR_POWER": 6502,
+            "BOAT_SMCR_SPEED": 6,
+            "BOAT_SPEED": 6,  
+            "WEATHER_DATA": "/path/to/data",
+            "BOAT_HS1": 6.0, 
+            "BOAT_LS1": 36.0,
+            "BOAT_HS2": 3.0,
+            "BOAT_LS2": 54.0,
+            "BOAT_CMC": -6.3,
+            "BOAT_BS1": 28.8,
+            "BOAT_HC": 10.0
+        }
+        
+        try:
+            pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+            # If we get here, the test passes
+            assert True
+        except ValueError:
+            # If we get here, there was an unexpected ValueError
+            assert False, "Valid parameters should not raise ValueError"

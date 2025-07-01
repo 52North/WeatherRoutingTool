@@ -2,12 +2,17 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import sqlalchemy as db
+import warnings
 from shapely.geometry import LineString, Point, box
 from shapely.strtree import STRtree
 
 from WeatherRoutingTool.constraints.constraints import ContinuousCheck
 from WeatherRoutingTool.utils.maps import Map
 import tests.basic_test_func as basic_test_func
+
+# Filter warnings
+warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
+warnings.filterwarnings("ignore", category=UserWarning, module="geopandas")
 
 
 # Create dummy GeoDataFrames
