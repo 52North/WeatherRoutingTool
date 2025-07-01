@@ -25,7 +25,7 @@ def generate_dummy_constraint_list():
 
 def create_dummy_IsoBased_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
+    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
     config = Config.assign_config(Path(configpath))
 
     ra = IsoBased(config)
@@ -34,7 +34,7 @@ def create_dummy_IsoBased_object():
 
 def create_dummy_IsoFuel_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
+    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
     config = Config.assign_config(Path(configpath))
 
     ra = IsoFuel(config)
@@ -53,13 +53,13 @@ def create_dummy_landpolygonsCrossing_object(db_engine):
 
 def create_dummy_Tanker_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests.json')
+    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
 
     pol = MariPowerTanker(file_name=configpath)
-    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.weather_path = os.path.join(dirname, 'data/tests_weather_data.nc')
     pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
     pol.use_depth_data = True
-    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.depth_path = os.path.join(dirname, 'data/tests_depth_data.nc')
     pol.load_data()
     return pol
 
@@ -70,8 +70,8 @@ def create_dummy_Direct_Power_Ship(ship_config_path):
     dirname = os.path.dirname(__file__)
 
     pol = DirectPowerBoat(file_name=configpath)
-    pol.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+    pol.weather_path = os.path.join(dirname, 'data/tests_weather_data.nc')
     pol.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-    pol.depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+    pol.depth_path = os.path.join(dirname, 'data/tests_depth_data.nc')
     pol.load_data()
     return pol

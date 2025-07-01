@@ -1,9 +1,11 @@
-from pydantic import BaseModel, Field, conlist, ValidationError
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 from typing import Optional, List, Annotated, Union, Literal
 from datetime import datetime
 from pathlib import Path
 import json
 import logging
+import os
+import sys
 
 logger = logging.getLogger('WRT.ShipConfig')
 
@@ -47,6 +49,8 @@ class ShipConfig(BaseModel):
     BOAT_FACTOR_CALM_WATER: float = 1.0  # multiplication factor for the calm water resistance model of maripower
     BOAT_FACTOR_WAVE_FORCES: float = 1.0  # multiplication factor for added resistance in waves model of maripower
     BOAT_FACTOR_WIND_FORCES: float = 1.0  # multiplication factor for the added resistance in wind model of maripower
+    BOAT_SMCR_POWER: float = 6
+    BOAT_SMCR_SPEED: float = 6
     BOAT_UNDER_KEEL_CLEARANCE: float = 20  # vertical distance between keel and ground
 
     @classmethod
@@ -76,4 +80,17 @@ class ShipConfig(BaseModel):
             return cls.validate_config(config_dict)
         else:
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
+            logger.error(msg)
             raise ValueError(msg)
+
+    @field_validator('BOAT_BREADTH', 'BOAT_LENGTH', 'BOAT_SMCR_POWER', 'BOAT_SPEED', mode='after')
+    @classmethod
+    def check_numeric_values_positivity(cls, v, info):
+        if v <= 0:
+            raise ValueError(f"'{info.field_name}' must be greater than zero, got {v}")
+        return v
+
+    @field_validator('BOAT_PROPULSION_EFFICIENCY')
+    def check_boat_propulsion_efficiency_range(cls, v):
+        if not (0 <= v <= 1):
+            raise ValueError(f"'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1, but got {v}.")

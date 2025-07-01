@@ -27,6 +27,7 @@
   "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest",
   
   "BOAT_SMCR_POWER": 6502,
+  "BOAT_SMCR_SPEED": 6,
   "BOAT_FUEL_RATE": 167,
   
   "BOAT_DRAUGHT_AFT": 10,

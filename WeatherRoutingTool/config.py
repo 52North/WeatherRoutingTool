@@ -64,7 +64,6 @@ class Config(BaseModel):
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
 
-    CHECK_WEATHER: bool = True
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -151,7 +150,7 @@ class Config(BaseModel):
             dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
             return dt
         except ValueError:
-            raise ValueError("DEPARTURE_TIME must be in format YYYY-MM-DDTHH:MMZ")
+            raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
     @field_validator('COURSES_FILE', 'DEPTH_DATA', 'WEATHER_DATA', 'ROUTE_PATH', 'CONFIG_PATH')
     def validate_path_exists(cls, v):
@@ -205,7 +204,22 @@ class Config(BaseModel):
     @field_validator('BOAT_SPEED')
     def check_boat_speed(cls, v):
         if v < 10:
-            logger.info("Your 'BOAT_SPEED' is lower than 10 m/s. Have you considered that this program works with m/s?")
+            logger.info("Your 'BOAT_SPEED' is lower than 10 m/s."
+                        " Have you considered that this program works with m/s?")
+        return v
+
+    @field_validator('DELTA_FUEL', 'TIME_FORECAST', 'ROUTER_HDGS_INCREMENTS_DEG',
+                     'ISOCHRONE_MAX_ROUTING_STEPS', mode='after')
+    @classmethod
+    def check_numeric_values_positivity(cls, v, info):
+        if v <= 0:
+            raise ValueError(f"'{info.field_name}' must be greater than zero, got {v}")
+        return v
+
+    @field_validator('ROUTER_HDGS_SEGMENTS')
+    def check_router_hdgs_segments_positive_and_even(cls, v):
+        if not (v > 0 and v % 2 == 0):
+            raise ValueError("'ROUTER_HDGS_SEGMENTS' must be a positive even integer.")
         return v
 
     @model_validator(mode='after')
@@ -225,38 +239,37 @@ class Config(BaseModel):
             (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
             and self.BOAT_TYPE != self.ALGORITHM_TYPE
         ):
-            raise ValueError("If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased', so must be the other one.")
+            raise ValueError("If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased', so must be the other one.")
         return self
 
     @model_validator(mode='after')
     def check_route_weather_data_compatibility(self) -> 'Config':
-        if self.CHECK_WEATHER:
-            try:
-                ds = xr.open_dataset(self.WEATHER_DATA)
+        try:
+            ds = xr.open_dataset(self.WEATHER_DATA)
 
-                # Check lat/lon bounds
-                lat = ds['latitude'].values
-                lon = ds['longitude'].values
-                map_coords = self.DEFAULT_MAP
-                if map_coords:
-                    lat_min, lon_min, lat_max, lon_max = map_coords
-                    if not (lat.min() <= lat_min <= lat.max() and
-                            lat.min() <= lat_max <= lat.max() and
-                            lon.min() <= lon_min <= lon.max() and
-                            lon.min() <= lon_max <= lon.max()):
-                        raise ValueError("Weather data does not cover the map region.")
+            # Check lat/lon bounds
+            lat = ds['latitude'].values
+            lon = ds['longitude'].values
+            map_coords = self.DEFAULT_MAP
+            if map_coords:
+                lat_min, lon_min, lat_max, lon_max = map_coords
+                if not (lat.min() <= lat_min <= lat.max() and
+                        lat.min() <= lat_max <= lat.max() and
+                        lon.min() <= lon_min <= lon.max() and
+                        lon.min() <= lon_max <= lon.max()):
+                    raise ValueError("Weather data does not cover the map region.")
 
-                # Check time coverage
-                if 'time' in ds:
-                    start = self.DEPARTURE_TIME
-                    end = start + timedelta(hours=self.TIME_FORECAST)
-                    times = pd.to_datetime(ds['time'].values)
-                    if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
-                        raise ValueError("Weather data does not cover the full routing time range.")
-                else:
-                    raise ValueError("Weather data missing time dimension.")
+            # Check time coverage
+            if 'time' in ds:
+                start = self.DEPARTURE_TIME
+                end = start + timedelta(hours=self.TIME_FORECAST)
+                times = pd.to_datetime(ds['time'].values)
+                if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
+                    raise ValueError("Weather data does not cover the full routing time range.")
+            else:
+                raise ValueError("Weather data missing time dimension.")
 
-            except Exception as e:
-                raise ValueError(f"Failed to validate weather data: {e}")
+        except Exception as e:
+            raise ValueError(f"Failed to validate weather data: {e}")
 
         return self

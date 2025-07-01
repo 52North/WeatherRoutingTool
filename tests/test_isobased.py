@@ -26,7 +26,9 @@ def test_update_position_fail():
     az_till_start = 330.558
 
     ra = basic_test_func.create_dummy_IsoBased_object()
+    print(ra.lats_per_step)
     ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
+    print(ra.lats_per_step)
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]]) * u.degree
     ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
@@ -42,11 +44,13 @@ def test_update_position_fail():
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-
+    print(ra.lats_per_step)
     move = ra.check_bearing(dist)
+    print(ra.lats_per_step)
+    print(move)
     constraints = ra.check_constraints(move, constraint_list)
     ra.update_position(move, constraints, dist)
-
+    print(ra.lats_per_step)
     lats_test = np.array([[lat_end, lat_end, lat_end, lat_end], [lat_start, lat_start, lat_start, lat_start]])
     lons_test = np.array([[lon_end, lon_end, lon_end, lon_end], [lon_start, lon_start, lon_start, lon_start]])
     dist_test = np.array([[dist_travel, dist_travel, dist_travel, dist_travel], [0, 0, 0, 0]]) * u.meter
@@ -245,8 +249,8 @@ def test_define_courses_array_shapes():
 
 
 def test_define_courses_current_course_filling():
-    start = (30, 45)
-    finish = (0, 20)
+    start = (38.192, 13.392)
+    finish = (41.349, 2.188)
     ra = basic_test_func.create_dummy_IsoBased_object()
 
     new_course = geod.inverse([start[0]], [start[1]], [finish[0]], [finish[1]])
@@ -326,9 +330,9 @@ def test_pruning_select_correct_idxs():
         [fuel_rate[0, 1], fuel_rate[0, 2], fuel_rate[0, 5], fuel_rate[0, 6]]) * u.kg/u.second
     speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2],
                               speed_per_step[0, 5], speed_per_step[0, 6]]) * u.meter/u.second
-    lat_test = np.array([[30, 30, 30, 30]])
-    lon_test = np.array([[45, 45, 45, 45]])
-    time_single = datetime(2023, 11, 11, 11, 11)
+    lat_test = np.array([[38.192, 38.192, 38.192, 38.192]])
+    lon_test = np.array([[13.392, 13.392, 13.392, 13.392]])
+    time_single = datetime(2025, 4, 1, 11, 11)
     time_test = np.array([time_single, time_single, time_single, time_single])
 
     ra.print_current_status()

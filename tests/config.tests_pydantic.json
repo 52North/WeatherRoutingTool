@@ -1,26 +1,25 @@
 {
-  "DEFAULT_ROUTE": [54.15, 13.15, 54.56, 13.56],
-  "DEPARTURE_TIME": "2023-07-20T11:11Z",
-  "DEFAULT_MAP": [54.1, 13.1, 54.6, 13.6],
+  "DEFAULT_ROUTE": [38.192, 13.392, 41.349, 2.188],
+  "DEPARTURE_TIME": "2025-04-01T11:11Z",
+  "DEFAULT_MAP": [37, 1, 42, 15],
   "BOAT_DRAUGHT_AFT": 10,
   "BOAT_DRAUGHT_FORE": 10,
   "INTERMEDIATE_WAYPOINTS": [[43.171, -132.077], [55.483, -141.686]],
   "CONSTRAINTS_LIST": ["land_crossing_global_land_mask", "water_depth", "via_waypoints"],
-
   "TIME_FORECAST": 20,
   "ROUTING_STEPS": 60,
   "DELTA_TIME_FORECAST": 3,
   "DELTA_FUEL": 3000,
 
   "COURSES_FILE": "tests",
-  "DEPTH_DATA": "tests/data/reduced_testdata_depth.nc",
-  "WEATHER_DATA": "tests/data/reduced_testdata_weather.nc",
+  "DEPTH_DATA": "C:/Users/JBA/WRT-for-sandbox/depth_data_region1.nc",
+  "WEATHER_DATA": "C:/Users/JBA/WRT-for-sandbox/weather_data_region1.nc",
   "ROUTE_PATH": "tests",
 
   "DATA_MODE": "from_file",
 
-  "ROUTER_HDGS_SEGMENTS": 30,
-  "ROUTER_HDGS_INCREMENTS_DEG": 6,
+  "ROUTER_HDGS_SEGMENTS": 4,
+  "ROUTER_HDGS_INCREMENTS_DEG": 1,
   "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
   "ISOCHRONE_PRUNE_SEGMENTS": 20,
 

@@ -35,7 +35,7 @@ def test_invalid_time_raises_error():
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "DEPARTURE_TIME must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
+    assert "'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
 
 
 def test_invalid_path_raises_error(tmp_path):
@@ -58,9 +58,50 @@ def test_speedy_boat_validation_fails():
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "If BOAT_TYPE or ALGORITHM_TYPE is 'speedy_isobased'" in str(excinfo.value)
+    assert "If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased'" in str(excinfo.value)
 
 
 def test_invalid_route_raises_error():
     config_data, _ = load_example_config()
-    config_data["DEFAULT_ROUTE"] = [54.15, 13.15, 54.56, 13.56]
+    config_data["DEFAULT_ROUTE"] = [54.15, 13.15, 54.56, 200]
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "lon_end must be between -180 and 180" in str(excinfo.value)
+
+
+def test_negative_delta_fuel_raises_error():
+    config_data, _ = load_example_config()
+    config_data["DELTA_FUEL"] = -100
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "'DELTA_FUEL' must be greater than zero" in str(excinfo.value)
+
+
+def test_non_even_router_hdgs_segments_raises_error():
+    config_data, _ = load_example_config()
+    config_data["ROUTER_HDGS_SEGMENTS"] = 31
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "'ROUTER_HDGS_SEGMENTS' must be a positive even integer" in str(excinfo.value)
+
+
+def test_route_map_compatibility():
+    config_data, _ = load_example_config()
+    config_data["DEFAUL_ROUTE"] = [38.192, 13.392, 41.349, 17.188]
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "is outside the defined map bounds" in str(excinfo.value)
+
+
+def test_weather_start_time_compatibility():
+    config_data, _ = load_example_config()
+    config_data["DEPARTURE_TIME"] = "2022-04-01T11:11Z"
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "Weather data does not cover the full routing time range." in str(excinfo.value)

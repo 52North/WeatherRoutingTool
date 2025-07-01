@@ -378,6 +378,7 @@ class TestMariPowerTanker:
             'BOAT_HBR': -99,
             'BOAT_LENGTH': -99,
             'BOAT_SMCR_POWER': -99,
+            'BOAT_SMCR_SPEED': 6,
             'BOAT_SPEED': 6,
             "BOAT_DRAUGHT_AFT": 10,
             "BOAT_DRAUGHT_FORE": 10,
