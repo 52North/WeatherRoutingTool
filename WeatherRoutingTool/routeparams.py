@@ -341,7 +341,7 @@ class RouteParams():
 
         for i in range(0, nsteps - 1):
             dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
-            dist[i] = dist_step['s12']
+            dist[i] = dist_step['s12'][0] # Extract single element from array to avoid NumPy deprecation warning
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):

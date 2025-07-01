@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -8,6 +9,9 @@ from WeatherRoutingTool.constraints.constraints import (ConstraintsList, Constra
                                                         RunTestContinuousChecks, WaterDepth, WaveHeight,
                                                         StatusCodeError)
 from WeatherRoutingTool.utils.maps import Map
+
+# Filter NumPy binary incompatibility warnings
+warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
 
 
 def generate_dummy_constraint_list():
