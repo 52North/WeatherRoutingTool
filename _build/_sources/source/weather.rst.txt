@@ -1,4 +1,0 @@
-.. weather-data:
-
-Weather data
-=================

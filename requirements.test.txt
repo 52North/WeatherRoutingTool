@@ -1,4 +1,0 @@
--r requirements.txt
-flake8
-psycopg2
-pytest
