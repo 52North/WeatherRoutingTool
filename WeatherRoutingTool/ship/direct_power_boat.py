@@ -103,6 +103,13 @@ class DirectPowerBoat(Boat):
         logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
                                       'to 75% SMCR power.'))
 
+    def check_data_meaningful(self):
+        data = ['Axv', 'Ayv', 'Aod', 'length', 'breadth', 'hs1', 'hs2', 'ls1', 'ls2', 'bs1', 'cmc', 'hbr', 'hc']
+        for d in data:
+            value = getattr(self, d, None)
+            if value is None or value == -99:
+                logger.info(f"The ship attribute {value} has no meaningful value")
+
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
             'hs1': 0.2 * self.hbr,

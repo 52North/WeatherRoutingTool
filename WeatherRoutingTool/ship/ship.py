@@ -116,6 +116,9 @@ class Boat:
     def load_data(self):
         pass
 
+    def check_data_meaningful(self):
+        pass
+
 
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
