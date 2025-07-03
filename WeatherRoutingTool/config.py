@@ -25,6 +25,7 @@ OPTIONAL_CONFIG_VARIABLES = {
     'GENETIC_NUMBER_OFFSPRINGS': 2,
     'GENETIC_POPULATION_SIZE': 20,
     'GENETIC_POPULATION_TYPE': 'grid_based',
+    'GENETIC_POPULATION_PATH': None,
     'INTERMEDIATE_WAYPOINTS': [],
     'ISOCHRONE_MAX_ROUTING_STEPS': 100,
     'ISOCHRONE_MINIMISATION_CRITERION': 'squareddist_over_disttodest',
@@ -66,6 +67,7 @@ class Config:
         self.GENETIC_NUMBER_OFFSPRINGS = None  # number of offsprings for genetic algorithm
         self.GENETIC_POPULATION_SIZE = None  # population size for genetic algorithm
         self.GENETIC_POPULATION_TYPE = None  # type for initial population (options: 'grid_based', 'from_geojson')
+        self.GENETIC_POPULATION_PATH = None  # path to initial population
         self.INTERMEDIATE_WAYPOINTS = None  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
         self.ISOCHRONE_MAX_ROUTING_STEPS = None  # maximum number of routing steps
         self.ISOCHRONE_MINIMISATION_CRITERION = None  # options: 'dist', 'squareddist_over_disttodest'
