@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError, PrivateAttr
 from typing import Optional, List, Annotated, Union, Literal
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -43,9 +43,9 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
 class Config(BaseModel):
 
     # Filepaths
-    COURSES_FILE: str = None  # path to file that acts as intermediate storage for courses per routing step
-    DEPTH_DATA: str  # path to depth data
-    WEATHER_DATA: str  # path to weather data
+    COURSES_FILE: str  # path to file that acts as intermediate storage for courses per routing step
+    DEPTH_DATA: str = None  # path to depth data
+    WEATHER_DATA: str = None  # path to weather data
     ROUTE_PATH: str  # path to json file to which the route will be written
     CONFIG_PATH: str = None  # path to config file
 
@@ -72,7 +72,8 @@ class Config(BaseModel):
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
     CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
 
-    DATA_MODE: Literal['automatic', 'from_file', 'odc'] = 'automatic'  # options: 'automatic', 'from_file', 'odc'
+    _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
+    _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
     DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
     # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
     DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
@@ -152,7 +153,7 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'DEPTH_DATA', 'WEATHER_DATA', 'ROUTE_PATH', 'CONFIG_PATH')
+    @field_validator('COURSES_FILE', 'ROUTE_PATH', 'CONFIG_PATH')
     def validate_path_exists(cls, v):
         path = Path(v)
         if not path.exists():
@@ -203,7 +204,7 @@ class Config(BaseModel):
 
     @field_validator('BOAT_SPEED')
     def check_boat_speed(cls, v):
-        if v < 10:
+        if v > 10:
             logger.info("Your 'BOAT_SPEED' is lower than 10 m/s."
                         " Have you considered that this program works with m/s?")
         return v
@@ -244,33 +245,60 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_route_weather_data_compatibility(self) -> 'Config':
-        try:
-            ds = xr.open_dataset(self.WEATHER_DATA)
+        path = Path(self.WEATHER_DATA)
+        if path.exists():
+            try:
+                ds = xr.open_dataset(self.WEATHER_DATA)
 
-            # Check lat/lon bounds
-            lat = ds['latitude'].values
-            lon = ds['longitude'].values
-            map_coords = self.DEFAULT_MAP
-            if map_coords:
-                lat_min, lon_min, lat_max, lon_max = map_coords
-                if not (lat.min() <= lat_min <= lat.max() and
-                        lat.min() <= lat_max <= lat.max() and
-                        lon.min() <= lon_min <= lon.max() and
-                        lon.min() <= lon_max <= lon.max()):
-                    raise ValueError("Weather data does not cover the map region.")
+                # Check lat/lon bounds
+                lat = ds['latitude'].values
+                lon = ds['longitude'].values
+                map_coords = self.DEFAULT_MAP
+                if map_coords:
+                    lat_min, lon_min, lat_max, lon_max = map_coords
+                    if not (lat.min() <= lat_min <= lat.max() and
+                            lat.min() <= lat_max <= lat.max() and
+                            lon.min() <= lon_min <= lon.max() and
+                            lon.min() <= lon_max <= lon.max()):
+                        raise ValueError("Weather data does not cover the map region.")
 
-            # Check time coverage
-            if 'time' in ds:
-                start = self.DEPARTURE_TIME
-                end = start + timedelta(hours=self.TIME_FORECAST)
-                times = pd.to_datetime(ds['time'].values)
-                if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
-                    raise ValueError("Weather data does not cover the full routing time range.")
-            else:
-                raise ValueError("Weather data missing time dimension.")
+                # Check time coverage
+                if 'time' in ds:
+                    start = self.DEPARTURE_TIME
+                    end = start + timedelta(hours=self.TIME_FORECAST)
+                    times = pd.to_datetime(ds['time'].values)
+                    if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
+                        raise ValueError("Weather data does not cover the full routing time range.")
+                else:
+                    raise ValueError("Weather data missing time dimension.")
 
-        except Exception as e:
-            raise ValueError(f"Failed to validate weather data: {e}")
-
+            except Exception as e:
+                raise ValueError(f"Failed to validate weather data: {e}")
+        else:
+            self._DATA_MODE_WEATHER = 'automatic'
         return self
 
+    @model_validator(mode='after')
+    def check_route_depth_data_compatibility(self) -> 'Config':
+        path = Path(self.DEPTH_DATA)
+        if path.exists():
+            try:
+                ds = xr.open_dataset(self.DEPTH_DATA)
+
+                # Check lat/lon bounds
+                lat = ds['latitude'].values
+                lon = ds['longitude'].values
+                map_coords = self.DEFAULT_MAP
+                if map_coords:
+                    lat_min, lon_min, lat_max, lon_max = map_coords
+                    if not (lat.min() <= lat_min <= lat.max() and
+                            lat.min() <= lat_max <= lat.max() and
+                            lon.min() <= lon_min <= lon.max() and
+                            lon.min() <= lon_max <= lon.max()):
+                        raise ValueError("Depth data does not cover the map region.")
+
+            except Exception as e:
+                raise ValueError(f"Failed to validate depth data: {e}")
+        else:
+            self._DATA_MODE_DEPTH = 'automatic'
+        return self
