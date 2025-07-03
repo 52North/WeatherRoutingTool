@@ -5,7 +5,7 @@ from WeatherRoutingTool.config import Config
 
 
 def load_example_config():
-    config_path = Path(__file__).parent / "config.tests_pydantic.json"
+    config_path = Path(__file__).parent / "config.tests.json"
     with config_path.open("r") as f:
         return json.load(f), config_path
 
@@ -40,7 +40,7 @@ def test_invalid_time_raises_error():
 
 def test_invalid_path_raises_error(tmp_path):
     config_data, _ = load_example_config()
-    config_data["WEATHER_DATA"] = str(tmp_path / "nonexistent.nc")
+    config_data["ROUTE_PATH"] = str(tmp_path / "nonexistent.nc")
 
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
@@ -91,7 +91,7 @@ def test_non_even_router_hdgs_segments_raises_error():
 
 def test_route_map_compatibility():
     config_data, _ = load_example_config()
-    config_data["DEFAUL_ROUTE"] = [38.192, 13.392, 41.349, 17.188]
+    config_data["DEFAULT_ROUTE"] = [36.192, 13.392, 41.349, 17.188]
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 

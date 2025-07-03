@@ -22,7 +22,7 @@ def test_mandatory_fields_present():
 
 
 def load_example_config():
-    config_path = Path(__file__).parent / "config.tests_pydantic.json"
+    config_path = Path(__file__).parent / "config.tests.json"
     with config_path.open("r") as f:
         return json.load(f), config_path
 

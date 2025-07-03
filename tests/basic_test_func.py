@@ -25,7 +25,7 @@ def generate_dummy_constraint_list():
 
 def create_dummy_IsoBased_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
+    configpath = os.path.join(dirname, 'config.tests.json')
     config = Config.assign_config(Path(configpath))
 
     ra = IsoBased(config)
@@ -34,7 +34,7 @@ def create_dummy_IsoBased_object():
 
 def create_dummy_IsoFuel_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
+    configpath = os.path.join(dirname, 'config.tests.json')
     config = Config.assign_config(Path(configpath))
 
     ra = IsoFuel(config)
@@ -53,7 +53,7 @@ def create_dummy_landpolygonsCrossing_object(db_engine):
 
 def create_dummy_Tanker_object():
     dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.tests_pydantic.json')
+    configpath = os.path.join(dirname, 'config.tests.json')
 
     pol = MariPowerTanker(file_name=configpath)
     pol.weather_path = os.path.join(dirname, 'data/tests_weather_data.nc')
