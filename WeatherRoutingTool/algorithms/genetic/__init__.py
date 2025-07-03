@@ -191,7 +191,6 @@ class Genetic(RoutingAlg):
             eliminate_duplicates=duplicates,
             repair=RepairInfeasibles(),
             return_least_infeasible=False, )
-
         termination = get_termination("n_gen", self.ncount)
 
         res = minimize(problem, algorithm, termination, save_history=True, verbose=True)
