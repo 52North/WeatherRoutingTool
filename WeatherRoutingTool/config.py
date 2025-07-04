@@ -160,7 +160,7 @@ class Config(BaseModel):
             raise ValueError(f"Path doesn't exist: {v}")
         return str(path)
 
-    @field_validator('DEFAULT_ROUTE', mode='before')
+    @field_validator('DEFAULT_ROUTE')
     def validate_route_coordinates(cls, v):
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_start, lon_start, lat_end, lon_end]")
@@ -178,7 +178,7 @@ class Config(BaseModel):
 
         return v
 
-    @field_validator('DEFAULT_MAP', mode='before')
+    @field_validator('DEFAULT_MAP')
     def validate_map_coordinates(cls, v):
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_min, lon_max, lat_end, lon_end]")
