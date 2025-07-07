@@ -74,9 +74,9 @@ class Config(BaseModel):
 
     _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
     _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
-    DEFAULT_ROUTE: list[Union[int, float]]
+    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
     # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
-    DEFAULT_MAP: list[Union[int, float]]
+    DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
     # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
     DELTA_FUEL: float = 3000  # amount of fuel per routing step (kg)
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
