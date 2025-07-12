@@ -12,12 +12,10 @@
   "DELTA_TIME_FORECAST": 3,
   "DELTA_FUEL": 3000,
 
-  "COURSES_FILE": "C:/Users/JBA/WeatherRoutingTool",
-  "DEPTH_DATA": "C:/Users/JBA/WeatherRoutingTool/depth_data_region1.nc",
-  "WEATHER_DATA": "C:/Users/JBA/WeatherRoutingTool/weather_data_region1.nc",
-  "ROUTE_PATH": "C:/Users/JBA/WeatherRoutingTool",
-
-  "DATA_MODE": "from_file",
+  "COURSES_FILE": "/home/<user>/WeatherRoutingTool/<...>",
+  "DEPTH_DATA": "/home/<user>/WeatherRoutingTool/data/depth_data.nc",
+  "WEATHER_DATA": "/home/<user>/WeatherRoutingTool/data/weather_data.nc",
+  "ROUTE_PATH": "/home/<user>/WeatherRoutingTool/<...>",
 
   "ROUTER_HDGS_SEGMENTS": 30,
   "ROUTER_HDGS_INCREMENTS_DEG": 6,

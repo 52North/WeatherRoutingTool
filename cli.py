@@ -1,6 +1,5 @@
 import argparse
 import warnings
-from pydantic import ValidationError
 from pathlib import Path
 import sys
 

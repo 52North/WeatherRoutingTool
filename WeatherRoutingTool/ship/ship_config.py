@@ -68,7 +68,7 @@ class ShipConfig(BaseModel):
 
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json':
+        if init_mode == 'from_json' and Path(path).exists:
             with path.open("r") as f:
                 config_data = json.load(f)
             return cls.validate_config(config_data)

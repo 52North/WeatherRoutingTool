@@ -43,10 +43,11 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
 class Config(BaseModel):
 
     # Filepaths
-    COURSES_FILE: str  # path to file that acts as intermediate storage for courses per routing step
+    COURSES_FILE: str
+    # path to the folder where the file that acts as intermediate storage for courses per routing step can be written
     DEPTH_DATA: str = None  # path to depth data
     WEATHER_DATA: str = None  # path to weather data
-    ROUTE_PATH: str  # path to json file to which the route will be written
+    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
     CONFIG_PATH: str = None  # path to config file
 
     # Other configuration
@@ -133,14 +134,20 @@ class Config(BaseModel):
 
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json':
-            with path.open("r") as f:
-                config_data = json.load(f)
-                config = cls.validate_config(config_data)
-                config.CONFIG_PATH = path
-            return config
+        if init_mode == 'from_json': 
+            if Path(path).exists:
+                with path.open("r") as f:
+                    config_data = json.load(f)
+                    config = cls.validate_config(config_data)
+                    config.CONFIG_PATH = path
+                return config
+            else: 
+                raise ValueError("Path doesn't exist: CONFIG_PATH")
         elif init_mode == 'from_dict':
-            return cls.validate_config(config_dict)
+            if config_dict != None:
+                return cls.validate_config(config_dict)
+            else:
+                raise ValueError("You chose init_mode = 'from_dict' but config_dict = None")
         else:
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
             raise ValueError(msg)
@@ -153,7 +160,7 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'ROUTE_PATH', 'CONFIG_PATH')
+    @field_validator('COURSES_FILE', 'ROUTE_PATH')
     def validate_path_exists(cls, v):
         path = Path(v)
         if not path.exists():
@@ -205,7 +212,7 @@ class Config(BaseModel):
     @field_validator('BOAT_SPEED')
     def check_boat_speed(cls, v):
         if v > 10:
-            logger.info("Your 'BOAT_SPEED' is lower than 10 m/s."
+            logger.info("Your 'BOAT_SPEED' is higher than 10 m/s."
                         " Have you considered that this program works with m/s?")
         return v
 
@@ -267,7 +274,7 @@ class Config(BaseModel):
                     start = self.DEPARTURE_TIME
                     end = start + timedelta(hours=self.TIME_FORECAST)
                     times = pd.to_datetime(ds['time'].values)
-                    if not (times[0] <= start <= times[-1] and times[0] <= end <= times[-1]):
+                    if not (times.min() <= start <= times.max() and times.min() <= end <= times.max()):
                         raise ValueError("Weather data does not cover the full routing time range.")
                 else:
                     raise ValueError("Weather data missing time dimension.")
