@@ -1,13 +1,14 @@
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError, PrivateAttr
-from typing import Optional, List, Annotated, Union, Literal
-from datetime import datetime, timedelta
-from pathlib import Path
 import json
 import logging
 import os
 import sys
-import xarray as xr
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Annotated, List, Literal, Self, Union
+
 import pandas as pd
+import xarray as xr
+from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
 
 logger = logging.getLogger('WRT.Config')
 
@@ -41,14 +42,15 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
 
 
 class Config(BaseModel):
+    """
+    Central configuration class of the Weather Routing Tool.
+    Parameters are validated using pydantic.
+    """
 
-    # Filepaths
-    COURSES_FILE: str
-    # path to the folder where the file that acts as intermediate storage for courses per routing step can be written
-    DEPTH_DATA: str = None  # path to depth data
-    WEATHER_DATA: str = None  # path to weather data
-    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
-    CONFIG_PATH: str = None  # path to config file
+    # !!! IMPORTANT NOTE !!!
+    # The order of the attributes matters. Attributes are validated in the order of their appearance.
+    # This means for any attribute it is only possible to access those other attributes in a field validator
+    # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
@@ -64,7 +66,6 @@ class Config(BaseModel):
     BOAT_SPEED: float  # boat speed [m/s]
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
-
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -110,10 +111,18 @@ class Config(BaseModel):
 
     ROUTER_HDGS_SEGMENTS: int = 30  # total number of headings (put even number!!)
     ROUTER_HDGS_INCREMENTS_DEG: int = 6  # increment of headings
-    ROUTE_POSTPROCESSING: bool = False  # Route is postprocessed with Traffic Separation Scheme
+    ROUTE_POSTPROCESSING: bool = False  # route is postprocessed with Traffic Separation Scheme
     ROUTING_STEPS: int = 60
 
     TIME_FORECAST: float = 90  # forecast hours weather
+
+    # Filepaths
+    COURSES_FILE: str = None  # needs to be declared after BOAT_TYPE
+    # path to file that acts as intermediate storage for courses per routing step
+    DEPTH_DATA: str = None  # path to depth data
+    WEATHER_DATA: str = None  # path to weather data
+    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
+    CONFIG_PATH: str = None  # path to config file
 
     @classmethod
     def validate_config(cls, config_data):
@@ -134,17 +143,17 @@ class Config(BaseModel):
 
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json': 
+        if init_mode == 'from_json':
             if Path(path).exists:
                 with path.open("r") as f:
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
                     config.CONFIG_PATH = path
                 return config
-            else: 
+            else:
                 raise ValueError("Path doesn't exist: CONFIG_PATH")
         elif init_mode == 'from_dict':
-            if config_dict != None:
+            if config_dict is not None:
                 return cls.validate_config(config_dict)
             else:
                 raise ValueError("You chose init_mode = 'from_dict' but config_dict = None")
@@ -153,6 +162,7 @@ class Config(BaseModel):
             raise ValueError(msg)
 
     @field_validator('DEPARTURE_TIME', mode='before')
+    @classmethod
     def parse_and_validate_datetime(cls, v):
         try:
             dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
@@ -160,14 +170,22 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'ROUTE_PATH')
-    def validate_path_exists(cls, v):
-        path = Path(v)
+    @field_validator('COURSES_FILE', 'ROUTE_PATH', mode='after')
+    @classmethod
+    def validate_path_exists(cls, v, info: ValidationInfo):
+        if info.field_name == 'COURSES_FILE':
+            if info.data.get('BOAT_TYPE') != 'CBT':
+                return v
+            else:
+                path = Path(os.path.dirname(v))
+        else:
+            path = Path(v)
         if not path.exists():
-            raise ValueError(f"Path doesn't exist: {v}")
+            raise ValueError(f"Path doesn't exist: {path}")
         return str(path)
 
-    @field_validator('DEFAULT_ROUTE')
+    @field_validator('DEFAULT_ROUTE', mode='after')
+    @classmethod
     def validate_route_coordinates(cls, v):
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_start, lon_start, lat_end, lon_end]")
@@ -185,8 +203,9 @@ class Config(BaseModel):
 
         return v
 
-    @field_validator('DEFAULT_MAP')
-    def validate_map_coordinates(cls, v):
+    @field_validator('DEFAULT_MAP', mode='after')
+    @classmethod
+    def validate_map_coordinates(cls, v, info):
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_min, lon_max, lat_end, lon_end]")
 
@@ -203,13 +222,15 @@ class Config(BaseModel):
 
         return v
 
-    @field_validator('CONSTRAINTS_LIST')
+    @field_validator('CONSTRAINTS_LIST', mode='after')
+    @classmethod
     def check_constraint_list(cls, v):
         if 'land_crossing_global_land_mask' not in v:
             raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
         return v
 
-    @field_validator('BOAT_SPEED')
+    @field_validator('BOAT_SPEED', mode='after')
+    @classmethod
     def check_boat_speed(cls, v):
         if v > 10:
             logger.info("Your 'BOAT_SPEED' is higher than 10 m/s."
@@ -219,30 +240,29 @@ class Config(BaseModel):
     @field_validator('DELTA_FUEL', 'TIME_FORECAST', 'ROUTER_HDGS_INCREMENTS_DEG',
                      'ISOCHRONE_MAX_ROUTING_STEPS', mode='after')
     @classmethod
-    def check_numeric_values_positivity(cls, v, info):
+    def check_numeric_values_positivity(cls, v, info: ValidationInfo):
         if v <= 0:
             raise ValueError(f"'{info.field_name}' must be greater than zero, got {v}")
         return v
 
-    @field_validator('ROUTER_HDGS_SEGMENTS')
+    @field_validator('ROUTER_HDGS_SEGMENTS', mode='after')
+    @classmethod
     def check_router_hdgs_segments_positive_and_even(cls, v):
         if not (v > 0 and v % 2 == 0):
             raise ValueError("'ROUTER_HDGS_SEGMENTS' must be a positive even integer.")
         return v
 
     @model_validator(mode='after')
-    def check_route_on_map(self) -> 'Config':
+    def check_route_on_map(self) -> Self:
         lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
         lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
-
         for lat, lon, name in [(lat_start, lon_start, "start"), (lat_end, lon_end, "end")]:
             if not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
                 raise ValueError(f"{name} point ({lat}, {lon}) is outside the defined map bounds")
-
         return self
 
     @model_validator(mode='after')
-    def check_boat_algorithm_compatibility(self) -> 'Config':
+    def check_boat_algorithm_compatibility(self) -> Self:
         if (
             (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
             and self.BOAT_TYPE != self.ALGORITHM_TYPE
@@ -251,7 +271,7 @@ class Config(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def check_route_weather_data_compatibility(self) -> 'Config':
+    def check_route_weather_data_compatibility(self) -> Self:
         path = Path(self.WEATHER_DATA)
         if path.exists():
             try:
@@ -286,7 +306,7 @@ class Config(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def check_route_depth_data_compatibility(self) -> 'Config':
+    def check_route_depth_data_compatibility(self) -> Self:
         path = Path(self.DEPTH_DATA)
         if path.exists():
             try:
