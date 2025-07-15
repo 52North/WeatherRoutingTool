@@ -75,3 +75,52 @@ def test_downsample_dataframe():
 
     assert np.allclose(var_1_test, var_1_returned, 0.00001)
     assert np.allclose(var_2_test, var_2_returned, 0.00001)
+
+def test_mps_to_knots_zero():
+    assert unit.mps_to_knots(0) == 0
+
+def test_mps_to_knots_positive():
+    assert np.isclose(unit.mps_to_knots(1), 1.94384)
+
+def test_mps_to_knots_negative():
+    assert np.isclose(unit.mps_to_knots(-10), -19.4384)
+    
+def test_mps_to_knots_large_number():
+    assert np.isclose(unit.mps_to_knots(1000), 1943.84)
+
+def test_knots_to_mps_zero():
+    assert unit.knots_to_mps(0) == 0
+
+def test_knots_to_mps_positive():
+    assert np.isclose(unit.knots_to_mps(1), 0.514444)
+
+def test_knots_to_mps_negative():
+    assert np.isclose(unit.knots_to_mps(-10), -5.14444)
+
+def test_knots_to_mps_large_number():
+    assert np.isclose(unit.knots_to_mps(1000), 514.444)
+
+def test_degree_to_pmpi_zero():
+    deg = np.array([0.0]) * u.degree
+    rad = unit.degree_to_pmpi(deg)
+    assert np.isclose(rad.value, 0.0)
+
+def test_degree_to_pmpi_positive():
+    deg = np.array([90.0]) * u.degree
+    rad = unit.degree_to_pmpi(deg)
+    assert np.isclose(rad.value, np.pi / 2)
+    
+def test_degree_to_pmpi_negative():
+    deg = np.array([-90.0]) * u.degree
+    rad = unit.degree_to_pmpi(deg)
+    assert np.isclose(rad.value, -np.pi / 2)
+
+def test_degree_to_pmpi_over_180():
+    deg = np.array([270.0]) * u.degree
+    rad = unit.degree_to_pmpi(deg)
+    assert np.isclose(rad.value, -np.pi / 2)
+
+def test_degree_to_pmpi_over_360():
+    deg = np.array([450.0]) * u.degree
+    rad = unit.degree_to_pmpi(deg)
+    assert np.isclose(rad.value, np.pi/2)
