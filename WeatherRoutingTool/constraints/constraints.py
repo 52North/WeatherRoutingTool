@@ -19,7 +19,7 @@ import WeatherRoutingTool.utils.formatting as form
 from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.environmental_data.weather import (WeatherCond)
 
 # Load the environment variables from the .env file
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

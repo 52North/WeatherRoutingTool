@@ -22,7 +22,7 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.utils.graphics import get_figure_path
-from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.environmental_data.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Genetic')
 

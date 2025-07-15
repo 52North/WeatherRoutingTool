@@ -20,7 +20,7 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.ship import Tanker
-from WeatherRoutingTool.weather_factory import WeatherFactory
+from WeatherRoutingTool.environmental_data.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, waypoint_dict, maripower_scenario,

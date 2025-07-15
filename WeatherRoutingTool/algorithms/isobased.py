@@ -1,22 +1,16 @@
-import logging
 from datetime import timedelta
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
 from astropy import units as u
 
-import WeatherRoutingTool.utils.formatting as form
-import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.environmental_data.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
 

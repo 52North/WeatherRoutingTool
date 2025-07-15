@@ -3,7 +3,7 @@ from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
-from WeatherRoutingTool.weather_factory import WeatherFactory
+from WeatherRoutingTool.environmental_data.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.algorithms.routingalg_factory import RoutingAlgFactory

@@ -1,7 +1,7 @@
 import logging
 
 import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.weather import WeatherCondFromFile, WeatherCondEnvAutomatic, WeatherCondODC, FakeWeather
+from WeatherRoutingTool.EnvironmentalData.weather import WeatherCondFromFile, WeatherCondEnvAutomatic, WeatherCondODC, FakeWeather
 
 logger = logging.getLogger('WRT.weather')
 

@@ -4,4 +4,4 @@ import WeatherRoutingTool.constraints
 import WeatherRoutingTool.routeparams
 import WeatherRoutingTool.ship
 import WeatherRoutingTool.utils
-import WeatherRoutingTool.weather
+import WeatherRoutingTool.environmental_data.weather

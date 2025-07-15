@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 import matplotlib
@@ -6,11 +5,10 @@ from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 
-import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
-from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.environmental_data.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 
