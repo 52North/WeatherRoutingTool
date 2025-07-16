@@ -149,14 +149,6 @@ class DirectPowerBoat(Boat):
                 
         if invalid_params:
             raise ValueError(f"The following parameters still have dummy values (-99) after setting optional parameters: {', '.join(invalid_params)}")
-
-        # Optional: Add warning filters for common deprecation warnings
-        # These can be uncommented and customized as needed:
-        # import warnings
-        # warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-        # warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
-        # warnings.filterwarnings("ignore", category=UserWarning, module="geopandas")
-
     def calculate_ship_geometry(self):
         # check for provided parameters
         self.hs1 = self.set_optional_parameter('hs1', self.hs1)
