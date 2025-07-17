@@ -12,8 +12,8 @@
   "DELTA_FUEL": 3000,
 
   "COURSES_FILE": "tests",
-  "DEPTH_DATA": "C:/Users/JBA/WRT-for-sandbox/depth_data_region1.nc",
-  "WEATHER_DATA": "C:/Users/JBA/WRT-for-sandbox/weather_data_region1.nc",
+  "DEPTH_DATA": "tests/data/tests_depth_data.nc",
+  "WEATHER_DATA": "tests/data/tests_weather_data.nc",
   "ROUTE_PATH": "tests",
 
   "DATA_MODE": "from_file",

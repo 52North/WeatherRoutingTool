@@ -212,7 +212,7 @@ class Config(BaseModel):
     @field_validator('BOAT_SPEED')
     def check_boat_speed(cls, v):
         if v > 10:
-            logger.info("Your 'BOAT_SPEED' is higher than 10 m/s."
+            logger.warning("Your 'BOAT_SPEED' is higher than 10 m/s."
                         " Have you considered that this program works with m/s?")
         return v
 
@@ -267,6 +267,8 @@ class Config(BaseModel):
                             lat.min() <= lat_max <= lat.max() and
                             lon.min() <= lon_min <= lon.max() and
                             lon.min() <= lon_max <= lon.max()):
+                        logger.info(f"Map coverage of WEATHER_DATA:[{lat.min()},{lon.min()}, {lat.max()}, {lon.max()}]")
+                        logger.info(f"DEFAULT_MAP:{self.DEFAULT_MAP}")
                         raise ValueError("Weather data does not cover the map region.")
 
                 # Check time coverage
@@ -275,6 +277,10 @@ class Config(BaseModel):
                     end = start + timedelta(hours=self.TIME_FORECAST)
                     times = pd.to_datetime(ds['time'].values)
                     if not (times.min() <= start <= times.max() and times.min() <= end <= times.max()):
+                        logger.info("Time coverage of WEATHER_DATA: "
+                                    f"[{times.min()}, {times.max()}]")
+                        logger.info(f"DEPARTURE_TIME: {self.DEPARTURE_TIME}")
+                        logger.info(f"Time until which a weather forecast should exist: {end}")
                         raise ValueError("Weather data does not cover the full routing time range.")
                 else:
                     raise ValueError("Weather data missing time dimension.")
