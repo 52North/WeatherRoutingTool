@@ -36,5 +36,6 @@ class ShipFactory:
             raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '
                                                                                   'not implemented.')
         ship.load_data()
+        ship.check_data_meaningful()
         ship.print_init()
         return ship
