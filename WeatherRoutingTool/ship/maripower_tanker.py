@@ -162,7 +162,7 @@ class MariPowerTanker(Boat):
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('path to weather data' + self.weather_path, 1))
-        logger.info(form.get_log_step('path to CoursesRoute.nc' + self.courses_path, 1))
+        logger.info(form.get_log_step('path to courses data' + self.courses_path, 1))
         logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
 
     def init_hydro_model_single_pars(self):
@@ -395,7 +395,7 @@ class MariPowerTanker(Boat):
         if (debug):
             print('xarray DataSet', ds)
 
-        ds.to_netcdf(self.courses_path + str())
+        ds.to_netcdf(self.courses_path)
         if (debug):
             ds_read = xr.open_dataset(self.courses_path)
             print('read data set', ds_read)
