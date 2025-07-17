@@ -41,6 +41,9 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
 
 
 class Config(BaseModel):
+    """
+        This class defines a config object using pydantic.
+    """
 
     # Filepaths
     COURSES_FILE: str
@@ -117,6 +120,12 @@ class Config(BaseModel):
 
     @classmethod
     def validate_config(cls, config_data):
+        """
+        validate the config by creating a Config class object and throw errors if necessary
+
+        :param config_data: config data provided by the user in form of a json file or a dict
+        :return: validated config
+        """
         try:
             config = cls(**config_data)
             logger.info("Config is valid!")
@@ -134,20 +143,29 @@ class Config(BaseModel):
 
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json': 
+        """
+        check input type of config data and run validate_config
+
+        :raises ValueError: path to json file doesn't exist although chosen as input type for config
+        :raises ValueError: dict doesn't exist although chosen as input type for config
+        :raises ValueError: mode chosen as input type for config doesn't exist
+        :return: validated config
+        """
+        if init_mode == 'from_json':
             if Path(path).exists:
                 with path.open("r") as f:
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
                     config.CONFIG_PATH = path
                 return config
-            else: 
-                raise ValueError("Path doesn't exist: CONFIG_PATH")
+            else:
+                logger.info(f"Given path to config json file: {path}")
+                raise ValueError("Path to config doesn't exist")
         elif init_mode == 'from_dict':
-            if config_dict != None:
+            if config_dict is not None:
                 return cls.validate_config(config_dict)
             else:
-                raise ValueError("You chose init_mode = 'from_dict' but config_dict = None")
+                raise ValueError("You chose init_mode = 'from_dict' but config_dict has no value")
         else:
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
             raise ValueError(msg)
@@ -169,6 +187,13 @@ class Config(BaseModel):
 
     @field_validator('DEFAULT_ROUTE')
     def validate_route_coordinates(cls, v):
+        """
+        check if the coordinates of DEFAULT_ROUTE have values that the program can work with
+
+        :raises ValueError: DEFAULT_ROUTE doesn't contain exactly 4 values
+        :raises ValueError: one of the coordinates isn't in the required range
+        :return: validated DEFAULT_ROUTE
+        """
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_start, lon_start, lat_end, lon_end]")
 
@@ -187,6 +212,13 @@ class Config(BaseModel):
 
     @field_validator('DEFAULT_MAP')
     def validate_map_coordinates(cls, v):
+        """
+        check if the coordinates of DEFAULT_MAP have values that the program can work with
+
+        :raises ValueError: DEFAULT_MAP doesn't contain exactly 4 values
+        :raises ValueError: one of the coordinates isn't in the required range
+        :return: validated DEFAULT_MAP
+        """
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_min, lon_max, lat_end, lon_end]")
 
@@ -205,12 +237,24 @@ class Config(BaseModel):
 
     @field_validator('CONSTRAINTS_LIST')
     def check_constraint_list(cls, v):
+        """
+        check that the CONSTRAINTS_LIST contains 'land_crossing_global_land_mask'
+        else the boat would be allowed to cross land
+
+        :raises ValueError: CONSTRAINTS_LIST doesn't contain 'land_crossing_global_land_mask'
+        :return: validated CONSTRAINTS_LIST
+        """
         if 'land_crossing_global_land_mask' not in v:
             raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
         return v
 
     @field_validator('BOAT_SPEED')
     def check_boat_speed(cls, v):
+        """
+        check for a realistic boat speed in m/s to rule out confusion with speed in knots
+
+        :return: validated BOAT_SPEED
+        """
         if v > 10:
             logger.info("Your 'BOAT_SPEED' is higher than 10 m/s."
                         " Have you considered that this program works with m/s?")
@@ -232,6 +276,12 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_route_on_map(self) -> 'Config':
+        """
+        check that the route runs inside the bounds of the defined map
+
+        :raises ValueError: route coordinates are outside the DEFAULT_MAP bounds
+        :return: config object with validated DEFAULT_ROUTE-DEFAULT_MAP-compatibility
+        """
         lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
         lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
 
@@ -243,6 +293,13 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_boat_algorithm_compatibility(self) -> 'Config':
+        """
+        the boat type 'speedy_isobased' is configured to run only with the corresponding
+        algorithm type 'speedy_isobased'
+
+        :raises ValueError: BOAT_TYPE is not compatible with ALGORITHM_TYPE
+        :return: config object with validated BOAT_TYPE-ALGORITHM_TYPE-compatibility
+        """
         if (
             (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
             and self.BOAT_TYPE != self.ALGORITHM_TYPE
@@ -252,6 +309,14 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_route_weather_data_compatibility(self) -> 'Config':
+        """
+        check that the route runs inside the map that has weather data available
+        considering place and time
+        :raises ValueError: weather data doesn't cover map
+        :raises ValueError: weather data doesn't cover full routing time range
+        :raises ValueError: weather data has no time dimension
+        :return: config object with validated WEATHER_DATA regarding place and time
+        """
         path = Path(self.WEATHER_DATA)
         if path.exists():
             try:
@@ -287,6 +352,13 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_route_depth_data_compatibility(self) -> 'Config':
+        """
+        check that the route runs inside the map that has depth data available
+        considering only place as the depth data is time independent
+
+        :raises ValueError: depth data doesn't cover map
+        :return: config object with validated DEPTH_DATA regarding place
+        """
         path = Path(self.DEPTH_DATA)
         if path.exists():
             try:
