@@ -13,6 +13,10 @@ logger = logging.getLogger('WRT.routingalg')
 
 
 class IsoFuel(IsoBased):
+    """
+    IsoFuel inherits from IsoBased and is based on the principle of routing steps that are equal in fuel consumption
+    """
+
     delta_fuel: float  # fuel available to the boat per routing step and segment (kg)
 
     def __init__(self, config):
@@ -74,6 +78,12 @@ class IsoFuel(IsoBased):
         return delta_time, delta_fuel, dist['s12']
 
     def determine_timespread(self, delta_time):
+        """TODO: add description
+        _summary_
+
+        :param delta_time: _description_
+        :type delta_time: _type_
+        """
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
         logger.info('delta_time', delta_time.to('hour'))
@@ -88,6 +98,11 @@ class IsoFuel(IsoBased):
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
 
     def final_pruning(self):
+        """TODO: add description
+        _summary_
+
+        :raises Exception: _description_
+        """
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:

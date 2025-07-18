@@ -30,6 +30,7 @@ class GridBasedPopulation(GridMixin, Sampling):
      - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
      - call print(GridBasedPopulation.mro()) to see the method resolution order
     """
+
     def __init__(self, src, dest, grid, var_type=np.float64):
         super().__init__(grid=grid)
         self.var_type = var_type
@@ -62,6 +63,7 @@ class FromGeojsonPopulation(Sampling):
     """
     Make initial population for genetic algorithm based on the isofuel algorithm with a ConstantFuelBoat
     """
+
     def __init__(self, src, dest, path_to_route_folder, var_type=np.float64):
         super().__init__()
         self.var_type = var_type
@@ -91,9 +93,13 @@ class FromGeojsonPopulation(Sampling):
     def get_great_circle_route(self, distance=100000):
         """
         Get equidistant route along great circle in the form [[lat1, lon1], [lat12, lon2], ...]
-        :param distance: distance in m
+
+        :param distance: distance in m, defaults to 100000
+        :type distance: int, optional
         :return: route as list of lat/lon points
+        :rtype: list
         """
+
         geod = Geodesic.WGS84
         line = geod.InverseLine(self.src[0], self.src[1], self.dest[0], self.dest[1])
         n = int(ceil(line.s13 / distance))
@@ -107,9 +113,13 @@ class FromGeojsonPopulation(Sampling):
     def read_route_from_file(self, route_absolute_path):
         """
         Read route from geojson file and return the coordinates in the form [[lat1, lon1], [lat12, lon2], ...]
+
         :param route_absolute_path: absolute path to geojson file
+        :type route_absolute_path: str
         :return: route as list of lat/lon points
+        :rtype: list
         """
+
         with open(route_absolute_path) as file:
             rp_dict = json.load(file)
         route = [[feature['geometry']['coordinates'][1], feature['geometry']['coordinates'][0]]
@@ -147,6 +157,7 @@ class GeneticCrossover(Crossover):
     """
     Custom class to define genetic crossover for routes
     """
+
     def __init__(self, prob=1):
 
         # define the crossover: number of parents and number of offsprings
@@ -194,6 +205,7 @@ class GridBasedMutation(GridMixin, Mutation):
     """
     Custom class to define genetic mutation for routes
     """
+
     def __init__(self, grid, prob=0.4):
         super().__init__(grid=grid)
         self.prob = prob
@@ -247,6 +259,7 @@ class RoutingProblem(ElementwiseProblem):
     """
     Class definition of the weather routing problem
     """
+
     boat: None
     constraint_list: None
     departure_time: None
@@ -258,16 +271,17 @@ class RoutingProblem(ElementwiseProblem):
         self.departure_time = departure_time
 
     def _evaluate(self, x, out, *args, **kwargs):
-        """
+        """TODO: add types
         Method defined by pymoo which has to be overriden
+
         :param x: numpy matrix with shape (rows: number of solutions/individuals, columns: number of design variables)
+        :type x:
         :param out:
             out['F']: function values, vector of length of number of solutions
             out['G']: constraints
-        :param args:
-        :param kwargs:
-        :return:
+        :type out:
         """
+
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         fuel, _ = self.get_power(x[0])
         constraints = self.get_constraints(x[0])
@@ -290,6 +304,7 @@ class RoutingProblem(ElementwiseProblem):
         :param route: Candidate array of waypoints
         :type route: np.ndarray
         :return: Array of constraint violations
+        :rtype: np.array
         """
 
         constraints = np.array([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
@@ -337,6 +352,7 @@ class RepairInfeasibles(Repair):
         :param constraints: Constraints array indicating violations with waypoints
         :type constraints: np.ndarray
         :return: Updated Candidate array
+        :rtype: np.ndarray
         """
 
         for i, c in enumerate(constraints):
@@ -357,6 +373,7 @@ class RepairInfeasibles(Repair):
         :param Z: Candidate solution array
         :type Z: np.ndarray
         :return: Array of updated population
+        :rtype: np.ndarrayn
         """
 
         constraints = [problem.get_constraints_array(r[0]) for r in Z]

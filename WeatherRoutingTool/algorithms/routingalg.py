@@ -17,6 +17,9 @@ logger = logging.getLogger('WRT.routingalg')
 
 class RoutingAlg:
     """
+    Mother class of all routing algorithms defining basic attributes and methods
+    """
+    """TODO: Is this still up-to-date? Some of the parameters aren't in use?
         Isochrone data structure with typing.
                 Parameters:
                     count: int  (routing step)

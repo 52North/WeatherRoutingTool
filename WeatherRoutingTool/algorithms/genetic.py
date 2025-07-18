@@ -28,6 +28,10 @@ logger = logging.getLogger('WRT.Genetic')
 
 
 class Genetic(RoutingAlg):
+    """
+    Extends RoutingAlg to a genetic algorithm using pymoo
+    """
+
     fig: matplotlib.figure
 
     pop_size: int
@@ -56,6 +60,21 @@ class Genetic(RoutingAlg):
         self.print_init()
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
+        """TODO: More detailed description?
+        Central method for calculating the route
+
+        :param boat: Boat profile
+        :type boat: Boat
+        :param wt: Weather data
+        :type wt: WeatherCond
+        :param constraints_list: List of constraints on the routing
+        :type constraints_list: ConstraintsList
+        :param verbose: sets verbosity, defaults to False
+        :type verbose: bool, optional
+        :return: calculated route
+        :rtype: RouteParams
+        """
+
         data = xr.open_dataset(self.weather_path)
         lat_int, lon_int = 10, 10
         wave_height = data.VHM0.isel(time=0)
@@ -90,6 +109,13 @@ class Genetic(RoutingAlg):
         logger.info('offsprings: ' + str(self.n_offsprings))
 
     def terminate(self, **kwargs):
+        """TODO: add description
+        _summary_
+
+        :return: Calculated route as a RouteParams object ready to be returned to the user
+        :rtype: RouteParams
+        """
+
         super().terminate()
 
         res = kwargs.get('result_object')
@@ -145,6 +171,23 @@ class Genetic(RoutingAlg):
         pass
 
     def optimize(self, problem, initial_population, crossover, mutation, duplicates):
+        """
+        Optimize the routing problem by using the pymoo method minimize
+        TODO: add description to parameters
+        :param problem: _description_
+        :type problem: _type_
+        :param initial_population: _description_
+        :type initial_population: _type_
+        :param crossover: _description_
+        :type crossover: _type_
+        :param mutation: _description_
+        :type mutation: _type_
+        :param duplicates: _description_
+        :type duplicates: _type_
+        :return: _description_
+        :rtype: pymoo.core.result.Result
+        """
+
         # cost[nan_mask] = 20000000000* np.nanmax(cost) if np.nanmax(cost) else 0
         algorithm = NSGA2(pop_size=self.pop_size, sampling=initial_population, crossover=crossover,
                           n_offsprings=self.n_offsprings, mutation=mutation, eliminate_duplicates=duplicates,
@@ -157,6 +200,13 @@ class Genetic(RoutingAlg):
         return res
 
     def plot_running_metric(self, res):
+        """TODO: add description
+        _summary_
+
+        :param res: _description_
+        :type res: _type_
+        """
+
         figure_path = get_figure_path()
         running = RunningMetric()
 
@@ -202,6 +252,15 @@ class Genetic(RoutingAlg):
         plt.close()
 
     def plot_population_per_generation(self, res, best_route):
+        """
+        create figures for every generation of routes
+        TODO: add description for parameters
+        :param res: _description_
+        :type res: pymoo.core.result.Result
+        :param best_route: _description_
+        :type best_route: _type_
+        """
+
         figure_path = get_figure_path()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))

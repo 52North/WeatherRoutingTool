@@ -8,6 +8,15 @@ def get_closest(array, value):
 
 
 def distance(route):
+    """TODO: Where is this function used?
+    Calculates the accumulated distance along a route
+
+    :param route: Some kind of route
+    :type route: TODO: add type of route
+    :return: Accumulated distance along a route
+    :rtype: np.array
+    """
+
     geod = Geodesic.WGS84
     dists = []
 
@@ -51,6 +60,10 @@ def time_diffs(speed, route):
 
 
 class GridMixin:
+    """TODO: add class description
+    _summary_
+
+    """
     grid: xr.Dataset
 
     def __init__(self, grid, *args, **kwargs):
