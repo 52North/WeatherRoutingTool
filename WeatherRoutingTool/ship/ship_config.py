@@ -19,6 +19,7 @@ class ShipConfig(BaseModel):
     BOAT_HBR: float  # height of top of superstructure (bridge etc.) [m]
     BOAT_LENGTH: float  # overall length [m]
     BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
+    BOAT_SMCR_SPEED: float
     BOAT_SPEED: float  # boat speed [m/s]
 
     # Recommended configuration
@@ -45,8 +46,6 @@ class ShipConfig(BaseModel):
     BOAT_FACTOR_CALM_WATER: float = 1.0  # multiplication factor for the calm water resistance model of maripower
     BOAT_FACTOR_WAVE_FORCES: float = 1.0  # multiplication factor for added resistance in waves model of maripower
     BOAT_FACTOR_WIND_FORCES: float = 1.0  # multiplication factor for the added resistance in wind model of maripower
-    BOAT_SMCR_POWER: float = 6
-    BOAT_SMCR_SPEED: float = 6
     BOAT_UNDER_KEEL_CLEARANCE: float = 20  # vertical distance between keel and ground
 
     @classmethod

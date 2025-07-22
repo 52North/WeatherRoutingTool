@@ -56,14 +56,6 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
     # options: 'isofuel', 'genetic', 'speedy_isobased'
 
-    BOAT_BREADTH: float  # ship breadth [m]
-    BOAT_DRAUGHT_AFT: float = 10  # aft draught (draught at rudder) in m
-    BOAT_DRAUGHT_FORE: float = 10  # fore draught (draught at forward perpendicular) in m
-    BOAT_FUEL_RATE: float  # fuel rate at service propulsion point [g/kWh]
-    BOAT_HBR: float  # height of top of superstructure (bridge etc.) [m]
-    BOAT_LENGTH: float  # overall length [m]
-    BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
-    BOAT_SPEED: float  # boat speed [m/s]
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
     CONSTRAINTS_LIST: List[Literal[
@@ -72,13 +64,12 @@ class Config(BaseModel):
         ]]
     # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
-    CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
 
     _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
     _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
-    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
+    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
     # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
-    DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
+    DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
     # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
     DELTA_FUEL: float = 3000  # amount of fuel per routing step (kg)
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
@@ -98,8 +89,6 @@ class Config(BaseModel):
     ISOCHRONE_MINIMISATION_CRITERION: Literal['dist', 'squareddist_over_disttodest'] = 'squareddist_over_disttodest'
     # options: 'dist', 'squareddist_over_disttodest'
     ISOCHRONE_NUMBER_OF_ROUTES: int = 1  # integer specifying how many routes should be searched
-    ISOCHRONE_PRUNE_BEARING: bool = False
-    ISOCHRONE_PRUNE_GCR_CENTERED: bool = True
     ISOCHRONE_PRUNE_GROUPS: Literal['courses', 'larger_direction', 'branch'] = 'larger_direction'  # can be 'courses',
     # 'larger_direction', 'branch'
     ISOCHRONE_PRUNE_SECTOR_DEG_HALF: int = 91  # half of the angular range of azimuth angle considered for pruning;
