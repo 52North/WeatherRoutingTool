@@ -311,3 +311,49 @@ class TestDPM:
         assert pol.Axv == Axv
         assert pol.Ayv == Ayv
         assert pol.Aod == Aod
+
+    def test_validate_parameters(self):
+        """
+        Test that the validate_parameters method directly identifies and raises an error for dummy values (-99).
+        """
+        # Create a boat object with dummy values
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+        pol.Axv = -99 * u.meter * u.meter
+        pol.hs1 = -99 * u.meter
+
+        with pytest.raises(ValueError) as excinfo:
+            pol.validate_parameters()
+
+        assert "dummy values (-99)" in str(excinfo.value)
+        assert "Axv" in str(excinfo.value)
+
+    def test_valid_parameters(self):
+        """
+        Test that valid parameters pass validation.
+        """
+        config = {
+            "BOAT_TYPE": "direct_power_method",
+            "BOAT_BREADTH": 32,
+            "BOAT_FUEL_RATE": 167,
+            "BOAT_HBR": 30,
+            "BOAT_LENGTH": 180,
+            "BOAT_SMCR_POWER": 6502,
+            "BOAT_SMCR_SPEED": 6,
+            "BOAT_SPEED": 6,  
+            "WEATHER_DATA": "/path/to/data",
+            "BOAT_HS1": 6.0, 
+            "BOAT_LS1": 36.0,
+            "BOAT_HS2": 3.0,
+            "BOAT_LS2": 54.0,
+            "BOAT_CMC": -6.3,
+            "BOAT_BS1": 28.8,
+            "BOAT_HC": 10.0
+        }
+
+        try:
+            pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+            # If we get here, the test passes
+            assert True
+        except ValueError:
+            # If we get here, there was an unexpected ValueError
+            assert False, "Valid parameters should not raise ValueError"
