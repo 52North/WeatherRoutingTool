@@ -143,3 +143,32 @@ class WeatherCond:
             v_wind_speed.append(
                 self.approx_weather(weather_data['v-component_of_wind_height_above_ground'], lats[i_coord],
                                     lons[i_coord], time[i_coord], 10))
+
+        weather_dict = {
+            "wave_direction": np.array(wave_direction, dtype='float32') * u.radian,
+            "wave_period": np.array(wave_period, dtype='float32') * u.second,
+            "wave_height": np.array(wave_height, dtype='float32') * u.meter,
+            "u_wind_speed": np.array(u_wind_speed, dtype='float32') * u.meter / u.second,
+            "v_wind_speed": np.array(v_wind_speed, dtype='float32') * u.meter / u.second,
+            "v_currents": np.array(v_currents, dtype='float32') * u.meter / u.second,
+            "u_currents" : np.array(u_currents, dtype='float32') * u.meter / u.second,
+            "pressure" : np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second ** 2),
+            "air_temperature" : np.array(air_temperature, dtype='float32') * u.Kelvin,
+          #  "air_temperature" : ship_params.air_temperature.to(u.deg_C, equivalencies=u.temperature()),
+            "salinity" : np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled,
+            "water_temperature" : np.array(water_temperature, dtype='float32') * u.deg_C
+        }
+        weather_dict['air_temperature'] = weather_dict['air_temperature'].to(u.deg_C, equivalencies=u.temperature())
+        return weather_dict
+
+
+
+    def approx_weather(self, var, lats, lons, time, height=None, depth=None):
+        var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
+        if height:
+            var = var.sel(height_above_ground=height, method='nearest', drop=False)
+        if depth:
+            var = var.sel(depth=depth, method='nearest', drop=False)
+        var = var.fillna(0).to_numpy()
+
+        return var
