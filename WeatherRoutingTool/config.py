@@ -218,15 +218,6 @@ class Config(BaseModel):
             raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
         return v
 
-    @field_validator('BOAT_SPEED', mode='after')
-    @classmethod
-    def check_boat_speed(cls, v):
-        if v > 10:
-            logger.warning(
-                "Your 'BOAT_SPEED' is higher than 10 m/s."
-                " Have you considered that this program works with m/s?")
-        return v
-
     @field_validator('DELTA_FUEL', 'TIME_FORECAST', 'ROUTER_HDGS_INCREMENTS_DEG',
                      'ISOCHRONE_MAX_ROUTING_STEPS', mode='after')
     @classmethod
