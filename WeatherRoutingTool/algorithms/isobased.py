@@ -17,20 +17,16 @@ logger = logging.getLogger('WRT.Isobased')
 
 
 class IsoBasedStatus():
-    lat: np.ndarray
-    lon: np.ndarray
-    time: np.ndarray
-
-    route_reached_destination: bool  # True everytime one route (or more) reaches the destination in a routing step
-    route_reached_waypoint: bool
+    name: str
+    state: str
+    error: int
     needs_further_routing: bool
 
-    state: str
     available_states: list
-    error: int
     available_errors: dict
 
-    def __init__():
+    def __init__(self):
+        self.name = "Isobased:"
         self.available_states = [
             "routing",
             "some_reached_destination",
@@ -39,15 +35,13 @@ class IsoBasedStatus():
             "error"
         ]
         self.available_errors = {
-            'no_error' : 0,
-            'pruning_error' : 1,
-            'out_of_routes' : 2,
-            'destination_not_reached' : 3
+            'no_error': 0,
+            'pruning_error': 1,
+            'out_of_routes': 2,
+            'destination_not_reached': 3
         }
-        self.route_reached_destination = False
-        self.route_reached_waypoint = False
-        self.needs_further_routing = True
         self.error = 0
+        self.needs_further_routing = True
 
     def update_state(self, state_request):
         state_exists = [istate for istate in available_states if istate == state_request]
@@ -57,7 +51,7 @@ class IsoBasedStatus():
         self.state = state_request
 
     def set_error_code(self, error_str):
-        self.error = self.available_errors(error_str)
+        self.error = self.available_errors[error_str]
         self.update_state("error")
 
 
@@ -278,51 +272,37 @@ class IsoBased(RoutingAlg):
             logger.info('Step ' + str(self.count))
 
             self.define_courses_per_step()
-            self.move_boat_direct(wt, boat, constraints_list)
+            self.estimate_fuel_consumption()
+
+            # move boat
+            units.cut_angles(self.current_course)
+            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
+            # ToDo: remove debug variable and use logger settings instead
+            if debug:
+                logger.info('delta_time: ', delta_time)
+                logger.info('delta_fuel: ', delta_fuel)
+                logger.info('dist: ', dist)
+                logger.info('state:', self.status.state)
+            move = self.check_bearing(dist)
+            if debug:
+                logger.info('move:', move)
+
+            delta_time, delta_fuel, dist = self.check_land_ahoy()
+            is_constrained = self.check_constraints(move, constraint_list)
+
+            self.get_weather_snapshot()
+            self.evaluate_constraints()
+            self.update()
+            # self.move_boat_direct(wt, boat, constraints_list)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
-            if self.status.state == "reached_destination":
-                logger.info('Initiating last step at routing step ' + str(self.count))
-                routes_to_collect = self.desired_number_of_routes > 1 and self.current_number_of_routes < self.desired_number_of_routes
-
-                if routes_to_collect:
-                    self.find_every_route_reaching_destination()
-                    number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
-
-                    # if the number of routes aimed at is larger than the number of routes reaching the distination
-                    # in this step, collect all routes, otherwise collect only as many as required
-                    if self.desired_number_of_routes <= number_of_possible_routes:
-                        remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
-                        self.find_routes_reaching_destination_in_current_step(remaining_routes)
-                        self.status.needs_further_routing = False
-                        break
-                    else:
-                        self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
-                        if self.next_step_routes.shape[0] == 0:
-                            logger.warning('No routes left for execution, terminating!')
-                            self.status.set_error_code('out_of_routes')
-                            break
-
-                        # organise routes for next step
-                        self.set_next_step_routes()
-                        self.status.set_state('routing')
-                else:
+            if self.status.state == "some_reached_destination":
+                self.collect_routes()
+                if not self.status.needs_further_routing:
                     break
 
             elif self.status.state == "reached_waypoint":
-                logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
-                self.final_pruning()
-                self.expand_axis_for_intermediate()
-                constraints_list.reached_positive()
-                self.finish_temp = constraints_list.get_current_destination()
-                self.start_temp = constraints_list.get_current_start()
-                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
-                self.status.update_state("routing")
-
-                logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
-                    self.finish_temp))
-                self.update_fig('p')
-                self.count += 1
+                self.depart_from_waypoint()
                 continue
 
             self.pruning_per_step(True)
@@ -331,56 +311,86 @@ class IsoBased(RoutingAlg):
             self.update_fig('p')
             self.count += 1
 
-            route = self.terminate()
+        route = self.terminate()
+        return route, self.status.error
 
-            return route, self.status.error
-
-
-    def move_boat_direct(self, wt: WeatherCond, boat: Boat, constraint_list: ConstraintsList):
-        """
-        calculate new boat position for current time step based on wind and boat function
-        """
-        # get wind speed (tws) and angle (twa)
-        debug = False
-
-        # get boat speed
+    def estimate_fuel_consumption(self, wt: WeatherCond, boat: Boat):
         bs = boat.get_boat_speed()
         bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
                                                self.get_current_lons(), self.time, None, True)
-        units.cut_angles(self.current_course)
 
-        # ship_params.print()
+    def check_constraints(self, move, constraint_list):
+        debug = False
 
-        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
-        # ToDo: remove debug variable and use logger settings instead
-        if debug:
-            logger.info('delta_time: ', delta_time)
-            logger.info('delta_fuel: ', delta_fuel)
-            logger.info('dist: ', dist)
-            logger.info('state:', self.status.state)
+        is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
+        if (debug):
+            form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
+        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0], move['lat2'],
+                                                       move['lon2'], self.time, is_constrained)
+        if (debug):
+            form.print_step('is_constrained after checking' + str(is_constrained), 1)
+        return is_constrained
 
-        move = self.check_bearing(dist)
-
-        if debug:
-            logger.info('move:', move)
-
-        delta_time, delta_fuel, dist = self.check_land_ahoy()
-
-        is_constrained = self.check_constraints(move, constraint_list)
-
+    def update(self):
         self.update_position(move, is_constrained, dist)
         self.update_time(delta_time)
         self.update_fuel(delta_fuel, ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
 
+    def depart_from_waypoint(self):
+        logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
+        self.final_pruning()
+        self.expand_axis_for_intermediate()
+        constraints_list.reached_positive()
+        self.finish_temp = constraints_list.get_current_destination()
+        self.start_temp = constraints_list.get_current_start()
+        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
+        self.status.update_state("routing")
+
+        logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
+            self.finish_temp))
+        self.update_fig('p')
+        self.count += 1
+
+    def collect_routes(self):
+        logger.info('Initiating last step at routing step ' + str(self.count))
+
+        if self.desired_number_of_routes == 1:
+            self.status.needs_further_routing = False
+            self.status.update_state("all_reached_destination")
+        else:
+            # TODO: delete this if unnessessary
+            if self.current_number_of_routes >= self.desired_number_of_routes:
+                raise ValueError("Something very strange happening here! Take a look.")
+            self.find_every_route_reaching_destination()
+            number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
+
+            # if the number of routes aimed at is larger than the number of routes reaching the distination
+            # in this step, collect all routes, otherwise collect only as many as required
+            if self.desired_number_of_routes <= number_of_possible_routes:
+                remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
+                self.find_routes_reaching_destination_in_current_step(remaining_routes)
+                self.status.update_state("all_reached_destination")
+                self.status.needs_further_routing = False
+            else:
+                self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
+                if self.next_step_routes.shape[0] == 0:
+                    logger.warning('No routes left for execution, terminating!')
+                    self.status.set_error_code('out_of_routes')
+                    self.status.needs_further_routing = False
+
+                # organise routes for next step
+                self.set_next_step_routes()
+                self.status.set_state('routing')
+
     def check_land_ahoy(self):
-        if self.route_reached_destination or self.route_reached_waypoint:
+        if (self.status.state == "some_reached_destination") or (self.status.state == "route_reached_waypoint"):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
-            if self.route_reached_destination:
+            if (self.status.state == "some_reached_destination"):
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
                         delta_time[i] = delta_time_last_step[i]
@@ -1122,18 +1132,6 @@ class IsoBased(RoutingAlg):
                 move['lon2'] = new_lon
 
         return move
-
-    def check_constraints(self, move, constraint_list):
-        debug = False
-
-        is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
-        if (debug):
-            form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
-        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0], move['lat2'],
-                                                       move['lon2'], self.time, is_constrained)
-        if (debug):
-            form.print_step('is_constrained after checking' + str(is_constrained), 1)
-        return is_constrained
 
     def update_position(self, move, is_constrained, dist):
         debug = False
