@@ -75,14 +75,25 @@ class Genetic(RoutingAlg):
         lat_int, lon_int = 10, 10
         wave_height = data.VHM0.isel(time=0)
         wave_height = wave_height[::lat_int, ::lon_int]
-        problem = RoutingProblem(departure_time=self.departure_time, boat=boat, constraint_list=constraints_list)
-        initial_population = PopulationFactory.get_population(self.population_type, self.start, self.finish,
-                                                              path_to_route_folder=self.path_to_route_folder,
-                                                              population_path=self.population_path,
-                                                              grid=wave_height,
 
-                                                              boat=boat)
-        mutation = MutationFactory.get_mutation(self.mutation_type, grid=wave_height)
+        problem = RoutingProblem(
+            departure_time=self.departure_time,
+            boat=boat,
+            constraint_list=constraints_list, )
+
+        initial_population = PopulationFactory.get_population(
+            population_type=self.population_type,
+            src=self.start,
+            dest=self.finish,
+            path_to_route_folder=self.path_to_route_folder,
+            population_path=self.population_path,
+            grid=wave_height,
+            boat=boat, )
+
+        mutation = MutationFactory.get_mutation(
+            mutation_type=self.mutation_type,
+            grid=wave_height, )
+
         crossover = CrossoverFactory.get_crossover(self.crossover_type)
         duplicates = RouteDuplicateElimination()
 
@@ -142,18 +153,19 @@ class Genetic(RoutingAlg):
         start_times = np.append(start_times, arrival_time)
         travel_times = np.append(travel_times, -99 * u.second)
 
-        route = RouteParams(count=npoints-1,
-                            start=self.start,
-                            finish=self.finish,
-                            gcr=None,
-                            route_type='min_fuel_route',
-                            time=travel_times[-1],
-                            lats_per_step=lats,
-                            lons_per_step=lons,
-                            course_per_step=courses[-1],
-                            dists_per_step=dists[-1],
-                            starttime_per_step=start_times,
-                            ship_params_per_step=self.ship_params)
+        route = RouteParams(
+            count=npoints-1,
+            start=self.start,
+            finish=self.finish,
+            gcr=None,
+            route_type='min_fuel_route',
+            time=travel_times[-1],
+            lats_per_step=lats,
+            lons_per_step=lons,
+            course_per_step=courses[-1],
+            dists_per_step=dists[-1],
+            starttime_per_step=start_times,
+            ship_params_per_step=self.ship_params, )
 
         self.check_destination()
         self.check_positive_power()
@@ -176,6 +188,7 @@ class Genetic(RoutingAlg):
             eliminate_duplicates=duplicates,
             repair=RepairInfeasibles(),
             return_least_infeasible=False, )
+
         termination = get_termination("n_gen", self.ncount)
 
         res = minimize(problem, algorithm, termination, save_history=True, verbose=True)

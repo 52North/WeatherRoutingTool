@@ -82,11 +82,18 @@ class RoutingProblem(ElementwiseProblem):
         return constraints
 
     def get_power(self, route):
-        route_dict = RouteParams.get_per_waypoint_coords(route[:, 1], route[:, 0], self.departure_time,
-                                                         self.boat.get_boat_speed())
+        route_dict = RouteParams.get_per_waypoint_coords(
+            route[:, 1],
+            route[:, 0],
+            self.departure_time,
+            self.boat.get_boat_speed(), )
 
-        shipparams = self.boat.get_ship_parameters(route_dict['courses'], route_dict['start_lats'],
-                                                   route_dict['start_lons'], route_dict['start_times'])
+        shipparams = self.boat.get_ship_parameters(
+            route_dict['courses'],
+            route_dict['start_lats'],
+            route_dict['start_lons'],
+            route_dict['start_times'], )
+
         fuel = shipparams.get_fuel_rate()
         fuel = (fuel / 3600) * route_dict['travel_times']
         return np.sum(fuel), shipparams

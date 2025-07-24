@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import copy
 import random
 from math import ceil
 from pathlib import Path
@@ -62,32 +63,60 @@ class GridBasedMutation(GridMixin, Mutation):
         return newPath
 
 
-class ShuffleMutation(GridMixin, Mutation):
+class RandomWalkMutation(GridMixin, Mutation):
+    """Mutates a random point in the waypoint to it's N4 alternatives"""
+
+    @staticmethod
+    def random_walk(point, to_avoid=None):
+        """Randomly pick an N4 neighbour of a waypoint"""
+
+        if to_avoid is None:
+            to_avoid = []
+
+        x, y = point
+
+        possible_moves = np.array([
+            [x+1, y], [x-1, y], #[x+1, y+1], [x+1, y-1],
+            [x, y+1], [x, y-1], #[x-1, y+1], [x-1, y-1],
+        ])
+
+        possible_moves = [
+            x for x in possible_moves
+            if not np.any(np.all(to_avoid == x, axis=1))
+        ]
+
+        return random.choice(possible_moves)
+
     def __init__(self, grid, prob=0.4):
         super().__init__(grid=grid)
 
         self.prob = prob
 
     def _do(self, problem, X, **kw):
-        for i in range(X.shape[0]):
-            x = X[i, 0]
+        if not random.random() > self.prob:
+            return X
 
-            cp1, cp2 = sorted(random.sample(range(1, x.shape[0]-1), 2))
-            np.random.shuffle(x[cp1:cp2])
+        rs = copy.deepcopy(X)
 
-            X[i, 0] = x
+        for route, in rs:
+            rindex = np.random.randint(1, route.shape[0] - 1)
 
-        return X
+            *_, (point,) = self.coords_to_index(route[[rindex]])
+            *_, neighbours = self.coords_to_index(route[[rindex-1, rindex+1]])
+
+            jitter = self.random_walk(point, neighbours)
+
+            *_, (coords,) = self.index_to_coords(jitter[None, :])
+            route[rindex] = coords
+        return rs
 
 
 class MutationFactory:
 
     @staticmethod
     def get_mutation(mutation_type: str, grid=None) -> Mutation:
-        return ShuffleMutation(grid)
-
         if mutation_type == 'grid_based':
-            mutation = GridBasedMutation(grid)
+            mutation = RandomWalkMutation(grid)
         else:
             msg = f"Mutation type '{mutation_type}' is invalid!"
             logger.error(msg)
