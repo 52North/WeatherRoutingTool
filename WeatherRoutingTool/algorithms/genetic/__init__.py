@@ -94,7 +94,10 @@ class Genetic(RoutingAlg):
             mutation_type=self.mutation_type,
             grid=wave_height, )
 
-        crossover = CrossoverFactory.get_crossover(self.crossover_type)
+        crossover = CrossoverFactory.get_crossover(
+            crossover_type=self.crossover_type,
+            grid=wave_height, )
+
         duplicates = RouteDuplicateElimination()
 
         # TODO: verify starting point and ending point are not in violation of a constraint.
