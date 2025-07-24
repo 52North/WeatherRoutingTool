@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
@@ -21,9 +22,9 @@ class Boat:
     def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name=file_name)
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         self.speed = config_obj.BOAT_SPEED * u.meter / u.second
         self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
@@ -115,6 +116,13 @@ class Boat:
     def load_data(self):
         pass
 
+    def check_data_meaningful(self):
+        """
+        This is an optional method to check if default boat variables have been changed into meaningful values.
+        It can be implemented in Child classes.
+        """
+        pass
+
 
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
@@ -124,9 +132,9 @@ class ConstantFuelBoat(Boat):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name=file_name)
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         # mandatory variables
         self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.kg / u.second
