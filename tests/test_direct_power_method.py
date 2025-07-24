@@ -339,9 +339,9 @@ class TestDPM:
             "BOAT_LENGTH": 180,
             "BOAT_SMCR_POWER": 6502,
             "BOAT_SMCR_SPEED": 6,
-            "BOAT_SPEED": 6,  
+            "BOAT_SPEED": 6,
             "WEATHER_DATA": "/path/to/data",
-            "BOAT_HS1": 6.0, 
+            "BOAT_HS1": 6.0,
             "BOAT_LS1": 36.0,
             "BOAT_HS2": 3.0,
             "BOAT_LS2": 54.0,
@@ -352,6 +352,7 @@ class TestDPM:
 
         try:
             pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+            pol.load_data()
             # If we get here, the test passes
             assert True
         except ValueError:
