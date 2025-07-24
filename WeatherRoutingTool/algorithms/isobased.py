@@ -1,4 +1,5 @@
 from datetime import timedelta
+from email.policy import linesep_splitter
 
 import numpy as np
 from geovectorslib import geod
@@ -14,6 +15,64 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.environmental_data.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
+
+class RoutingStep:
+    lats: np.ndarray
+    lons: np.ndarray
+    courses: np.ndarray
+    time: np.ndarray
+
+    delta_time: datetime
+    delta_fuel: float
+    delta_dist: float
+    is_constrained: np.ndarray
+
+    def __init__(self):
+        self.delta_time = None
+        self.delta_fuel = None
+        self.delta_dist = None
+        self.is_constrained = None
+
+        self.lats = np.full(2, None)
+        self.lons = np.full(2, None)
+        self.time = np.array([self.departure_time])
+        self.course = np.array([0]) * u.degree
+
+    def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
+        self.delta_fuel = delta_fuel
+        self.delta_time = delta_time
+        self.delta_dist = delta_dist
+
+    def update_start_step(self, lats, lons, courses, time):
+        self.lats[0] = lats
+        self.lons[0] = lons
+        self.courses[0] = courses[0]
+        self.time = time
+
+    def update_end_step(self, lats, lons, courses):
+        self.lats[1] = lats
+        self.lons[1] = lons
+        self.courses[1] = courses
+
+    def update_constraints(self, constraints):
+        self.is_constrained = constraints
+
+    def get_lat(self, position):
+        if position == 'start':
+            return self.lats[0]
+        elif position == 'end':
+            return self.lats[1]
+        else:
+            raise ValueError('RoutingSteps.get_lat accepts arguments "start" and "end"')
+
+    def get_start_lon(self):
+        if position == 'start':
+            return self.lons[0]
+        elif position == 'end':
+            return self.lons[1]
+        else:
+            raise ValueError('RoutingSteps.get_lon accepts arguments "start" and "end"')
+
 
 
 class IsoBasedStatus():
@@ -103,9 +162,9 @@ class IsoBased(RoutingAlg):
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
     route_list: list
-    pruning_error: bool
 
     status: IsoBasedStatus
+    routing_step: RoutingStep
 
     def __init__(self, config):
         super().__init__(config)
@@ -150,6 +209,7 @@ class IsoBased(RoutingAlg):
         self.path_to_route_folder = config.ROUTE_PATH
 
         self.status = IsoBasedStatus()
+        self.routing_step = RoutingStep()
 
     def print_init(self):
         RoutingAlg.print_init(self)
@@ -272,28 +332,11 @@ class IsoBased(RoutingAlg):
             logger.info('Step ' + str(self.count))
 
             self.define_courses_per_step()
-            self.estimate_fuel_consumption()
-
-            # move boat
-            units.cut_angles(self.current_course)
-            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
-            # ToDo: remove debug variable and use logger settings instead
-            if debug:
-                logger.info('delta_time: ', delta_time)
-                logger.info('delta_fuel: ', delta_fuel)
-                logger.info('dist: ', dist)
-                logger.info('state:', self.status.state)
-            move = self.check_bearing(dist)
-            if debug:
-                logger.info('move:', move)
-
-            delta_time, delta_fuel, dist = self.check_land_ahoy()
-            is_constrained = self.check_constraints(move, constraint_list)
-
+            bs, ship_params = self.estimate_fuel_consumption(boat)
+            self.move_boat()
+            self.check_constraints(move, constraint_list)
             self.get_weather_snapshot()
-            self.evaluate_constraints()
-            self.update()
-            # self.move_boat_direct(wt, boat, constraints_list)
+            self.update(ship_params)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
             if self.status.state == "some_reached_destination":
@@ -314,6 +357,23 @@ class IsoBased(RoutingAlg):
         route = self.terminate()
         return route, self.status.error
 
+    def move_boat(self):
+        units.cut_angles(self.current_course)
+        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
+        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
+        # ToDo: remove debug variable and use logger settings instead
+        if debug:
+            logger.info('delta_time: ', delta_time)
+            logger.info('delta_fuel: ', delta_fuel)
+            logger.info('dist: ', dist)
+            logger.info('state:', self.status.state)
+        move = self.check_bearing(dist)
+        if debug:
+            logger.info('move:', move)
+
+        self.check_land_ahoy()
+
+
     def estimate_fuel_consumption(self, wt: WeatherCond, boat: Boat):
         bs = boat.get_boat_speed()
         bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
@@ -321,6 +381,7 @@ class IsoBased(RoutingAlg):
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
                                                self.get_current_lons(), self.time, None, True)
+        return bs, ship_params
 
     def check_constraints(self, move, constraint_list):
         debug = False
@@ -332,12 +393,12 @@ class IsoBased(RoutingAlg):
                                                        move['lon2'], self.time, is_constrained)
         if (debug):
             form.print_step('is_constrained after checking' + str(is_constrained), 1)
-        return is_constrained
+        self.routing_step.update_constraints(is_constrained)
 
-    def update(self):
-        self.update_position(move, is_constrained, dist)
-        self.update_time(delta_time)
-        self.update_fuel(delta_fuel, ship_params.get_fuel_rate())
+    def update(self, ship_params):
+        self.update_position()
+        self.update_time()
+        self.update_fuel(ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
 
     def depart_from_waypoint(self):
@@ -400,8 +461,7 @@ class IsoBased(RoutingAlg):
                 delta_time = delta_time_last_step
                 delta_fuel = delta_fuel_last_step
                 dist = dist_last_step
-
-        return delta_time, delta_fuel, dist
+        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
         """
@@ -965,6 +1025,8 @@ class IsoBased(RoutingAlg):
 
     def define_courses_per_step(self):
         self.define_courses()
+        self.routing_step.update_start_step(self.get_current_lats(), self.get_current_lons(),
+                                          self.get_current_course(), self.time)
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_groups, prune_symmetry_axis='gcr'):
         self.prune_sector_deg_half = sector_deg_half * u.degree
@@ -1077,9 +1139,9 @@ class IsoBased(RoutingAlg):
                                                           'of the route segments are successful for Route '
                     + route_name + '!')
 
-    def update_time(self, delta_time):
-        self.full_time_traveled += delta_time
-        self.time += timedelta(seconds=delta_time)
+    def update_time(self):
+        self.full_time_traveled += self.routing_step.delta_time
+        self.time += timedelta(seconds=self.routing_step.delta_time)
 
     def check_bearing(self, dist):
         """
@@ -1089,6 +1151,7 @@ class IsoBased(RoutingAlg):
         """
         debug = False
 
+        dist = self.routing_step.delta_dist
         ncourses = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
@@ -1131,29 +1194,33 @@ class IsoBased(RoutingAlg):
                 move['lat2'] = new_lat
                 move['lon2'] = new_lon
 
-        return move
+        self.routing_step.update_end_step(move[lat2], move[lon2], move[azi2])
 
-    def update_position(self, move, is_constrained, dist):
+    def update_position(self):
         debug = False
-        self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
-        self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
+        end_step_lon = self.routing_step.get_lon('end')
+        end_step_lat = self.routing_step.get_lat('end')
+        dist = self.routing_step.delta_dist
+        is_constrained = self.routing_step.is_constrained
+
+        self.lats_per_step = np.vstack((end_step_lat, self.lats_per_step))
+        self.lons_per_step = np.vstack((end_step_lon, self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
         self.course_per_step = np.vstack((self.current_course, self.course_per_step))
 
         # ToDo: use logger.debug and args.debug
         if debug:
-            print('path of this step' +  # str(move['lat1']) +
-                  # str(move['lon1']) +
-                  str(move['lat2']) + str(move['lon2']))
+            print('path of this step' +
+                  str(end_step_lat) + str(end_step_lon))
             print('dist_per_step', self.dist_per_step)
             print('dist', dist)
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
-        travel_dist = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])  # calculate full distance
+        travel_dist = geod.inverse(start_lats, start_lons, end_step_lat, end_step_lon)  # calculate full distance
         end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
         end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
-        dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
+        dist_to_dest = geod.inverse(end_step_lat, end_step_lon, end_lats, end_lons)  # calculate full distance
 
         # traveled, azimuth of gcr connecting start and new position
         # self.current_variant = gcrs['azi1']

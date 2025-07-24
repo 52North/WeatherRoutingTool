@@ -79,7 +79,8 @@ class IsoFuel(IsoBased):
         logger.info('delta_time', delta_time.to('hour'))
         logger.info('spread of time: ' + str(mean.to('hour')) + '+-' + str(stddev.to('hour')))
 
-    def update_time(self, delta_time):
+    def update_time(self):
+        delta_time = self.routing_step.delta_time
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
             raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
         for i in range(0, self.full_time_traveled.shape[0]):
