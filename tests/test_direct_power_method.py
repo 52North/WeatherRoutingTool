@@ -12,13 +12,13 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 
 have_maripower = False
-try:
-    import mariPower
-    from tests.test_maripower_tanker import TestMariPowerTanker
+# try:
+#    import mariPower
+#    from tests.test_maripower_tanker import TestMariPowerTanker
 
-    have_maripower = True
-except ModuleNotFoundError:
-    pass  # maripower installation is optional
+#    have_maripower = True
+# except ModuleNotFoundError:
+#    pass  # maripower installation is optional
 
 
 class TestDPM:
@@ -225,8 +225,8 @@ class TestDPM:
         - relative difference of wind direction and boat course is changing in steps of 10 degrees
         - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
     '''
-
-    @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+    @pytest.mark.skip(reason="maripower needs adjustments for Python 3.11")
+    # @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
     @pytest.mark.manual
     def test_compare_wind_resistance_to_maripower(self):
         lats = np.full(10, 54.9)  # 37
