@@ -172,13 +172,9 @@ def test_safe_crossing_shape_return():
 
 
 def test_check_constraints_land_crossing():
-    move = {'lat2': np.array([52.70, 53.55]),
-            # 1st point: land crossing (failure), 2nd point: no land crossing(success)
-            'lon2': np.array([4.04, 5.45])}
-
     ra = basic_test_func.create_dummy_IsoBased_object()
-    ra.lats_per_step = np.array([[52.76, 53.45]])
-    ra.lons_per_step = np.array([[5.40, 3.72]])
+    ra.routing_step.lats = np.array([[52.76, 53.45], [52.70, 53.55]])
+    ra.routing_step.lons = np.array([[5.40, 3.72], [4.04, 5.45]])
 
     land_crossing = LandCrossing()
     wave_height = WaveHeight()
@@ -188,9 +184,9 @@ def test_check_constraints_land_crossing():
     constraint_list = generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    is_constrained = ra.check_constraints(move, constraint_list)
-    assert is_constrained[0] == 1
-    assert is_constrained[1] == 0
+    ra.check_constraints(constraint_list)
+    assert ra.routing_step.is_constrained[0] == 1
+    assert ra.routing_step.is_constrained[1] == 0
 
 
 def test_safe_crossing_continuous():

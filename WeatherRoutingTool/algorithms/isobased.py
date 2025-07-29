@@ -20,7 +20,7 @@ class RoutingStep:
     lats: np.ndarray
     lons: np.ndarray
     courses: np.ndarray
-    time: np.ndarray
+    departure_time: np.ndarray
 
     delta_time: timedelta
     delta_fuel: float
@@ -35,7 +35,7 @@ class RoutingStep:
 
         self.lats = np.full(2, None)
         self.lons = np.full(2, None)
-        self.time = np.array([self.departure_time])
+        self.departure_time = np.array([None])
         self.course = np.array([0]) * u.degree
 
     def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
@@ -47,7 +47,7 @@ class RoutingStep:
         self.lats[0] = lats
         self.lons[0] = lons
         self.courses[0] = courses[0]
-        self.time = time
+        self.departure_time = time
 
     def update_end_step(self, lats, lons, courses):
         self.lats[1] = lats
@@ -59,19 +59,24 @@ class RoutingStep:
 
     def _get_point(self, position, coord="all"):
         if coord == "all":
-            return (self.lons[0], self.lats[0])
+            return (self.lons[position], self.lats[position])
         elif coord == 'lat':
-            return self.lats[0]
+            return self.lats[position]
         elif coord == 'lon':
-            return self.lons[0]
+            return self.lons[position]
         else:
             raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
     def get_start_point(self, coord="all"):
-        self.get_point(0, coord)
+        return self._get_point(0, coord)
 
     def get_end_point(self, coord="all"):
-        self.get_point(1, coord)
+        return self._get_point(1, coord)
+
+    def print(self):
+        print('latitudes: ', self.lats)
+        print('longitudes: ', self.lons)
+        print('courses: ', self.course)
 
 
 class IsoBasedStatus():
@@ -386,7 +391,9 @@ class IsoBased(RoutingAlg):
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
         if (debug):
             form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
-        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0],
+
+        is_constrained = constraint_list.safe_crossing(self.routing_step.get_start_point('lat'),
+                                                       self.routing_step.get_start_point('lon'),
                                                        self.routing_step.get_end_point('lat'),
                                                        self.routing_step.get_end_point('lon'), self.time,
                                                        is_constrained)
