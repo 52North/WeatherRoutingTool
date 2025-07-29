@@ -385,18 +385,25 @@ def test_check_bearing():
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.current_course = np.array([az, az, az, az]) * u.degree
 
-    dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
-
+    ra.routing_step.update_start_step(
+        lats=np.array([lat_start, lat_start, lat_start, lat_start]),
+        lons=np.array([lon_start, lon_start, lon_start, lon_start]),
+        courses=np.array([az, az, az, az]) * u.degree,
+        time=None
+    )
+    ra.routing_step.delta_dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
+    
     lats_test = np.array([[lat_end, lat_end, lat_end, lat_end], [lat_start, lat_start, lat_start, lat_start]])
     lons_test = np.array([[lon_end, lon_end, lon_end, lon_end], [lon_start, lon_start, lon_start, lon_start]])
 
     ra.print_current_status()
-    move = ra.check_bearing(dist)
+    ra.check_bearing()
 
     # print('lats_test[0]', lats_test[0])
     # print('lons_test[0]', lons_test[0])
-    assert np.allclose(lats_test[0], move['lat2'], 0.01)
-    assert np.allclose(lons_test[0], move['lon2'], 0.01)
+
+    assert np.allclose(lats_test[0], ra.routing_step.get_end_point('lat'), 0.01)
+    assert np.allclose(lons_test[0], ra.routing_step.get_end_point('lon'), 0.01)
 
 
 '''
