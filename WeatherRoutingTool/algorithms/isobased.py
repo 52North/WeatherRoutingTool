@@ -35,24 +35,26 @@ class RoutingStep:
 
         self.lats = np.full(2, None)
         self.lons = np.full(2, None)
+        self.courses = np.full(2, None)
         self.departure_time = np.array([None])
-        self.course = np.array([0]) * u.degree
 
     def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
         self.delta_fuel = delta_fuel
         self.delta_time = delta_time
         self.delta_dist = delta_dist
 
+    def _update_step(self, position, lats, lons, courses, time):
+        self.lats[position] = lats
+        self.lons[position] = lons
+        self.courses[position] = courses
+        if position == 0:
+            self.departure_time = time
+
     def update_start_step(self, lats, lons, courses, time):
-        self.lats[0] = lats
-        self.lons[0] = lons
-        self.courses[0] = courses[0]
-        self.departure_time = time
+        return self._update_step(0, lats, lons, courses, time)
 
     def update_end_step(self, lats, lons, courses):
-        self.lats[1] = lats
-        self.lons[1] = lons
-        self.courses[1] = courses
+        return self._update_step(1, lats, lons, courses, None)
 
     def update_constraints(self, constraints):
         self.is_constrained = constraints
@@ -146,6 +148,7 @@ class IsoBased(RoutingAlg):
     starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
     absolutefuel_per_step: np.ndarray  # (kg)
 
+    #TODO: current_course is obsolet. Replace by routing_step.courses
     current_course: np.ndarray  # current course (0-360°)
 
     # the lenght of the following arrays depends on the number of courses (course segments)
@@ -361,6 +364,7 @@ class IsoBased(RoutingAlg):
         return route, self.status.error
 
     def move_boat(self):
+        debug = False
         units.cut_angles(self.current_course)
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
         self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
@@ -370,7 +374,7 @@ class IsoBased(RoutingAlg):
             logger.info('delta_fuel: ', delta_fuel)
             logger.info('dist: ', dist)
             logger.info('state:', self.status.state)
-        move = self.check_bearing(dist)
+        move = self.check_bearing()
         if debug:
             logger.info('move:', move)
 
@@ -1149,7 +1153,7 @@ class IsoBased(RoutingAlg):
         self.full_time_traveled += self.routing_step.delta_time
         self.time += timedelta(seconds=self.routing_step.delta_time)
 
-    def check_bearing(self, dist):
+    def check_bearing(self):
         """
         ToDo: add description
         :param dist:
@@ -1200,7 +1204,7 @@ class IsoBased(RoutingAlg):
                 move['lat2'] = new_lat
                 move['lon2'] = new_lon
 
-        self.routing_step.update_end_step(move[lat2], move[lon2], move[azi2])
+        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'], courses=move['azi2'])
 
     def update_position(self):
         debug = False
