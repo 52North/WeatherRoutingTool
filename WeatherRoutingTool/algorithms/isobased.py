@@ -16,13 +16,14 @@ from WeatherRoutingTool.environmental_data.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
 
+
 class RoutingStep:
     lats: np.ndarray
     lons: np.ndarray
     courses: np.ndarray
     time: np.ndarray
 
-    delta_time: datetime
+    delta_time: timedelta
     delta_fuel: float
     delta_dist: float
     is_constrained: np.ndarray
@@ -57,22 +58,21 @@ class RoutingStep:
     def update_constraints(self, constraints):
         self.is_constrained = constraints
 
-    def get_lat(self, position):
-        if position == 'start':
+    def _get_point(self, position, coord="all"):
+        if coord == "all":
+            return (self.lons[0], self.lats[0])
+        elif coord == 'lat':
             return self.lats[0]
-        elif position == 'end':
-            return self.lats[1]
-        else:
-            raise ValueError('RoutingSteps.get_lat accepts arguments "start" and "end"')
-
-    def get_start_lon(self):
-        if position == 'start':
+        elif coord == 'lon':
             return self.lons[0]
-        elif position == 'end':
-            return self.lons[1]
         else:
-            raise ValueError('RoutingSteps.get_lon accepts arguments "start" and "end"')
+            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
+    def get_start_point(self, coord="all"):
+        self.get_point(0, coord)
+
+    def get_end_point(self, coord="all"):
+        self.get_point(1, coord)
 
 
 class IsoBasedStatus():
@@ -334,8 +334,7 @@ class IsoBased(RoutingAlg):
             self.define_courses_per_step()
             bs, ship_params = self.estimate_fuel_consumption(boat)
             self.move_boat()
-            self.check_constraints(move, constraint_list)
-            self.get_weather_snapshot()
+            self.check_constraints(constraints_list)
             self.update(ship_params)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
@@ -373,7 +372,6 @@ class IsoBased(RoutingAlg):
 
         self.check_land_ahoy()
 
-
     def estimate_fuel_consumption(self, wt: WeatherCond, boat: Boat):
         bs = boat.get_boat_speed()
         bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
@@ -383,14 +381,16 @@ class IsoBased(RoutingAlg):
                                                self.get_current_lons(), self.time, None, True)
         return bs, ship_params
 
-    def check_constraints(self, move, constraint_list):
+    def check_constraints(self, constraint_list):
         debug = False
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
         if (debug):
             form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
-        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0], move['lat2'],
-                                                       move['lon2'], self.time, is_constrained)
+        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0],
+                                                       self.routing_step.get_end_point('lat'),
+                                                       self.routing_step.get_end_point('lon'), self.time,
+                                                       is_constrained)
         if (debug):
             form.print_step('is_constrained after checking' + str(is_constrained), 1)
         self.routing_step.update_constraints(is_constrained)
@@ -1026,7 +1026,7 @@ class IsoBased(RoutingAlg):
     def define_courses_per_step(self):
         self.define_courses()
         self.routing_step.update_start_step(self.get_current_lats(), self.get_current_lons(),
-                                          self.get_current_course(), self.time)
+                                            self.get_current_course(), self.time)
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_groups, prune_symmetry_axis='gcr'):
         self.prune_sector_deg_half = sector_deg_half * u.degree
@@ -1198,8 +1198,8 @@ class IsoBased(RoutingAlg):
 
     def update_position(self):
         debug = False
-        end_step_lon = self.routing_step.get_lon('end')
-        end_step_lat = self.routing_step.get_lat('end')
+        end_step_lon = self.routing_step.get_end_point('lon')
+        end_step_lat = self.routing_step.get_end_point('lat')
         dist = self.routing_step.delta_dist
         is_constrained = self.routing_step.is_constrained
 
