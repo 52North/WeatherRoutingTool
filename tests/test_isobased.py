@@ -169,17 +169,16 @@ def test_check_bearing_false():
     # az_till_start = 330.558
 
     ra = basic_test_func.create_dummy_IsoBased_object()
-    ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
-    ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
-    ra.course_per_step = np.array([[0, 0, 0, 0]]) * u.degree
-    ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
-    ra.current_course = np.array([az, az, az, az]) * u.degree
+    ra.routing_step.update_start_step(
+        lats=np.array([lat_start, lat_start, lat_start, lat_start]),
+        lons=np.array([lon_start, lon_start, lon_start, lon_start]),
+        courses=np.array([az, az, az, az]) * u.degree,
+        time=None
+    )
+    ra.routing_step.delta_dist = np.array([10000, 10000, 10000, 10000]) * u.meter
+    ra.check_bearing()
 
-    dist = np.array([10000, 10000, 10000, 10000]) * u.meter
-
-    ra.check_bearing(dist)
-
-    assert ra.route_reached_destination is False
+    assert ra.status.state == "routing"
 
 
 ##

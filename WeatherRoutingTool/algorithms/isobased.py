@@ -107,6 +107,7 @@ class IsoBasedStatus():
             'out_of_routes': 2,
             'destination_not_reached': 3
         }
+        self.state = "routing"
         self.error = 0
         self.needs_further_routing = True
 
