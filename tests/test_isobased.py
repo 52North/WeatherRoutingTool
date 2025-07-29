@@ -88,7 +88,13 @@ def test_update_position_success():
     ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
     ra.current_course = np.array([az, az, az, az]) * u.degree
 
-    dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
+    ra.routing_step.update_start_step(
+        lats=np.array([lat_start, lat_start, lat_start, lat_start]),
+        lons=np.array([lon_start, lon_start, lon_start, lon_start]),
+        courses=np.array([az, az, az, az]) * u.degree,
+        time=None
+    )
+    ra.routing_step.delta_dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
 
     land_crossing = LandCrossing()
     wave_height = WaveHeight()
@@ -99,9 +105,9 @@ def test_update_position_success():
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
 
-    move = ra.check_bearing(dist)
-    constraints = ra.check_constraints(move, constraint_list)
-    ra.update_position(move, constraints, dist)
+    ra.check_bearing()
+    ra.check_constraints(constraint_list)
+    ra.update_position()
 
     no_constraints = ra.full_dist_traveled > 0
     assert np.array_equal(no_constraints, np.array([1, 1, 1, 1]))
@@ -123,7 +129,6 @@ def test_check_bearing_true():
     az_test = np.array([az, az, az, az]) * u.degree
     lon_test = np.array([lon_end, lon_end, lon_end, lon_end])
     lat_test = np.array([lat_end, lat_end, lat_end, lat_end])
-    dist = np.array([10000000, 10000000, 10000000, 10000]) * u.meter
 
     ra = basic_test_func.create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
@@ -131,16 +136,24 @@ def test_check_bearing_true():
     ra.course_per_step = np.array([[0, 0, 0, 0]]) * u.degree
     ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
     ra.current_course = np.array([az, az, az, az]) * u.degree
+
+    ra.routing_step.update_start_step(
+        lats=np.array([lat_start, lat_start, lat_start, lat_start]),
+        lons=np.array([lon_start, lon_start, lon_start, lon_start]),
+        courses=np.array([az, az, az, az]) * u.degree,
+        time=None
+    )
+    ra.routing_step.delta_dist = np.array([10000000, 10000000, 10000000, 10000]) * u.meter
+
     ra.finish = (lat_end, lon_end)
     ra.finish_temp = ra.finish
 
-    move = ra.check_bearing(dist)
-    move['azi2'] = move['azi2'] * u.degree
+    ra.check_bearing()
 
-    assert ra.route_reached_destination is True
-    assert np.allclose(move['azi2'], az_test, 0.1)
-    assert np.array_equal(move['lon2'], lon_test)
-    assert np.array_equal(move['lat2'], lat_test)
+    assert ra.status.state == "some_reached_destination"
+    assert np.allclose(ra.routing_step.get_end_point('courses'), az_test, 0.1)
+    assert np.array_equal(ra.routing_step.get_end_point('lon'), lon_test)
+    assert np.array_equal(ra.routing_step.get_end_point('lat'), lat_test)
 
 
 ##

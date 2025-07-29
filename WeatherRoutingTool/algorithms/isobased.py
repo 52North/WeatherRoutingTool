@@ -66,8 +66,10 @@ class RoutingStep:
             return self.lats[position]
         elif coord == 'lon':
             return self.lons[position]
+        elif coord == 'courses':
+            return self.courses[position]
         else:
-            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
+            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon", "courses"')
 
     def get_start_point(self, coord="all"):
         return self._get_point(0, coord)
@@ -109,7 +111,7 @@ class IsoBasedStatus():
         self.needs_further_routing = True
 
     def update_state(self, state_request):
-        state_exists = [istate for istate in available_states if istate == state_request]
+        state_exists = [istate for istate in self.available_states if istate == state_request]
         if not state_exists:
             raise ValueError('Wrong state requested for Isobased routing: ' + state_request)
 
@@ -374,7 +376,7 @@ class IsoBased(RoutingAlg):
             logger.info('delta_fuel: ', delta_fuel)
             logger.info('dist: ', dist)
             logger.info('state:', self.status.state)
-        move = self.check_bearing()
+        self.check_bearing()
         if debug:
             logger.info('move:', move)
 
@@ -1187,7 +1189,7 @@ class IsoBased(RoutingAlg):
             new_lon = np.full(ncourses, self.finish_temp[1])
 
             if reached_final:
-                self.status.update_state('reached_destination')
+                self.status.update_state('some_reached_destination')
                 self.current_last_step_dist = dist.copy()
                 self.current_last_step_dist_to_dest = dist_to_dest['s12']
 
@@ -1204,7 +1206,7 @@ class IsoBased(RoutingAlg):
                 move['lat2'] = new_lat
                 move['lon2'] = new_lon
 
-        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'], courses=move['azi2'])
+        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'], courses=move['azi2'] * u.degree)
 
     def update_position(self):
         debug = False
