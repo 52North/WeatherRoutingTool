@@ -1,5 +1,4 @@
 from datetime import timedelta
-from email.policy import linesep_splitter
 
 import numpy as np
 from geovectorslib import geod
