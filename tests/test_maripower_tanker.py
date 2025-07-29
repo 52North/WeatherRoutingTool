@@ -21,7 +21,8 @@ except ModuleNotFoundError:
     pass  # maripower installation is optional
 
 
-@pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+@pytest.mark.skip(reason="maripower needs adjustments for Python 3.11.")
+# @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
 @pytest.mark.maripower
 class TestMariPowerTanker:
     def compare_times(self, time64, time):
@@ -374,17 +375,17 @@ class TestMariPowerTanker:
             "COURSES_FILE": courses_path,
             "DEPTH_DATA": depth_path,
             "WEATHER_DATA": weather_path,
-            'BOAT_FUEL_RATE': -99,
-            'BOAT_HBR': -99,
-            'BOAT_LENGTH': -99,
-            'BOAT_SMCR_POWER': -99,
+            'BOAT_FUEL_RATE': 167,
+            'BOAT_HBR': 30,
+            'BOAT_LENGTH': 180,
+            'BOAT_SMCR_POWER': 6502,
             'BOAT_SMCR_SPEED': 6,
             'BOAT_SPEED': 6,
             "BOAT_DRAUGHT_AFT": 10,
             "BOAT_DRAUGHT_FORE": 10,
             'BOAT_ROUGHNESS_DISTRIBUTION_LEVEL': 5,
             'BOAT_ROUGHNESS_LEVEL': 5.,
-            'BOAT_BREADTH': -99
+            'BOAT_BREADTH': 32
         }
 
         pol = MariPowerTanker(init_mode="from_dict", config_dict=config)
