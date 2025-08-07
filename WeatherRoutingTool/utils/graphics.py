@@ -312,11 +312,6 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
 
     return fig, ax
 
-# TODO: remove
-# def get_figure_path():
-#     return "/Users/shreyas/Developer/GSoC/52N/workdir-genetic/figs/"
-
-
 # TODO: faulty
 def plot_genetic_algorithm_initial_population(src, dest, routes):
     figure_path = get_figure_path()
