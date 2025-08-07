@@ -42,7 +42,6 @@ The following lists contain information on each variable which can be set. The c
 
 **Required variables** (no default values provided):
 
-- ``COURSES_FILE``: path to file that acts as intermediate storage for courses per routing step
 - ``DEFAULT_MAP``: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
 - ``DEFAULT_ROUTE``: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
 - ``DEPARTURE_TIME``: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
@@ -56,6 +55,10 @@ The following lists contain information on each variable which can be set. The c
 - ``BOAT_SMCR_POWER``: Specific Maximum Continuous Rating power (kWh)
 - ``BOAT_SMCR_SPEED``: average speed at SMCR power (m/s)
 - ``BOAT_SPEED``: boat speed (m/s)
+
+**Required variables in specific cases** (no default values provided):
+
+- ``COURSES_FILE``: path to file that acts as intermediate storage for courses per routing step; it is required if ``BOAT_TYPE="CBT"``
 
 **Recommended variables**:
 
@@ -86,7 +89,6 @@ The following lists contain information on each variable which can be set. The c
 - ``BOAT_UNDER_KEEL_CLEARANCE``: vertical distance between keel and ground (default: 20m)
 - ``ALGORITHM_TYPE``: options: 'isofuel', 'genetic', 'speedy_isobased' (The latter shall only for testing; default: 'direct_power_method'; default: 'isofuel')
 - ``CONSTRAINTS_LIST``: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints', 'status_error' (default: ['land_crossing_global_land_mask', 'water_depth', 'on_map'])
-- ``DATA_MODE``: options: 'automatic', 'from_file', 'odc' (default: automatic)
 - ``DELTA_FUEL``: amount of fuel per routing step (default: 3000kg)
 - ``DELTA_TIME_FORECAST``: time resolution of weather forecast (default: 3h)
 - ``FACTOR_CALM_WATER``: multiplication factor for the calm water resistance model
