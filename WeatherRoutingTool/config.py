@@ -5,7 +5,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated, List, Literal, Self, Union
-
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
@@ -81,6 +80,7 @@ class Config(BaseModel):
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
     GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson'] = 'grid_based'  # type for initial population
     # (options: 'grid_based', 'from_geojson')
+    GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
 
     INTERMEDIATE_WAYPOINTS: Annotated[
       list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
