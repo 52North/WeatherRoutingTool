@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Annotated, List, Literal, Self, Union
+from typing import Annotated, List, Literal, Optional, Self, Union
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo

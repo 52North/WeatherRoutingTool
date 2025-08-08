@@ -1,25 +1,10 @@
-import json
 import logging
-import os
 import random
-from math import ceil
-from pathlib import Path
-from datetime import datetime
 
 import numpy as np
-from geographiclib.geodesic import Geodesic
 from pymoo.core.crossover import Crossover
-from pymoo.core.duplicate import ElementwiseDuplicateElimination
-from pymoo.core.mutation import Mutation
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.sampling import Sampling
-from pymoo.core.repair import Repair
-from skimage.graph import route_through_array
 
-from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
-from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.utils.graphics import plot_genetic_algorithm_initial_population
 
 logger = logging.getLogger('WRT.Genetic')
 
@@ -60,8 +45,6 @@ class SinglePointCrossover(Crossover):
         return child1, child2
 
 
-import numpy as np
-
 def impute_n8_path(points):
     """
     Ensure all adjacent points in the array are 8-connected neighbors.
@@ -96,6 +79,7 @@ def impute_n8_path(points):
             result.extend(waypoints[1:])  # Skip the first point (already in result)
 
     return np.array(result)
+
 
 def interpolate_n8_path(start, end):
     """

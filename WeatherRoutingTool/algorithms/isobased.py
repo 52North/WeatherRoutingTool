@@ -507,7 +507,6 @@ class IsoBased(RoutingAlg):
             self.count) + '_route_' + str(idxs) + '.png'
         logger.info('Save updated figure to ' + final_path)
         plt.savefig(final_path)
-        plt.close()
 
     def set_next_step_routes(self):
         """
