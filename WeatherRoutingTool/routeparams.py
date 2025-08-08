@@ -209,6 +209,9 @@ class RouteParams():
         with open(filename) as file:
             rp_dict = json.load(file)
 
+        if 'features' not in rp_dict or not isinstance(rp_dict['features'], list):
+            raise ValueError(f"Missing or invalid 'features' key in {filename}")
+
         point_list = rp_dict['features']
         count = len(point_list)
 
@@ -243,11 +246,51 @@ class RouteParams():
         fuel_type = np.full(count, "")
 
         for ipoint in range(0, count):
-            coord_pair = point_list[ipoint]['geometry']['coordinates']
+            point = point_list[ipoint]
+
+            if 'geometry' not in point or not isinstance(point['geometry'], dict):
+                raise ValueError(f"Missing or invalid 'geometry' for point {ipoint} in {filename}")
+            if (
+                "coordinates" not in point["geometry"]
+                or not isinstance(point["geometry"]["coordinates"], list)
+                or len(point["geometry"]["coordinates"]) < 2
+            ):
+                raise ValueError(f"Missing or invalid 'geometry.coordinates' for point {ipoint} in {filename}")
+
+            coord_pair = point['geometry']['coordinates']
             lats_per_step[ipoint] = coord_pair[1]
             lons_per_step[ipoint] = coord_pair[0]
 
-            property = point_list[ipoint]['properties']
+            if 'properties' not in point or not isinstance(point['properties'], dict):
+                raise ValueError(f"Missing or invalid 'properties' for point {ipoint} in {filename}")
+
+            property = point['properties']
+
+            expected_scalar_properties = [
+                'time', 'fuel_type'
+            ]
+            expected_value_properties = [
+                'speed', 'engine_power', 'fuel_consumption', 'propeller_revolution',
+                'calm_resistance', 'wind_resistance', 'wave_resistance', 'shallow_water_resistance',
+                'hull_roughness_resistance', 'wave_height', 'wave_direction', 'wave_period',
+                'u_currents', 'v_currents', 'u_wind_speed', 'v_wind_speed', 'pressure',
+                'air_temperature', 'salinity', 'water_temperature', 'status', 'message'
+            ]
+
+            for prop_name in expected_scalar_properties:
+                if prop_name not in property:
+                    raise ValueError(f"Missing '{prop_name}' in properties for point {ipoint} in {filename}")
+
+            for prop_name in expected_value_properties:
+                if (
+                    prop_name not in property
+                    or not isinstance(property[prop_name], dict)
+                    or "value" not in property[prop_name]
+                ):
+                    raise ValueError(
+                        f"Missing or invalid '{prop_name}.value' in properties for point {ipoint} in {filename}"
+                    )
+
             start_time_per_step[ipoint] = datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
             speed[ipoint] = property['speed']['value']
             power[ipoint] = property['engine_power']['value']
@@ -273,6 +316,9 @@ class RouteParams():
             water_temperature[ipoint] = property['water_temperature']['value']
             status[ipoint] = property['status']['value']
             message[ipoint] = property['message']['value']
+
+        if count < 1:
+            raise ValueError(f"No valid route points found in {filename}. 'features' list is empty.")
 
         speed = speed[:-1] * u.meter/u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
