@@ -147,7 +147,8 @@ class FromGeojsonPopulation(Sampling):
     def get_great_circle_route(self, distance=100000):
         """
         Get equidistant route along great circle in the form [[lat1, lon1], [lat12, lon2], ...]
-        :param distance: distance in m
+        :param distance: distance in m, defaults to 100000
+        :type distance: int or float
         :return: route as list of lat/lon points
         """
         geod = Geodesic.WGS84

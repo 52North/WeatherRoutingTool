@@ -14,14 +14,6 @@ from pymoo.util.running_metric import RunningMetric
 
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.routeparams import RouteParams
-from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.utils.graphics import get_figure_path
-from WeatherRoutingTool.weather import WeatherCond
-
 from WeatherRoutingTool.algorithms.genetic.utils import (
     RouteDuplicateElimination,
     RepairInfeasibles,)
@@ -29,6 +21,13 @@ from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
 from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
+from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
+from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.utils.graphics import get_figure_path
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Genetic')
 

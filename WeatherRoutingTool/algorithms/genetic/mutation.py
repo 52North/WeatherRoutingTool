@@ -98,7 +98,9 @@ class RandomWalkMutation(GridMixin, Mutation):
 
 
 class MutationFactory:
-
+    """
+    Factory class for mutation
+    """
     @staticmethod
     def get_mutation(mutation_type: str, grid=None) -> Mutation:
         if mutation_type == 'grid_based':

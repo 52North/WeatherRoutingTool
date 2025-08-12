@@ -1,4 +1,3 @@
-"""Weather functions."""
 import logging
 import os
 import time
@@ -533,24 +532,13 @@ class WeatherCondFromFile(WeatherCond):
         return twa, tws
 
     def init_wind_vectors(self):
-        """Return wind vectors for given number of hours.
-            Parameters:
-                    model (dict): available forecast wind functions
-                    hours_ahead (int): number of hours looking ahead
-                    lats, lons: rectange defining forecast area
-            Returns:
-                    wind_vectors (dict):
-                        model: model timestamp
-                        hour: function for given forecast hour
-            """
-
-        wind_vectors = {}
-        wind_vectors['start_time'] = self.time_start
-
+        """
+        Set wind vectors for given number of hours.
+        """
+        wind_vectors = {'start_time': self.time_start}
         for i in range(self.time_steps):
             time = self.time_start + self.time_res * i
             wind_vectors[i] = self.read_wind_vectors(time)  # print('reading wind vector time', time)
-
         self.wind_vectors = wind_vectors
 
     def get_wind_vector(self, time):

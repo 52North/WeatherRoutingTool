@@ -226,25 +226,6 @@ class IsoBased(RoutingAlg):
         :rtype: RouteParams
         """
 
-        """
-        TODO: Are these Parameters still up-to-date? If so where are they used?
-        Progress one isochrone with pruning/optimising route for specific time segment
-
-            Parameters:
-                iso1 (Isochrone) - starting isochrone
-                start_point (tuple) - starting point of the route
-                end_point (tuple) - end point of the route
-                x1_coords (tuple) - tuple of arrays (lats, lons)
-                x2_coords (tuple) - tuple of arrays (lats, lons)
-                boat (dict) - boat profile
-                winds (dict) - wind functions
-                start_time (datetime) - start time
-                delta_time (float) - time to move in seconds
-                params (dict) - isochrone calculation parameters
-
-            Returns:
-                iso (Isochrone) - next isochrone
-        """
         self.check_settings()
         self.check_for_positive_constraints(constraints_list)
         self.define_initial_variants()
@@ -518,7 +499,7 @@ class IsoBased(RoutingAlg):
         """
         Plot every complete individual route that is reaching the destination
 
-        :param idxs: Loop index
+        :param idxs: loop index
         :type idxs: int
         """
 
