@@ -22,8 +22,8 @@ jobs:
       GL_TOKEN: '${{ secrets.GL_TOKEN }}'
     strategy:
       matrix:
-        python-version: [ "3.9" ]
-        #python-version: ["3.9", "3.10", "3.11"]
+        python-version: [ "3.13" ]
+        #python-version: ["3.11", "3.13"]
 
     steps:
       - uses: actions/checkout@v3
@@ -37,6 +37,7 @@ jobs:
           sudo apt-get update && sudo apt-get -y install libproj-dev proj-data proj-bin libgeos-dev
           python -m pip install --upgrade pip
           if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
+          if [ -f requirements-without-deps.txt ]; then pip install -r requirements-without-deps.txt --no-deps; fi
           pip install git+https://git:${GL_TOKEN}@collaborating.tuhh.de/m-8/fds-research-projects/maridata/maripower.git
       - name: Run flake8
         run: |

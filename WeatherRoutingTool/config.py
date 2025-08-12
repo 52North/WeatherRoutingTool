@@ -1,13 +1,13 @@
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError, PrivateAttr
-from typing import Optional, List, Annotated, Union, Literal
-from datetime import datetime, timedelta
-from pathlib import Path
 import json
 import logging
 import os
 import sys
-import xarray as xr
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Annotated, List, Literal, Optional, Self, Union
 import pandas as pd
+import xarray as xr
+from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
 
 logger = logging.getLogger('WRT.Config')
 
@@ -42,43 +42,31 @@ def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stre
 
 class Config(BaseModel):
     """
-        This class defines a config object using pydantic.
+    Central configuration class of the Weather Routing Tool.
+    Parameters are validated using pydantic.
     """
 
-    # Filepaths
-    COURSES_FILE: str
-    # path to the folder where the file that acts as intermediate storage for courses per routing step can be written
-    DEPTH_DATA: str = None  # path to depth data
-    WEATHER_DATA: str = None  # path to weather data
-    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
-    CONFIG_PATH: str = None  # path to config file
+    # !!! IMPORTANT NOTE !!!
+    # The order of the attributes matters. Attributes are validated in the order of their appearance.
+    # This means for any attribute it is only possible to access those other attributes in a field validator
+    # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
     # options: 'isofuel', 'genetic', 'speedy_isobased'
 
-    BOAT_BREADTH: float  # ship breadth [m]
-    BOAT_DRAUGHT_AFT: float = 10  # aft draught (draught at rudder) in m
-    BOAT_DRAUGHT_FORE: float = 10  # fore draught (draught at forward perpendicular) in m
-    BOAT_FUEL_RATE: float  # fuel rate at service propulsion point [g/kWh]
-    BOAT_HBR: float  # height of top of superstructure (bridge etc.) [m]
-    BOAT_LENGTH: float  # overall length [m]
-    BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
-    BOAT_SPEED: float  # boat speed [m/s]
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
-
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
         ]]
     # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
-    CONSTANT_FUEL_RATE: float = 0.1  # wo wird das benutzt?
 
     _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
     _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
-    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4, default_factory=list)]
+    DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
     # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
     DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
     # bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
@@ -92,6 +80,7 @@ class Config(BaseModel):
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
     GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson'] = 'grid_based'  # type for initial population
     # (options: 'grid_based', 'from_geojson')
+    GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
 
     INTERMEDIATE_WAYPOINTS: Annotated[
       list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
@@ -100,8 +89,6 @@ class Config(BaseModel):
     ISOCHRONE_MINIMISATION_CRITERION: Literal['dist', 'squareddist_over_disttodest'] = 'squareddist_over_disttodest'
     # options: 'dist', 'squareddist_over_disttodest'
     ISOCHRONE_NUMBER_OF_ROUTES: int = 1  # integer specifying how many routes should be searched
-    ISOCHRONE_PRUNE_BEARING: bool = False
-    ISOCHRONE_PRUNE_GCR_CENTERED: bool = True
     ISOCHRONE_PRUNE_GROUPS: Literal['courses', 'larger_direction', 'branch'] = 'larger_direction'  # can be 'courses',
     # 'larger_direction', 'branch'
     ISOCHRONE_PRUNE_SECTOR_DEG_HALF: int = 91  # half of the angular range of azimuth angle considered for pruning;
@@ -113,10 +100,18 @@ class Config(BaseModel):
 
     ROUTER_HDGS_SEGMENTS: int = 30  # total number of headings (put even number!!)
     ROUTER_HDGS_INCREMENTS_DEG: int = 6  # increment of headings
-    ROUTE_POSTPROCESSING: bool = False  # Route is postprocessed with Traffic Separation Scheme
+    ROUTE_POSTPROCESSING: bool = False  # route is postprocessed with Traffic Separation Scheme
     ROUTING_STEPS: int = 60
 
     TIME_FORECAST: float = 90  # forecast hours weather
+
+    # Filepaths
+    COURSES_FILE: str = None  # needs to be declared after BOAT_TYPE
+    # path to file that acts as intermediate storage for courses per routing step
+    DEPTH_DATA: str = None  # path to depth data
+    WEATHER_DATA: str = None  # path to weather data
+    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
+    CONFIG_PATH: str = None  # path to config file
 
     @classmethod
     def validate_config(cls, config_data):
@@ -181,6 +176,7 @@ class Config(BaseModel):
             raise ValueError(msg)
 
     @field_validator('DEPARTURE_TIME', mode='before')
+    @classmethod
     def parse_and_validate_datetime(cls, v):
         try:
             dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
@@ -188,14 +184,22 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'ROUTE_PATH')
-    def validate_path_exists(cls, v):
-        path = Path(v)
+    @field_validator('COURSES_FILE', 'ROUTE_PATH', mode='after')
+    @classmethod
+    def validate_path_exists(cls, v, info: ValidationInfo):
+        if info.field_name == 'COURSES_FILE':
+            if info.data.get('BOAT_TYPE') != 'CBT':
+                return v
+            else:
+                path = Path(os.path.dirname(v))
+        else:
+            path = Path(v)
         if not path.exists():
-            raise ValueError(f"Path doesn't exist: {v}")
+            raise ValueError(f"Path doesn't exist: {path}")
         return str(path)
 
-    @field_validator('DEFAULT_ROUTE')
+    @field_validator('DEFAULT_ROUTE', mode='after')
+    @classmethod
     def validate_route_coordinates(cls, v):
         """
         Check if the coordinates of DEFAULT_ROUTE have values that the program can work with
@@ -220,8 +224,9 @@ class Config(BaseModel):
 
         return v
 
-    @field_validator('DEFAULT_MAP')
-    def validate_map_coordinates(cls, v):
+    @field_validator('DEFAULT_MAP', mode='after')
+    @classmethod
+    def validate_map_coordinates(cls, v, info):
         """
         Check if the coordinates of DEFAULT_MAP have values that the program can work with
 
@@ -245,7 +250,8 @@ class Config(BaseModel):
 
         return v
 
-    @field_validator('CONSTRAINTS_LIST')
+    @field_validator('CONSTRAINTS_LIST', mode='after')
+    @classmethod
     def check_constraint_list(cls, v):
         """
         Check that the CONSTRAINTS_LIST contains 'land_crossing_global_land_mask'
@@ -258,34 +264,23 @@ class Config(BaseModel):
             raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
         return v
 
-    @field_validator('BOAT_SPEED')
-    def check_boat_speed(cls, v):
-        """
-        Check for a realistic boat speed in m/s to rule out confusion with speed in knots
-
-        :return: Validated BOAT_SPEED
-        """
-        if v > 10:
-            logger.info("Your 'BOAT_SPEED' is higher than 10 m/s."
-                        " Have you considered that this program works with m/s?")
-        return v
-
     @field_validator('DELTA_FUEL', 'TIME_FORECAST', 'ROUTER_HDGS_INCREMENTS_DEG',
                      'ISOCHRONE_MAX_ROUTING_STEPS', mode='after')
     @classmethod
-    def check_numeric_values_positivity(cls, v, info):
+    def check_numeric_values_positivity(cls, v, info: ValidationInfo):
         if v <= 0:
             raise ValueError(f"'{info.field_name}' must be greater than zero, got {v}")
         return v
 
-    @field_validator('ROUTER_HDGS_SEGMENTS')
+    @field_validator('ROUTER_HDGS_SEGMENTS', mode='after')
+    @classmethod
     def check_router_hdgs_segments_positive_and_even(cls, v):
         if not (v > 0 and v % 2 == 0):
             raise ValueError("'ROUTER_HDGS_SEGMENTS' must be a positive even integer.")
         return v
 
     @model_validator(mode='after')
-    def check_route_on_map(self) -> 'Config':
+    def check_route_on_map(self) -> Self:
         """
         Check that the route runs inside the bounds of the defined map
 
@@ -294,15 +289,13 @@ class Config(BaseModel):
         """
         lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
         lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
-
         for lat, lon, name in [(lat_start, lon_start, "start"), (lat_end, lon_end, "end")]:
             if not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
                 raise ValueError(f"{name} point ({lat}, {lon}) is outside the defined map bounds")
-
         return self
 
     @model_validator(mode='after')
-    def check_boat_algorithm_compatibility(self) -> 'Config':
+    def check_boat_algorithm_compatibility(self) -> Self:
         """
         The boat type 'speedy_isobased' is configured to run only with the corresponding
         algorithm type 'speedy_isobased'
@@ -318,7 +311,7 @@ class Config(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def check_route_weather_data_compatibility(self) -> 'Config':
+    def check_route_weather_data_compatibility(self) -> Self:
         """
         Check that the route runs inside the map that has weather data available
         considering place and time
@@ -342,6 +335,8 @@ class Config(BaseModel):
                             lat.min() <= lat_max <= lat.max() and
                             lon.min() <= lon_min <= lon.max() and
                             lon.min() <= lon_max <= lon.max()):
+                        logger.info(f"Map coverage of WEATHER_DATA:[{lat.min()},{lon.min()}, {lat.max()}, {lon.max()}]")
+                        logger.info(f"DEFAULT_MAP:{self.DEFAULT_MAP}")
                         raise ValueError("Weather data does not cover the map region.")
 
                 # Check time coverage
@@ -350,6 +345,10 @@ class Config(BaseModel):
                     end = start + timedelta(hours=self.TIME_FORECAST)
                     times = pd.to_datetime(ds['time'].values)
                     if not (times.min() <= start <= times.max() and times.min() <= end <= times.max()):
+                        logger.info("Time coverage of WEATHER_DATA: "
+                                    f"[{times.min()}, {times.max()}]")
+                        logger.info(f"DEPARTURE_TIME: {self.DEPARTURE_TIME}")
+                        logger.info(f"Time until which a weather forecast should exist: {end}")
                         raise ValueError("Weather data does not cover the full routing time range.")
                 else:
                     raise ValueError("Weather data missing time dimension.")
@@ -361,7 +360,7 @@ class Config(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def check_route_depth_data_compatibility(self) -> 'Config':
+    def check_route_depth_data_compatibility(self) -> Self:
         """
         Check that the route runs inside the map that has depth data available
         considering only place as the depth data is time independent

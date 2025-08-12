@@ -313,6 +313,7 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
     return fig, ax
 
 
+# TODO: faulty
 def plot_genetic_algorithm_initial_population(src, dest, routes):
     figure_path = get_figure_path()
     if figure_path is not None:

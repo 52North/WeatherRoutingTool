@@ -26,9 +26,7 @@ def test_update_position_fail():
     az_till_start = 330.558
 
     ra = basic_test_func.create_dummy_IsoBased_object()
-    print(ra.lats_per_step)
     ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
-    print(ra.lats_per_step)
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.course_per_step = np.array([[0, 0, 0, 0]]) * u.degree
     ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
@@ -44,13 +42,9 @@ def test_update_position_fail():
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
-    print(ra.lats_per_step)
     move = ra.check_bearing(dist)
-    print(ra.lats_per_step)
-    print(move)
     constraints = ra.check_constraints(move, constraint_list)
     ra.update_position(move, constraints, dist)
-    print(ra.lats_per_step)
     lats_test = np.array([[lat_end, lat_end, lat_end, lat_end], [lat_start, lat_start, lat_start, lat_start]])
     lons_test = np.array([[lon_end, lon_end, lon_end, lon_end], [lon_start, lon_start, lon_start, lon_start]])
     dist_test = np.array([[dist_travel, dist_travel, dist_travel, dist_travel], [0, 0, 0, 0]]) * u.meter

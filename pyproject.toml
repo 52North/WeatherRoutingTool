@@ -11,37 +11,18 @@ authors = [
 description = "Python package for weather routing"
 readme = "README.md"
 #license = { file="LICENSE" }
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 classifiers = [
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "astropy",
-    "bbox",
-    "cartopy>0.20.0",
-    "dask",
-    "datacube",
-    "geographiclib<2.0",
-    "geopandas",
-    "geovectorslib",
-    "global_land_mask",
-    "icecream",
-    "lxml",
-    "maridatadownloader @ git+https://github.com/52North/maridatadownloader",
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas",
-    "Pillow",
-    "pymoo>=0.6.1",
-    "pytest",
-    "scikit-image",
-    "scipy>=1.10.0",
-    "shapely",
-    "sqlalchemy>1.4.51",
-    "xarray"
-]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 include = ["WeatherRoutingTool*"]

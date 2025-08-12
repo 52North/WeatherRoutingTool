@@ -12,8 +12,8 @@
   "DELTA_FUEL": 3000,
 
   "COURSES_FILE": "tests",
-  "DEPTH_DATA": "C:/Users/JBA/WRT-for-sandbox/depth_data_region1.nc",
-  "WEATHER_DATA": "C:/Users/JBA/WRT-for-sandbox/weather_data_region1.nc",
+  "DEPTH_DATA": "tests/data/tests_depth_data.nc",
+  "WEATHER_DATA": "tests/data/tests_weather_data.nc",
   "ROUTE_PATH": "tests",
 
   "DATA_MODE": "from_file",
@@ -23,8 +23,6 @@
   "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
   "ISOCHRONE_PRUNE_SEGMENTS": 20,
 
-  "ISOCHRONE_PRUNE_GCR_CENTERED": true,
-  "ISOCHRONE_PRUNE_BEARING": false,
   "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest",
   "ISOCHRONE_NUMBER_OF_ROUTES": 1,
 
@@ -39,5 +37,6 @@
   "BOAT_HBR": 30,
   "BOAT_LENGTH": 180,
   "BOAT_SMCR_POWER" : 6502,
+  "BOAT_SMCR_SPEED": 6,
   "BOAT_SPEED": 6
 }
