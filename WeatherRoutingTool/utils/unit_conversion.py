@@ -16,37 +16,40 @@ u.add_enabled_units([knots])
 
 
 def mps_to_knots(vals):
-    """convert the Meters/second to knots.
-    knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h."""
+    """
+    Convert the meters/second to knots.
+    Knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h.
+    """
     return vals * 3600.0 / 1852.0
 
 
 def knots_to_mps(vals):
-    """convert the Meters/second to knots.
-        knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h."""
-
+    """
+    Convert the Meters/second to knots.
+    Knot is a unit of speed equal to one nautical mile per hour, exactly 1.852 km/h.
+    """
     return vals * 1852.0 / 3600.0
 
 
 def round_time(dt=None, round_to=60):
     """
-        Round a datetime object to any time lapse in seconds.
-        ref: /questions/3463930/how-to-round-the-minute-of-a-datetime-object
-        dt : datetime.datetime object, default now.
-        round_to : Closest number of seconds to round to, default 1 minute.
-
-        """
-
+    Round a datetime object to any time lapse in seconds.
+    ref: /questions/3463930/how-to-round-the-minute-of-a-datetime-object
+    :param dt: datetime.datetime object, default now.
+    :type dt: datetime.datetime
+    :param round_to: closest number of seconds to round to, defaults to 60
+    :type round_to: int
+    :return:
+    :rtype: datetime.datetime
+    """
     if dt is None:
         dt = datetime.now()
     seconds = (dt.replace(tzinfo=None) - dt.min).seconds
     rounding = (seconds + round_to / 2) // round_to * round_to
-
     # print('dt = ', dt)
     # print('seconds = ', seconds)
     # print('rounging = ', rounding)
     # print('return = ', dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond))
-
     return dt + timedelta(0, rounding - seconds, - dt.microsecond)
 
 
@@ -84,7 +87,6 @@ def convert_pandatime_to_datetime(time):
         dt_object = convert_npdt64_to_datetime(time_dt[i])
         timestamp = dt_object.timestamp()
         time_converted[i] = datetime.fromtimestamp(timestamp=timestamp)
-
     return time_converted
 
 
@@ -107,7 +109,6 @@ def check_dataset_spacetime_consistency(ds1, ds2, coord, ds1_name, ds2_name):
     logger.info(
         form.get_log_step('Resolutions are: ' + ds1_name + ':' + str(res1) + ', ' + ds2_name + ':' + str(res2), 2))
     logger.info(form.get_log_step(ds2_name + ' is shifted wrt. ' + ds1_name + ' by ' + str(shift2), 2))
-
     return res1, res2, shift2
 
 
@@ -121,7 +122,6 @@ def compare_times(time1, time2):
         logger.info('time1: ', time1)
         logger.info('time2: ', time2)
         assert np.abs(time1[iTime] - time2[iTime]) < 0.2
-
     return True
 
 
@@ -131,7 +131,6 @@ def get_angle_bins(min_alpha, max_alpha, levels):
 
     result = np.linspace(min_alpha.value, max_alpha.value, int(levels.value)) * u.degree
     cut_angles(result)
-
     return result
 
 

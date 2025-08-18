@@ -4,10 +4,29 @@ from geographiclib.geodesic import Geodesic
 
 
 def get_closest(array, value):
+    """
+    Determine and return index of the value in the array which is closest to the given value.
+    If there are multiple values in the array with the same distance to the value, the first/smallest index is used.
+    :param array: array used to search in
+    :type array: numpy.ndarray
+    :param value: value for which the closest value in the array should be found
+    :type value: numeric
+    :return: index
+    :rtype: numpy.int64
+    """
     return np.abs(array - value).argmin()
 
 
 def distance(route):
+    """TODO: Where is this function used?
+    Calculates the accumulated distance along a route
+
+    :param route: Some kind of route
+    :type route: TODO: add type of route
+    :return: Accumulated distance along a route
+    :rtype: np.array
+    """
+
     geod = Geodesic.WGS84
     dists = []
 
@@ -49,6 +68,10 @@ def time_diffs(speed, route):
 
 
 class GridMixin:
+    """TODO: add class description
+    _summary_
+
+    """
     grid: xr.Dataset
 
     def __init__(self, grid, *args, **kwargs):

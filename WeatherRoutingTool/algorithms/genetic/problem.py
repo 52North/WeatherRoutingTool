@@ -24,11 +24,13 @@ class RoutingProblem(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
-        Method defined by pymoo which has to be overriden
+        Method defined by pymoo which has to be overridden
         :param x: numpy matrix with shape (rows: number of solutions/individuals, columns: number of design variables)
+        :type x: numpy matrix
         :param out:
             out['F']: function values, vector of length of number of solutions
             out['G']: constraints
+        :type out: dict
         :param args:
         :param kwargs:
         :return:

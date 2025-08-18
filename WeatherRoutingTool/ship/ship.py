@@ -116,6 +116,13 @@ class Boat:
     def load_data(self):
         pass
 
+    def check_data_meaningful(self):
+        """
+        This is an optional method to check if default boat variables have been changed into meaningful values.
+        It can be implemented in Child classes.
+        """
+        pass
+
 
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned

@@ -38,7 +38,7 @@ def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
     fig = Figure(figsize=(1600 / dpi, 800 * n_maps / dpi), dpi=dpi)
     fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
 
-    """Add gcrs between provided points to the map figure."""
+    # Add gcrs between provided points to the map figure.
     path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
     print(path)
     for i in range(n_maps):
@@ -81,10 +81,10 @@ def plot_barbs(fig, winds):
     lats = winds['lats_u']
     lons = winds['lons_u']
 
-    # rebinx=5  #CMEMS
+    # rebinx=5  # CMEMS
     # rebiny=11
 
-    # rebinx=1   #NCEP
+    # rebinx=1   # NCEP
     # rebiny=1
 
     rebinx = 10  # depth
@@ -112,27 +112,6 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     return fig
 
 
-'''
-def plot_route(fig, route: RouteParams, colour):
-    """
-    Add isochrone to the map figure.
-    Input: dictionary from move_boat_direct
-    """
-    ax = fig.get_axes()[0]
-    lats = route.lats_per_step
-    lons = route.lons_per_step
-    ax = fig.get_axes()[0]
-    # for i in range(len(lats)):
-    #     ax.plot(lons[i], lats[i], 'ro')
-
-    legend_entry = str(route.route_type) + ' (fuel: ' +  '%0.2f' % route.fuel + 't, time: ' + str(route.time) + 'h)'
-
-    ax.plot(lons, lats, colour, label=legend_entry, transform=ccrs.PlateCarree())
-
-    return fig
-    '''
-
-
 def plot_legend(fig):
     ax = fig.get_axes()[0]
     ax.legend()
@@ -143,22 +122,19 @@ def get_colour(i):
     # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
     colours = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
-
-    if (i > 18):
+    if i > 18:
         print('Are you sure that you want to have so many curves in one plot?!')
         i = i-18
-
-    if (i > 9):
+    if i > 9:
         i = i-9
         print('Currently only 11 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))
-
     return colours[i]
 
 
 def get_marker(i):
     markers = ['o', 's', 'd', 'P', 'D', 'x', 'p']
-    if (i > 6):
+    if i > 6:
         i = i - 7
         print('Currently only 5 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))

@@ -54,6 +54,9 @@ class RoutePostprocessing:
         self.ship_speed = self.boat.get_boat_speed()
 
     def post_process_route(self):
+        """TODO: add class description
+        _summary_
+        """
         route_bbx = self.get_route_bbox()
         route_segments_gdf = self.create_route_segments()
         seamark_gdf = self.retrieve_seamark_data(route_bbx, self.engine)
@@ -126,6 +129,10 @@ class RoutePostprocessing:
         return route_postprocessed
 
     def connect_database(self):
+        """
+        :return: database engine
+        :rtype: sqlalchemy.engine.Engine
+        """
         engine = sqlalchemy.create_engine("postgresql://{user}:{pwd}@{host}:{port}/{db}".
                                           format(user=self.user, pwd=self.password, host=self.host,
                                                  db=self.database, port=self.port))
@@ -158,12 +165,27 @@ class RoutePostprocessing:
         return bbox
 
     def query_data(self, query, engine):
+        """
+        :param query: database query
+        :type query: str
+        :param engine: sqlalchemy engine
+        :type engine: sqlalchemy.engine.Engine
+        :return: dataframe
+        :rtype: geopandas.GeoDataFrame
+        """
         gdf_seamark = gpd.read_postgis(query, engine)
         return gdf_seamark
 
     def retrieve_seamark_data(self, bbox_wkt, engine):
         """
         Retrieve all the seamark objects within the bounding box
+
+        :param bbox_wkt: bounding box wkt
+        :type bbox_wkt: str
+        :param engine: sqlalchemy engine
+        :type engine: sqlalchemy.engine.Engine
+        :return: dataframe
+        :rtype: geopandas.GeoDataFrame
         """
         query = "SELECT *,linestring AS geom FROM " + self.schema + ".ways " \
                 "WHERE  (tags -> 'seamark:type'='separation_boundary' OR tags -> 'seamark:type'='separation_line' " \
@@ -178,15 +200,17 @@ class RoutePostprocessing:
         First, find intersection points of route segments with any seamark object.
         If any intersection is available, then iterate over each route segment and the intersection points
         to identify which route segment is getting intersected with the intersection point.
-        Then, the relevant route segment is added to the list of indices of intersected route segments
+        Then, the relevant route segment is added to the list of indices of intersected route segments.
 
         :param route_segments_gdf: geodataframe of ship route segments
+        :type route_segments_gdf: geopandas.GeoDataFrame
         :param seamark_gdf: geodataframe of all seamark TSS objects within the bounding box of the route
-        :returns: The list of route segment indices which intersects the TSS seamark objects
+        :type seamark_gdf: geopandas.GeoDataFrame
+        :return: The list of route segment indices which intersects the TSS seamark objects
+        :rtype: list
         """
         intersection_gdf = gpd.overlay(route_segments_gdf, seamark_gdf,
                                        how='intersection', keep_geom_type=False)
-
         intersected_route_indices_list = []
         for index_seg, seg in route_segments_gdf.iterrows():
             for index_in, intersecting_point in intersection_gdf.iterrows():
@@ -200,13 +224,19 @@ class RoutePostprocessing:
                 dist = intersecting_point.geometry.distance(seg.geometry) < EPS
                 if dist:
                     intersected_route_indices_list.append(index_seg)
-
         return intersected_route_indices_list
 
     def is_start_or_finish_node_in_separation_zone(self, route_segments_gdf, seamark_gdf):
         """
         Find whether seamark TSS objects contains the starting or ending node of the
-        route. If contains, the route is not forwarded for postprocessing
+        route. If contains, the route is not forwarded for postprocessing.
+
+        :param route_segments_gdf: geodataframe of ship route segments
+        :type route_segments_gdf: geopandas.GeoDataFrame
+        :param seamark_gdf: geodataframe of all seamark TSS objects within the bounding box of the route
+        :type seamark_gdf: geopandas.GeoDataFrame
+        :return:
+        :rtype: bool
         """
         first_route_node = self.find_first_node_of_route_seg(route_segments_gdf)
         last_route_node = self.find_last_node_of_route_seg(route_segments_gdf)
@@ -258,8 +288,11 @@ class RoutePostprocessing:
         node of the each separation lane. Then the separation lane having the minimum distance is selected.
 
         :param last_node: the node of the route segments before the first intersecting point
+        :type last_node: shapely.Point
         :param seperation_lanes_gdf: geodataframe of separation lanes
-        :returns: geodataframe of the separation lane need to be followed
+        :type seperation_lanes_gdf: geopandas.GeoDataFrame
+        :return: geodataframe of the separation lane need to be followed
+        :rtype: geopandas.GeoDataFrame
         """
         dist_list = []
         for line in seperation_lanes_gdf.geom:
@@ -275,6 +308,20 @@ class RoutePostprocessing:
 
     def connect_route_segments(self, first_route_seg_gdf, separation_lane_gdf,
                                last_route_seg_gdf, route_segments_gdf=None):
+        """
+        _summary_
+
+        :param first_route_seg_gdf:
+        :type first_route_seg_gdf: geopandas.GeoDataFrame
+        :param separation_lane_gdf:
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :param last_route_seg_gdf:
+        :type last_route_seg_gdf: geopandas.GeoDataFrame
+        :param route_segments_gdf:
+        :type route_segments_gdf: geopandas.GeoDataFrame
+        :return: geodataframe of the final route
+        :rtype: geopandas.GeoDataFrame
+        """
         # Create new geometries for new connecting LineStrings before and after separation lanes
         if first_route_seg_gdf.empty:
             first_connecting_seg_geom = self.create_first_connecting_seg_from_node(route_segments_gdf,
@@ -317,6 +364,13 @@ class RoutePostprocessing:
         """
         Build the LineString between the route node before the first intersection and
         the first node of the separation lane segment
+
+        :param first_route_seg_gdf:
+        :type first_route_seg_gdf: geopandas.GeoDataFrame
+        :param separation_lane_gdf:
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :return:
+        :rtype: shapely.LineString
         """
         x, y = separation_lane_gdf.geom.xy
         first_node_of_separation_lane = Point(x[0], y[0])
@@ -326,6 +380,14 @@ class RoutePostprocessing:
 
     def create_first_connecting_seg_from_node(self, route_segment_gdf,
                                               separation_lane_gdf):
+        """
+        :param route_segment_gdf:
+        :type route_segment_gdf: geopandas.GeoDataFrame
+        :param separation_lane_gdf:
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :return:
+        :rtype: shapely.LineString
+        """
         x, y = separation_lane_gdf.geom.xy
         first_node_of_separation_lane = Point(x[0], y[0])
         first_node_of_route_seg = self.find_first_node_of_route_seg(route_segment_gdf)
@@ -335,7 +397,14 @@ class RoutePostprocessing:
     def create_last_connecting_line(self, last_route_seg_gdf, separation_lane_gdf):
         """
         Build the LineString between the last node of the separtion lane and the first route node
-        after the last intersection
+        after the last intersection.
+
+        :param last_route_seg_gdf:
+        :type last_route_seg_gdf: geopandas.GeoDataFrame
+        :param separation_lane_gdf:
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :return:
+        :rtype: shapely.LineString
         """
         x, y = separation_lane_gdf.geom.xy
         last_index = len(x)-1
@@ -347,7 +416,14 @@ class RoutePostprocessing:
     def create_last_connecting_line_from_node(self, route_segment_gdf, separation_lane_gdf):
         """
         Build the LineString between the last node of the separtion lane and the first route node
-        after the last intersection
+        after the last intersection.
+
+        :param route_segment_gdf:
+        :type route_segment_gdf: geopandas.GeoDataFrame
+        :param separation_lane_gdf:
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :return:
+        :rtype: shapely.LineString
         """
         x, y = separation_lane_gdf.geom.xy
         last_index = len(x)-1
@@ -361,7 +437,12 @@ class RoutePostprocessing:
         To recalculate the start time of the new route segments, first a new integer index is set
         to final route segments dataframe. Then, the index of first Not available Timestamp
         value is searched and start calculating the new time taken from that index to rest
-        of the dataframe
+        of the dataframe.
+
+        :param final_route:
+        :type final_route: geopandas.GeoDataFrame
+        :return: start times
+        :rtype: list[datetime.datetime]
         """
         self.lats_per_step = []
         self.lons_per_step = []
@@ -398,7 +479,20 @@ class RoutePostprocessing:
         """
         Calculate the time taken using time = distance / ship speed of the previous
         route segment and then added the new time taken into previous timestamp to
-        get the new start time
+        get the new start time.
+
+        :param lat:
+        :type lat: numpy.ndarray
+        :param lon:
+        :type lon: numpy.ndarray
+        :param start_times:
+        :type start_times: list[datetime.datetime]
+        :param node_index:
+        :type node_index: int
+        :param speed:
+        :type speed: float
+        :return: time stamps
+        :rtype: datetime.datetime
         """
         previous_step_index = node_index - 1
         previous_timestamp = start_times[previous_step_index]
@@ -412,6 +506,17 @@ class RoutePostprocessing:
     def terminate(self, route_lons, route_lats, starttime_list, boat_speed):
         """
         Find the courses from route_dict to calculate the ship_parameters
+
+        :param route_lons:
+        :type route_lons: numpy.ndarray
+        :param route_lats:
+        :type route_lats: numpy.ndarray
+        :param starttime_list:
+        :type starttime_list: list[datetime.datetime]
+        :param boat_speed:
+        :type boat_speed: float
+        :return: final route
+        :rtype: RouteParams
         """
         route_lons_np = np.array(route_lons)
         route_lats_np = np.array(route_lats)
@@ -456,15 +561,17 @@ class RoutePostprocessing:
 
         return route
 
-    def find_point_from_perpendicular_angle(self, start_node,
-                                            segment):
+    def find_point_from_perpendicular_angle(self, start_node, segment):
         """
         Find the intersecting point on a line segment which it makes a perpendicular
-        angle from a given point
+        angle from a given point.
+
         :param start_node: given point
+        :type start_node: shapely.Point
         :param segment: given line segment
-        :returns: coordinates of the point on the line which  makes a right angle
-        from the given point
+        :type segment:
+        :returns: coordinates of the point on the line which makes a right angle from the given point
+        :rtype: tuple
         """
         line_x, line_y = segment.xy
         x_start = line_x[0]
@@ -480,13 +587,21 @@ class RoutePostprocessing:
         y = m * x - m * xp + yp
         return x, y
 
-    def check_valid_crossing(self, separation_lanes_data_gdf,
-                             last_node_of_first_route_seg,
+    def check_valid_crossing(self, separation_lanes_data_gdf, last_node_of_first_route_seg,
                              first_node_of_last_route_seg):
         """
         This checks whether the straight line starting from the point before the intersection
-        and ending from the point after the last intersection makes an angle between 60 to 120
+        and ending from the point after the last intersection makes an angle between 60 and 120
         with respect to the nearest separation lane of the starting point.
+
+        :param separation_lanes_data_gdf:
+        :type separation_lanes_data_gdf: geopandas.GeoDataFrame
+        :param last_node_of_first_route_seg:
+        :type last_node_of_first_route_seg: shapely.Point
+        :param first_node_of_last_route_seg:
+        :type first_node_of_last_route_seg: shapely.Point
+        :returns:
+        :rtype: tuple(bool, shapely.LineString)
         """
         intersecting_route_seg_geom = LineString(
             [(last_node_of_first_route_seg.x, last_node_of_first_route_seg.y),
@@ -494,10 +609,8 @@ class RoutePostprocessing:
         intersecting_route_seg_gdf = gpd.GeoDataFrame(
             geometry=[intersecting_route_seg_geom],
             crs=separation_lanes_data_gdf.crs)
-        intersecting_separation_lanes = gpd.overlay(intersecting_route_seg_gdf,
-                                                    separation_lanes_data_gdf,
-                                                    how='intersection',
-                                                    keep_geom_type=False)
+        intersecting_separation_lanes = gpd.overlay(
+            intersecting_route_seg_gdf, separation_lanes_data_gdf, how='intersection', keep_geom_type=False)
         if len(intersecting_separation_lanes) == 0:
             return False, None
         merged_separation_lanes_data_df = pd.merge(
@@ -508,8 +621,8 @@ class RoutePostprocessing:
         min_dist_indx = dist_to_separation_lane.idxmin()
         separation_lane = merged_separation_lanes_data_df.iloc[[min_dist_indx]]
         angle_current_crossing, separation_lane_segment = self.calculate_angle_of_current_crossing(
-            last_node_of_first_route_seg, first_node_of_last_route_seg,
-            separation_lane, intersecting_route_seg_geom)
+            last_node_of_first_route_seg, first_node_of_last_route_seg, separation_lane,
+            intersecting_route_seg_geom)
         if angle_current_crossing >= 60 and angle_current_crossing <= 120:
             return True, separation_lane_segment
         else:
@@ -517,14 +630,32 @@ class RoutePostprocessing:
 
     def calculate_slope(self, x1, y1, x2, y2):
         """
-        Calculate the slope of a line from the two given points on the same line
+        Calculate the slope of a line from the two given points on the same line.
+
+        :param x1:
+        :type: x1: numeric
+        :param y1:
+        :type: y1: numeric
+        :param x2:
+        :type: x2: numeric
+        :param y2:
+        :type: y2: numeric
+        :return: slope
+        :rtype: numeric
         """
         slope = (y2 - y1) / (x2 - x1)
         return slope
 
     def calculate_angle_from_slope(self, s1, s2):
         """
-        Calculate angle between two lines when the slopes of the two lines are given
+        Calculate angle between two lines when the slopes of the two lines are given.
+
+        :param s1:
+        :type: s1: numeric
+        :param s2:
+        :type: s2: numeric
+        :return: angle
+        :rtype: numeric
         """
         if s1*s2 == -1:
             angle = 90.0
@@ -532,34 +663,30 @@ class RoutePostprocessing:
             angle = math.degrees(math.atan((s1 - s2) / (1 + (s1 * s2))))
         return angle
 
-    def calculate_angle_of_current_crossing(self, start_node, end_node,
-                                            separation_lane_gdf,
+    def calculate_angle_of_current_crossing(self, start_node, end_node, separation_lane_gdf,
                                             intersecting_route_seg_geom):
         """
         Calculate the angle between the straight line which starts from the point before first
         intersection and ends after the last intersection with respect to the intersecting
-        separation lane segment. Separation lane can contains multiple line segments.
+        separation lane segment. Separation lane can contain multiple line segments.
+
         :param start_node: starting node of the straight line
+        :type start_node: shapely.Point
         :param end_node: ending node of the straight line
+        :type end_node: shapely.Point
         :param separation_lane_gdf: separation lanes
-        :param intersecting_route_seg_geom: route segment which is intersecting the separation
-        lane
+        :type separation_lane_gdf: geopandas.GeoDataFrame
+        :param intersecting_route_seg_geom: route segment which is intersecting the separation lane
+        :type intersecting_route_seg_geom: shapely.LineString
+        :return:
+        :rtype: tuple
         """
-
-        slope_route = self.calculate_slope(start_node.x, start_node.y,
-                                           end_node.x, end_node.y)
-
+        slope_route = self.calculate_slope(start_node.x, start_node.y, end_node.x, end_node.y)
         for line in separation_lane_gdf.geom:
             for i in range(len(line.coords) - 1):
-                separation_lane_segment = LineString(
-                    [line.coords[i], line.coords[i + 1]])
+                separation_lane_segment = LineString( [line.coords[i], line.coords[i + 1]])
                 if separation_lane_segment.intersects(intersecting_route_seg_geom):
                     point_x, point_y = separation_lane_segment.xy
-                    slope_separation_lane = self.calculate_slope(point_x[0],
-                                                                 point_y[0],
-                                                                 point_x[1],
-                                                                 point_y[1])
-                    angle_current_crossing = self.calculate_angle_from_slope(
-                        slope_route,
-                        slope_separation_lane)
+                    slope_separation_lane = self.calculate_slope(point_x[0], point_y[0], point_x[1], point_y[1])
+                    angle_current_crossing = self.calculate_angle_from_slope(slope_route, slope_separation_lane)
                     return abs(angle_current_crossing), separation_lane_segment

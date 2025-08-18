@@ -50,11 +50,10 @@ def impute_n8_path(points):
     Ensure all adjacent points in the array are 8-connected neighbors.
     Insert waypoints between points that are not n8 neighbors.
 
-    Parameters:
-    points (numpy.ndarray): Array of shape (n, 2) containing [x, y] coordinates
-
-    Returns:
-    numpy.ndarray: Array with interpolated waypoints ensuring n8 connectivity
+    :param points: Array of shape (n, 2) containing [x, y] coordinates
+    :type points: numpy.ndarray
+    :return: Array with interpolated waypoints ensuring n8 connectivity
+    :rtype: numpy.ndarray
     """
     if len(points) < 2:
         return points
@@ -86,12 +85,12 @@ def interpolate_n8_path(start, end):
     Generate a path of n8-connected waypoints between two points.
     Uses Bresenham-like algorithm optimized for 8-connectivity.
 
-    Parameters:
-    start (array-like): Starting point [x, y]
-    end (array-like): Ending point [x, y]
-
-    Returns:
-    list: List of waypoints including start and end points
+    :param start: Starting point [x, y]
+    :type start: array-like
+    :param end: Ending point [x, y]
+    :type end: array-like
+    :return: List of waypoints including start and end points
+    :rtype: list
     """
     x0, y0 = start
     x1, y1 = end
@@ -166,13 +165,15 @@ class PMX(GridMixin, Crossover):
         return rpt
 
     def pmx_crossover(self, p1: np.ndarray, p2: np.ndarray):
-        """Perform Partially Mapped Crossover (PMX) between two parent routes.
+        """
+        Perform Partially Mapped Crossover (PMX) between two parent routes.
 
-        Args:
-            p1, p2: np.ndarray of shape (N,2) with the same set of waypoints.
-
-        Returns:
-            Two offspring np.ndarrays of shape (N,2).
+        :param p1: np.ndarray of shape (N,2) with the same set of waypoints.
+        :type p1: numpy.ndarray
+        :param p2: np.ndarray of shape (N,2) with the same set of waypoints.
+        :type p2: numpy.ndarray
+        :return: Two offspring np.ndarrays of shape (N,2).
+        :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
 
         if p1.shape != p2.shape:
@@ -230,9 +231,10 @@ class PMX(GridMixin, Crossover):
         return c1, c2
 
 
-# factory
 class CrossoverFactory:
-
+    """
+    Factory class for crossover
+    """
     @staticmethod
     def get_crossover(crossover_type: str, grid=None):
         crossover = PMX(grid=grid)

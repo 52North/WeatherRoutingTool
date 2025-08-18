@@ -2,9 +2,9 @@ import json
 import logging
 import os
 import random
+from datetime import datetime
 from math import ceil
 from pathlib import Path
-from datetime import datetime
 
 import numpy as np
 from geographiclib.geodesic import Geodesic
@@ -16,9 +16,9 @@ from pymoo.core.sampling import Sampling
 from pymoo.core.repair import Repair
 from skimage.graph import route_through_array
 
-from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import plot_genetic_algorithm_initial_population
 
 logger = logging.getLogger('WRT.Genetic')
@@ -153,7 +153,8 @@ class FromGeojsonPopulation(Sampling):
     def get_great_circle_route(self, distance=100000):
         """
         Get equidistant route along great circle in the form [[lat1, lon1], [lat12, lon2], ...]
-        :param distance: distance in m
+        :param distance: distance in m, defaults to 100000
+        :type distance: int or float
         :return: route as list of lat/lon points
         """
         geod = Geodesic.WGS84
@@ -170,6 +171,7 @@ class FromGeojsonPopulation(Sampling):
         """
         Read route from geojson file and return the coordinates in the form [[lat1, lon1], [lat12, lon2], ...]
         :param route_absolute_path: absolute path to geojson file
+        :type route_absolute_path: str
         :return: route as list of lat/lon points
         """
         with open(route_absolute_path) as file:

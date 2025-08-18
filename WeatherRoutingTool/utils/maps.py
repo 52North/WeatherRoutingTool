@@ -1,4 +1,4 @@
-class Map():
+class Map:
     lat1: float
     lat2: float
     lon1: float
