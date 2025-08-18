@@ -1,0 +1,38 @@
+@startuml sequence diagram WRT IsoBased
+cli.py -> execute_routing.py : execute_routing(config)
+execute_routing.py -> isobased.py: execute_routing(Boat,\nWeatherCond, ConstraintsList)
+note right of isobased.py
+    execute_routing.py invokes the execute_routing function of the IsoBased class.
+end note
+group execute_routing
+    loop count < ncount
+    isobased.py -> isobased.py : define_courses_per_step()
+    group move_boat_direct(wt, boat, constraints_list)
+        isobased.py -> isobased.py : bs = boat.get_boat_speed()
+        isobased.py -> isobased.py : ship_params = boat.get_ship_parameters()
+        isobased.py -> isobased.py : dist = self.get_delta_variables_netCDF(ship_params, bs)
+        group check_bearing(dist)
+         isobased.py -> isobased.py : move = geod.direct(dist)
+        end
+        isobased.py -> isobased.py : is_constrained = check_constraints(move, constraint_list)
+        isobased.py -> isobased.py : update_position(move, is_constrained, dist)
+    end
+        alt route_reached_destination
+        isobased.py -> isobased.py : break loop
+        else route_reached_waypoint
+        isobased.py -> isobased.py : continue routing from waypoint
+        end
+    end
+isobased.py -> isobased.py : route = terminate()
+isobased.py -> execute_routing.py: return route
+end
+note right 
+    ncount is the maximal number of 
+    routing steps considered for the route.
+    It is set in the config by ISOCHRONE_MAX_ROUTING_STEPS.
+
+    The direct funktion belongs to the geod.py package. 
+    For more information on it look in teh geod documentation.
+end note
+
+@enduml

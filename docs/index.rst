@@ -14,6 +14,7 @@ Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!
    source/constraints/index
    source/consumption-models/index
    source/weather
+   source/sequence_diagrams
    source/api-documentation/index
    source/contributing
    source/references
