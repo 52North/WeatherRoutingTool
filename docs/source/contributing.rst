@@ -19,9 +19,10 @@ Example:
 
     This is a reStructuredText style.
     """
-    :param param1: this is a first param
-    :param param2: this is a second param
-    :returns: this is a description of what is returned
+    :param param1: first param
+    :type param1: type of first param
+    :return: description of what is returned
+    :rtype: type of return value
     :raises keyError: raises an exception
     """
 
