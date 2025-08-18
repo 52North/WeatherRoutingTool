@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated, List, Literal, Optional, Self, Union
+
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
@@ -121,7 +122,7 @@ class Config(BaseModel):
         :param config_data: Config data provided by the user in form of a json file or a dict
         :type config_data: dict
         :return: Validated config
-        :rtype: Config object
+        :rtype: WeatherRoutingTool.config.Config
         """
         try:
             config = cls(**config_data)
@@ -153,7 +154,7 @@ class Config(BaseModel):
         :raises ValueError: Dict doesn't exist although chosen as input type for config
         :raises ValueError: Mode chosen as input type for config doesn't exist
         :return: Validated config
-        :rtype: Config object
+        :rtype: WeatherRoutingTool.config.Config
         """
 
         if init_mode == 'from_json':
@@ -207,6 +208,7 @@ class Config(BaseModel):
         :raises ValueError: DEFAULT_ROUTE doesn't contain exactly 4 values
         :raises ValueError: One of the coordinates isn't in the required range
         :return: Validated DEFAULT_ROUTE
+        :rtype: tuple
         """
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_start, lon_start, lat_end, lon_end]")
@@ -233,6 +235,7 @@ class Config(BaseModel):
         :raises ValueError: DEFAULT_MAP doesn't contain exactly 4 values
         :raises ValueError: One of the coordinates isn't in the required range
         :return: validated DEFAULT_MAP
+        :rtype: tuple
         """
         if len(v) != 4:
             raise ValueError("Coordinate list must contain exactly 4 values: [lat_min, lon_max, lat_end, lon_end]")
@@ -259,6 +262,7 @@ class Config(BaseModel):
 
         :raises ValueError: CONSTRAINTS_LIST doesn't contain 'land_crossing_global_land_mask'
         :return: Validated CONSTRAINTS_LIST
+        :rtype: list
         """
         if 'land_crossing_global_land_mask' not in v:
             raise ValueError("'land_crossing_global_land_mask' must be included in 'CONSTRAINTS_LIST'.")
@@ -286,6 +290,7 @@ class Config(BaseModel):
 
         :raises ValueError: Route coordinates are outside the DEFAULT_MAP bounds
         :return: Config object with validated DEFAULT_ROUTE-DEFAULT_MAP-compatibility
+        :rtype: WeatherRoutingTool.config.Config
         """
         lat_min, lon_min, lat_max, lon_max = self.DEFAULT_MAP
         lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
@@ -302,6 +307,7 @@ class Config(BaseModel):
 
         :raises ValueError: BOAT_TYPE is not compatible with ALGORITHM_TYPE
         :return: Config object with validated BOAT_TYPE-ALGORITHM_TYPE-compatibility
+        :rtype: WeatherRoutingTool.config.Config
         """
         if (
             (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
@@ -319,6 +325,7 @@ class Config(BaseModel):
         :raises ValueError: Weather data doesn't cover full routing time range
         :raises ValueError: Weather data has no time dimension
         :return: Config object with validated WEATHER_DATA regarding place and time
+        :rtype: WeatherRoutingTool.config.Config
         """
         path = Path(self.WEATHER_DATA)
         if path.exists():
@@ -367,6 +374,7 @@ class Config(BaseModel):
 
         :raises ValueError: Depth data doesn't cover map
         :return: Config object with validated DEPTH_DATA regarding place
+        :rtype: WeatherRoutingTool.config.Config
         """
         path = Path(self.DEPTH_DATA)
         if path.exists():

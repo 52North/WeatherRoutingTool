@@ -15,6 +15,14 @@ def merge_figures_to_gif(path, nof_figures):
 
 
 def execute_routing(config):
+    """
+    Execute route optimization based on the user-defined configuration.
+    After a successful run the final route is saved into the configured folder.
+
+    :param config: validated configuration
+    :type config: WeatherRoutingTool.config.Config
+    :return: None
+    """
     # prof = cProfile.Profile()
     # prof.enable()
 
