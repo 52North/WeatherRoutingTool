@@ -1,11 +1,11 @@
-UML Class diagrams
-=====================
+Inheritance diagrams
+====================
 
 This section provides comprehensive UML class diagrams for the WeatherRoutingTool package,
 organized by functional modules to show inheritance relationships and class hierarchies.
 
 Algorithm Classes
--------------------------------
+-----------------
 
 The routing algorithms follow a clear inheritance pattern with ``RoutingAlg`` as the base class:
 
@@ -21,7 +21,7 @@ The routing algorithms follow a clear inheritance pattern with ``RoutingAlg`` as
    :private-bases:
 
 Ship and Boat Classes
------------------------------------
+---------------------
 
 The ship modeling follows a base ``Boat`` class with specialized implementations:
 
@@ -35,7 +35,7 @@ The ship modeling follows a base ``Boat`` class with specialized implementations
    :private-bases:
 
 Weather Classes
-----------------------
+---------------
 
 Weather handling classes for different data sources and processing:
 
@@ -47,7 +47,7 @@ Weather handling classes for different data sources and processing:
    :private-bases:
 
 Constraint Classes
--------------------------
+------------------
 
 Constraint handling for route validation and safety:
 
