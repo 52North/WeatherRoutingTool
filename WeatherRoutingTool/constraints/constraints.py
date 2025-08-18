@@ -26,7 +26,7 @@ logger = logging.getLogger("WRT.Constraints")
 
 class Constraint:
     """
-    Main class for handling of constraints. Constraints implemented so far: 
+    Main class for handling of constraints. Constraints implemented so far:
     LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with too low water depth),
     StayOnMap (prohibit leaving the area for which the weather data has been obtained)
     """
@@ -214,7 +214,7 @@ class ConstraintsList:
     """
     List of constraints. During the routing procedure, you can check for ConstraintList.safe_crossing(lat_start,
     lat_end, lon_start, lon_end, time) which looks for constraints in between starting point and destination.
-    Alternatively it can also be checked for a single point whether a constraint is hit via 
+    Alternatively it can also be checked for a single point whether a constraint is hit via
     ConstraintList.safe_endpoint(lat, lon, time).
     """
 
@@ -591,7 +591,7 @@ class WaterDepth(NegativeContraint):
         :raises KeyError: measurement in measurements is not known on ODC
         :return: Depth data loaded from ODC
         :rtype: xarray.Dataset
-        """        
+        """
         logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
 
         dc = datacube.Datacube()
@@ -646,7 +646,7 @@ class WaterDepth(NegativeContraint):
 
     def load_data_from_file(self, depth_path):
         """
-        Load depth data from given file 
+        Load depth data from given file
 
         :param depth_path: Path to the depth data
         :type depth_path: str
@@ -804,15 +804,15 @@ class ContinuousCheck(NegativeContraint):
     for the continuous check in the negative constraints
     """
 
-    host : str
-    database : str
-    user : str
-    password : str
-    port : str  # returns values from .env  to be passed in the engine of the db
+    host: str
+    database: str
+    user: str
+    password: str
+    port: str  # returns values from .env  to be passed in the engine of the db
 
-    predicates : list  # Possible spatial relations to be tested when considering the constraints
+    predicates: list  # Possible spatial relations to be tested when considering the constraints
 
-    tags : list  # Values of the seamark tags that need to be considered
+    tags: list  # Values of the seamark tags that need to be considered
 
     engine: sqlalchemy.engine
 
@@ -891,15 +891,15 @@ class SeamarkCrossing(ContinuousCheck):
     for the continuous check in the negative constraints
     """
 
-    host : str
-    database : str
-    user : str
-    password : str
-    port : str  # returns values from .env  to be passed in the engine of the db
+    host: str
+    database: str
+    user: str
+    password: str
+    port: str  # returns values from .env  to be passed in the engine of the db
 
-    predicates : list  # Possible spatial relations to be tested when considering the constraints
+    predicates: list  # Possible spatial relations to be tested when considering the constraints
 
-    tags : list  # Values of the seamark tags that need to be considered
+    tags: list  # Values of the seamark tags that need to be considered
 
     concat_tree: STRtree
 

@@ -684,7 +684,7 @@ class RoutePostprocessing:
         slope_route = self.calculate_slope(start_node.x, start_node.y, end_node.x, end_node.y)
         for line in separation_lane_gdf.geom:
             for i in range(len(line.coords) - 1):
-                separation_lane_segment = LineString( [line.coords[i], line.coords[i + 1]])
+                separation_lane_segment = LineString([line.coords[i], line.coords[i + 1]])
                 if separation_lane_segment.intersects(intersecting_route_seg_geom):
                     point_x, point_y = separation_lane_segment.xy
                     slope_separation_lane = self.calculate_slope(point_x[0], point_y[0], point_x[1], point_y[1])
