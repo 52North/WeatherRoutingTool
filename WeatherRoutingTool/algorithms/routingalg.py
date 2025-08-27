@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
-from WeatherRoutingTool.environmental_data.weather import WeatherCond
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 

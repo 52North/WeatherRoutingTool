@@ -19,7 +19,7 @@ import WeatherRoutingTool.utils.formatting as form
 from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.environmental_data.weather import (WeatherCond)
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger("WRT.Constraints")
 

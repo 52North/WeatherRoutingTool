@@ -9,7 +9,7 @@ from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.environmental_data.weather_factory import WeatherFactory
+from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):

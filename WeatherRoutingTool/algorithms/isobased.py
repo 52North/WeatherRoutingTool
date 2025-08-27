@@ -11,7 +11,7 @@ from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
-from WeatherRoutingTool.environmental_data.weather import WeatherCond
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
 
