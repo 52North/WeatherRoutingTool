@@ -17,17 +17,14 @@ logger = logging.getLogger('WRT.ship')
 
 class DirectPowerBoat(Boat):
     """
-           estimates power & fuel consumption based on the so-called Direct Power Method
+    Estimates power & fuel consumption based on the so-called Direct Power Method
 
-           The following approximations are used:
-               - a fixed working point of 75% SMCR power and an average ship speed is assumed
-                 (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
-               - additional power and fuel consumption is derived from added resistances of the environmental conditions
-               - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
-                 the Fujiwara approximation
-
-               Returns:
-                   ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
+    The following approximations are used:
+     - a fixed working point of 75% SMCR power and an average ship speed is assumed
+       (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
+     - additional power and fuel consumption is derived from added resistances of the environmental conditions
+     - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
+       the Fujiwara approximation
     """
 
     power_at_sp: float  # power at the service propulsion point
@@ -103,6 +100,13 @@ class DirectPowerBoat(Boat):
 
         logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
                                       'to 75% SMCR power.'))
+
+    def check_data_meaningful(self):
+        data = ['Axv', 'Ayv', 'Aod', 'length', 'breadth', 'hs1', 'hs2', 'ls1', 'ls2', 'bs1', 'cmc', 'hbr', 'hc']
+        for d in data:
+            value = getattr(self, d, None)
+            if value is None or value == -99:
+                logger.info(f"The ship attribute {value} has no meaningful value")
 
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
@@ -388,6 +392,10 @@ class DirectPowerBoat(Boat):
         return P
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+        """
+        :return: ShipParams object containing ship parameters like power consumption and fuel rate
+        :rtype: WeatherRoutingTool.ship.shipparams.ShipParams
+        """
         debug = False
         n_requests = len(courses)
 

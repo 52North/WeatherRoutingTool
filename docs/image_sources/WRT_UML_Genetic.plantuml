@@ -1,0 +1,21 @@
+@startuml sequence diagram WRT Genetic
+cli.py -> execute_routing.py : execute_routing(config)
+execute_routing.py -> genetic.py: execute_routing\n(Boat, WeatherCond, ConstraintsList)
+note right of genetic.py
+    execute_routing.py invokes the execute_routing function of the Genetic class.
+end note
+group execute_routing
+    group optimize(problem, initial_population, crossover, mutation, duplicates)
+        genetic.py -> genetic.py: algorithm = NSGA2(initial_population, crossover, mutation, duplicates)
+        genetic.py -> genetic.py: termination = get_termination()
+        genetic.py -> genetic.py: res = minimize(problem, algorithm, termination)
+    end
+genetic.py -> genetic.py: route = terminate(result_object=res, problem=problem)
+genetic.py -> execute_routing.py: return route
+end
+note right
+    genetic.py uses pymoo to implement a genetic algorithm for calculating the route.
+    The funktions get_termination and minimize are pymoo functions. 
+    Look in the pymoo documentation for more informations on them.
+end note
+

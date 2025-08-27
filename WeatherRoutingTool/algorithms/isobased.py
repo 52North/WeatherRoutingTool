@@ -139,6 +139,9 @@ class IsoBased(RoutingAlg):
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
+    route_reached_destination: bool  # True everytime one route (or more) reaches the destination in a routing step
+    route_reached_waypoint: bool
+
     start_temp: tuple  # changes if intermediate waypoints are used
     finish_temp: tuple  # changes if intermediate waypoints are used
     gcr_course_temp: tuple
@@ -149,7 +152,7 @@ class IsoBased(RoutingAlg):
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     shipparams_per_step: ShipParams  # object storing ship parameters (fuel rate, power consumption ...)
     starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
-    absolutefuel_per_step: np.ndarray  # (kg)
+    absolutefuel_per_step: np.ndarray   # (kg)
 
     #TODO: current_course is obsolet. Replace by routing_step.courses
     current_course: np.ndarray  # current course (0-360°)
@@ -164,7 +167,7 @@ class IsoBased(RoutingAlg):
     prune_sector_deg_half: int  # angular range of course that is considered for pruning (only one half, 0-180°)
     prune_segments: int  # number of course bins that are used for pruning
     prune_symmetry_axis: str  # method to define pruning symmetry axis
-    prune_groups: str  # method to define grouping of route segments before the pruning
+    prune_groups: str   # method to define grouping of route segments before the pruning
     minimisation_criterion: str  # minimisation criterion
 
     desired_number_of_routes: int
@@ -276,6 +279,10 @@ class IsoBased(RoutingAlg):
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
+        """TODO: add description
+        _summary_
+        """
+
         # branch out for multiple headings
         nof_input_routes = self.lats_per_step.shape[1]
 
@@ -315,21 +322,18 @@ class IsoBased(RoutingAlg):
         """
         Progress one isochrone with pruning/optimising route for specific time segment
 
-            Parameters:
-                iso1 (Isochrone) - starting isochrone
-                start_point (tuple) - starting point of the route
-                end_point (tuple) - end point of the route
-                x1_coords (tuple) - tuple of arrays (lats, lons)
-                x2_coords (tuple) - tuple of arrays (lats, lons)
-                boat (dict) - boat profile
-                winds (dict) - wind functions
-                start_time (datetime) - start time
-                delta_time (float) - time to move in seconds
-                params (dict) - isochrone calculation parameters
-
-            Returns:
-                iso (Isochrone) - next isochrone
+        :param boat: Boat profile
+        :type boat: Boat
+        :param wt: Weather data
+        :type wt: WeatherCond
+        :param constraints_list: List of constraints on the routing
+        :type constraints_list: ConstraintsList
+        :param verbose: sets verbosity, defaults to False
+        :type verbose: bool, optional
+        :return: Calculated route
+        :rtype: RouteParams
         """
+
         self.check_settings()
         self.check_for_positive_constraints(constraints_list)
         self.define_initial_variants()
@@ -493,10 +497,11 @@ class IsoBased(RoutingAlg):
         'next_step_routes' dataframe. In this case, all routes originating from the same origin point are stored in
         the dataframe.
         """
+
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
-        df_current_last_step['dist'] = self.current_last_step_dist.value  # pandas struggles with units
+        df_current_last_step['dist'] = self.current_last_step_dist.value    # pandas struggles with units
         df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest.value
         df_current_last_step['fuel'] = self.absolutefuel_per_step[0, :].value
 
@@ -518,7 +523,7 @@ class IsoBased(RoutingAlg):
 
             df_reaching_destination = specific_route_group[
                 specific_route_group['dist'] >= specific_route_group['dist_dest']
-                ]
+            ]
             num_rows = df_reaching_destination.shape[0]
 
             if num_rows > 0:
@@ -535,7 +540,11 @@ class IsoBased(RoutingAlg):
         In this function, different routes obtained from 'find_every_route_reaching_destination'
         and stored in current_step_routes dataframe are sorted by minimum fuel.
         The number of routes that are selected is specified by the variable remaining_routes.
+
+        :param remaining_routes: Variable for saving routes meeting fuel consumption criteria, defaults to 0
+        :type remaining_routes: int, optional
         """
+
         current_step_routes_sort_by_fuel = self.current_step_routes.sort_values(by=['fuel'])
         route_df = current_step_routes_sort_by_fuel['st_index'].head(remaining_routes)
 
@@ -591,7 +600,11 @@ class IsoBased(RoutingAlg):
     def plot_routes(self, idxs):
         """
         Plot every complete individual route that is reaching the destination
+
+        :param idxs: loop index
+        :type idxs: int
         """
+
         fig = self.fig
         fig, ax = graphics.generate_basemap(self.fig, self.depth, self.start,
                                             self.finish)
@@ -620,6 +633,7 @@ class IsoBased(RoutingAlg):
         Updating all arrays according to the indices of the routes that need to be further
         processed in the next routing step
         """
+
         # sorting order matters here????
         idxs = self.next_step_routes['st_index']
         # Return a trimmed isochrone
@@ -645,6 +659,7 @@ class IsoBased(RoutingAlg):
         In this function, when all routes are constrained, the arrays are set
         back to previous step to provide meaningful error message.
         """
+
         last_idx = len(self.lats_per_step)
         col = len(self.lats_per_step[0])
         self.update_fig('p')
@@ -669,11 +684,12 @@ class IsoBased(RoutingAlg):
             raise Exception('Pruned indices running out of bounds.')
 
     def routes_from_previous_step(self):
-        '''
+        """
         When all routes are constrained, unique routes until the current constrained
         routing step are found here. Then, the unique routes are written into json files
         and plotted.
-        '''
+        """
+
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
@@ -802,6 +818,17 @@ class IsoBased(RoutingAlg):
         return idxs
 
     def pruning(self, trim, bins):
+        """TODO: add description
+        _summary_
+
+        :param trim: _description_
+        :type trim: _type_
+        :param bins: _description_
+        :type bins: _type_
+        :raises ValueError: _description_
+        :raises Exception: _description_
+        """
+
         debug = False
         valid_pruning_segments = -99
 
@@ -864,11 +891,29 @@ class IsoBased(RoutingAlg):
             raise Exception('Pruned indices running out of bounds.')
 
     def courses_based_pruning(self, bins):
+        """TODO: add description
+        _summary_
+
+        :param bins: _description_
+        :type bins: _type_
+        :return: _description_
+        :rtype: _type_
+        """
+
         bin_stat, bin_edges, bin_number = binned_statistic(self.current_course, self.full_dist_traveled,
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
     def larger_direction_based_pruning(self, bins):
+        """TODO: add description
+        _summary_
+
+        :param bins: _description_
+        :type bins: _type_
+        :return: _description_
+        :rtype: _type_
+        """
+
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         larger_direction = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
@@ -878,6 +923,13 @@ class IsoBased(RoutingAlg):
         return bin_stat, bin_edges, bin_number
 
     def branch_based_pruning(self):
+        """TODO: add description
+        _summary_
+
+        :return: _description_
+        :rtype: _type_
+        """
+
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
@@ -915,12 +967,16 @@ class IsoBased(RoutingAlg):
             self.pruning_headings_centered(trim)
 
     def pruning_gcr_centered(self, trim=True):
-        '''
+        """
         For every pruning segment, select the route that maximises the distance towards the starting point (or last
         intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is defined
         based on the gcr
         of the current 'mean' position towards the (temporary) destination.
-        '''
+
+        :param trim: TODO: add _description_, defaults to True
+        :type trim: bool, optional
+        """
+
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
@@ -982,11 +1038,15 @@ class IsoBased(RoutingAlg):
         self.pruning(trim, bins)
 
     def pruning_headings_centered(self, trim=True):
-        '''
+        """
         For every pruning segment, select the route that maximises the distance towards the starting point (or last
         intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
         the median of all considered courses.
-        '''
+
+        :param trim: _description_, defaults to True
+        :type trim: bool, optional
+        """
+
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
@@ -1038,8 +1098,6 @@ class IsoBased(RoutingAlg):
 
     def define_courses_per_step(self):
         self.define_courses()
-        self.routing_step.update_start_step(self.get_current_lats(), self.get_current_lons(),
-                                            self.get_current_course(), self.time)
 
     def set_pruning_settings(self, sector_deg_half, seg, prune_groups, prune_symmetry_axis='gcr'):
         self.prune_sector_deg_half = sector_deg_half * u.degree
@@ -1094,6 +1152,12 @@ class IsoBased(RoutingAlg):
         return idx
 
     def terminate(self, **kwargs):
+        """TODO: add description
+
+        :return: Calculated route as a RouteParams object ready to be returned to the user
+        :rtype: RouteParams
+        """
+
         super().terminate()
 
         if self.status.state == "routing":
@@ -1158,10 +1222,10 @@ class IsoBased(RoutingAlg):
 
     def check_bearing(self):
         """
-        ToDo: add description
-        :param dist:
+        TODO: add description
         :return:
         """
+
         debug = False
 
         dist = self.routing_step.delta_dist
@@ -1170,7 +1234,7 @@ class IsoBased(RoutingAlg):
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
         dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
-        # ToDo: use logger.debug and args.debug
+    # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
             # print('dist traveled:', dist)
@@ -1210,6 +1274,10 @@ class IsoBased(RoutingAlg):
         self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'], courses=move['azi2'] * u.degree)
 
     def update_position(self):
+	"""
+        Update the current position of the ship
+        """
+
         debug = False
         end_step_lon = self.routing_step.get_end_point('lon')
         end_step_lat = self.routing_step.get_end_point('lat')

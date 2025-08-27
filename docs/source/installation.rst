@@ -10,7 +10,9 @@ Steps:
 - [recommended] create and activate a virtual environment, e.g.
   - ``python3 -m venv "venv"``
   - ``source venv/bin/activate``
-- install the WRT: ``pip install .`` or in editable mode (recommended for development) ``pip install -e .``
+- install the WRT: ``pip install . && pip install --no-deps -r requirements-without-deps.txt`` or in editable mode (recommended for development) ``pip install -e . && pip install --no-deps -r requirements-without-deps.txt``
+
+The part `pip install --no-deps -r requirements-without-deps.txt` is necessary because of a dependency issue (see https://github.com/52North/WeatherRoutingTool/issues/8). We might implement a different solution in the feature making the installation easier/cleaner.
 
 **Power/fuel consumption framework**
 

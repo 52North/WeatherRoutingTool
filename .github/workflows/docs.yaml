@@ -1,0 +1,47 @@
+name: Build and deploy documentation using Sphinx and GitHub Pages
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout Repository
+        uses: actions/checkout@v5
+      -
+        name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      -
+        name: Install requirements
+        run: |
+          sudo apt-get update && sudo apt-get -y install graphviz
+          pip3 install -r requirements.txt
+          pip3 install -r requirements-without-deps.txt --no-deps
+          pip3 install -r docs/requirements.txt
+      -
+        name: Build docs using Sphinx
+        run: cd docs && make html
+      -
+        name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/_build/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -15,16 +15,7 @@ logger = logging.getLogger('WRT.routingalg')
 
 class RoutingAlg:
     """
-        Isochrone data structure with typing.
-                Parameters:
-                    count: int  (routing step)
-                    start: tuple    (lat,long at start)
-                    finish: tuple   (lat,lon and end)
-                    gcr_course: float (initial course)
-                    lats1, lons1, azi1, s12: (M, N) arrays, N=headings+1, M=number of steps+1 (decreasing step number)
-                    azi0, s0: (M, 1) vectors without history
-                    time1: current datetime
-                    elapsed: complete elapsed timedelta
+    Mother class of all routing algorithms defining basic attributes and methods
     """
 
     start: tuple  # lat, lon at start
@@ -64,8 +55,11 @@ class RoutingAlg:
         pass
 
     def calculate_gcr(self, start, finish):
+        """
+        Calculate distance between start and end according to Vincenty's approach, return dictionary
+        """
         gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [
-            finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
+            finish[1]])
         return gcr['azi1']
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
