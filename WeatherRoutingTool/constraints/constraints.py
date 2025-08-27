@@ -351,8 +351,8 @@ class ConstraintsList:
                                                                   is_constrained)
 
         # TO BE UPDATED
-        is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) \
-                                                        | np.array(is_constrained_continuous)
+        is_constrained_array = (np.array(is_constrained) | np.array(is_constrained_discrete)
+                                | np.array(is_constrained_continuous))
         is_constrained = is_constrained_array.tolist()
         return is_constrained
 
@@ -638,8 +638,9 @@ class WaterDepth(NegativeContraint):
         downloader = DownloaderFactory.get_downloader(downloader_type='xarray', platform='etoponcei')
         depth_data = downloader.download()
         depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
-        depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),
-                                                    longitude=slice(self.map_size.lon1, self.map_size.lon2))
+        boundary_map = self.map_size.get_widened_map(1)
+        depth_data_chunked = depth_data_chunked.sel(latitude=slice(boundary_map.lat1, boundary_map.lat2),
+                                                    longitude=slice(boundary_map.lon1, boundary_map.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
         self._to_netcdf(depth_data_chunked, depth_path)
         return depth_data_chunked
@@ -947,7 +948,7 @@ class SeamarkCrossing(ContinuousCheck):
             logger.debug(query)
         else:
             query = ["SELECT * FROM " + self.schema + ".nodes "
-                     f"WHERE ({category_clause} OR tags -> " + tags + ")",
+                                                      f"WHERE ({category_clause} OR tags -> " + tags + ")",
                      "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
                      f"WHERE ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
@@ -1079,8 +1080,8 @@ class LandPolygonsCrossing(ContinuousCheck):
     def build_landpolygon_query(self, map_size):
         bbox_wkt = self.set_map_bbox(map_size)
         query = "SELECT *,wkb_geometry as geom FROM public.land_polygons " \
-                "WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('{}', 4326))".\
-                format(bbox_wkt)
+                "WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('{}', 4326))". \
+            format(bbox_wkt)
         return query
 
     def set_landpolygon_STRTree(self, db_engine=None, query=None):

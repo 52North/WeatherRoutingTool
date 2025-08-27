@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
+import pytest
 from datetime import datetime, timedelta
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as unit
-import pandas as pd
+from WeatherRoutingTool.utils.maps import Map
 
 
 def test_get_angle_bins_2greater360():
@@ -137,3 +139,18 @@ def test_degree_to_pmpi_over_360():
     deg = np.array([450.0]) * u.degree
     rad = unit.degree_to_pmpi(deg)
     assert np.isclose(rad.value, np.pi / 2)
+
+
+@pytest.mark.parametrize("input,output", [
+    ([-5, -5, -2, -1], [-6, -6, -1, 0]),  # all negative
+    ([-5, -1, 5, 1], [-6, -2, 6, 2]),  # min negative, max positive
+    ([1, 5, 5, 5], [0, 4, 6, 6]),  # all positive
+    ([0, -5, 5, 0], [-1, -6, 6, 1])  # min and max are 0
+])
+def test_return_widened_map(input, output):
+    map = Map(input[0], input[1], input[2], input[3])
+    widened_map = map.get_widened_map(1)
+    assert widened_map.lat1 == output[0]
+    assert widened_map.lon1 == output[1]
+    assert widened_map.lat2 == output[2]
+    assert widened_map.lon2 == output[3]
