@@ -210,6 +210,147 @@ class IsoBased(RoutingAlg):
     def define_initial_variants(self):
         pass
 
+    def _advance_step(self):
+        """Increment the routing step count by 1"""
+        self.count +=1
+
+    def _retract_step(self):
+        """Decrement the routing step count by 1"""
+        self.count -=1
+
+    def _handle_reached_destination(self):
+        """
+        Handle logic when the final destination is reached.
+
+        - If only one route is required, stops and returns immediately.
+        - If multiple routes are required, continues generating
+        additional routes until the desired number is reached
+        or no more valid routes exist.
+
+        Returns
+        -------
+        bool
+            True if routing should stop (destination finalized or error),
+            False if routing should continue to the next step.
+        """
+        logger.info('Initiating last step at routing step ' + str(self.count))
+        if self.desired_number_of_routes == 1:
+            return True
+        
+        if self.desired_number_of_routes > 1 and self.current_number_of_routes < self.desired_number_of_routes:
+            self.find_every_route_reaching_destination()
+            number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
+
+            if self.desired_number_of_routes <= number_of_possible_routes:
+                remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
+                self.find_routes_reaching_destination_in_current_step(remaining_routes)
+                return True
+            else:
+                self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
+                if self.next_step_routes.shape[0] == 0:
+                    logger.warning('No routes left for execution, terminating!')
+                    return True
+
+                self.set_next_step_routes()
+                self.pruning_per_step(True)
+                if self.pruning_error:
+                    return True
+                
+                self.route_reached_destination = False
+                self.update_fig('p')
+                self._advance_step()
+                return False   
+        return True
+    
+    def _safe_pruning(self):
+        """
+        Perform pruning safely with error handling.
+
+        Runs `pruning_per_step()`. If a pruning error occurs and the
+        step counter is greater than zero, the step is rolled back
+        and reverted.
+
+        Notes
+        -----
+        This prevents the algorithm from crashing due to pruning failures.
+        """
+        self.pruning_per_step(True)
+        if self.pruning_error and self.count>0:
+            self._retract_step()
+            self.revert_to_previous_step()
+
+    def _handle_normal_progress(self):
+        """
+        Handle the normal routing progress when neither a waypoint
+        nor the final destination has been reached.
+
+        - Runs pruning safely.
+        - Updates the visualization.
+        - Advances the routing step if no pruning errors occur.
+        """
+        self._safe_pruning()
+        if not self.pruning_error:
+            self.update_fig("p")
+            self._advance_step()
+
+    def _finalize_route(self):
+        """
+        Finalize and return the computed route.
+
+        - Ensures final pruning is performed if destination
+        is not yet marked as reached.
+        - Selects the best route based on fuel consumption
+        if multiple routes are available.
+
+        Returns
+        -------
+        RouteParams
+        The best route object, or the finalized route
+        after pruning.
+        """
+        if not self.route_reached_destination:
+            self._retract_step()
+
+        if self.desired_number_of_routes == 1:
+            self.final_pruning()
+            return self.terminate()
+        
+        if not self.route_list:
+            if self.pruning_error:
+                self.routes_from_previous_step()
+            self.final_pruning()
+            return self.terminate()
+        self.route_list.sort(key=lambda x: x.get_full_fuel())
+        return self.route_list[0]
+
+    def _handle_reached_waypoint(self,constraints_list: ConstraintsList):
+        """
+        Handle logic when an intermediate waypoint is reached.
+
+        - Runs final pruning for the completed segment.
+        - Expands the axis for the next routing segment.
+        - Updates the start and finish positions for the next segment.
+        - Resets state and advances the routing step.
+
+        Parameters
+        ----------
+        constraints_list : ConstraintsList
+        The constraints object managing routing waypoints.
+        """
+        logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
+        self.final_pruning()
+        self.expand_axis_for_intermediate()
+        constraints_list.reached_positive()
+        
+        self.finish_temp = constraints_list.get_current_destination()
+        self.start_temp = constraints_list.get_current_start()
+        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
+        self.route_reached_waypoint = False
+
+        logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
+        self.update_fig('p')
+        self._advance_step()
+        
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         """
         Progress one isochrone with pruning/optimising route for specific time segment
@@ -225,7 +366,7 @@ class IsoBased(RoutingAlg):
         :return: Calculated route
         :rtype: RouteParams
         """
-
+        #---Initial Setup---
         self.check_settings()
         self.check_for_positive_constraints(constraints_list)
         self.define_initial_variants()
@@ -235,88 +376,21 @@ class IsoBased(RoutingAlg):
         # Note: self.count starts at 0
         while self.count < self.ncount:
             logger.info(form.get_line_string())
-            logger.info('Step ' + str(self.count))
+            logger.info(f"Step {self.count}")
 
             self.define_courses_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
             if self.route_reached_destination:
-                logger.info('Initiating last step at routing step ' + str(self.count))
-
-                if self.desired_number_of_routes > 1 and self.current_number_of_routes < self.desired_number_of_routes:
-                    self.find_every_route_reaching_destination()
-                    number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
-
-                    if self.desired_number_of_routes <= number_of_possible_routes:
-                        remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
-                        self.find_routes_reaching_destination_in_current_step(remaining_routes)
-                        break
-                    else:
-                        self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
-                        if self.next_step_routes.shape[0] == 0:
-                            logger.warning('No routes left for execution, terminating!')
-                            break
-
-                        self.set_next_step_routes()
-                        self.pruning_per_step(True)
-                        if self.pruning_error:
-                            break
-                        self.route_reached_destination = False
-                        self.update_fig('p')
-                        self.count += 1
-                        continue
-                else:
+                if self._handle_reached_destination():
                     break
-
             elif self.route_reached_waypoint:
-                logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
-                self.final_pruning()
-                self.expand_axis_for_intermediate()
-                constraints_list.reached_positive()
-                self.finish_temp = constraints_list.get_current_destination()
-                self.start_temp = constraints_list.get_current_start()
-                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
-                self.route_reached_waypoint = False
-
-                logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
-                    self.finish_temp))
-                self.update_fig('p')
-                self.count += 1
-                continue
-
-            self.pruning_per_step(True)
-
-            if self.pruning_error:
-                break
+                self._handle_reached_waypoint(constraints_list)
             else:
-                self.update_fig('p')
-                self.count += 1
-
-        # if routing steps runs out without reaching destination,
-        # then the last step count isn't executed
-        if not self.route_reached_destination:
-            self.count -= 1
-
-        if self.pruning_error and self.count > 0:
-            self.count = self.count - 1
-            self.revert_to_previous_step()
-
-        # ToDo: harmonize with above/merge with loop over routing steps
-        if self.desired_number_of_routes == 1:
-            self.final_pruning()
-            route = self.terminate()
-            return route
-        else:
-            if not self.route_list:
-                if self.pruning_error:
-                    self.routes_from_previous_step()
-                self.final_pruning()
-                route = self.terminate()
-                return route
-            else:
-                self.route_list.sort(key=lambda x: x.get_full_fuel())
-                return self.route_list[0]
+                self._handle_normal_progress()
+        #--- Finalization ---
+        return self._finalize_route()
 
     def move_boat_direct(self, wt: WeatherCond, boat: Boat, constraint_list: ConstraintsList):
         """
