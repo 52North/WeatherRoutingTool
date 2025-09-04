@@ -63,7 +63,7 @@ def execute_routing(config):
 
     # *******************************************
     # routing
-    min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
+    min_fuel_route, error_code = min_fuel_route.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
     min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 

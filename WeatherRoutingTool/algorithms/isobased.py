@@ -144,7 +144,7 @@ class RoutingStep:
 class IsoBasedStatus():
     name: str
     state: str
-    error: int
+    error: str
     needs_further_routing: bool
 
     available_states: list
@@ -155,7 +155,7 @@ class IsoBasedStatus():
         self.available_states = [
             "routing",
             "some_reached_destination",
-            "all_reached_destination"
+            "all_reached_destination",
             "reached_waypoint",
             "error"
         ]
@@ -166,7 +166,7 @@ class IsoBasedStatus():
             'destination_not_reached': 3
         }
         self.state = "routing"
-        self.error = 0
+        self.error = "no_error"
         self.needs_further_routing = True
 
     def update_state(self, state_request):
@@ -176,9 +176,22 @@ class IsoBasedStatus():
 
         self.state = state_request
 
-    def set_error_code(self, error_str):
-        self.error = self.available_errors[error_str]
+    def set_error_str(self, error_str):
+        error_exists = [ierr for ierr in self.available_errors.keys if ierr == error_str]
+        if not error_exists:
+            raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
+        self.error = error_str
         self.update_state("error")
+
+    def get_error_code(self):
+        return self.available_errors[self.error]
+
+    def print(self):
+        logger.info(form.get_log_step('Routing Status Report: ', 0))
+        logger.info(form.get_log_step('active state: ' + self.state, 1))
+        logger.info(form.get_log_step('error state: ' + self.error, 1))
+        logger.info(form.get_log_step('error code: ' + str(self.get_error_code()), 1))
+        logger.info(form.get_log_step('needs further routing: ' + str(self.needs_further_routing), 1))
 
 
 class IsoBased(RoutingAlg):
@@ -424,13 +437,13 @@ class IsoBased(RoutingAlg):
                 continue
 
             self.pruning_per_step(True)
-            if self.status.error == self.status.available_errors["pruning_error"]:
+            if self.status.error == "pruning_error":
                 break
             self.update_fig('p')
             self.count += 1
 
         route = self.terminate()
-        return route, self.status.error
+        return route, self.status.get_error_code()
 
     def move_boat(self, bs, ship_params):
         debug = False
@@ -447,7 +460,7 @@ class IsoBased(RoutingAlg):
         if debug:
             logger.info('move:', move)
 
-        self.check_land_ahoy()
+        self.check_land_ahoy(ship_params, bs)
 
     def estimate_fuel_consumption(self, boat: Boat):
         bs = boat.get_boat_speed()
@@ -525,14 +538,14 @@ class IsoBased(RoutingAlg):
                 self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
                 if self.next_step_routes.shape[0] == 0:
                     logger.warning('No routes left for execution, terminating!')
-                    self.status.set_error_code('out_of_routes')
+                    self.status.set_error_str('out_of_routes')
                     self.status.needs_further_routing = False
 
                 # organise routes for next step
                 self.set_next_step_routes()
                 self.status.set_state('routing')
 
-    def check_land_ahoy(self):
+    def check_land_ahoy(self, ship_params, bs):
         if (self.status.state == "some_reached_destination") or (self.status.state == "route_reached_waypoint"):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
@@ -541,11 +554,11 @@ class IsoBased(RoutingAlg):
                     if self.bool_arr_reached_final[i]:
                         self.routing_step.delta_time[i] = delta_time_last_step[i]
                         self.routing_step.delta_fuel[i] = delta_fuel_last_step[i]
-                        self.routing_step.dist[i] = dist_last_step[i]
+                        self.routing_step.delta_dist[i] = dist_last_step[i]
             else:
                 self.routing_step.delta_time = delta_time_last_step
                 self.routing_step.delta_fuel = delta_fuel_last_step
-                self.routing_step.dist = dist_last_step
+                self.routing_step.delta_dist = dist_last_step
 #        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
@@ -932,7 +945,7 @@ class IsoBased(RoutingAlg):
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
             logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
-            self.status.set_error_code('pruning_error')
+            self.status.set_error_str('pruning_error')
             return
         elif (valid_pruning_segments < self.prune_segments * 0.1):
             logger.warning(' More than 90% of pruning segments constrained for step ' + str(self.count) + '!')
@@ -1226,14 +1239,13 @@ class IsoBased(RoutingAlg):
         :return: Calculated route as a RouteParams object ready to be returned to the user
         :rtype: RouteParams
         """
-
-        super().terminate()
+        self.status.print()
 
         if self.status.state == "routing":
-            self.status.set_error_code("destination_not_reached")
+            self.status.set_error_str("destination_not_reached")
             self.count -= 1
 
-        if self.status.error == self.status.available_errors["pruning_error"]:
+        if self.status.error == "pruning_error":
             if self.count > 0:
                 self.count = self.count - 1
                 self.revert_to_previous_step()
@@ -1248,11 +1260,13 @@ class IsoBased(RoutingAlg):
         else:
             # if multiple routes are requested and the list of routes is emtpy, return route that minimised fuel
             # of current or previous step.
-            if self.status.error == self.status.available_errors["pruning_error"]:
+            if self.status.error == "pruning_error":
                 self.routes_from_previous_step()
             self.final_pruning()
 
         self.check_status(self.shipparams_per_step.get_status(), 'minimum')
+
+        super().terminate()
 
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
@@ -1450,7 +1464,7 @@ class IsoBased(RoutingAlg):
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-        if self.pruning_error:
+        if self.status.error == "pruning_error":
             final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
             final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
