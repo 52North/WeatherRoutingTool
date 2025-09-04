@@ -37,10 +37,10 @@ def test_update_position_fail():
     ra.dist_per_step = np.array([[0, 0, 0, 0]]) * u.meter
 
     ra.routing_step.init_step(
-        lats_start = np.array([lat_start, lat_start, lat_start, lat_start]),
-        lons_start = np.array([lon_start, lon_start, lon_start, lon_start]),
-        courses = np.array([az, az, az, az]) * u.degree,
-        time = None
+        lats_start=np.array([lat_start, lat_start, lat_start, lat_start]),
+        lons_start=np.array([lon_start, lon_start, lon_start, lon_start]),
+        courses=np.array([az, az, az, az]) * u.degree,
+        time=None
     )
     ra.routing_step.delta_dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
     ra.current_course = np.array([az, az, az, az]) * u.degree
@@ -122,7 +122,6 @@ def test_update_position_success():
 # test wheather IsoBased::checkbearing correcly sets route_reached_destination to True and whether the returned
 # variables are correct
 def test_check_bearing_true():
-
     ra = basic_test_func.create_dummy_IsoBased_object()
 
     lat_start = 54.87
@@ -195,7 +194,7 @@ def test_get_delta_variables_last_step():
     lon_start = 13.33
     lat_end = 54.9
     lon_end = 13.46
-    boat_speed = 20 * u.meter/u.second
+    boat_speed = 20 * u.meter / u.second
 
     az = 68.087
     dist_test = np.array([8987, 8987, 8987, 8987]) * u.meter
@@ -241,8 +240,6 @@ def test_define_courses_array_shapes():
     ra.set_course_segments(nof_hdgs_segments, hdgs_increments)
 
     ra.define_courses()
-    ra.print_shape()
-    ra.print_current_status()
     # checking 2D arrays
     assert ra.lats_per_step.shape[1] == nof_hdgs_segments + 1
     assert ra.dist_per_step.shape == ra.lats_per_step.shape
@@ -261,6 +258,7 @@ def test_define_courses_array_shapes():
     test whether routing step variables at the start of a routing procedure are correctly filled
 '''
 
+
 def test_define_courses_current_course_filling():
     start = (38.192, 13.392)
     finish = (41.349, 2.188)
@@ -270,8 +268,6 @@ def test_define_courses_current_course_filling():
     new_course['azi1'] = new_course['azi1']
 
     ra.define_courses()
-    ra.print_shape()
-    ra.print_current_status()
 
     # checking current_course
     reference_shape = ra.lats_per_step.shape[1]
@@ -284,7 +280,6 @@ def test_define_courses_current_course_filling():
          new_course['azi1'] - 1, new_course['azi1'] - 2]) * u.degree
 
     for i in range(0, test_current_course.shape[0]):
-        print('ra.current_course: ', test_current_course[i])
         assert test_current_course[i] == ra.routing_step.get_courses()[i]
         assert start[1] == ra.routing_step.get_start_point('lon')[i]
         assert start[0] == ra.routing_step.get_start_point('lat')[i]
@@ -293,6 +288,7 @@ def test_define_courses_current_course_filling():
 '''
     test whether indices survive the pruning which maximise the total distance traveled
 '''
+
 
 def test_pruning_select_correct_idxs():
     nof_hdgs_segments = 8
@@ -304,10 +300,10 @@ def test_pruning_select_correct_idxs():
 
     courses = np.array([15, 16, 22, 23, 44, 45, 71, 72, 74]) * u.degree
     ra.routing_step.update_start_step(
-        lats = ra.routing_step.get_start_point('lat'),
-        lons = ra.routing_step.get_start_point('lon'),
-        courses = courses,
-        time = ra.routing_step.get_time()
+        lats=ra.routing_step.get_start_point('lat'),
+        lons=ra.routing_step.get_start_point('lon'),
+        courses=courses,
+        time=ra.routing_step.get_time()
     )
 
     pruning_bins = np.array([10, 20, 40, 60, 80]) * u.degree
@@ -319,10 +315,10 @@ def test_pruning_select_correct_idxs():
     ra.course_per_step = np.array([ra.routing_step.get_courses()]) * u.degree
 
     sp = ShipParams(
-        fuel_rate=fuel_rate * u.kg/u.second,
+        fuel_rate=fuel_rate * u.kg / u.second,
         power=np.full(fuel_rate.shape, 0) * u.Watt,
         rpm=np.full(fuel_rate.shape, 0) * u.Hz,
-        speed=speed_per_step * u.meter/u.second,
+        speed=speed_per_step * u.meter / u.second,
         r_calm=np.full(fuel_rate.shape, 0) * u.newton,
         r_wind=np.full(fuel_rate.shape, 0) * u.newton,
         r_waves=np.full(fuel_rate.shape, 0) * u.newton,
@@ -350,9 +346,9 @@ def test_pruning_select_correct_idxs():
         [ra.full_time_traveled[1], ra.full_time_traveled[2], ra.full_time_traveled[5], ra.full_time_traveled[6]])
 
     full_fuel_test = np.array(
-        [fuel_rate[0, 1], fuel_rate[0, 2], fuel_rate[0, 5], fuel_rate[0, 6]]) * u.kg/u.second
+        [fuel_rate[0, 1], fuel_rate[0, 2], fuel_rate[0, 5], fuel_rate[0, 6]]) * u.kg / u.second
     speed_ps_test = np.array([speed_per_step[0, 1], speed_per_step[0, 2],
-                              speed_per_step[0, 5], speed_per_step[0, 6]]) * u.meter/u.second
+                              speed_per_step[0, 5], speed_per_step[0, 6]]) * u.meter / u.second
     lat_test = np.array([[38.192, 38.192, 38.192, 38.192]])
     lon_test = np.array([[13.392, 13.392, 13.392, 13.392]])
     time_single = datetime(2025, 4, 1, 11, 11)
@@ -372,8 +368,6 @@ def test_pruning_select_correct_idxs():
     assert np.array_equal(lat_test, ra.lats_per_step)
     assert np.array_equal(lon_test, ra.lons_per_step)
     assert np.array_equal(time_test, ra.time)
-
-    # form.print_line()  # ra.print_ra()
 
 
 '''
@@ -401,11 +395,9 @@ def test_check_bearing():
         time=None
     )
     ra.routing_step.delta_dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
-    
+
     lats_test = np.array([[lat_end, lat_end, lat_end, lat_end], [lat_start, lat_start, lat_start, lat_start]])
     lons_test = np.array([[lon_end, lon_end, lon_end, lon_end], [lon_start, lon_start, lon_start, lon_start]])
-
-    ra.routing_step.print()
 
     ra.check_bearing()
 
@@ -433,7 +425,6 @@ def test_find_every_route_reaching_destination_testtwobranches():
     ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
     ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]]) * u.kg
-    ra.print_init()
 
     ra.find_every_route_reaching_destination()
     assert ra.current_step_routes['st_index'][0] == 1
@@ -459,7 +450,6 @@ def test_find_every_route_reaching_destination_testonebranch():
     ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
     ra.absolutefuel_per_step = np.array([[1, 0, 1, 1], [1, 1, 1, 1]]) * u.kg
-    ra.print_init()
 
     ra.find_every_route_reaching_destination()
     assert ra.current_step_routes['st_index'][0] == 1
@@ -486,11 +476,11 @@ def test_find_routes_testduplicates():
     ra.current_last_step_dist = np.array([2, 2, 2, 0]) * u.meter
     ra.current_last_step_dist_to_dest = np.array([1, 1, 1, 1]) * u.meter
     ra.shipparams_per_step = ShipParams.set_default_array()
-    ra.shipparams_per_step.fuel_rate = np.array([[2, 2, 1, 1], [1, 1, 1, 1]]) * u.kg/u.second
+    ra.shipparams_per_step.fuel_rate = np.array([[2, 2, 1, 1], [1, 1, 1, 1]]) * u.kg / u.second
     ra.absolutefuel_per_step = np.array([[2, 2, 1, 1], [1, 1, 1, 1]]) * u.kg
 
     # definitions necessary only for completness
-    ra.shipparams_per_step.speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter/u.second
+    ra.shipparams_per_step.speed = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.meter / u.second
     ra.shipparams_per_step.power = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.Watt
     ra.shipparams_per_step.rpm = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.Hz
     ra.shipparams_per_step.r_wind = np.array([[0, 0, 0, 0], [0, 0, 0, 0]]) * u.newton
@@ -519,8 +509,6 @@ def test_find_routes_testduplicates():
     ra.path_to_route_folder = None
     ra.figure_path = None
 
-    ra.print_init()
-
     ra.find_every_route_reaching_destination()
     ra.find_routes_reaching_destination_in_current_step(2)
     assert ra.current_step_routes['st_index'][0] == 0
@@ -546,6 +534,7 @@ def test_branch_based_pruning():
 
     assert np.array_equal(np.array(idxs), np.array(idxs_test))
 
+
 def test_routing_init_step():
     lats = np.array([1.2, 1.3, 1.4, 1.5])
     lons = np.array([2.2, 2.3, 2.4, 2.5])
@@ -554,10 +543,10 @@ def test_routing_init_step():
 
     rs = RoutingStep()
     rs.init_step(
-        lats_start = lats,
-        lons_start = lons,
+        lats_start=lats,
+        lons_start=lons,
         courses=courses,
-        time = time
+        time=time
     )
     dummy_end = np.full(4, -99)
 
@@ -589,10 +578,10 @@ def test_routing_step_update_start_step():
     )
     rs.print()
     rs.update_start_step(
-        lats = lats_new,
-        lons = lons_new,
-        courses = courses_new,
-        time = time_new
+        lats=lats_new,
+        lons=lons_new,
+        courses=courses_new,
+        time=time_new
     )
 
     dummy_end = np.full(4, -99)
@@ -604,10 +593,10 @@ def test_routing_step_update_start_step():
     assert np.array_equal(rs.lats[1], dummy_end)
     assert np.array_equal(rs.lons[1], dummy_end)
 
+
 def test_routing_step_update_end_step():
     lats_new = np.array([1.2, 1.3, 1.4, 1.5])
     lons_new = np.array([2.2, 2.3, 2.4, 2.5])
-    courses_new = np.array([3.2, 3.3, 3.4, 3.5]) * u.degree
 
     rs = RoutingStep()
     lats_start = np.array([4.2, 4.3, 4.4, 4.5])
@@ -635,4 +624,3 @@ def test_routing_step_update_end_step():
     assert np.array_equal(rs.lats[0], lats_start)
     assert np.array_equal(rs.lons[0], lons_start)
     assert np.array_equal(rs.courses, courses_start)
-
