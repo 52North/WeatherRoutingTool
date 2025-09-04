@@ -408,7 +408,7 @@ class IsoBased(RoutingAlg):
             logger.info('Step ' + str(self.count))
 
             self.define_courses_per_step()
-            bs, ship_params = self.estimate_fuel_consumption(weather_dict, boat)
+            bs, ship_params = self.estimate_fuel_consumption(boat)
             self.move_boat(bs, ship_params)
             self.check_constraints(constraints_list)
             self.update(ship_params)
@@ -424,7 +424,7 @@ class IsoBased(RoutingAlg):
                 continue
 
             self.pruning_per_step(True)
-            if self.status.error == self.available_errors("pruning_error"):
+            if self.status.error == self.status.available_errors["pruning_error"]:
                 break
             self.update_fig('p')
             self.count += 1
@@ -449,19 +449,18 @@ class IsoBased(RoutingAlg):
 
         self.check_land_ahoy()
 
-    def estimate_fuel_consumption(self, weather_dict, boat: Boat):
+    def estimate_fuel_consumption(self, boat: Boat):
         bs = boat.get_boat_speed()
         bs = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(
-            self.routing_step.get_courses(),
-            self.routing_step.get_start_point('lat'),
-            self.routing_step.get_start_point('lon'),
-            self.routing_step.time,
-            weather_dict,
-            None,
-            True
+            courses = self.routing_step.get_courses(),
+            lats = self.routing_step.get_start_point('lat'),
+            lons = self.routing_step.get_start_point('lon'),
+            time = self.routing_step.get_time(),
+            speed = None,
+            unique_coords = True
         )
         return bs, ship_params
 
@@ -1234,7 +1233,7 @@ class IsoBased(RoutingAlg):
             self.status.set_error_code("destination_not_reached")
             self.count -= 1
 
-        if self.status.error == self.available_errors("pruning_error"):
+        if self.status.error == self.status.available_errors["pruning_error"]:
             if self.count > 0:
                 self.count = self.count - 1
                 self.revert_to_previous_step()
@@ -1397,9 +1396,9 @@ class IsoBased(RoutingAlg):
         if debug:
             print('full_dist_traveled:', self.full_dist_traveled)
 
-    def update_fuel(self, delta_fuel, fuel_rate):
+    def update_fuel(self, fuel_rate):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
-        self.absolutefuel_per_step = np.vstack((delta_fuel, self.absolutefuel_per_step))
+        self.absolutefuel_per_step = np.vstack((self.routing_step.delta_fuel, self.absolutefuel_per_step))
 
     def get_delta_variables(self, boat, wind, bs):
         pass
