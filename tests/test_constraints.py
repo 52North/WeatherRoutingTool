@@ -2,12 +2,16 @@ import os
 
 import numpy as np
 import xarray as xr
+from astropy import units as u
 
 import tests.basic_test_func as basic_test_func
+from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
                                                         RunTestContinuousChecks, WaterDepth, WaveHeight,
                                                         StatusCodeError)
 from WeatherRoutingTool.utils.maps import Map
+
+set_up_logging()
 
 
 def generate_dummy_constraint_list():
@@ -173,8 +177,16 @@ def test_safe_crossing_shape_return():
 
 def test_check_constraints_land_crossing():
     ra = basic_test_func.create_dummy_IsoBased_object()
-    ra.routing_step.lats = np.array([[52.76, 53.45], [52.70, 53.55]])
-    ra.routing_step.lons = np.array([[5.40, 3.72], [4.04, 5.45]])
+    ra.routing_step.init_step(
+        lats_start=np.array([52.76, 53.45]),
+        lons_start=np.array([5.40, 3.72]),
+        courses = np.array([99, 99]) * u.degree,
+        time = None
+    )
+    ra.routing_step.update_end_step(
+        lats = np.array([52.70, 53.55]),
+        lons = np.array([4.04, 5.45]),
+    )
 
     land_crossing = LandCrossing()
     wave_height = WaveHeight()

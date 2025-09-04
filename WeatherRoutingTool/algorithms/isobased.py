@@ -33,9 +33,9 @@ class RoutingStep:
         self.delta_dist = None
         self.is_constrained = None
 
-        self.lats = np.full(2, None)
-        self.lons = np.full(2, None)
-        self.courses = np.full(2, None)
+        self.lats = np.array([[None]])
+        self.lons = np.array([[None]])
+        self.courses = np.array([None])
         self.departure_time = np.array([None])
 
     def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
@@ -43,44 +43,102 @@ class RoutingStep:
         self.delta_time = delta_time
         self.delta_dist = delta_dist
 
+    def _update_single_var(self, old_var, added_var, position):
+        var_array = np.split(old_var,2)
+        new_var = None
+        if position == 0:
+            var_keep = var_array[1]
+            new_var = np.vstack((added_var, var_keep))
+        elif position == 1:
+            var_keep = var_array[0]
+            new_var = np.vstack((var_keep, added_var))
+        return new_var
+
+    """
+    Update class variables during the routing step. The shape of the updated coordinates has to match the shape that 
+    has been chosen for the initialisation.
+
+    :position: 0 = departure point, 1 = arrival point
+    :lat: new latitude values
+    :lon: new longitude values
+    :courses: new courses
+    :time: new departure time
+    """
     def _update_step(self, position, lats, lons, courses, time):
-        self.lats[position] = lats
-        self.lons[position] = lons
-        self.courses[position] = courses
+        self.lats = self._update_single_var(self.lats, lats, position)
+        self.lons = self._update_single_var(self.lons, lons, position)
         if position == 0:
             self.departure_time = time
+            self.courses = courses
 
     def update_start_step(self, lats, lons, courses, time):
         return self._update_step(0, lats, lons, courses, time)
 
-    def update_end_step(self, lats, lons, courses):
-        return self._update_step(1, lats, lons, courses, None)
+    def update_end_step(self, lats, lons):
+        return self._update_step(1, lats, lons, None, None)
+
+    def print(self):
+        logger.info(form.get_log_step('Departure: ', 0))
+        logger.info(form.get_log_step('lats: ' + str(self.lats[0]), 1))
+        logger.info(form.get_log_step('lons: ' + str(self.lons[0]), 1))
+        logger.info(form.get_log_step('courses: ' + str(self.courses), 1))
+        logger.info(form.get_log_step('time: ' + str(self.departure_time), 1))
+        logger.info(form.get_log_step('Arrival: ',0))
+        logger.info(form.get_log_step('lats: ' + str(self.lats[1]), 1))
+        logger.info(form.get_log_step('lons: ' + str(self.lons[1]),1))
+        logger.info(form.get_log_step('constraints: ' + str(self.is_constrained)))
+
+
+    """
+    Initialise the class object at the start routing step. The coordinates of the destination coordinates are set to 
+    arrays containing None. The coordinates of the starting point can come with any shape; the shape of the destination
+    coordinates will be adapted.
+
+    :lats_start: latitudes of the departure point
+    :lons_start: longitudes of the departure point
+    :courses: courses
+    :time: departure time
+    """
+    def init_step(self, lats_start, lons_start, courses, time):
+        var_shape = lats_start.shape[0]
+        dummy_end = np.full(var_shape, -99)
+
+        self.lats = np.vstack((lats_start, dummy_end))
+        self.lons = np.vstack((lons_start, dummy_end))
+        self.courses = courses
+        self.departure_time = time
+
+        self.is_constrained = np.full(var_shape, False)
+
+        self.delta_time = None
+        self.delta_fuel = None
+        self.delta_dist = None
 
     def update_constraints(self, constraints):
         self.is_constrained = constraints
 
-    def _get_point(self, position, coord="all"):
+    def get_start_point(self, coord="all"):
+        return self._get_point(coord, 0)
+
+    def get_end_point(self, coord="all"):
+        return self._get_point(coord, 1)
+
+    def _get_point(self, coord="all", position = 0):
         if coord == "all":
             return (self.lons[position], self.lats[position])
         elif coord == 'lat':
             return self.lats[position]
         elif coord == 'lon':
             return self.lons[position]
-        elif coord == 'courses':
-            return self.courses[position]
         else:
-            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon", "courses"')
+            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
-    def get_start_point(self, coord="all"):
-        return self._get_point(0, coord)
+    def get_courses(self):
+        return self.courses
 
-    def get_end_point(self, coord="all"):
-        return self._get_point(1, coord)
+    def get_time(self):
+        return self.departure_time
 
-    def print(self):
-        print('latitudes: ', self.lats)
-        print('longitudes: ', self.lons)
-        print('courses: ', self.course)
 
 
 class IsoBasedStatus():
@@ -153,9 +211,6 @@ class IsoBased(RoutingAlg):
     shipparams_per_step: ShipParams  # object storing ship parameters (fuel rate, power consumption ...)
     starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
     absolutefuel_per_step: np.ndarray   # (kg)
-
-    #TODO: current_course is obsolet. Replace by routing_step.courses
-    current_course: np.ndarray  # current course (0-360°)
 
     # the lenght of the following arrays depends on the number of courses (course segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all courses
@@ -237,9 +292,9 @@ class IsoBased(RoutingAlg):
 
     def print_current_status(self):
         logger.info('PRINTING ALG SETTINGS')
-        logger.info('step = ', self.count)
-        logger.info('start', self.start)
-        logger.info('finish', self.finish)
+        logger.info('step = ' + str(self.count))
+        logger.info('start' + str(self.start))
+        logger.info('finish' + str(self.finish))
         logger.info('per-step variables:')
         logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step)))
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step)))
@@ -273,9 +328,9 @@ class IsoBased(RoutingAlg):
 
     def current_position(self):
         logger.info('CURRENT POSITION')
-        logger.info('lats = ', self.current_lats)
-        logger.info('lons = ', self.current_lons)
-        logger.info('course = ', self.current_course)
+        logger.info('lats = ', self.routing_step.get_start_point('lat'))
+        logger.info('lons = ', self.routing_step.get_start_point('lon'))
+        logger.info('course = ', self.routing_step.get_start_point('courses'))
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
@@ -310,10 +365,17 @@ class IsoBased(RoutingAlg):
                                  +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
-        self.current_course = new_course['azi1'] * u.degree  # center courses around gcr
-        self.current_course = np.repeat(self.current_course, self.course_segments + 1)
-        self.current_course = self.current_course - delta_hdgs
-        self.current_course = units.cut_angles(self.current_course)
+        current_course = new_course['azi1'] * u.degree  # center courses around gcr
+        current_course = np.repeat(current_course, self.course_segments + 1)
+        current_course = current_course - delta_hdgs
+        current_course = units.cut_angles(current_course)
+
+        self.routing_step.init_step(
+            lats_start = self.lats_per_step[-1],
+            lons_start = self.lons_per_step[-1],
+            courses = current_course,
+            time = self.starttime_per_step[-1]
+        )
 
     def define_initial_variants(self):
         pass
@@ -346,8 +408,8 @@ class IsoBased(RoutingAlg):
             logger.info('Step ' + str(self.count))
 
             self.define_courses_per_step()
-            bs, ship_params = self.estimate_fuel_consumption(boat)
-            self.move_boat()
+            bs, ship_params = self.estimate_fuel_consumption(weather_dict, boat)
+            self.move_boat(bs, ship_params)
             self.check_constraints(constraints_list)
             self.update(ship_params)
 
@@ -370,9 +432,9 @@ class IsoBased(RoutingAlg):
         route = self.terminate()
         return route, self.status.error
 
-    def move_boat(self):
+    def move_boat(self, bs, ship_params):
         debug = False
-        units.cut_angles(self.current_course)
+        self.routing_step.courses = units.cut_angles(self.routing_step.get_courses())
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
         self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
         # ToDo: remove debug variable and use logger settings instead
@@ -387,13 +449,20 @@ class IsoBased(RoutingAlg):
 
         self.check_land_ahoy()
 
-    def estimate_fuel_consumption(self, wt: WeatherCond, boat: Boat):
+    def estimate_fuel_consumption(self, weather_dict, boat: Boat):
         bs = boat.get_boat_speed()
-        bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
+        bs = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
-        ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
-                                               self.get_current_lons(), self.time, None, True)
+        ship_params = boat.get_ship_parameters(
+            self.routing_step.get_courses(),
+            self.routing_step.get_start_point('lat'),
+            self.routing_step.get_start_point('lon'),
+            self.routing_step.time,
+            weather_dict,
+            None,
+            True
+        )
         return bs, ship_params
 
     def check_constraints(self, constraint_list):
@@ -471,14 +540,14 @@ class IsoBased(RoutingAlg):
             if (self.status.state == "some_reached_destination"):
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
-                        delta_time[i] = delta_time_last_step[i]
-                        delta_fuel[i] = delta_fuel_last_step[i]
-                        dist[i] = dist_last_step[i]
+                        self.routing_step.delta_time[i] = delta_time_last_step[i]
+                        self.routing_step.delta_fuel[i] = delta_fuel_last_step[i]
+                        self.routing_step.dist[i] = dist_last_step[i]
             else:
-                delta_time = delta_time_last_step
-                delta_fuel = delta_fuel_last_step
-                dist = dist_last_step
-        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
+                self.routing_step.delta_time = delta_time_last_step
+                self.routing_step.delta_fuel = delta_fuel_last_step
+                self.routing_step.dist = dist_last_step
+#        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
         """
@@ -647,7 +716,6 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
@@ -675,7 +743,6 @@ class IsoBased(RoutingAlg):
                                                            col_start=0, col_end=col,
                                                            idxs=None)
             col_len = len(self.lats_per_step[0])
-            self.current_course = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
             self.time = np.full(col_len, -99)
@@ -835,8 +902,9 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         if debug:
             print('binning for pruning', bins)
-            print('current courses', self.current_course)
+            print('current courses', self.routing_step.get_courses())
             print('full_dist_traveled', self.full_dist_traveled)
+            print('courses per step ', self.course_per_step)
 
         is_pruned = False
         if self.prune_groups == 'larger_direction':
@@ -879,14 +947,19 @@ class IsoBased(RoutingAlg):
             self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
-            self.shipparams_per_step.select(idxs)
-
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_course = self.current_course[idxs]
+            self.shipparams_per_step.select(idxs)
+
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
+
+            self.routing_step.lats = self.routing_step.lats[:, idxs]
+            self.routing_step.lons = self.routing_step.lons[:, idxs]
+            self.routing_step.courses = self.routing_step.courses[idxs]
+            self.routing_step.departure_time = self.routing_step.departure_time[idxs]
+
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
@@ -900,7 +973,7 @@ class IsoBased(RoutingAlg):
         :rtype: _type_
         """
 
-        bin_stat, bin_edges, bin_number = binned_statistic(self.current_course, self.full_dist_traveled,
+        bin_stat, bin_edges, bin_number = binned_statistic(self.routing_step.get_courses().value, self.full_dist_traveled,
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
@@ -1112,9 +1185,6 @@ class IsoBased(RoutingAlg):
         self.course_segments = seg
         self.course_increments_deg = inc * u.degree
 
-    def get_current_course(self):
-        return self.current_course
-
     def get_current_lats(self):
         return self.lats_per_step[0, :]
 
@@ -1242,7 +1312,7 @@ class IsoBased(RoutingAlg):
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_course.value, dist.value)
+                           self.routing_step.get_courses().value, dist.value)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -1271,10 +1341,10 @@ class IsoBased(RoutingAlg):
                 move['lat2'] = new_lat
                 move['lon2'] = new_lon
 
-        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'], courses=move['azi2'] * u.degree)
+        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'])
 
     def update_position(self):
-	"""
+        """
         Update the current position of the ship
         """
 
@@ -1287,7 +1357,11 @@ class IsoBased(RoutingAlg):
         self.lats_per_step = np.vstack((end_step_lat, self.lats_per_step))
         self.lons_per_step = np.vstack((end_step_lon, self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
-        self.course_per_step = np.vstack((self.current_course, self.course_per_step))
+        self.course_per_step = np.vstack((self.routing_step.get_courses(), self.course_per_step))
+        self.routing_step.update_end_step(
+            lats = end_step_lat,
+            lons = end_step_lon
+        )
 
         # ToDo: use logger.debug and args.debug
         if debug:

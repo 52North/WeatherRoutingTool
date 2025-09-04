@@ -185,10 +185,11 @@ class WeatherCondEnvAutomatic(WeatherCond):
         time_min_CMEMS_phys = (self.time_start - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
         time_max_CMEMS_phys = (self.time_end + timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
 
-        lon_min = self.map_size.lon1
-        lon_max = self.map_size.lon2
-        lat_min = self.map_size.lat1
-        lat_max = self.map_size.lat2
+        boundary_map = self.map_size.get_widened_map(1)
+        lon_min = boundary_map.lon1
+        lon_max = boundary_map.lon2
+        lat_min = boundary_map.lat1
+        lat_max = boundary_map.lat2
         height_min = 10
         height_max = 20
 

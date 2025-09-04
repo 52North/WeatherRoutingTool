@@ -34,7 +34,6 @@ class RoutingAlg:
         self.departure_time = config.DEPARTURE_TIME
 
         gcr = self.calculate_gcr(self.start, self.finish)
-        self.current_course = gcr * u.degree
         self.gcr_course = gcr * u.degree
 
         self.figure_path = get_figure_path()
