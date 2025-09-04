@@ -932,7 +932,7 @@ class IsoBased(RoutingAlg):
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
             logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
-            self.pruning_error = True
+            self.status.set_error_code('pruning_error')
             return
         elif (valid_pruning_segments < self.prune_segments * 0.1):
             logger.warning(' More than 90% of pruning segments constrained for step ' + str(self.count) + '!')
