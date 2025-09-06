@@ -10,6 +10,10 @@ logger = logging.getLogger('WRT.Isochrone')
 
 
 class IsoChrone(IsoBased):
+    """TODO: add description (Is this algorithm in use? It is not possible to choose it in the config.)
+    _summary_
+    """
+
     delta_time: int
 
     def __init__(self, start, finish, time, delta_time):
@@ -17,6 +21,14 @@ class IsoChrone(IsoBased):
         self.delta_time = delta_time
 
     def check_isochrones(self, route: RouteParams):
+        """
+        Check route for equal time intervals
+
+        :param route: Currently considered routes
+        :type route: RouteParams
+        :raises ValueError: If time intervall between every step of the route isn't 3600 s
+        """
+
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:

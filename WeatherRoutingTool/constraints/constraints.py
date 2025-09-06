@@ -21,38 +21,16 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 
-# Load the environment variables from the .env file
-parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 logger = logging.getLogger("WRT.Constraints")
 
 
-# Constraint: Main class for handling of constraints
-# PositiveConstraint: handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)
-# NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth,
-# too high waves, danger areas...)
-# NegativeConstraintFrom weather: negative constraint which needs information from the weather (this includes depth
-# information which are stored in the netCDF weather file)
-# ConstraintPars: class that initialises ConstraintList
-# ConstraintList: list of constraints
-#
-# constraints implemented so far: LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with
-# too low water depth), StayOnMap (prohibit leaving the area
-#           for which the weather data has been obtained
-#
-# Inclusion in routing algorithm:
-#       1) initialise all individual constraints that shall be considered (for example check
-#       Isochrones/execute_routing.py)
-#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check
-#       Isochrones/execute_routing.py)
-#       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start,
-#       lon_end, time) which looks for constraints in
-#           between starting point and destination;
-#           alternatively it can also be checked for a single point whether a constraint is hit via
-#           ConstraintList.safe_endpoint(lat, lon, time)
-
-
 class Constraint:
+    """
+    Main class for handling of constraints. Constraints implemented so far:
+    LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with too low water depth),
+    StayOnMap (prohibit leaving the area for which the weather data has been obtained)
+    """
+
     name: str
     message: str
     lat: np.ndarray
@@ -90,6 +68,10 @@ class Constraint:
 
 
 class PositiveConstraint(Constraint):
+    """
+    Handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)
+    """
+
     def __init__(self, name):
         Constraint.__init__(self, name)
 
@@ -113,12 +95,22 @@ class PositiveConstraintPoint(PositiveConstraint):
 
 
 class NegativeContraint(Constraint):
+    """
+    Handling of constraints where the ship MUST NOT pass a certain area (too low water depth,
+    too high waves, danger areas...)
+    """
+
     def __init__(self, name):
         Constraint.__init__(self, name)
         self.message = "At least one point discarded as "
 
 
 class NegativeConstraintFromWeather(NegativeContraint):
+    """
+    Negative constraint which needs information from the weather (this includes depth
+    information which are stored in the netCDF weather file)
+    """
+
     wt: WeatherCond
 
     def __init__(self, name, weather):
@@ -130,6 +122,10 @@ class NegativeConstraintFromWeather(NegativeContraint):
 
 
 class ConstraintPars:
+    """
+    Class that initialises ConstraintList
+    """
+
     resolution: int
     bCheckEndPoints: bool
     bCheckCrossing: bool
@@ -146,6 +142,10 @@ class ConstraintPars:
 
 
 class ConstraintsListFactory:
+    """
+    Initialise ConstraintList object and add all constraints that shall be considered
+    """
+
     def __init__(self):
         pass
 
@@ -211,6 +211,13 @@ class ConstraintsListFactory:
 
 
 class ConstraintsList:
+    """
+    List of constraints. During the routing procedure, you can check for ConstraintList.safe_crossing(lat_start,
+    lat_end, lon_start, lon_end, time) which looks for constraints in between starting point and destination.
+    Alternatively it can also be checked for a single point whether a constraint is hit via
+    ConstraintList.safe_endpoint(lat, lon, time).
+    """
+
     pars: ConstraintPars
     positive_constraints: list
     negative_constraints_discrete: list
@@ -315,12 +322,19 @@ class ConstraintsList:
         """
         Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops
         over all Constraints added to the ConstraintList
-        :param lat:
-        :param lon:
-        :param current_time:
-        :param is_constrained:
-        :return:
+
+        :param lat: Latitude of point to check
+        :type lat: numpy.ndarray or float
+        :param lon: Longitude of point to check
+        :type lon: numpy.ndarray or float
+        :param current_time: Time of point to check
+        :type current_time: datetime
+        :param is_constrained: List of booleans for every constraint stating if the point is constraint by it
+        :type is_constrained: list[bool]
+        :return: is_constrained
+        :rtype: list[bool]
         """
+
         for iConst in range(0, self.neg_dis_size):
             is_constrained_temp = self.negative_constraints_discrete[iConst].constraint_on_point(lat, lon, current_time)
             if is_constrained_temp.any():
@@ -337,12 +351,29 @@ class ConstraintsList:
                                                                   is_constrained)
 
         # TO BE UPDATED
-        is_constrained_array = np.array(is_constrained) | np.array(is_constrained_discrete) \
-                                                        | np.array(is_constrained_continuous)
+        is_constrained_array = (np.array(is_constrained) | np.array(is_constrained_discrete)
+                                | np.array(is_constrained_continuous))
         is_constrained = is_constrained_array.tolist()
         return is_constrained
 
     def safe_crossing_continuous(self, lat_start, lon_start, lat_end, lon_end, is_constrained):
+        """TODO: add description
+        _summary_
+
+        :param lat_start: Latitude of start point of section to check
+        :type lat_start: ndarray or float
+        :param lon_start: Longitude of start point of section to check
+        :type lon_start: numpy.ndarray or float
+        :param lat_end: Latitude of end point of section to check
+        :type lat_end: numpy.ndarray or float
+        :param lon_end: Longitude of end point of section to check
+        :type lon_end: numpy.ndarray or float
+        :param is_constrained: List of booleans for every constraint stating if the section is constraint by it
+        :type is_constrained: list[bool]
+        :return: is_constrained.tolist()
+        :rtype: list[bool]
+        """
+
         is_constrained = np.array(is_constrained)
 
         logger.debug('Entering continuous checks')
@@ -359,15 +390,24 @@ class ConstraintsList:
         Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
         (lat_end, lon_end).
         To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and
-        loops through all these steps calling ConstraintList.safe_endpoint()
-        :param lat_start:
-        :param lon_start:
-        :param lat_end:
-        :param lon_end:
-        :param current_time:
-        :param is_constrained:
-        :return:
+        loops through all these steps calling ConstraintList.safe_endpoint())
+
+        :param lat_start: Latitude of start point of section to check
+        :type lat_start: numpy.ndarray or float
+        :param lon_start: Longitude of start point of section to check
+        :type lon_start: numpy.ndarray or float
+        :param lat_end: Latitude of end point of section to check
+        :type lat_end: numpy.ndarray or float
+        :param lon_end: Longitude of end point of section to check
+        :type lon_end: numpy.ndarray or float
+        :param current_time:Time of point to check
+        :type current_time: datetime
+        :param is_constrained: List of booleans for every constraint stating if the section is constraint by it
+        :type is_constrained: list[bool]
+        :return: is_constrained.tolist()
+        :rtype: list[bool]
         """
+
         debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
@@ -436,6 +476,10 @@ class ConstraintsList:
 
 
 class LandCrossing(NegativeContraint):
+    """
+    Constraint such that the boat cannot cross land
+    """
+
     def __init__(self):
         NegativeContraint.__init__(self, "LandCrossing")
         self.message += "crossing land!"  # self.resource_type = 0
@@ -481,6 +525,10 @@ class StatusCodeError(NegativeContraint):
 
 
 class WaveHeight(NegativeConstraintFromWeather):
+    """
+    Constraint such that the boat can't cross a certain wave hight
+    """
+
     current_wave_height: np.ndarray
     max_wave_height: float
 
@@ -502,6 +550,10 @@ class WaveHeight(NegativeConstraintFromWeather):
 
 
 class WaterDepth(NegativeContraint):
+    """
+    Constraint such that the boat can't cross over a minimal water depth
+    """
+
     map_size: Map
     depth_data: xr  # the xarray.Dataset is expected to have a variable called "z" (as in the original ETOPO dataset)
     current_depth: np.ndarray
@@ -526,6 +578,20 @@ class WaterDepth(NegativeContraint):
             raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
 
     def load_data_ODC(self, depth_path, product_name, measurements=None):
+        """
+        Load depth data from ODC
+
+        :param depth_path: Path to where depth data should be written to
+        :type depth_path: str
+        :param product_name: Name of the ODC dataset
+        :type product_name: str
+        :param measurements: A list of band names to load from the product_name dataset, defaults to None
+        :type measurements: list[str], optional
+        :raises ValueError: product_name is not known on ODC
+        :raises KeyError: measurement in measurements is not known on ODC
+        :return: Depth data loaded from ODC
+        :rtype: xarray.Dataset
+        """
         logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
 
         dc = datacube.Datacube()
@@ -558,18 +624,37 @@ class WaterDepth(NegativeContraint):
         return ds_datacube
 
     def load_data_automatic(self, depth_path):
+        """
+        Load data from NCEI
+
+        :param depth_path: Path to where depth data should be written to
+        :type depth_path: str
+        :return: Depth data loaded from NCEI
+        :rtype: xarray.Dataset
+        """
+
         logger.info(form.get_log_step('Automatic download of depth data', 0))
 
         downloader = DownloaderFactory.get_downloader(downloader_type='xarray', platform='etoponcei')
         depth_data = downloader.download()
         depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
-        depth_data_chunked = depth_data_chunked.sel(latitude=slice(self.map_size.lat1, self.map_size.lat2),
-                                                    longitude=slice(self.map_size.lon1, self.map_size.lon2))
+        boundary_map = self.map_size.get_widened_map(1)
+        depth_data_chunked = depth_data_chunked.sel(latitude=slice(boundary_map.lat1, boundary_map.lat2),
+                                                    longitude=slice(boundary_map.lon1, boundary_map.lon2))
         # Note: if depth_path already exists, the file will be overwritten!
         self._to_netcdf(depth_data_chunked, depth_path)
         return depth_data_chunked
 
     def load_data_from_file(self, depth_path):
+        """
+        Load depth data from given file
+
+        :param depth_path: Path to the depth data
+        :type depth_path: str
+        :return: Depth data loaded from file
+        :rtype: xarray.Dataset
+        """
+
         # FIXME: if this loads the whole file into memory, apply subsetting already here
         logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
         ds_depth = None
@@ -654,7 +739,15 @@ class WaterDepth(NegativeContraint):
         return fig, ax
 
     def _has_scaling(self, dataset):
-        """Check if any of the included data variables has a scale_factor or add_offset"""
+        """
+        Check if any of the included data variables has a scale_factor or add_offset
+
+        :param dataset: Dataset that should be checked on scaling
+        :type dataset: xarray.Dataset
+        :return: If dataset has scaling
+        :rtype: bool
+        """
+
         for var in dataset.data_vars:
             if 'scale_factor' in dataset[var].attrs or 'add_offset' in dataset[var].attrs:
                 return True
@@ -671,12 +764,17 @@ class WaterDepth(NegativeContraint):
             - https://github.com/pydata/xarray/issues/2822
             - https://github.com/Unidata/netcdf4-python/issues/1020
         """
+
         if '_NCProperties' in dataset.attrs:
             del dataset.attrs['_NCProperties']
         dataset.to_netcdf(file_out)
 
 
 class StayOnMap(NegativeContraint):
+    """
+    Constraint such that the boat can't leave the map that has weather data available
+    """
+
     lat1: float
     lon1: float
     lat2: float
@@ -703,26 +801,20 @@ class StayOnMap(NegativeContraint):
 
 class ContinuousCheck(NegativeContraint):
     """
-    Contains various functions to test data connection,
-    gathering and use for obtaining spatial relations
+    Contains various functions to test data connection, gathering and use for obtaining spatial relations
     for the continuous check in the negative constraints
-
-    Attributes
-    ----------
-
-    host : str
-    database : str
-    user : str
-    password : str
-    port : str
-        returns values from .env  to be passed in the engine of the db
-
-    predicates : list
-        Possible spatial relations to be tested when considering the constraints
-
-    tags : list
-        Values of the seamark tags that need to be considered
     """
+
+    host: str
+    database: str
+    user: str
+    password: str
+    port: str  # returns values from .env  to be passed in the engine of the db
+
+    predicates: list  # Possible spatial relations to be tested when considering the constraints
+
+    tags: list  # Values of the seamark tags that need to be considered
+
     engine: sqlalchemy.engine
 
     def __init__(self, db_engine=None):
@@ -744,16 +836,8 @@ class ContinuousCheck(NegativeContraint):
     def connect_database(self):
         """
         Connect to the database
-
-        Parameters
-        ----------
-        No arguments
-
-
-        Returns
-        ----------
-        Engine of PostgreSQL
         """
+
         # Connect to the PostgreSQL database using SQLAlchemy
         engine = sqlalchemy.create_engine(
             "postgresql://{user}:{pwd}@{host}:{port}/{db}".format(user=self.user, pwd=self.password, host=self.host,
@@ -804,28 +888,21 @@ class RunTestContinuousChecks(ContinuousCheck):
 
 class SeamarkCrossing(ContinuousCheck):
     """
-    Contains various functions to test data connection,
-    gathering and use for obtaining spatial relations
+    Contains various functions to test data connection, gathering and use for obtaining spatial relations
     for the continuous check in the negative constraints
-
-    Attributes
-    ----------
-
-    host : str
-    database : str
-    user : str
-    password : str
-    port : str
-        returns values from .env  to be passed in the engine of the db
-
-    predicates : list
-        Possible spatial relations to be tested when considering the constraints
-
-    tags : list
-        Values of the seamark tags that need to be considered
     """
+
+    host: str
+    database: str
+    user: str
+    password: str
+    port: str  # returns values from .env  to be passed in the engine of the db
+
+    predicates: list  # Possible spatial relations to be tested when considering the constraints
+
+    tags: list  # Values of the seamark tags that need to be considered
+
     concat_tree: STRtree
-    tags: list
 
     def __init__(self, is_stay_on_map=None, map_size=None, db_engine=None):
         super().__init__(db_engine=db_engine)
@@ -835,6 +912,17 @@ class SeamarkCrossing(ContinuousCheck):
             self.concat_tree = self.set_STRTree(db_engine=self.engine, query=seamark_query)
 
     def build_seamark_query(self, is_stay_on_map=None, map_size=None):
+        """TODO: add description
+        _summary_
+
+        :param is_stay_on_map: _description_, defaults to None
+        :type is_stay_on_map: _type_, optional
+        :param map_size: _description_, defaults to None
+        :type map_size: _type_, optional
+        :return: _description_
+        :rtype: _type_
+        """
+
         tags = "'seamark:type'='restricted_area'"
         tags_category = ['safety', 'nature_reserve', 'bird_sanctuary',
                          'game_reserve', 'seal_sanctuary',
@@ -860,7 +948,7 @@ class SeamarkCrossing(ContinuousCheck):
             logger.debug(query)
         else:
             query = ["SELECT * FROM " + self.schema + ".nodes "
-                     f"WHERE ({category_clause} OR tags -> " + tags + ")",
+                                                      f"WHERE ({category_clause} OR tags -> " + tags + ")",
                      "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
                      f"WHERE ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
@@ -877,19 +965,14 @@ class SeamarkCrossing(ContinuousCheck):
         """
         Create new GeoDataFrame using public.nodes table in the query
 
-        Parameters
-        ----------
-        engine : sqlalchemy engine
-            engine object
-
-        query : str
-            sql query for table nodes
-
-        Returns
-        ----------
-        gdf : GeoDataFrame
-            gdf including all the features from public.nodes table
+        :param db_engine: sqlalchemy engine
+        :type db_engine: sqlalchemy.engine.Engine
+        :param query: sql query for table nodes, defaults to None
+        :type query: str, optional
+        :return: gdf including all the features from public.nodes table
+        :rtype: GeoDataFrame
         """
+
         # Define SQL query to retrieve list of tables
         # sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
         gdf = gpd.read_postgis(con=db_engine, sql=query, geom_col="geom", crs="epsg:4326")
@@ -898,20 +981,14 @@ class SeamarkCrossing(ContinuousCheck):
 
     def query_ways(self, db_engine, query):
         """
-        Create new GeoDataFrame using public.ways table in the query
+        Create new GeoDataFrame using public.nodes table in the query
 
-        Parameters
-        ----------
-        engine : sqlalchemy engine
-            engine object
-
-        query : str
-            sql query for table ways
-
-        Returns
-        ----------
-        gdf : GeoDataFrame
-            gdf including all the features from public.ways table
+        :param db_engine: sqlalchemy engine
+        :type db_engine: sqlalchemy.engine.Engine
+        :param query: sql query for table ways, defaults to None
+        :type query: str, optional
+        :return: gdf including all the features from public.nodes table
+        :rtype: GeoDataFrame
         """
 
         gdf = gpd.read_postgis(con=db_engine, sql=query, geom_col="geom", crs="epsg:4326")
@@ -920,21 +997,15 @@ class SeamarkCrossing(ContinuousCheck):
 
     def concat_nodes_ways(self, db_engine, query):
         """
-         Create new GeoDataFrame using public.ways and public.nodes table together in the query
+        Create new GeoDataFrame using public.ways and public.nodes table together in the query
 
-         Parameters
-         ----------
-         query : list
-             sql query for table ways
-
-        engine : sqlalchemy engine
-             engine object
-
-         Returns
-         ----------
-         combined_gdf : GeoDataFrame
-             gdf including all the features from public.ways and public.nodes table
-         """
+        :param query: sql query for table ways
+        :type query: list
+        :param engine: sqlalchemy engine
+        :type engine: sqlalchemy.engine.Engine
+        :return: gdf including all the features from public.ways and public.nodes table
+        :rtype: geopandas.GeoDataFrame
+        """
         if "nodes" in query[0] and "ways" in query[1]:
             gdf_nodes = self.query_nodes(db_engine, query[0])
             gdf_ways = self.query_ways(db_engine, query[1])
@@ -954,28 +1025,19 @@ class SeamarkCrossing(ContinuousCheck):
 
     def check_crossing(self, lat_start, lon_start, lat_end, lon_end):
         """
-         Check if certain route crosses specified seamark objects
+        Check if certain route crosses specified seamark objects
 
-         Parameters
-         ----------
-         lat_start : np.array
-            array of all origin latitudes of routing segments
-
-        lon_start : np.array
-        lon_start : np.array
-            array of all origin longitudes of routing segments
-
-         lat_end : np.array
-            array of all destination latitudes of routing segments
-
-        lon_end : np.array
-            array of all destination longitudes of routing segments
-
-         Returns
-         ----------
-         query_tree : list
-             bool of spatial relation result (True or False)
-         """
+        :param lat_start: array of all origin latitudes of routing segments
+        :type lat_start: numpy.ndarray
+        :param lon_start: array of all origin longitudes of routing segments
+        :type lon_start: numpy.ndarray
+        :param lat_end: array of all destination latitudes of routing segments
+        :type lat_end: numpy.ndarray
+        :param lon_end: array of all destination longitudes of routing segments
+        :type lon_end: numpy.ndarray
+        :return: list of spatial relation result (True or False)
+        :rtype: list[bool]
+        """
 
         query_tree = []
         if self.concat_tree is not None:
@@ -1018,8 +1080,8 @@ class LandPolygonsCrossing(ContinuousCheck):
     def build_landpolygon_query(self, map_size):
         bbox_wkt = self.set_map_bbox(map_size)
         query = "SELECT *,wkb_geometry as geom FROM public.land_polygons " \
-                "WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('{}', 4326))".\
-                format(bbox_wkt)
+                "WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('{}', 4326))". \
+            format(bbox_wkt)
         return query
 
     def set_landpolygon_STRTree(self, db_engine=None, query=None):
@@ -1031,49 +1093,32 @@ class LandPolygonsCrossing(ContinuousCheck):
         """
         Create new GeoDataFrame using public.ways table in the query
 
-        Parameters
-        ----------
-        engine : sqlalchemy engine
-            engine object
-
-        query : str
-            sql query for table ways
-
-        Returns
-        ----------
-        gdf : GeoDataFrame
-            gdf including all the features from public.ways table
+        :param engine: sqlalchemy engine
+        :type engine: sqlalchemy.engine.Engine
+        :param query: sql query for table ways
+        :type query: str
+        :return: gdf including all the features from public.ways table
+        :rtype: geopandas.GeoDataFrame
         """
 
         gdf = gpd.read_postgis(sql=query, con=db_engine, geom_col="geom")  # .drop(columns=["GEOMETRY"])
         gdf = gdf[gdf["geom"] != None]
-
         return gdf
 
     def check_crossing(self, lat_start, lon_start, lat_end, lon_end):
         """
         Check if certain route crosses specified seamark objects
 
-        Parameters
-        ----------
-        lat_start : np.array
-            array of all origin latitudes of routing segments
-
-        lon_start : np.array
-            array of all origin longitudes of routing segments
-
-        lat_end : np.array
-            array of all destination latitudes of routing segments
-
-        lon_end : np.array
-            array of all destination longitudes of routing segments
-
-        time : datetime.datetime (optional argument)
-
-        Returns
-        ----------
-        query_tree : list
-            bool of spatial relation result (True or False)
+        :param lat_start: array of all origin latitudes of routing segments
+        :type lat_start: numpy.ndarray
+        :param lon_start: array of all origin longitudes of routing segments
+        :type lon_start: numpy.ndarray
+        :param lat_end: array of all destination latitudes of routing segments
+        :type lat_end: numpy.ndarray
+        :param lon_end: array of all destination longitudes of routing segments
+        :type lon_end: numpy.ndarray
+        :return: list of spatial relation result (True or False)
+        :rtype: list[bool]
         """
 
         query_tree = []
@@ -1094,6 +1139,4 @@ class LandPolygonsCrossing(ContinuousCheck):
                 else:
                     # if route is constrained
                     query_tree.append(True)
-
-            # returns a list bools (spatial relation)
             return query_tree

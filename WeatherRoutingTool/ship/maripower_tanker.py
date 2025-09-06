@@ -2,6 +2,7 @@ import copy
 import logging
 import math
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,8 +13,9 @@ from astropy import units as u
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
+
 
 have_maripower = False
 try:
@@ -74,9 +76,9 @@ class MariPowerTanker(Boat):
 
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name=file_name)
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
 
         # mandatory variables for maripower
         if not config_obj.COURSES_FILE:
@@ -160,7 +162,7 @@ class MariPowerTanker(Boat):
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('path to weather data' + self.weather_path, 1))
-        logger.info(form.get_log_step('path to CoursesRoute.nc' + self.courses_path, 1))
+        logger.info(form.get_log_step('path to courses data' + self.courses_path, 1))
         logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
 
     def init_hydro_model_single_pars(self):
@@ -393,7 +395,7 @@ class MariPowerTanker(Boat):
         if (debug):
             print('xarray DataSet', ds)
 
-        ds.to_netcdf(self.courses_path + str())
+        ds.to_netcdf(self.courses_path)
         if (debug):
             ds_read = xr.open_dataset(self.courses_path)
             print('read data set', ds_read)

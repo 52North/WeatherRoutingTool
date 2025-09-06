@@ -1,5 +1,6 @@
 import logging
 import math
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,27 +8,24 @@ import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
-from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 logger = logging.getLogger('WRT.ship')
 
 
 class DirectPowerBoat(Boat):
     """
-           estimates power & fuel consumption based on the so-called Direct Power Method
+    Estimates power & fuel consumption based on the so-called Direct Power Method
 
-           The following approximations are used:
-               - a fixed working point of 75% SMCR power and an average ship speed is assumed
-                 (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
-               - additional power and fuel consumption is derived from added resistances of the environmental conditions
-               - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
-                 the Fujiwara approximation
-
-               Returns:
-                   ship_params  - ShipParams object containing ship parameters like power consumption and fuel rate
-       """
+    The following approximations are used:
+     - a fixed working point of 75% SMCR power and an average ship speed is assumed
+       (Currently it is only possible to travel at this fixed working point. No deviating speeds can be set.)
+     - additional power and fuel consumption is derived from added resistances of the environmental conditions
+     - currently only the wind resistance is considered; the wind resistance coefficient is calculated using
+       the Fujiwara approximation
+    """
 
     power_at_sp: float  # power at the service propulsion point
     eta_prop: float  # propulsion efficiency
@@ -56,16 +54,16 @@ class DirectPowerBoat(Boat):
         super().__init__(init_mode, file_name, config_dict)
         config_obj = None
         if init_mode == "from_file":
-            config_obj = ShipConfig(file_name=file_name)
+            config_obj = ShipConfig.assign_config(Path(file_name))
         else:
-            config_obj = ShipConfig(init_mode='from_dict', config_dict=config_dict)
-        config_obj.print()
+            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
+        print(config_obj.model_dump(exclude_unset=True))
 
         # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
         self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
-        self.speed_at_sp = config_obj.BOAT_SMCR_SPEED * u.meter/u.second
+        self.speed_at_sp = config_obj.BOAT_SMCR_SPEED * u.meter / u.second
 
         self.eta_prop = config_obj.BOAT_PROPULSION_EFFICIENCY
         self.overload_factor = config_obj.BOAT_OVERLOAD_FACTOR
@@ -91,16 +89,24 @@ class DirectPowerBoat(Boat):
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
 
     def interpolate_to_true_speed(self, power):
-        const = power/(self.speed_at_sp**(3))
-        power_interpolated = const * self.speed**(3)
+        const = power / (self.speed_at_sp ** (3))
+        power_interpolated = const * self.speed ** (3)
         return power_interpolated
 
     def load_data(self):
         self.calculate_ship_geometry()
         self.calculate_head_wind_coeff()
+        self.validate_parameters()
 
         logger.info(form.get_log_step('The boat speed provided is assumed to be the speed that corresponds '
                                       'to 75% SMCR power.'))
+
+    def check_data_meaningful(self):
+        data = ['Axv', 'Ayv', 'Aod', 'length', 'breadth', 'hs1', 'hs2', 'ls1', 'ls2', 'bs1', 'cmc', 'hbr', 'hc']
+        for d in data:
+            value = getattr(self, d, None)
+            if value is None or value == -99:
+                logger.info(f"The ship attribute {value} has no meaningful value")
 
     def set_optional_parameter(self, par_string, par):
         approx_pars = {
@@ -115,6 +121,39 @@ class DirectPowerBoat(Boat):
         if par < 0:
             par = approx_pars[par_string]
         return par
+
+    def validate_parameters(self):
+        """
+        Validates that no parameter has a dummy value (-99) after optional parameters have been set.
+        Raises ValueError if any parameter still has a dummy value.
+        """
+        params_to_validate = {
+            'Axv': self.Axv,
+            'Ayv': self.Ayv,
+            'Aod': self.Aod,
+            'hs1': self.hs1,
+            'ls1': self.ls1,
+            'hs2': self.hs2,
+            'ls2': self.ls2,
+            'cmc': self.cmc,
+            'bs1': self.bs1,
+            'hc': self.hc
+        }
+
+        invalid_params = []
+        for param_name, param_value in params_to_validate.items():
+            if isinstance(param_value, u.Quantity):
+                if param_value.value == -99:
+                    invalid_params.append(param_name)
+                    logger.warning(f"Parameter {param_name} has dummy value -99")
+            elif param_value == -99:
+                invalid_params.append(param_name)
+                logger.warning(f"Parameter {param_name} has dummy value -99")
+
+        if invalid_params:
+            raise ValueError(
+                f"The following parameters still have dummy values (-99) after setting optional parameters: "
+                f"{', '.join(invalid_params)}")
 
     def calculate_ship_geometry(self):
         # check for provided parameters
@@ -133,6 +172,9 @@ class DirectPowerBoat(Boat):
                         - self.hs1 * self.length)
         if self.Aod < 0:
             self.Aod = self.hs1 * self.ls1 + self.hs2 * self.ls2
+
+        # Validate that no parameter has a dummy value (-99) after optional parameters have been set
+        self.validate_parameters()
 
     def calculate_head_wind_coeff(self):
         """
@@ -350,6 +392,10 @@ class DirectPowerBoat(Boat):
         return P
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+        """
+        :return: ShipParams object containing ship parameters like power consumption and fuel rate
+        :rtype: WeatherRoutingTool.ship.shipparams.ShipParams
+        """
         debug = False
         n_requests = len(courses)
 

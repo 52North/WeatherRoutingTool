@@ -3,7 +3,8 @@ import copy
 import matplotlib.pyplot as plt
 import pytest
 
-from WeatherRoutingTool.algorithms.genetic_utils import GridBasedMutation, GeneticCrossover
+from WeatherRoutingTool.algorithms.genetic.utils import GeneticCrossover
+# from WeatherRoutingTool.algorithms.genetic.utils import GridBasedMutation, GeneticCrossover
 from WeatherRoutingTool.utils import graphics
 
 

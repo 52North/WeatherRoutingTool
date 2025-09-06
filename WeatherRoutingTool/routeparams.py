@@ -19,7 +19,7 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 logger = logging.getLogger('WRT.Routeparams')
 
 
-class RouteParams():
+class RouteParams:
     """
     This is a Container class for route parameters. Parameters are assumed to be constant for every route segment (=
     distance from one coordinate pair to the following). The parameters for each routing step are tied to the start

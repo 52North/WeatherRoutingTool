@@ -8,6 +8,9 @@ logger = logging.getLogger('WRT')
 
 
 class RoutingAlgFactory:
+    """
+    Class for generating a routing algorithm object based on the ALGORITHM_TYPE defined in the config
+    """
 
     @staticmethod
     def get_routing_alg(config):
