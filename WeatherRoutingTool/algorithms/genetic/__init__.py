@@ -10,6 +10,7 @@ from pymoo.util.running_metric import RunningMetric
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
 from pymoo.optimize import minimize
+from pymoo.core.result import Result
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.config import Config
@@ -23,6 +24,7 @@ from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
 from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
+from WeatherRoutingTool.algorithms.genetic import utils
 
 import WeatherRoutingTool.utils.formatting as formatting
 import WeatherRoutingTool.utils.graphics as graphics
@@ -69,13 +71,15 @@ class Genetic(RoutingAlg):
         mutation = MutationFactory.get_mutation(self.config)
         repair = RepairFactory.get_repair(self.config)
 
+        duplicates = utils.RouteDuplicateElimination()
+
         # optimize
         res_minimize = self.optimize(
-            problem, initial_population, crossover, mutation, repair)
+            problem, initial_population, crossover, mutation, duplicates, repair)
 
         # terminate
         res_terminate = self.terminate(
-            res_minimize=res_minimize,
+            res=res_minimize,
             problem=problem,)
 
         return res_terminate
@@ -86,7 +90,8 @@ class Genetic(RoutingAlg):
         initial_population,
         crossover,
         mutation,
-        repair
+        duplicates,
+        repair,
     ):
         algorithm = NSGA2(
             pop_size=self.pop_size,
@@ -94,9 +99,10 @@ class Genetic(RoutingAlg):
             sampling=initial_population,
             crossover=crossover,
             mutation=mutation,
-            repair=repair,
-            eliminate_duplicates=False,  # TODO: eliminate duplicates?
-            return_least_infeasible=False, )
+            # repair=repair,
+            eliminate_duplicates=False,
+            return_least_infeasible=False,
+        )
 
         termination = get_termination("n_gen", self.n_generations)
 
@@ -109,17 +115,15 @@ class Genetic(RoutingAlg):
 
         return res
 
-    def terminate(self, **kw):
+    def terminate(self, res: Result, problem: RoutingProblem):
         super().terminate()
 
-        res = kw["res_minimize"]
-        problem: RoutingProblem = kw["problem"]
-
         best_index = res.F.argmin()
-        best_route = res.X[best_index, 0]
+        # ensure res.X is of shape (n_sol, n_var)
+        best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel, ship_params = problem.get_power(best_route)
-        logger.info(f"Best fuel: {res.f}")
+        logger.info(f"Best fuel: {fuel}")
 
         if self.figure_path is not None:
             logger.info(f"Writing figures to {self.figure_path}")
@@ -247,7 +251,7 @@ class Genetic(RoutingAlg):
         history = res.history
         fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
 
-        for igen in range(0, self.n_generations):
+        for igen in range(len(history)):
             pt.rcParams['font.size'] = graphics.get_standard('font_size')
             figtitlestr = 'Population of Generation ' + str(igen + 1)
 

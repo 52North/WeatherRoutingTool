@@ -1,4 +1,7 @@
+from pymoo.core.duplicate import ElementwiseDuplicateElimination
+
 from geographiclib.geodesic import Geodesic
+import numpy as np
 
 from typing import Optional
 import functools
@@ -103,3 +106,9 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
         dt = json.load(fp)
 
     return route_from_geojson(dt)
+
+
+# ----------
+class RouteDuplicateElimination(ElementwiseDuplicateElimination):
+    def is_equal(self, a, b):
+        return np.array_equal(a.X[0], b.X[0])
