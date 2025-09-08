@@ -377,10 +377,10 @@ class IsoBased(RoutingAlg):
         current_course = units.cut_angles(current_course)
 
         self.routing_step.init_step(
-            lats_start = self.lats_per_step[-1],
-            lons_start = self.lons_per_step[-1],
+            lats_start = self.lats_per_step[0],
+            lons_start = self.lons_per_step[0],
             courses = current_course,
-            time = self.starttime_per_step[-1]
+            time = self.starttime_per_step[0]
         )
 
     def define_initial_variants(self):
@@ -445,14 +445,11 @@ class IsoBased(RoutingAlg):
         self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
         # ToDo: remove debug variable and use logger settings instead
         if debug:
-            logger.info('delta_time: ', delta_time)
-            logger.info('delta_fuel: ', delta_fuel)
-            logger.info('dist: ', dist)
-            logger.info('state:', self.status.state)
+            logger.info('delta_time: ' + str(delta_time))
+            logger.info('delta_fuel: ' +str(delta_fuel))
+            logger.info('dist: ' + str(dist))
+            logger.info('state:' + str(self.status.state))
         self.check_bearing()
-        if debug:
-            logger.info('move:', move)
-
         self.check_land_ahoy(ship_params, bs)
 
     def estimate_fuel_consumption(self, boat: Boat):
