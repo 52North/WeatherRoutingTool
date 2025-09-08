@@ -210,9 +210,6 @@ class IsoBased(RoutingAlg):
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
-    route_reached_destination: bool  # True everytime one route (or more) reaches the destination in a routing step
-    route_reached_waypoint: bool
-
     start_temp: tuple  # changes if intermediate waypoints are used
     finish_temp: tuple  # changes if intermediate waypoints are used
     gcr_course_temp: tuple
@@ -264,10 +261,6 @@ class IsoBased(RoutingAlg):
         self.time = np.array([self.departure_time])
         self.full_time_traveled = np.array([0]) * u.s
         self.full_dist_traveled = np.array([0]) * u.m
-
-        self.route_reached_destination = False
-        self.route_reached_waypoint = False
-        self.pruning_error = False
 
         self.finish_temp = self.finish
         self.start_temp = self.start
@@ -433,7 +426,7 @@ class IsoBased(RoutingAlg):
                     break
 
             elif self.status.state == "reached_waypoint":
-                self.depart_from_waypoint()
+                self.depart_from_waypoint(constraints_list)
                 continue
 
             self.pruning_per_step(True)
@@ -499,7 +492,7 @@ class IsoBased(RoutingAlg):
         self.update_fuel(ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
 
-    def depart_from_waypoint(self):
+    def depart_from_waypoint(self, constraints_list):
         logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
         self.final_pruning()
         self.expand_axis_for_intermediate()
