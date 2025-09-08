@@ -536,7 +536,7 @@ class IsoBased(RoutingAlg):
 
                 # organise routes for next step
                 self.set_next_step_routes()
-                self.status.set_state('routing')
+                self.status.update_state('routing')
 
     def check_land_ahoy(self, ship_params, bs):
         if (self.status.state == "some_reached_destination") or (self.status.state == "route_reached_waypoint"):
