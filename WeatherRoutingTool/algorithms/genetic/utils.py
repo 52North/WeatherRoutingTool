@@ -28,7 +28,7 @@ def great_circle_route(
     :rtype: list[tuple[float, float]]
     """
 
-    geod = Geodesic.WGS84
+    geod: Geodesic = Geodesic.WGS84
     line = geod.InverseLine(*src, *dst)
     n = int(math.ceil(line.s13 / distance))
     route = []
@@ -36,7 +36,23 @@ def great_circle_route(
         s = min(distance * i, line.s13)
         g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
         route.append((g['lat2'], g['lon2']))
-    return route
+    return [src, *route[1:-1], dst]
+
+
+def great_circle_distance(src, dst) -> float:
+    """Measure great circle distance between src and dst waypoints
+
+    :param src: Source waypoint as (lat, lon) pair
+    :type src: Sequence
+    :param dst: Destination waypoint as (lat, lon) pair
+    :type dst: Sequence
+    :return: Great circle distance between src and dst
+    :rtype: float
+    """
+
+    geod: Geodesic = Geodesic.WGS84
+    dist = geod.Inverse(*src, *dst)
+    return dist["s12"]
 
 
 def geojson_from_route(
