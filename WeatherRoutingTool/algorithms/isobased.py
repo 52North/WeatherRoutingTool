@@ -177,7 +177,7 @@ class IsoBasedStatus():
         self.state = state_request
 
     def set_error_str(self, error_str):
-        error_exists = [ierr for ierr in self.available_errors.keys if ierr == error_str]
+        error_exists = [ierr for ierr in self.available_errors.keys() if ierr == error_str]
         if not error_exists:
             raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
         self.error = error_str
