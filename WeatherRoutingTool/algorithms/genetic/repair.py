@@ -1,13 +1,11 @@
-from pymoo.core.repair import Repair
+from pymoo.core.repair import Repair, NoRepair
 
 import logging
-
-from WeatherRoutingTool.config import Config
 
 logger = logging.getLogger("WRT.genetic.repair")
 
 
 class RepairFactory:
     @staticmethod
-    def get_repair(config: Config):
-        pass
+    def get_repair():
+        return NoRepair()

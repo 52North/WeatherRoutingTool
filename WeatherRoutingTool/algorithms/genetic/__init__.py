@@ -67,9 +67,12 @@ class Genetic(RoutingAlg):
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt,)
 
-        crossover = CrossoverFactory.get_crossover(self.config)
+        crossover = CrossoverFactory.get_crossover(
+            self.config, constraints_list)
+
         mutation = MutationFactory.get_mutation(self.config)
-        repair = RepairFactory.get_repair(self.config)
+
+        repair = RepairFactory.get_repair()
 
         duplicates = utils.RouteDuplicateElimination()
 
@@ -99,8 +102,8 @@ class Genetic(RoutingAlg):
             sampling=initial_population,
             crossover=crossover,
             mutation=mutation,
-            # repair=repair,
-            eliminate_duplicates=False,
+            repair=repair,
+            eliminate_duplicates=duplicates,
             return_least_infeasible=False,
         )
 
@@ -265,15 +268,15 @@ class Genetic(RoutingAlg):
                 title=figtitlestr,
                 show_depth=False, )
 
-            for iroute in range(0, self.pop_size):
-                last_pop = history[igen].pop.get('X')
+            last_pop = history[igen].pop.get('X')
 
+            for iroute in range(0, self.pop_size):
                 if iroute == 0:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
                         color="firebrick",
-                        label="full population", )
+                        label=f"full population [{last_pop.shape[0]}]", )
 
                 else:
                     ax.plot(
