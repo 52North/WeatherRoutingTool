@@ -1,181 +1,118 @@
-import logging
-import random
-
-import numpy as np
 from pymoo.core.crossover import Crossover
 
-from WeatherRoutingTool.algorithms.data_utils import GridMixin
+import numpy as np
 
-logger = logging.getLogger('WRT.Genetic')
+from datetime import datetime
+import logging
+
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
+from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.config import Config
+
+logger = logging.getLogger("WRT.genetic.crossover")
 
 
-class SinglePointCrossover(Crossover):
+# base classes
+# ----------
+class OffspringRejectionCrossover(Crossover):
+    """Offspring-Rejection Crossover Base Class
+
+    Algorithm:
+    - Generate offsprings using sub-class' implementation of the `crossover` function
+    - Validate if offsprings violate discrete constraints
+        - True — get rid of both offsprings, and return parents
+        - False — return offsprings
     """
-    Custom class to define genetic crossover for routes
-    """
-    def __init__(self, prob=1):
 
-        # define the crossover: number of parents and number of offsprings
-        super().__init__(2, 2)
-        self.prob = prob
+    def __init__(
+        self,
+        departure_time: datetime,
+        constraints_list: ConstraintsList,
+        prob=.5,
+    ):
+        super().__init__(n_parents=2, n_offsprings=2, prob=prob)
 
-    def _do(self, problem, X, **kwargs):
-        # The input of has the following shape (n_parents, n_matings, n_var)
-        _, n_matings, _ = X.shape
-        Y = np.full_like(X, None, dtype=object)
-        for k in range(n_matings):
-            # get the first and the second parent
-            a, b = X[0, k, 0], X[1, k, 0]
-            Y[0, k, 0], Y[1, k, 0] = self.crossover(a, b)
-        return Y
-
-    def crossover(self, parent1, parent2):
-        # src = parent1[0]
-        # dest = parent1[-1]
-        intersect = np.array([x for x in parent1 if any((x == y).all() for y in parent2)])
-
-        if len(intersect) == 0:
-            return parent1, parent2
-        else:
-            cross_over_point = random.choice(intersect)
-            idx1 = np.where((parent1 == cross_over_point).all(axis=1))[0][0]
-            idx2 = np.where((parent2 == cross_over_point).all(axis=1))[0][0]
-            child1 = np.concatenate((parent1[:idx1], parent2[idx2:]), axis=0)
-            child2 = np.concatenate((parent2[:idx2], parent1[idx1:]), axis=0)  # print(child1, child2)
-        return child1, child2
-
-
-def impute_n8_path(points):
-    """
-    Ensure all adjacent points in the array are 8-connected neighbors.
-    Insert waypoints between points that are not n8 neighbors.
-
-    :param points: Array of shape (n, 2) containing [x, y] coordinates
-    :type points: numpy.ndarray
-    :return: Array with interpolated waypoints ensuring n8 connectivity
-    :rtype: numpy.ndarray
-    """
-    if len(points) < 2:
-        return points
-
-    result = [points[0]]  # Start with the first point
-
-    for i in range(1, len(points)):
-        current = points[i-1]
-        next_point = points[i]
-
-        # Calculate the difference between consecutive points
-        dx = next_point[0] - current[0]
-        dy = next_point[1] - current[1]
-
-        # Check if points are n8 neighbors (max distance of 1 in both x and y)
-        if abs(dx) <= 1 and abs(dy) <= 1:
-            # Already n8 neighbors, just add the next point
-            result.append(next_point)
-        else:
-            # Need to interpolate waypoints
-            waypoints = interpolate_n8_path(current, next_point)
-            result.extend(waypoints[1:])  # Skip the first point (already in result)
-
-    return np.array(result)
-
-
-def interpolate_n8_path(start, end):
-    """
-    Generate a path of n8-connected waypoints between two points.
-    Uses Bresenham-like algorithm optimized for 8-connectivity.
-
-    :param start: Starting point [x, y]
-    :type start: array-like
-    :param end: Ending point [x, y]
-    :type end: array-like
-    :return: List of waypoints including start and end points
-    :rtype: list
-    """
-    x0, y0 = start
-    x1, y1 = end
-
-    path = [(x0, y0)]
-
-    dx = abs(x1 - x0)
-    dy = abs(y1 - y0)
-
-    # Direction of movement
-    sx = 1 if x0 < x1 else -1
-    sy = 1 if y0 < y1 else -1
-
-    x, y = x0, y0
-
-    # Use the maximum of dx and dy as the number of steps
-    # This ensures 8-connectivity (diagonal moves allowed)
-    steps = max(dx, dy)
-
-    for i in range(steps):
-        if i > 0:  # Don't add the starting point again
-            path.append((x, y))
-
-        # Calculate next position
-        # Move diagonally when possible, otherwise move in the direction with larger error
-        next_x = x
-        next_y = y
-
-        if abs(x1 - x) > 0:
-            next_x = x + sx
-        if abs(y1 - y) > 0:
-            next_y = y + sy
-
-        x, y = next_x, next_y
-
-    # Ensure we end at the target point
-    if (x, y) != (x1, y1):
-        path.append((x1, y1))
-
-    return path
-
-
-class PMX(GridMixin, Crossover):
-    """Partially Mapped Crossover"""
-
-    def __init__(self, grid=None, prob=.5):
-        super().__init__(grid=grid, n_parents=2, n_offsprings=2, prob=prob,)
+        self.departure_time = departure_time
+        self.constraints_list = constraints_list
 
     def _do(self, problem, X, **kw):
+        # n_parents assumed to be 2
+        # n_var assumed to be 1 -> expands into (N, 2)
         n_parents, n_matings, n_var = X.shape
 
-        # return var
         Y = np.full_like(X, None, dtype=object)
 
         for k in range(n_matings):
-            p1, p2 = X[0, k, 0], X[1, k, 0]
-            Y[0, k, 0], Y[1, k, 0] = self.pmx_crossover(p1.copy(), p2.copy())
+            p1 = X[0, k, 0]
+            p2 = X[1, k, 0]
 
-            Y[0, k, 0] = self.impute(Y[0, k, 0])
-            Y[1, k, 0] = self.impute(Y[1, k, 0])
+            o1, o2 = self.crossover(p1.copy(), p2.copy())
+
+            if (
+                self.route_constraint_violations(o1).any() or
+                self.route_constraint_violations(o2).any()
+            ):
+                Y[0, k, 0] = p1
+                Y[1, k, 0] = p2
+            else:
+                Y[0, k, 0] = o1
+                Y[1, k, 0] = o2
         return Y
 
-    def impute(self, pt: np.ndarray):
-        *_, indices = self.coords_to_index(pt)
-        indices = np.array(indices)
-        indices = impute_n8_path(indices)
+    def crossover(
+        self,
+        p1: np.ndarray,
+        p2: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Sub-class' implementation of the crossover function"""
 
-        *_, rpt = self.index_to_coords(indices)
-        rpt = np.array(rpt)
-        rpt[[0, -1]] = pt[[0, -1]]
+        return p1, p2
 
-        return rpt
+    def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
+        """Check if route breaks any discrete constraints
 
-    def pmx_crossover(self, p1: np.ndarray, p2: np.ndarray):
-        """
-        Perform Partially Mapped Crossover (PMX) between two parent routes.
-
-        :param p1: np.ndarray of shape (N,2) with the same set of waypoints.
-        :type p1: numpy.ndarray
-        :param p2: np.ndarray of shape (N,2) with the same set of waypoints.
-        :type p2: numpy.ndarray
-        :return: Two offspring np.ndarrays of shape (N,2).
-        :rtype: tuple(numpy.ndarray, numpy.ndarray)
+        :param route: list of waypoints
+        :dtype route: np.ndarray
+        :return: Boolean array of constraint violations per waypoint
+        :rtype: np.ndarray
         """
 
+        is_constrained = self.constraints_list.safe_crossing_discrete(
+            route[:-1, 0], route[:-1, 1], route[1:, 0], route[1:, 1],
+            current_time=self.departure_time,
+            is_constrained=[False] * (route.shape[0] - 1), )
+
+        return np.array(is_constrained)
+
+
+# crossover implementations
+# ----------
+class SinglePointCrossover(OffspringRejectionCrossover):
+    """Single-point crossover operator with great-circle patching"""
+
+    def crossover(self, p1, p2):
+        xp1 = np.random.randint(1, p1.shape[0] - 1)
+        xp2 = np.random.randint(1, p2.shape[0] - 1)
+
+        gcr_dist = 1e6
+
+        r1 = np.concatenate([
+            p1[:xp1],
+            utils.great_circle_route(tuple(p1[xp1-1]), tuple(p2[xp2]), distance=gcr_dist),
+            p2[xp2:]])
+
+        r2 = np.concatenate([
+            p2[:xp2],
+            utils.great_circle_route(tuple(p2[xp2-1]), tuple(p1[xp1]), distance=gcr_dist),
+            p1[xp1:]])
+
+        return r1, r2
+
+
+class PMX(OffspringRejectionCrossover):
+    """Partially Mapped Crossover"""
+
+    def crossover(self, p1, p2):
         if p1.shape != p2.shape:
             logging.info("PMX — Not of equal length")
             return p1, p2
@@ -187,7 +124,7 @@ class PMX(GridMixin, Crossover):
         parent2 = [tuple(row) for row in p2]
 
         # Choose crossover points
-        cx1, cx2 = sorted(random.sample(range(N), 2))
+        cx1, cx2 = sorted(np.random.choice(range(N), 2, replace=False))
 
         # Initialize offspring placeholders
         child1 = [None] * N
@@ -232,10 +169,22 @@ class PMX(GridMixin, Crossover):
 
 
 class CrossoverFactory:
-    """
-    Factory class for crossover
-    """
     @staticmethod
-    def get_crossover(crossover_type: str, grid=None):
-        crossover = PMX(grid=grid)
-        return crossover
+    def get_crossover(config: Config, constraints_list: ConstraintsList):
+        # inputs
+        departure_time = config.DEPARTURE_TIME
+
+        return SinglePointCrossover(
+            departure_time=departure_time,
+            constraints_list=constraints_list,
+            prob=.5, )
+
+        # return PMX(
+        #     departure_time=departure_time,
+        #     constraints_list=constraints_list,
+        #     prob=.5, )
+
+        return OffspringRejectionCrossover(
+            departure_time=departure_time,
+            constraints_list=constraints_list,
+            prob=.5, )
