@@ -536,7 +536,7 @@ class IsoBased(RoutingAlg):
                 self.status.update_state('routing')
 
     def check_land_ahoy(self, ship_params, bs):
-        if (self.status.state == "some_reached_destination") or (self.status.state == "route_reached_waypoint"):
+        if (self.status.state == "some_reached_destination") or (self.status.state == "reached_waypoint"):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
             if (self.status.state == "some_reached_destination"):

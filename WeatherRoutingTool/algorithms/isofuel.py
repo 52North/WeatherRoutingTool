@@ -148,6 +148,7 @@ class IsoFuel(IsoBased):
         idxs = np.argmin(full_fuel_array)
 
         if debug:
+            print('full_fuel_array: ', full_fuel_array)
             print('idxs', idxs)
 
         # Return a trimmed isochrone
