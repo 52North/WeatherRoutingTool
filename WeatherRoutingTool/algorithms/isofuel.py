@@ -124,7 +124,8 @@ class IsoFuel(IsoBased):
         logger.info('delta_time', delta_time.to('hour'))
         logger.info('spread of time: ' + str(mean.to('hour')) + '+-' + str(stddev.to('hour')))
 
-    def update_time(self, delta_time):
+    def update_time(self):
+        delta_time = self.routing_step.delta_time
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
             raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
         for i in range(0, self.full_time_traveled.shape[0]):
@@ -147,6 +148,7 @@ class IsoFuel(IsoBased):
         idxs = np.argmin(full_fuel_array)
 
         if debug:
+            print('full_fuel_array: ', full_fuel_array)
             print('idxs', idxs)
 
         # Return a trimmed isochrone
@@ -159,7 +161,6 @@ class IsoFuel(IsoBased):
             self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
-            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]

@@ -11,7 +11,6 @@ import numpy as np
 import os
 from datetime import datetime, timedelta
 from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
-from matplotlib.legend_handler import HandlerTuple
 
 from astropy import units as u
 

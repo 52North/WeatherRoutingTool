@@ -185,10 +185,11 @@ class WeatherCondEnvAutomatic(WeatherCond):
         time_min_CMEMS_phys = (self.time_start - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
         time_max_CMEMS_phys = (self.time_end + timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
 
-        lon_min = self.map_size.lon1
-        lon_max = self.map_size.lon2
-        lat_min = self.map_size.lat1
-        lat_max = self.map_size.lat2
+        boundary_map = self.map_size.get_widened_map(1)
+        lon_min = boundary_map.lon1
+        lon_max = boundary_map.lon2
+        lat_min = boundary_map.lat1
+        lat_max = boundary_map.lat2
         height_min = 10
         height_max = 20
 
@@ -658,7 +659,7 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
-    def __init__(self, time, hours, time_res, coord_res=1/12, var_dict=None):
+    def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
@@ -684,14 +685,14 @@ class FakeWeather(WeatherCond):
         # initialise coordinates
         # round differences to 10^-5 (~1 m for latitude) to prevent shifts due to floating numbers
         # interpret the configured map size limits inclusive
-        n_lat_values = ceil(round(self.map_size.lat2 - self.map_size.lat1, 5)/self.coord_res) + 1
+        n_lat_values = ceil(round(self.map_size.lat2 - self.map_size.lat1, 5) / self.coord_res) + 1
         lat_start = self.map_size.lat1
-        lat_end = self.map_size.lat1 + self.coord_res * (n_lat_values-1)
+        lat_end = self.map_size.lat1 + self.coord_res * (n_lat_values - 1)
         lat = np.linspace(lat_start, lat_end, n_lat_values)
 
-        n_lon_values = ceil(round(self.map_size.lon2 - self.map_size.lon1, 5)/self.coord_res) + 1
+        n_lon_values = ceil(round(self.map_size.lon2 - self.map_size.lon1, 5) / self.coord_res) + 1
         lon_start = self.map_size.lon1
-        lon_end = self.map_size.lon1 + self.coord_res * (n_lon_values-1)
+        lon_end = self.map_size.lon1 + self.coord_res * (n_lon_values - 1)
         lon = np.linspace(lon_start, lon_end, n_lon_values)
 
         n_time_values = self.time_steps + 1
