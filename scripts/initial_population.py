@@ -2,23 +2,18 @@
 # It does not consider weather, travel time, etc.
 # The algorithm is explained in Kuhlemann & Tierney (2020): “A genetic algorithm for finding realistic sea routes
 # considering the weather”, doi:10.1007/s10732-020-09449-7
-
 import json
 import logging
 import math
 import os.path
 import sys
-import itertools
 from typing import TypedDict
 
 import shapely
-from cartopy.feature import NaturalEarthFeature
 from geographiclib.geodesic import Geodesic
 from geographiclib.geodesicline import GeodesicLine
 from global_land_mask import is_land
-from pyproj import Transformer
-from shapely import line_interpolate_point, LineString, MultiPolygon, Point, Polygon, STRtree
-from shapely.ops import transform
+from shapely import line_interpolate_point, LineString, Point
 
 
 logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s')
@@ -29,22 +24,6 @@ logger.setLevel(logging.DEBUG)
 geod = Geodesic.WGS84
 GeodesicOutmask = TypedDict('GeodesicOutmask', {'lat1': float, 'lat2': float, 'a12': float, 's12': float,
                                                 'azi2': float, 'azi1': float, 'lon1': float, 'lon2': float})
-# from_crs = 'EPSG:4326'
-# to_crs = 'EPSG:3857'  # is this accurate enough to measure distances in m for this use case?? How large can errors become?
-# project = Transformer.from_crs(from_crs, to_crs, always_xy=True).transform
-# Note: careful with cartopy and lakes
-# land_features = NaturalEarthFeature(category='physical', name='land', scale='10m')
-# polygons = [list(geom.geoms) if isinstance(geom, MultiPolygon) else [geom] for geom in land_features.geometries()]
-# polygons = list(itertools.chain.from_iterable(polygons))
-# polygons = [polygon.buffer(0.1) for polygon in polygons]
-# cut polygons at utm zone borders, project to UTM, buffer with meters and reproject?
-# tree = STRtree([transform(project, geom) for geom in polygons])
-
-
-# def is_within_land_buffer(point: Point, buffer: float = 10000) -> bool:
-#     # FIXME: build strtree with geographic coordinates, buffer polygons and use within instead of dwithin?
-#     indices = tree.query(transform(project, point), predicate='dwithin', distance=buffer)
-#     return len(indices) > 0
 
 
 def is_close_to_land(point: Point, distance: float = 0, angle_step: float = 30) -> bool:
@@ -84,7 +63,6 @@ def has_point_on_land(line: GeodesicLine, interval: float = 1000):
         s = min(interval * i, line.s13)
         g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
         # if is_land(g['lat2'], g['lon2']):
-        # if is_within_land_buffer(Point(g['lon2'], g['lat2'])):
         if is_close_to_land(Point(g['lon2'], g['lat2'])):
             return True
     return False
@@ -160,7 +138,6 @@ def split_segments(start: Point, end: Point, threshold: float, distance: float, 
         if line.s13 > threshold:
             midpoint = get_midpoint(line)
             # over_land = is_land(midpoint['lat2'], midpoint['lon2'])
-            # over_land = is_within_land_buffer(Point(midpoint['lon2'], midpoint['lat2']))
             over_land = is_close_to_land(Point(midpoint['lon2'], midpoint['lat2']))
             logger.info(f"Midpoint {midpoint}.")
             logger.info(f"Midpoint over land: {over_land}.")
@@ -171,13 +148,11 @@ def split_segments(start: Point, end: Point, threshold: float, distance: float, 
                 dist = i * distance
                 p1 = move_point_perpendicular(midpoint, dist)
                 # if not is_land(p1.y, p1.x):
-                # if not is_within_land_buffer(p1):
                 if not is_close_to_land(p1):
                     new_point = p1
                     break
                 p2 = move_point_perpendicular(midpoint, dist, False)
                 # if not is_land(p2.y, p2.x):
-                # if not is_within_land_buffer(p2):
                 if not is_close_to_land(p2):
                     new_point = p2
                     break
@@ -213,7 +188,8 @@ def initial_route_generation(
     :type start: shapely.Point
     :param end:
     :type end: shapely.Point
-    :param threshold: define a segment length below which no further division is done to prevent the algorithm to run forever
+    :param threshold: define a segment length below which no further division is done to prevent the algorithm to
+      run forever
     :type threshold: int or float
     :param distance: distance used to move midpoint perpendicular
     :type distance: int or float
@@ -238,7 +214,8 @@ def initial_route_generation(
             point_sequence = [start]
             fixed_points = [start] + waypoints[route_idx] + [end]
             for waypoint_idx in range(len(fixed_points)-1):
-                split_segments(fixed_points[waypoint_idx], fixed_points[waypoint_idx+1], threshold, distance, point_sequence)
+                split_segments(fixed_points[waypoint_idx], fixed_points[waypoint_idx+1],
+                               threshold, distance, point_sequence)
                 point_sequence.append(fixed_points[waypoint_idx+1])
             if interpolate:
                 point_sequence = interpolate_equal_distance(point_sequence, interp_dist, interp_normalized)
@@ -294,13 +271,14 @@ def get_test_scenario(name: str):
         case "sardinia":
             return TestScenario(Point(7, 40), Point(11, 40))
         case "marseille-cyprus":
-            return TestScenario(Point(5.2, 43),Point(33.7, 34.8))
+            return TestScenario(Point(5.2, 43), Point(33.7, 34.8))
         case "barcelona-alexandria":
             return TestScenario(Point(2.3, 41), Point(32, 32))
         case "perth-brisbane":
             return TestScenario(Point(114, -32), Point(155, -27))
         case "brest-lisbon":
-            return TestScenario(Point(-5, 48.2), Point(-9.5, 38.5), [[Point(-10, 43)], [Point(-5.5, 45.5), Point(-10, 41)]])
+            return TestScenario(Point(-5, 48.2), Point(-9.5, 38.5),
+                                [[Point(-10, 43)], [Point(-5.5, 45.5), Point(-10, 41)]])
 
 
 def main():
