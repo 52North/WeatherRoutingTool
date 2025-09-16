@@ -4,6 +4,7 @@ import numpy as np
 from pymoo.core.problem import ElementwiseProblem
 
 from WeatherRoutingTool.routeparams import RouteParams
+import WeatherRoutingTool.algorithms.genetic.utils as utils
 
 logger = logging.getLogger('WRT.Genetic')
 
@@ -37,35 +38,10 @@ class RoutingProblem(ElementwiseProblem):
         """
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         fuel, _ = self.get_power(x[0])
-        constraints = self.get_constraints(x[0])
+        constraints = utils.get_constraints(x[0], self.constraint_list)
         # print(costs.shape)
         out['F'] = np.column_stack([fuel])
         out['G'] = np.column_stack([constraints])
-
-    def is_neg_constraints(self, lat, lon, time):
-        lat = np.array([lat])
-        lon = np.array([lon])
-        is_constrained = [False for i in range(0, lat.shape[0])]
-        is_constrained = self.constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-        # print(is_constrained)
-        return 0 if not is_constrained else 1
-
-    def get_constraints_array(self, route: np.ndarray) -> np.ndarray:
-        """
-        Return constraint violation per waypoint in route
-
-        :param route: Candidate array of waypoints
-        :type route: np.ndarray
-        :return: Array of constraint violations
-        """
-
-        constraints = np.array([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
-        return constraints
-
-    def get_constraints(self, route):
-        # ToDo: what about time?
-        constraints = np.sum(self.get_constraints_array(route))
-        return constraints
 
     def get_power(self, route):
         route_dict = RouteParams.get_per_waypoint_coords(
