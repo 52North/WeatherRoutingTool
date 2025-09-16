@@ -35,12 +35,8 @@ if __name__ == "__main__":
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
     # Validate config with pydantic and run route optimization
-    try:
-        config = Config.assign_config(Path(args.file))
-        execute_routing(config)
-    except Exception as e:
-        print(e)
-        sys.exit(1)
+    config = Config.assign_config(Path(args.file))
+    execute_routing(config)
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
