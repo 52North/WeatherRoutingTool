@@ -230,6 +230,24 @@ class RoutingStep:
 
 
 class IsoBasedStatus():
+    """
+    Class to store status and error descriptions of IsoBased algorithms.
+
+    This class defines status and error descriptions as well as error codes. At the beginning of the routing procedure,
+    the state is set to "routing" and the error to "no_error".
+
+    :params available states: pre-defined status descriptions
+    :type list[str]:
+    :params available errors: pre-defined error descriptions
+    :type list[str]:
+    :params state: current routing state
+    :type str:
+    :params error: error status
+    :type str:
+    :params needs_further_routing: information about whether further routing steps are necessary
+    :type bool:
+    """
+
     name: str
     state: str
     error: str
@@ -239,7 +257,6 @@ class IsoBasedStatus():
     available_errors: dict
 
     def __init__(self):
-        self.name = "Isobased:"
         self.available_states = [
             "routing",
             "some_reached_destination",
@@ -257,21 +274,32 @@ class IsoBasedStatus():
         self.error = "no_error"
         self.needs_further_routing = True
 
-    def update_state(self, state_request):
+    def update_state(self, state_request: str) -> None:
+        """
+        Updates status description.
+
+        :raises ValueError: if status description is not implemented
+        """
         state_exists = [istate for istate in self.available_states if istate == state_request]
         if not state_exists:
             raise ValueError('Wrong state requested for Isobased routing: ' + state_request)
 
         self.state = state_request
 
-    def set_error_str(self, error_str):
+    def set_error_str(self, error_str: str) -> None:
+        """
+        Updates error state.
+
+        :raises ValueError: if error state is not implemented.
+        """
         error_exists = [ierr for ierr in self.available_errors.keys() if ierr == error_str]
         if not error_exists:
             raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
         self.error = error_str
         self.update_state("error")
 
-    def get_error_code(self):
+    def get_error_code(self) -> int:
+        """Returns error code. """
         return self.available_errors[self.error]
 
     def print(self):
