@@ -59,13 +59,13 @@ class RoutingStep:
         self.courses = np.array([None])
         self.departure_time = np.array([None])
 
-    def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
+    def update_delta_variables(self, delta_fuel: float, delta_time: timedelta, delta_dist: float) -> None:
         """Update variables for fuel consumption, travel time and travel distance."""
         self.delta_fuel = delta_fuel
         self.delta_time = delta_time
         self.delta_dist = delta_dist
 
-    def _update_single_var(self, old_var, added_var, position):
+    def _update_single_var(self, old_var: np.ndarray, added_var: np.ndarray, position: int) -> np.ndarray:
         var_array = np.split(old_var, 2)
         new_var = None
         if position == 0:
@@ -76,7 +76,14 @@ class RoutingStep:
             new_var = np.vstack((var_keep, added_var))
         return new_var
 
-    def _update_step(self, position, lats, lons, courses, time):
+    def _update_step(
+            self,
+            position: int,
+            lats: np.ndarray,
+            lons: np.ndarray,
+            courses: np.ndarray,
+            time: np.ndarray
+    ) -> None:
         """
         Update class variables while routing is ongoing.
 
@@ -100,7 +107,7 @@ class RoutingStep:
             self.departure_time = time
             self.courses = courses
 
-    def update_start_step(self, lats, lons, courses, time):
+    def update_start_step(self, lats: np.ndarray, lons: np.ndarray, courses: np.ndarray, time: np.ndarray) -> None:
         """
         Update class variables for the departure point while routing is ongoing.
 
@@ -115,9 +122,9 @@ class RoutingStep:
         :param time: new departure time
         :type: np.ndrarray
         """
-        return self._update_step(0, lats, lons, courses, time)
+        self._update_step(0, lats, lons, courses, time)
 
-    def update_end_step(self, lats, lons):
+    def update_end_step(self, lats: np.ndarray, lons: np.ndarray) -> None:
         """
         Update class variables for the arrival point while routing is ongoing.
 
@@ -128,9 +135,9 @@ class RoutingStep:
         :param lons: new longitude values
         :type: np.ndarray
         """
-        return self._update_step(1, lats, lons, None, None)
+        self._update_step(1, lats, lons, None, None)
 
-    def print(self):
+    def print(self) -> None:
         logger.info(form.get_log_step('Departure: ', 0))
         logger.info(form.get_log_step('lats: ' + str(self.lats[0]), 1))
         logger.info(form.get_log_step('lons: ' + str(self.lons[0]), 1))
@@ -141,7 +148,7 @@ class RoutingStep:
         logger.info(form.get_log_step('lons: ' + str(self.lons[1]), 1))
         logger.info(form.get_log_step('constraints: ' + str(self.is_constrained)))
 
-    def init_step(self, lats_start, lons_start, courses, time):
+    def init_step(self, lats_start: np.ndarray, lons_start: np.ndarray, courses: np.ndarray, time: np.ndarray) -> None:
         """
         Initialise the class object at the start of each routing step.
 
@@ -173,37 +180,37 @@ class RoutingStep:
         self.delta_fuel = None
         self.delta_dist = None
 
-    def update_constraints(self, constraints):
+    def update_constraints(self, constraints: np.ndarray) -> None:
         """Update the constraint information."""
         self.is_constrained = constraints
 
-    def get_start_point(self, coord="all"):
+    def get_start_point(self, coord: str ="all") -> np.ndarray | (np.ndarray, np.ndarray):
         """
         Get the coordinates of the starting point.
 
-        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :param coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
         :type: str
 
-        :returns: coordinate(s) of starting point
+        :return: coordinate(s) of starting point
         :rtype: float or tuple in the form of (longitudes, latitudes)
         :raises ValueError: if coord is not implemented
         """
         return self._get_point(coord, 0)
 
-    def get_end_point(self, coord="all"):
+    def get_end_point(self, coord: str="all") -> np.ndarray | (np.ndarray, np.ndarray):
         """
         Get the coordinates of the arrival point.
 
-        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
-        :type: str
+        :param coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type coord: str
 
-        :returns: coordinate(s) of arrival point
+        :return: coordinate(s) of arrival point
         :rtype: float or tuple in the form of (longitudes, latitudes)
         :raises ValueError: if coord is not implemented
         """
         return self._get_point(coord, 1)
 
-    def _get_point(self, coord="all", position=0):
+    def _get_point(self, coord: str="all", position: int =0) -> np.ndarray | (np.ndarray, np.ndarray):
         if coord == "all":
             return (self.lons[position], self.lats[position])
         elif coord == 'lat':
@@ -213,11 +220,11 @@ class RoutingStep:
         else:
             raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
-    def get_courses(self):
+    def get_courses(self) -> np.ndarray:
         """Get courses set at starting point."""
         return self.courses
 
-    def get_time(self):
+    def get_time(self) -> np.ndarray:
         """Get departure time from starting point."""
         return self.departure_time
 
