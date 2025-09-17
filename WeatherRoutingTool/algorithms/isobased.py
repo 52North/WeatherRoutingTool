@@ -17,6 +17,27 @@ logger = logging.getLogger('WRT.Isobased')
 
 
 class RoutingStep:
+    """
+    Class for storing parameters that characterise a single routing step for IsoBased algorithms.
+
+    :param lats: latitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: latitudes for start (index = 0) and arrival points (index=1), columns: latitudes for\
+        different routes
+    :param lons: longitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: longitudes for start (index = 0) and arrival points (index=1), columns: longitudes for\
+        different routes
+    :param courses: courses set at the starting point of the routing step
+    :type: np.ndarray
+    :param departure_time: departure times of all routes from the starting point
+    :type: np.ndarray
+    :param delta_time: travel time
+    :type: timedelta
+    :param delta_fuel: fuel consumption
+    :type: float
+    :param is_constrained: information on constraint violations
+    :type: bool
+    """
+
     lats: np.ndarray
     lons: np.ndarray
     courses: np.ndarray
@@ -39,12 +60,13 @@ class RoutingStep:
         self.departure_time = np.array([None])
 
     def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
+        """Update variables for fuel consumption, travel time and travel distance."""
         self.delta_fuel = delta_fuel
         self.delta_time = delta_time
         self.delta_dist = delta_dist
 
     def _update_single_var(self, old_var, added_var, position):
-        var_array = np.split(old_var,2)
+        var_array = np.split(old_var, 2)
         new_var = None
         if position == 0:
             var_keep = var_array[1]
@@ -54,17 +76,24 @@ class RoutingStep:
             new_var = np.vstack((var_keep, added_var))
         return new_var
 
-    """
-    Update class variables during the routing step. The shape of the updated coordinates has to match the shape that 
-    has been chosen for the initialisation.
-
-    :position: 0 = departure point, 1 = arrival point
-    :lat: new latitude values
-    :lon: new longitude values
-    :courses: new courses
-    :time: new departure time
-    """
     def _update_step(self, position, lats, lons, courses, time):
+        """
+        Update class variables while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param position: 0 = departure point, 1 = arrival point
+        :type: int
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
+
         self.lats = self._update_single_var(self.lats, lats, position)
         self.lons = self._update_single_var(self.lons, lons, position)
         if position == 0:
@@ -72,9 +101,33 @@ class RoutingStep:
             self.courses = courses
 
     def update_start_step(self, lats, lons, courses, time):
+        """
+        Update class variables for the departure point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
         return self._update_step(0, lats, lons, courses, time)
 
     def update_end_step(self, lats, lons):
+        """
+        Update class variables for the arrival point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        """
         return self._update_step(1, lats, lons, None, None)
 
     def print(self):
@@ -83,23 +136,29 @@ class RoutingStep:
         logger.info(form.get_log_step('lons: ' + str(self.lons[0]), 1))
         logger.info(form.get_log_step('courses: ' + str(self.courses), 1))
         logger.info(form.get_log_step('time: ' + str(self.departure_time), 1))
-        logger.info(form.get_log_step('Arrival: ',0))
+        logger.info(form.get_log_step('Arrival: ', 0))
         logger.info(form.get_log_step('lats: ' + str(self.lats[1]), 1))
-        logger.info(form.get_log_step('lons: ' + str(self.lons[1]),1))
+        logger.info(form.get_log_step('lons: ' + str(self.lons[1]), 1))
         logger.info(form.get_log_step('constraints: ' + str(self.is_constrained)))
 
-
-    """
-    Initialise the class object at the start routing step. The coordinates of the destination coordinates are set to 
-    arrays containing None. The coordinates of the starting point can come with any shape; the shape of the destination
-    coordinates will be adapted.
-
-    :lats_start: latitudes of the departure point
-    :lons_start: longitudes of the departure point
-    :courses: courses
-    :time: departure time
-    """
     def init_step(self, lats_start, lons_start, courses, time):
+        """
+        Initialise the class object at the start of each routing step.
+
+        The arguments initialise the variables for the starting point. The variables for the arrival point are set to
+        arrays containing None. The variables for the starting point can come with any shape; the shape of all other
+        arrays will be adjusted, accordingly. The array for the constraint information is initialised to be 'False' for
+        all routes.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
         var_shape = lats_start.shape[0]
         dummy_end = np.full(var_shape, -99)
 
@@ -115,15 +174,36 @@ class RoutingStep:
         self.delta_dist = None
 
     def update_constraints(self, constraints):
+        """Update the constraint information."""
         self.is_constrained = constraints
 
     def get_start_point(self, coord="all"):
+        """
+        Get the coordinates of the starting point.
+
+        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type: str
+
+        :returns: coordinate(s) of starting point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
         return self._get_point(coord, 0)
 
     def get_end_point(self, coord="all"):
+        """
+        Get the coordinates of the arrival point.
+
+        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type: str
+
+        :returns: coordinate(s) of arrival point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
         return self._get_point(coord, 1)
 
-    def _get_point(self, coord="all", position = 0):
+    def _get_point(self, coord="all", position=0):
         if coord == "all":
             return (self.lons[position], self.lats[position])
         elif coord == 'lat':
@@ -134,11 +214,12 @@ class RoutingStep:
             raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
     def get_courses(self):
+        """Get courses set at starting point."""
         return self.courses
 
     def get_time(self):
+        """Get departure time from starting point."""
         return self.departure_time
-
 
 
 class IsoBasedStatus():
@@ -220,7 +301,7 @@ class IsoBased(RoutingAlg):
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     shipparams_per_step: ShipParams  # object storing ship parameters (fuel rate, power consumption ...)
     starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
-    absolutefuel_per_step: np.ndarray   # (kg)
+    absolutefuel_per_step: np.ndarray  # (kg)
 
     # the lenght of the following arrays depends on the number of courses (course segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all courses
@@ -232,7 +313,7 @@ class IsoBased(RoutingAlg):
     prune_sector_deg_half: int  # angular range of course that is considered for pruning (only one half, 0-180°)
     prune_segments: int  # number of course bins that are used for pruning
     prune_symmetry_axis: str  # method to define pruning symmetry axis
-    prune_groups: str   # method to define grouping of route segments before the pruning
+    prune_groups: str  # method to define grouping of route segments before the pruning
     minimisation_criterion: str  # minimisation criterion
 
     desired_number_of_routes: int
@@ -377,10 +458,10 @@ class IsoBased(RoutingAlg):
         current_course = units.cut_angles(current_course)
 
         self.routing_step.init_step(
-            lats_start = self.lats_per_step[0],
-            lons_start = self.lons_per_step[0],
-            courses = current_course,
-            time = self.starttime_per_step[0]
+            lats_start=self.lats_per_step[0],
+            lons_start=self.lons_per_step[0],
+            courses=current_course,
+            time=self.starttime_per_step[0]
         )
 
     def define_initial_variants(self):
@@ -446,7 +527,7 @@ class IsoBased(RoutingAlg):
         # ToDo: remove debug variable and use logger settings instead
         if debug:
             logger.info('delta_time: ' + str(delta_time))
-            logger.info('delta_fuel: ' +str(delta_fuel))
+            logger.info('delta_fuel: ' + str(delta_fuel))
             logger.info('dist: ' + str(dist))
             logger.info('state:' + str(self.status.state))
         self.check_bearing()
@@ -458,12 +539,12 @@ class IsoBased(RoutingAlg):
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(
-            courses = self.routing_step.get_courses(),
-            lats = self.routing_step.get_start_point('lat'),
-            lons = self.routing_step.get_start_point('lon'),
-            time = self.routing_step.get_time(),
-            speed = None,
-            unique_coords = True
+            courses=self.routing_step.get_courses(),
+            lats=self.routing_step.get_start_point('lat'),
+            lons=self.routing_step.get_start_point('lon'),
+            time=self.routing_step.get_time(),
+            speed=None,
+            unique_coords=True
         )
         return bs, ship_params
 
@@ -549,7 +630,8 @@ class IsoBased(RoutingAlg):
                 self.routing_step.delta_time = delta_time_last_step
                 self.routing_step.delta_fuel = delta_fuel_last_step
                 self.routing_step.delta_dist = dist_last_step
-#        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
+
+    #        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
         """
@@ -572,7 +654,7 @@ class IsoBased(RoutingAlg):
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
-        df_current_last_step['dist'] = self.current_last_step_dist.value    # pandas struggles with units
+        df_current_last_step['dist'] = self.current_last_step_dist.value  # pandas struggles with units
         df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest.value
         df_current_last_step['fuel'] = self.absolutefuel_per_step[0, :].value
 
@@ -594,7 +676,7 @@ class IsoBased(RoutingAlg):
 
             df_reaching_destination = specific_route_group[
                 specific_route_group['dist'] >= specific_route_group['dist_dest']
-            ]
+                ]
             num_rows = df_reaching_destination.shape[0]
 
             if num_rows > 0:
@@ -975,7 +1057,8 @@ class IsoBased(RoutingAlg):
         :rtype: _type_
         """
 
-        bin_stat, bin_edges, bin_number = binned_statistic(self.routing_step.get_courses().value, self.full_dist_traveled,
+        bin_stat, bin_edges, bin_number = binned_statistic(self.routing_step.get_courses().value,
+                                                           self.full_dist_traveled,
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
@@ -1307,7 +1390,7 @@ class IsoBased(RoutingAlg):
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
         dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
-    # ToDo: use logger.debug and args.debug
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
             # print('dist traveled:', dist)
@@ -1362,8 +1445,8 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
         self.course_per_step = np.vstack((self.routing_step.get_courses(), self.course_per_step))
         self.routing_step.update_end_step(
-            lats = end_step_lat,
-            lons = end_step_lon
+            lats=end_step_lat,
+            lons=end_step_lon
         )
 
         # ToDo: use logger.debug and args.debug
