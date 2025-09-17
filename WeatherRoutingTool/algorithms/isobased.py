@@ -312,36 +312,116 @@ class IsoBasedStatus():
 
 class IsoBased(RoutingAlg):
     """
-    All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
-    courses (plus 1) and M corresponds to the number of routing steps.
-    At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
-    correspond to properties of the point of departure of the respective routing step. This means that
-    for 'count = 0' the elements of lats_per_step and lons_per_step correspond to the coordinates of the
-    departure point of the whole route. The first elements of the attributes
-     - course_per_step
-     - dist_per_step
-     - speed_per_step
-    are 0 to satisfy this definition.
+    Base class for algorithms that are based on traveling with constant fuel/time/etc.
+
+    The class initiates the main evaluation steps that are necessary for IsoBased algorithms. The function
+    execute_routing is the core of the implementation. It iterates over individual routing steps and initiates the main
+    evaluations which are:
+        - define a set of route segments that is to be tested (function: define_courses_per_step)
+        - estimate the fuel consumption rate at the start of the route segments based on weather conditions and\
+            ship type (function: estimate_fuel_consumption, calls Ship module)
+        - move the ship considering that a fixed amount of fuel/time/etc can be consumed (function: move_boat)
+        - evaluate possible constraints (function: check_constraints, calls Constraints module)
+        - select routes that maximise/minimise the evaluation criterion (function: pruning)
+    The class also considers positive constraints like waypoints that need to be passed
+    (function: check_for_positive_constraints).
+
+    The variables that charactarise a single routing step are stored in a RoutingStep object. Error and state
+    descriptions are stored in an IsoBasedStatus object. For further evaluation of the error status by the user,
+    an error code is returned by the main function execute_routing.
+
+    The history of the routing procedure is stored in a selection of np.ndarrays with dimension MxN (variables with
+    suffix 'per_step') and np.ndarrays with dimension N (variables with prefix 'full') whereby 'M' corresponds to the
+    current number of routing steps and 'N' corresponds to the current number of courses +1. The dimensions of these
+    arrays aren't static; for every routing step, a row is added on top of the matrices (functions with prefix
+    'update').
+
+    :param ncount: total number of routing steps
+    :type ncount: int
+    :param count: current routing step
+    :type count: int
+    :param start_temp: temporary starting point considering intermediate waypoints
+    :type start_temp: tuple (lat, lon)
+    :param finish_temp: temporary arrival point considering intermediate waypoints
+    :type finish_temp: tuple (lat, lon)
+    :param grc_course_temp: course of grand circle route towards temporary arrival point
+    :type gcr_course_temp: tuple
+
+    :param lats_per_step: latitudes per routing step and test route
+    :type lats_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param lons_per_step: longitudes per routing step and test route
+    :type lons_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param course_per_step: courses per routing step and test route; angle convention: 0-360°
+    :type course_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param dist_per_step:  geodesic distance travelled per routing step and test route
+    :type dist_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param shipparams_per_step: ship parameters (fuel rate, power consumption ...) per routing step and test route
+    :type shipparams_per_step: ShipParams
+    :param starttime_per_step: start time for every routing step
+    :type starttime_per_step: (M,N) np.ndarray (datetime object) N=courses+1, M=steps (M decreasing)
+    :param absolutefuel_per_step: absolute fuel consumed for every route at certain routing step
+    :type absolutefuel_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+
+    :param full_dist_traveled: full distance traveled for every test route
+    :type full_dist_traveled: (N) np.ndarray N=courses+1
+    :param full_time_traveled: full travel time for every test route
+    :type full_time_traveled: (N) np.ndarray N=courses+1
+    :param time: current datetime for every test route
+    :type time: (N) np.ndarray N=courses+1
+
+    :param course_segments: number of course segments in the range of -180° to 180°
+    :type course_segments: int
+    :param course_increments_deg: increment between different courses
+    :type course_increments_deg: int
+    :param prune_sector_deg_half: angular range of course that is considered for pruning (only one half, 0-180°)
+    :type prune_sector_deg_half: int
+    :param prune_segments: number of course bins that are used for pruning
+    :type prune segments: int
+    :param prune_symmetry_axis: method to define pruning symmetry axis
+    :type prune_symmetry_axis: str
+    :param prune_groups: method to define grouping of route segments before the pruning
+    :type prune_groups: str
+    :param minimisation_criterion: minimisation criterion
+    :type minimisation_criterion: str
+
+    :param desired_number_of_routes: number of routes requested for multiple-routes approach
+    :type desired_number_of_routes: int
+    :param current_number_of_routes: current number of routes in case of multiple-routes approach
+    :type current_number_of_routes: int
+    :param current_step_routes:
+    :type current_step_routes: pd.DataFrame
+    :param next_step_routes:
+    :type next_step_routes: pd.DataFrame
+    :param route_list: list of routes in case of multiple-routes approach
+    :type route_list: list[RouteParams]
+
+    :param status: container for status and error information
+    :type status: IsoBasedStatus
+    :param routing_step: container for variables for single routing step
+    :type routing_step: RoutingStep
     """
+
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
-    start_temp: tuple  # changes if intermediate waypoints are used
-    finish_temp: tuple  # changes if intermediate waypoints are used
-    gcr_course_temp: tuple
+    start_temp: tuple  # temporary starting point considering intermediate waypoints
+    finish_temp: tuple  # temporary arrival point considering intermediate waypoints
+    gcr_course_temp: tuple # course of grand circle route towards temporary arrival point
 
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    course_per_step: np.ndarray  # course (0 - 360°)
-    dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
-    shipparams_per_step: ShipParams  # object storing ship parameters (fuel rate, power consumption ...)
-    starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
-    absolutefuel_per_step: np.ndarray  # (kg)
+    # (M,N) arrays to store routing history per routing step: N=courses+1, M=steps (M decreasing)
+    lats_per_step: np.ndarray  # latitudes
+    lons_per_step: np.ndarray  # longitudes
+    course_per_step: np.ndarray  # courses (0 - 360°)
+    dist_per_step: np.ndarray  # geodesic distance
+    starttime_per_step: np.ndarray  # start time: datetime object
+    absolutefuel_per_step: np.ndarray  # absolute fuel
 
-    # the lenght of the following arrays depends on the number of courses (course segments)
-    full_dist_traveled: np.ndarray  # full geodesic distance since start for all courses
-    full_time_traveled: np.ndarray  # time elapsed since start for all courses
-    time: np.ndarray  # current datetime for all courses
+    shipparams_per_step: ShipParams  # ship parameters (fuel rate, power consumption ...)
+
+    # (N) arrays to store routing history for full routes: N=courses
+    full_dist_traveled: np.ndarray  # full geodesic distance since start
+    full_time_traveled: np.ndarray  # time elapsed since start
+    time: np.ndarray  # current datetime
 
     course_segments: int  # number of course segments in the range of -180° to 180°
     course_increments_deg: int  # increment between different variants
@@ -351,14 +431,14 @@ class IsoBased(RoutingAlg):
     prune_groups: str  # method to define grouping of route segments before the pruning
     minimisation_criterion: str  # minimisation criterion
 
-    desired_number_of_routes: int
-    current_number_of_routes: int
+    desired_number_of_routes: int # number of routes requested for multiple-routes approach
+    current_number_of_routes: int # current number of routes in case of multiple-routes approach
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
-    route_list: list
+    route_list: list # list of routes in case of multiple-routes approach
 
-    status: IsoBasedStatus
-    routing_step: RoutingStep
+    status: IsoBasedStatus # container for status and error information
+    routing_step: RoutingStep # container for variables for single routing step
 
     def __init__(self, config):
         super().__init__(config)
@@ -460,7 +540,7 @@ class IsoBased(RoutingAlg):
         _summary_
         """
 
-        # branch out for multiple headings
+        # branch out for multiple courses
         nof_input_routes = self.lats_per_step.shape[1]
 
         new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
@@ -482,7 +562,7 @@ class IsoBased(RoutingAlg):
         self.time = np.repeat(self.time, self.course_segments + 1, axis=0)
         self.check_course_def()
 
-        # determine new headings - centered around gcrs X0 -> X_prev_step
+        # determine new courses - centered around gcrs X0 -> X_prev_step
         delta_hdgs = np.linspace(-self.course_segments / 2 * self.course_increments_deg,
                                  +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
@@ -1243,7 +1323,7 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
-            print('Pruning... Pruning symmetry axis defined by median of considered headings.')
+            print('Pruning... Pruning symmetry axis defined by median of considered courses.')
 
         # propagate current end points towards temporary destination
         non_zero_idxs = np.where(self.full_dist_traveled != 0)[0]
