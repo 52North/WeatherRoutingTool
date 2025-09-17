@@ -536,8 +536,12 @@ class IsoBased(RoutingAlg):
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
-        """TODO: add description
-        _summary_
+        """
+        Initialise variables that store the routing history for the next routing step.
+
+        All variables that store the routing history are extended to match the dimension M = N_routes x course_segments.
+        Variables for single coordinate pairs are repeated for different course segments. The routing_step object is
+        initialised for the current routing step.
         """
 
         # branch out for multiple courses
@@ -584,17 +588,33 @@ class IsoBased(RoutingAlg):
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         """
-        Progress one isochrone with pruning/optimising route for specific time segment
+        Core function for the initialisation of important evaluations of IsoBased algorithms.
 
-        :param boat: Boat profile
-        :type boat: Boat
+        The function iterates over individual routing steps and initiates the main routing evaluations which are:
+        - define a set of route segments that is to be tested (function: define_courses_per_step)
+        - estimate the fuel consumption rate at the start of the route segments based on weather conditions and\
+            ship type (function: estimate_fuel_consumption, calls Ship module)
+        - move the ship considering that a fixed amount of fuel/time/etc can be consumed (function: move_boat)
+        - evaluate possible constraints (function: check_constraints, calls Constraints module)
+        - select routes that maximise/minimise the evaluation criterion (function: pruning)
+        The class also considers positive constraints like waypoints that need to be passed
+        (function: check_for_positive_constraints).
+
+        In case of successful algorithm execution, the function returns a RouteParams object. It performs
+        evaluations considering the individual routing states. It catches errors, returns an error code as well as the
+        best route at the state of the routing algorithm, at which the error occurred. In case the algorithm is
+        configured to find multiple routes (ISOCHRONE_NUMBER_OF_ROUTES>1), this function returns the best route while
+        all routes that have been found are written to separate json files.
+
+        :param boat: Ship object
+        :type boat: Ship
         :param wt: Weather data
         :type wt: WeatherCond
-        :param constraints_list: List of constraints on the routing
+        :param constraints_list: List of constraints
         :type constraints_list: ConstraintsList
         :param verbose: sets verbosity, defaults to False
         :type verbose: bool, optional
-        :return: Calculated route
+        :return: calculated route
         :rtype: RouteParams
         """
 
@@ -635,6 +655,19 @@ class IsoBased(RoutingAlg):
         return route, self.status.get_error_code()
 
     def move_boat(self, bs, ship_params):
+        """
+        Move boat to new position based on estimated fuel consumption (or similar).
+
+        The travel time, fuel consumption and travel distance are estimated and stored in routing_step. Based on
+        these variables, the new ship position is determined without considering constraints. If the ship can reach
+        its (temporary) destination for one test route, all variables of this route are propagated to the destination.
+
+        :param bs: boat speed
+        :type bs: float
+        :param ship_params: ship parameters (fuel consumption, ...)
+        :type ship_params: ShipParams
+        """
+
         debug = False
         self.routing_step.courses = units.cut_angles(self.routing_step.get_courses())
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
@@ -649,6 +682,14 @@ class IsoBased(RoutingAlg):
         self.check_land_ahoy(ship_params, bs)
 
     def estimate_fuel_consumption(self, boat: Boat):
+        """
+        Initiate the estimation of the fuel consumption by the Ship module.
+
+        :param boat: boat object for fuel estimation
+        :type boat: Boat
+        :return: boat speed, calculated ship parameters
+        :rtype: float, ShipParams
+        """
         bs = boat.get_boat_speed()
         bs = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
 
@@ -664,6 +705,16 @@ class IsoBased(RoutingAlg):
         return bs, ship_params
 
     def check_constraints(self, constraint_list):
+        """
+        Evaluate whether the new route segments violate constraints.
+
+        The characteristics of the new route segments are sent to the Constraints module for evaluation. The variable
+        routing_step is updated accordingly.
+
+        :param constraint_list: list of constraints
+        :type constraint_list: ConstraintsList
+        """
+
         debug = False
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
@@ -680,12 +731,26 @@ class IsoBased(RoutingAlg):
         self.routing_step.update_constraints(is_constrained)
 
     def update(self, ship_params):
+        """
+        Update all variables that store the routing history for the new position considering the constraints.
+
+        :param ship_params: ship parameters
+        :type ship_params: ShipParams
+        """
+
         self.update_position()
         self.update_time()
         self.update_fuel(ship_params.get_fuel_rate())
         self.update_shipparams(ship_params)
 
     def depart_from_waypoint(self, constraints_list):
+        """
+        Initialise variables that store the routing history when departing from an intermediate waypoint.
+
+        :param constraints_list: list of constraints
+        :type constraints_list: ConstraintsList
+        """
+
         logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
         self.final_pruning()
         self.expand_axis_for_intermediate()
@@ -701,6 +766,17 @@ class IsoBased(RoutingAlg):
         self.count += 1
 
     def collect_routes(self):
+        """
+        Collect all routes if any has been propagated to destination.
+
+        In case of standard algorithm execution (desired_number_of_routes = 1), the status is updated accordingly.
+
+        In case the algorithm has been configured to find multiple routes (desired_number_of_routes > 1):
+        - it is checked whether the requested number of routes has been found
+        - all route found in the current routing step are written to file
+        - the status is updated accordingly
+        - the algorithm is configured to find further routes if necessary
+        """
         logger.info('Initiating last step at routing step ' + str(self.count))
 
         if self.desired_number_of_routes == 1:
@@ -732,6 +808,13 @@ class IsoBased(RoutingAlg):
                 self.status.update_state('routing')
 
     def check_land_ahoy(self, ship_params, bs):
+        """
+        Check whether any of the test routes can reach the destination.
+
+        For every test route, the travel distance of the current routing step is compared to the distance to the
+        (temporary) destination. If the latter distance is smaller, this very route is propagated to the destination.
+
+        """
         if (self.status.state == "some_reached_destination") or (self.status.state == "reached_waypoint"):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
@@ -749,21 +832,19 @@ class IsoBased(RoutingAlg):
     #        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
+        # ToDo: move to IsoFuel algorithm
         """
-        This function finds routes reaching the destination in the current last step of routing.
-        First, it creates a dataframe with origin point of the current route segments.
-        The route segments are grouped according to the origin point.
-        'dist' is the distance that could be travelled with available amount of fuel.
-        'dist_dest' is the distance from origin point to the destination.
-        'st_index' is storing the same index order of other nd arrays such as self.lats_per_step
-        before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
-        (acts as a key from the dataframe to other arrays such as self.lats_per_step )
+        Collect all test routes that can be propagated to the destination (multiple-routes approach).
 
-        Routes from the current step reaching the destination are stored in 'current_step_routes' dataframe.
-        Only the one route segment per branch originating from the same origin point that minimize the fuel is stored
-        in current_step_routes. Routes which are not reaching the destination in the current step are stored in
-        'next_step_routes' dataframe. In this case, all routes originating from the same origin point are stored in
-        the dataframe.
+        This function collects all routes reaching the destination in the current routing step. It
+        - creates a pd.DataFrame with the latitudes, longitudes, travel distance, distance to destination and fuel
+            consumption of the current routing segments
+        - stores the index order of the original 'per_step' arrays for later reference as axis with name 'st_index'
+        - groups the variables of the DataFrame according to matching starting points of the routing segment
+        - stores *only* the best routes per branch that reach the destination in the 'current_step_routes' dataframe.
+        - stores *all* routes that do not reach the destination in the 'next_step_routes' dataframe for further
+          evaluation
+
         """
 
         df_current_last_step = pd.DataFrame()
@@ -804,12 +885,14 @@ class IsoBased(RoutingAlg):
                 self.next_step_routes = pd.concat([self.next_step_routes, specific_route_group], ignore_index=True)
 
     def find_routes_reaching_destination_in_current_step(self, remaining_routes=0):
+        # ToDo: move to IsoFuel algorithm
         """
-        In this function, different routes obtained from 'find_every_route_reaching_destination'
-        and stored in current_step_routes dataframe are sorted by minimum fuel.
-        The number of routes that are selected is specified by the variable remaining_routes.
+        Rank routes that reach the destination and write them to file (multiple-routes approach).
 
-        :param remaining_routes: Variable for saving routes meeting fuel consumption criteria, defaults to 0
+        The number of routes that are selected is specified by the variable remaining_routes. If the figure path
+        is set, the routes are plotted.
+
+        :param remaining_routes: specifies how many routes shall be selected
         :type remaining_routes: int, optional
         """
 
@@ -828,7 +911,12 @@ class IsoBased(RoutingAlg):
                 self.plot_routes(idxs)
 
     def make_route_object(self, idxs):
+        """
+        Generates RouteParams object from 'per_step' variables based on index of test route (multiple-routes approach).
 
+        :param idxs: index of test route
+        :type idxs: int
+        """
         # ToDo: very similar to IsoFuel.final_pruning -> harmonize
 
         try:
@@ -867,7 +955,7 @@ class IsoBased(RoutingAlg):
 
     def plot_routes(self, idxs):
         """
-        Plot every complete individual route that is reaching the destination
+        Plot every complete individual route that is reaching the destination (multiple-routes approach).
 
         :param idxs: loop index
         :type idxs: int
@@ -898,8 +986,7 @@ class IsoBased(RoutingAlg):
 
     def set_next_step_routes(self):
         """
-        Updating all arrays according to the indices of the routes that need to be further
-        processed in the next routing step
+        Update all arrays of test routes that need to be further processed (multiple-routes approach).
         """
 
         # sorting order matters here????
@@ -923,8 +1010,7 @@ class IsoBased(RoutingAlg):
 
     def revert_to_previous_step(self):
         """
-        In this function, when all routes are constrained, the arrays are set
-        back to previous step to provide meaningful error message.
+        Revert arrays to previous routing step if all routes are constrained for current (multiple-routes approach).
         """
 
         last_idx = len(self.lats_per_step)
@@ -995,6 +1081,7 @@ class IsoBased(RoutingAlg):
                 self.plot_routes(idx)
 
     def update_shipparams(self, ship_params_single_step):
+        """Update ShipParams object. """
         new_rpm = np.vstack((ship_params_single_step.get_rpm(), self.shipparams_per_step.get_rpm()))
         new_power = np.vstack((ship_params_single_step.get_power(), self.shipparams_per_step.get_power()))
         new_speed = np.vstack((ship_params_single_step.get_speed(), self.shipparams_per_step.get_speed()))
@@ -1051,6 +1138,7 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_message(new_message)
 
     def check_course_def(self):
+        """ Perform sanity checks for 'per_step' variables. """
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (
                 self.lats_per_step.shape[1] == self.course_per_step.shape[1]) and (
                          self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
