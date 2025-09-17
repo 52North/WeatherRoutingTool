@@ -17,6 +17,27 @@ logger = logging.getLogger('WRT.Isobased')
 
 
 class RoutingStep:
+    """
+    Class for storing parameters that characterise a single routing step for IsoBased algorithms.
+
+    :param lats: latitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: latitudes for start (index = 0) and arrival points (index=1), columns: latitudes for different\
+        routes
+    :param lons: longitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: longitudes for start (index = 0) and arrival points (index=1), columns: longitudes for\
+        different routes
+    :param courses: courses set at the starting point of the routing step
+    :type: np.ndarray
+    :param departure_time: departure times of all routes from the starting point
+    :type: np.ndarray
+    :param delta_time: travel time
+    :type: timedelta
+    :param delta_fuel: fuel consumption
+    :type: float
+    :param is_constrained: information on constraint violations
+    :type: bool
+    """
+
     lats: np.ndarray
     lons: np.ndarray
     courses: np.ndarray
@@ -39,6 +60,7 @@ class RoutingStep:
         self.departure_time = np.array([None])
 
     def update_delta_variables(self, delta_fuel, delta_time, delta_dist):
+        """Update variables for fuel consumption, travel time and travel distance."""
         self.delta_fuel = delta_fuel
         self.delta_time = delta_time
         self.delta_dist = delta_dist
@@ -54,17 +76,25 @@ class RoutingStep:
             new_var = np.vstack((var_keep, added_var))
         return new_var
 
-    """
-    Update class variables during the routing step. The shape of the updated coordinates has to match the shape that 
-    has been chosen for the initialisation.
 
-    :position: 0 = departure point, 1 = arrival point
-    :lat: new latitude values
-    :lon: new longitude values
-    :courses: new courses
-    :time: new departure time
-    """
     def _update_step(self, position, lats, lons, courses, time):
+        """
+        Update class variables while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param position: 0 = departure point, 1 = arrival point
+        :type: int
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
+
         self.lats = self._update_single_var(self.lats, lats, position)
         self.lons = self._update_single_var(self.lons, lons, position)
         if position == 0:
@@ -72,9 +102,33 @@ class RoutingStep:
             self.courses = courses
 
     def update_start_step(self, lats, lons, courses, time):
+        """
+        Update class variables for the departure point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
         return self._update_step(0, lats, lons, courses, time)
 
     def update_end_step(self, lats, lons):
+        """
+        Update class variables for the arrival point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        """
         return self._update_step(1, lats, lons, None, None)
 
     def print(self):
@@ -88,18 +142,24 @@ class RoutingStep:
         logger.info(form.get_log_step('lons: ' + str(self.lons[1]),1))
         logger.info(form.get_log_step('constraints: ' + str(self.is_constrained)))
 
-
-    """
-    Initialise the class object at the start routing step. The coordinates of the destination coordinates are set to 
-    arrays containing None. The coordinates of the starting point can come with any shape; the shape of the destination
-    coordinates will be adapted.
-
-    :lats_start: latitudes of the departure point
-    :lons_start: longitudes of the departure point
-    :courses: courses
-    :time: departure time
-    """
     def init_step(self, lats_start, lons_start, courses, time):
+        """
+        Initialise the class object at the start of each routing step.
+
+        The arguments initialise the variables for the starting point. The variables for the arrival point are set to
+        arrays containing None. The variables for the starting point can come with any shape; the shape of all other
+        arrays will be adjusted, accordingly. The array for the constraint information is initialised to be 'False' for
+        all routes.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
         var_shape = lats_start.shape[0]
         dummy_end = np.full(var_shape, -99)
 
@@ -115,12 +175,33 @@ class RoutingStep:
         self.delta_dist = None
 
     def update_constraints(self, constraints):
+        """Update the constraint information."""
         self.is_constrained = constraints
 
     def get_start_point(self, coord="all"):
+        """
+        Get the coordinates of the starting point.
+
+        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type: str
+
+        :returns: coordinate(s) of starting point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
         return self._get_point(coord, 0)
 
     def get_end_point(self, coord="all"):
+        """
+        Get the coordinates of the arrival point.
+
+        :params coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type: str
+
+        :returns: coordinate(s) of arrival point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
         return self._get_point(coord, 1)
 
     def _get_point(self, coord="all", position = 0):
@@ -134,9 +215,11 @@ class RoutingStep:
             raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
     def get_courses(self):
+        """Get courses set at starting point."""
         return self.courses
 
     def get_time(self):
+        """Get departure time from starting point."""
         return self.departure_time
 
 
