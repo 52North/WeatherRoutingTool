@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 import matplotlib
@@ -6,7 +5,6 @@ from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 
-import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
@@ -36,7 +34,6 @@ class RoutingAlg:
         self.departure_time = config.DEPARTURE_TIME
 
         gcr = self.calculate_gcr(self.start, self.finish)
-        self.current_course = gcr * u.degree
         self.gcr_course = gcr * u.degree
 
         self.figure_path = get_figure_path()
