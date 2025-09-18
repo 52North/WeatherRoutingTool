@@ -616,8 +616,6 @@ def test_routing_step_update_end_step():
         lons=lons_new
     )
 
-    dummy_end = np.full(4, None)
-
     assert np.array_equal(rs.lats[1], lats_new)
     assert np.array_equal(rs.lons[1], lons_new)
     assert np.array_equal(rs.departure_time, time_start)

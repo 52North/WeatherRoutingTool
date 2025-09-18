@@ -180,12 +180,12 @@ def test_check_constraints_land_crossing():
     ra.routing_step.init_step(
         lats_start=np.array([52.76, 53.45]),
         lons_start=np.array([5.40, 3.72]),
-        courses = np.array([99, 99]) * u.degree,
-        time = None
+        courses=np.array([99, 99]) * u.degree,
+        time=None
     )
     ra.routing_step.update_end_step(
-        lats = np.array([52.70, 53.55]),
-        lons = np.array([4.04, 5.45]),
+        lats=np.array([52.70, 53.55]),
+        lons=np.array([4.04, 5.45]),
     )
 
     land_crossing = LandCrossing()

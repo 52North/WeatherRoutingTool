@@ -184,7 +184,7 @@ class RoutingStep:
         """Update the constraint information."""
         self.is_constrained = constraints
 
-    def get_start_point(self, coord: str ="all"):
+    def get_start_point(self, coord: str = "all"):
         """
         Get the coordinates of the starting point.
 
@@ -197,7 +197,7 @@ class RoutingStep:
         """
         return self._get_point(coord, 0)
 
-    def get_end_point(self, coord: str="all"):
+    def get_end_point(self, coord: str = "all"):
         """
         Get the coordinates of the arrival point.
 
@@ -210,7 +210,7 @@ class RoutingStep:
         """
         return self._get_point(coord, 1)
 
-    def _get_point(self, coord: str="all", position: int =0):
+    def _get_point(self, coord: str = "all", position: int = 0):
         if coord == "all":
             return (self.lons[position], self.lats[position])
         elif coord == 'lat':
@@ -406,7 +406,7 @@ class IsoBased(RoutingAlg):
 
     start_temp: tuple  # temporary starting point considering intermediate waypoints
     finish_temp: tuple  # temporary arrival point considering intermediate waypoints
-    gcr_course_temp: tuple # course of grand circle route towards temporary arrival point
+    gcr_course_temp: tuple  # course of grand circle route towards temporary arrival point
 
     # (M,N) arrays to store routing history per routing step: N=courses+1, M=steps (M decreasing)
     lats_per_step: np.ndarray  # latitudes
@@ -431,14 +431,14 @@ class IsoBased(RoutingAlg):
     prune_groups: str  # method to define grouping of route segments before the pruning
     minimisation_criterion: str  # minimisation criterion
 
-    desired_number_of_routes: int # number of routes requested for multiple-routes approach
-    current_number_of_routes: int # current number of routes in case of multiple-routes approach
+    desired_number_of_routes: int  # number of routes requested for multiple-routes approach
+    current_number_of_routes: int  # current number of routes in case of multiple-routes approach
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
-    route_list: list # list of routes in case of multiple-routes approach
+    route_list: list  # list of routes in case of multiple-routes approach
 
-    status: IsoBasedStatus # container for status and error information
-    routing_step: RoutingStep # container for variables for single routing step
+    status: IsoBasedStatus  # container for status and error information
+    routing_step: RoutingStep  # container for variables for single routing step
 
     def __init__(self, config):
         super().__init__(config)
@@ -1156,13 +1156,13 @@ class IsoBased(RoutingAlg):
 
     def get_pruned_indices_statistics(
             self,
-            bin_stat : np.ndarray,
-            bin_edges : np.ndarray,
-            trim : bool
+            bin_stat: np.ndarray,
+            bin_edges: np.ndarray,
+            trim: bool
     ) -> list[int]:
         """
         Collect routes whose travel distance matches the maximum bin entries in the pruning histogram.
-        
+
         :param bin_stat: bin content of the pruning histogram which is the maximum travel distance per bin
         :type bin_stat: np.ndarray
         :param bin_edges: bin edges of the pruning histogram
@@ -1191,7 +1191,7 @@ class IsoBased(RoutingAlg):
 
         return idxs
 
-    def pruning(self, trim : bool, bins : np.ndarray) -> None:
+    def pruning(self, trim: bool, bins: np.ndarray) -> None:
         """
         Perform pruning.
 
@@ -1274,7 +1274,7 @@ class IsoBased(RoutingAlg):
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
-    def courses_based_pruning(self, bins : np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def courses_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Perform courses-based pruning
 
@@ -1296,9 +1296,9 @@ class IsoBased(RoutingAlg):
     def larger_direction_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Perform larger-direction-based pruning.
-        
-        Define an angle referred to as 'larger direction' which is the azimuthal angle from the starting point of the 
-        test routes towards the current position. A histogram is filled with the maximum travel distance 
+
+        Define an angle referred to as 'larger direction' which is the azimuthal angle from the starting point of the
+        test routes towards the current position. A histogram is filled with the maximum travel distance
         (argument: statistic = np.nanmax) in dependence of bins of the larger direction. The bin content, bin edges and
         the bin numbers are returned.
 
@@ -1358,7 +1358,7 @@ class IsoBased(RoutingAlg):
             idxs.append(max_dist_indxs[0])
         return idxs
 
-    def pruning_per_step(self, trim : bool=True) -> None:
+    def pruning_per_step(self, trim: bool = True) -> None:
         """
         Initiate pruning. Decide between pruning methods with different symmetry axis.
         """
@@ -1367,7 +1367,7 @@ class IsoBased(RoutingAlg):
         else:
             self.pruning_headings_centered(trim)
 
-    def pruning_gcr_centered(self, trim : bool=True) -> None:
+    def pruning_gcr_centered(self, trim: bool = True) -> None:
         """
         Initiate pruning with the grand circle route as the symmetry axis.
 
@@ -1436,7 +1436,7 @@ class IsoBased(RoutingAlg):
 
         self.pruning(trim, bins)
 
-    def pruning_headings_centered(self, trim : bool=True) -> None:
+    def pruning_headings_centered(self, trim: bool = True) -> None:
         """
         Initiate pruning with a symmetry axis that is determined from the spread of courses.
 
