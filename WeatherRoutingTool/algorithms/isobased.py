@@ -1,15 +1,10 @@
-import logging
 from datetime import timedelta
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
 from astropy import units as u
 
-import WeatherRoutingTool.utils.formatting as form
-import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import *
@@ -21,58 +16,429 @@ from WeatherRoutingTool.weather import WeatherCond
 logger = logging.getLogger('WRT.Isobased')
 
 
+class RoutingStep:
+    """
+    Class for storing parameters that characterise a single routing step for IsoBased algorithms.
+
+    :param lats: latitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: latitudes for start (index = 0) and arrival points (index=1), columns: latitudes for\
+        different routes
+    :param lons: longitude values for the start and arrival point of the routing step
+    :type: np.ndarray, rows: longitudes for start (index = 0) and arrival points (index=1), columns: longitudes for\
+        different routes
+    :param courses: courses set at the starting point of the routing step
+    :type: np.ndarray
+    :param departure_time: departure times of all routes from the starting point
+    :type: np.ndarray
+    :param delta_time: travel time
+    :type: timedelta
+    :param delta_fuel: fuel consumption
+    :type: float
+    :param is_constrained: information on constraint violations
+    :type: bool
+    """
+
+    lats: np.ndarray
+    lons: np.ndarray
+    courses: np.ndarray
+    departure_time: np.ndarray
+
+    delta_time: timedelta
+    delta_fuel: float
+    delta_dist: float
+    is_constrained: np.ndarray
+
+    def __init__(self):
+        self.delta_time = None
+        self.delta_fuel = None
+        self.delta_dist = None
+        self.is_constrained = None
+
+        self.lats = np.array([[None]])
+        self.lons = np.array([[None]])
+        self.courses = np.array([None])
+        self.departure_time = np.array([None])
+
+    def update_delta_variables(self, delta_fuel: float, delta_time: timedelta, delta_dist: float) -> None:
+        """Update variables for fuel consumption, travel time and travel distance."""
+        self.delta_fuel = delta_fuel
+        self.delta_time = delta_time
+        self.delta_dist = delta_dist
+
+    def _update_single_var(self, old_var: np.ndarray, added_var: np.ndarray, position: int) -> np.ndarray:
+        var_array = np.split(old_var, 2)
+        new_var = None
+        if position == 0:
+            var_keep = var_array[1]
+            new_var = np.vstack((added_var, var_keep))
+        elif position == 1:
+            var_keep = var_array[0]
+            new_var = np.vstack((var_keep, added_var))
+        return new_var
+
+    def _update_step(
+            self,
+            position: int,
+            lats: np.ndarray,
+            lons: np.ndarray,
+            courses: np.ndarray,
+            time: np.ndarray
+    ) -> None:
+        """
+        Update class variables while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param position: 0 = departure point, 1 = arrival point
+        :type: int
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
+
+        self.lats = self._update_single_var(self.lats, lats, position)
+        self.lons = self._update_single_var(self.lons, lons, position)
+        if position == 0:
+            self.departure_time = time
+            self.courses = courses
+
+    def update_start_step(self, lats: np.ndarray, lons: np.ndarray, courses: np.ndarray, time: np.ndarray) -> None:
+        """
+        Update class variables for the departure point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
+        self._update_step(0, lats, lons, courses, time)
+
+    def update_end_step(self, lats: np.ndarray, lons: np.ndarray) -> None:
+        """
+        Update class variables for the arrival point while routing is ongoing.
+
+        The shape of the arguments has to match the shape that has been chosen for the initialisation.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        """
+        self._update_step(1, lats, lons, None, None)
+
+    def print(self) -> None:
+        logger.info(form.get_log_step('Departure: ', 0))
+        logger.info(form.get_log_step('lats: ' + str(self.lats[0]), 1))
+        logger.info(form.get_log_step('lons: ' + str(self.lons[0]), 1))
+        logger.info(form.get_log_step('courses: ' + str(self.courses), 1))
+        logger.info(form.get_log_step('time: ' + str(self.departure_time), 1))
+        logger.info(form.get_log_step('Arrival: ', 0))
+        logger.info(form.get_log_step('lats: ' + str(self.lats[1]), 1))
+        logger.info(form.get_log_step('lons: ' + str(self.lons[1]), 1))
+        logger.info(form.get_log_step('constraints: ' + str(self.is_constrained)))
+
+    def init_step(self, lats_start: np.ndarray, lons_start: np.ndarray, courses: np.ndarray, time: np.ndarray) -> None:
+        """
+        Initialise the class object at the start of each routing step.
+
+        The arguments initialise the variables for the starting point. The variables for the arrival point are set to
+        arrays containing None. The variables for the starting point can come with any shape; the shape of all other
+        arrays will be adjusted, accordingly. The array for the constraint information is initialised to be 'False' for
+        all routes.
+
+        :param lats: new latitude values
+        :type: np.ndarray
+        :param lons: new longitude values
+        :type: np.ndarray
+        :param courses: new courses
+        :type: np.ndarray
+        :param time: new departure time
+        :type: np.ndrarray
+        """
+        var_shape = lats_start.shape[0]
+        dummy_end = np.full(var_shape, -99)
+
+        self.lats = np.vstack((lats_start, dummy_end))
+        self.lons = np.vstack((lons_start, dummy_end))
+        self.courses = courses
+        self.departure_time = time
+
+        self.is_constrained = np.full(var_shape, False)
+
+        self.delta_time = None
+        self.delta_fuel = None
+        self.delta_dist = None
+
+    def update_constraints(self, constraints: np.ndarray) -> None:
+        """Update the constraint information."""
+        self.is_constrained = constraints
+
+    def get_start_point(self, coord: str = "all"):
+        """
+        Get the coordinates of the starting point.
+
+        :param coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type: str
+
+        :return: coordinate(s) of starting point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
+        return self._get_point(coord, 0)
+
+    def get_end_point(self, coord: str = "all"):
+        """
+        Get the coordinates of the arrival point.
+
+        :param coord: coordinate(s) that is/are requested. Can be 'lat', 'lon', 'all. Defaults to 'all'.
+        :type coord: str
+
+        :return: coordinate(s) of arrival point
+        :rtype: float or tuple in the form of (longitudes, latitudes)
+        :raises ValueError: if coord is not implemented
+        """
+        return self._get_point(coord, 1)
+
+    def _get_point(self, coord: str = "all", position: int = 0):
+        if coord == "all":
+            return (self.lons[position], self.lats[position])
+        elif coord == 'lat':
+            return self.lats[position]
+        elif coord == 'lon':
+            return self.lons[position]
+        else:
+            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
+
+    def get_courses(self) -> np.ndarray:
+        """Get courses set at starting point."""
+        return self.courses
+
+    def get_time(self) -> np.ndarray:
+        """Get departure time from starting point."""
+        return self.departure_time
+
+
+class IsoBasedStatus():
+    """
+    Class to store status and error descriptions of IsoBased algorithms.
+
+    This class defines status and error descriptions as well as error codes. At the beginning of the routing procedure,
+    the state is set to "routing" and the error to "no_error".
+
+    :params available states: pre-defined status descriptions
+    :type list[str]:
+    :params available errors: pre-defined error descriptions
+    :type list[str]:
+    :params state: current routing state
+    :type str:
+    :params error: error status
+    :type str:
+    :params needs_further_routing: information about whether further routing steps are necessary
+    :type bool:
+    """
+
+    name: str
+    state: str
+    error: str
+    needs_further_routing: bool
+
+    available_states: list
+    available_errors: dict
+
+    def __init__(self):
+        self.available_states = [
+            "routing",
+            "some_reached_destination",
+            "all_reached_destination",
+            "reached_waypoint",
+            "error"
+        ]
+        self.available_errors = {
+            'no_error': 0,
+            'pruning_error': 1,
+            'out_of_routes': 2,
+            'destination_not_reached': 3
+        }
+        self.state = "routing"
+        self.error = "no_error"
+        self.needs_further_routing = True
+
+    def update_state(self, state_request: str) -> None:
+        """
+        Updates status description.
+
+        :raises ValueError: if status description is not implemented
+        """
+        state_exists = [istate for istate in self.available_states if istate == state_request]
+        if not state_exists:
+            raise ValueError('Wrong state requested for Isobased routing: ' + state_request)
+
+        self.state = state_request
+
+    def set_error_str(self, error_str: str) -> None:
+        """
+        Updates error state.
+
+        :raises ValueError: if error state is not implemented.
+        """
+        error_exists = [ierr for ierr in self.available_errors.keys() if ierr == error_str]
+        if not error_exists:
+            raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
+        self.error = error_str
+        self.update_state("error")
+
+    def get_error_code(self) -> int:
+        """Returns error code. """
+        return self.available_errors[self.error]
+
+    def print(self):
+        logger.info(form.get_log_step('Routing Status Report: ', 0))
+        logger.info(form.get_log_step('active state: ' + self.state, 1))
+        logger.info(form.get_log_step('error state: ' + self.error, 1))
+        logger.info(form.get_log_step('error code: ' + str(self.get_error_code()), 1))
+        logger.info(form.get_log_step('needs further routing: ' + str(self.needs_further_routing), 1))
+
+
 class IsoBased(RoutingAlg):
     """
-    All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of
-    courses (plus 1) and M corresponds to the number of routing steps.
-    At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays
-    correspond to properties of the point of departure of the respective routing step. This means that
-    for 'count = 0' the elements of lats_per_step and lons_per_step correspond to the coordinates of the
-    departure point of the whole route. The first elements of the attributes
-     - course_per_step
-     - dist_per_step
-     - speed_per_step
-    are 0 to satisfy this definition.
+    Base class for algorithms that are based on traveling with constant fuel/time/etc.
+
+    The class initiates the main evaluation steps that are necessary for IsoBased algorithms. The function
+    execute_routing is the core of the implementation. It iterates over individual routing steps and initiates the main
+    evaluations which are:
+        - define a set of route segments that is to be tested (function: define_courses_per_step)
+        - estimate the fuel consumption rate at the start of the route segments based on weather conditions and\
+            ship type (function: estimate_fuel_consumption, calls Ship module)
+        - move the ship considering that a fixed amount of fuel/time/etc can be consumed (function: move_boat)
+        - evaluate possible constraints (function: check_constraints, calls Constraints module)
+        - select routes that maximise/minimise the evaluation criterion (function: pruning)
+    The class also considers positive constraints like waypoints that need to be passed
+    (function: check_for_positive_constraints).
+
+    The variables that charactarise a single routing step are stored in a RoutingStep object. Error and state
+    descriptions are stored in an IsoBasedStatus object. For further evaluation of the error status by the user,
+    an error code is returned by the main function execute_routing.
+
+    The history of the routing procedure is stored in a selection of np.ndarrays with dimension MxN (variables with
+    suffix 'per_step') and np.ndarrays with dimension N (variables with prefix 'full') whereby 'M' corresponds to the
+    current number of routing steps and 'N' corresponds to the current number of courses +1. The dimensions of these
+    arrays aren't static; for every routing step, a row is added on top of the matrices (functions with prefix
+    'update').
+
+    :param ncount: total number of routing steps
+    :type ncount: int
+    :param count: current routing step
+    :type count: int
+    :param start_temp: temporary starting point considering intermediate waypoints
+    :type start_temp: tuple (lat, lon)
+    :param finish_temp: temporary arrival point considering intermediate waypoints
+    :type finish_temp: tuple (lat, lon)
+    :param grc_course_temp: course of grand circle route towards temporary arrival point
+    :type gcr_course_temp: tuple
+
+    :param lats_per_step: latitudes per routing step and test route
+    :type lats_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param lons_per_step: longitudes per routing step and test route
+    :type lons_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param course_per_step: courses per routing step and test route; angle convention: 0-360°
+    :type course_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param dist_per_step:  geodesic distance travelled per routing step and test route
+    :type dist_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+    :param shipparams_per_step: ship parameters (fuel rate, power consumption ...) per routing step and test route
+    :type shipparams_per_step: ShipParams
+    :param starttime_per_step: start time for every routing step
+    :type starttime_per_step: (M,N) np.ndarray (datetime object) N=courses+1, M=steps (M decreasing)
+    :param absolutefuel_per_step: absolute fuel consumed for every route at certain routing step
+    :type absolutefuel_per_step: (M,N) np.ndarray N=courses+1, M=steps (M decreasing)
+
+    :param full_dist_traveled: full distance traveled for every test route
+    :type full_dist_traveled: (N) np.ndarray N=courses+1
+    :param full_time_traveled: full travel time for every test route
+    :type full_time_traveled: (N) np.ndarray N=courses+1
+    :param time: current datetime for every test route
+    :type time: (N) np.ndarray N=courses+1
+
+    :param course_segments: number of course segments in the range of -180° to 180°
+    :type course_segments: int
+    :param course_increments_deg: increment between different courses
+    :type course_increments_deg: int
+    :param prune_sector_deg_half: angular range of course that is considered for pruning (only one half, 0-180°)
+    :type prune_sector_deg_half: int
+    :param prune_segments: number of course bins that are used for pruning
+    :type prune segments: int
+    :param prune_symmetry_axis: method to define pruning symmetry axis
+    :type prune_symmetry_axis: str
+    :param prune_groups: method to define grouping of route segments before the pruning
+    :type prune_groups: str
+    :param minimisation_criterion: minimisation criterion
+    :type minimisation_criterion: str
+
+    :param desired_number_of_routes: number of routes requested for multiple-routes approach
+    :type desired_number_of_routes: int
+    :param current_number_of_routes: current number of routes in case of multiple-routes approach
+    :type current_number_of_routes: int
+    :param current_step_routes:
+    :type current_step_routes: pd.DataFrame
+    :param next_step_routes:
+    :type next_step_routes: pd.DataFrame
+    :param route_list: list of routes in case of multiple-routes approach
+    :type route_list: list[RouteParams]
+
+    :param status: container for status and error information
+    :type status: IsoBasedStatus
+    :param routing_step: container for variables for single routing step
+    :type routing_step: RoutingStep
     """
+
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
-    route_reached_destination: bool  # True everytime one route (or more) reaches the destination in a routing step
-    route_reached_waypoint: bool
+    start_temp: tuple  # temporary starting point considering intermediate waypoints
+    finish_temp: tuple  # temporary arrival point considering intermediate waypoints
+    gcr_course_temp: tuple  # course of grand circle route towards temporary arrival point
 
-    start_temp: tuple  # changes if intermediate waypoints are used
-    finish_temp: tuple  # changes if intermediate waypoints are used
-    gcr_course_temp: tuple
+    # (M,N) arrays to store routing history per routing step: N=courses+1, M=steps (M decreasing)
+    lats_per_step: np.ndarray  # latitudes
+    lons_per_step: np.ndarray  # longitudes
+    course_per_step: np.ndarray  # courses (0 - 360°)
+    dist_per_step: np.ndarray  # geodesic distance
+    starttime_per_step: np.ndarray  # start time: datetime object
+    absolutefuel_per_step: np.ndarray  # absolute fuel
 
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    course_per_step: np.ndarray  # course (0 - 360°)
-    dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
-    shipparams_per_step: ShipParams  # object storing ship parameters (fuel rate, power consumption ...)
-    starttime_per_step: np.ndarray  # start time for every routing step (datetime object)
-    absolutefuel_per_step: np.ndarray   # (kg)
+    shipparams_per_step: ShipParams  # ship parameters (fuel rate, power consumption ...)
 
-    current_course: np.ndarray  # current course (0-360°)
-
-    # the lenght of the following arrays depends on the number of courses (course segments)
-    full_dist_traveled: np.ndarray  # full geodesic distance since start for all courses
-    full_time_traveled: np.ndarray  # time elapsed since start for all courses
-    time: np.ndarray  # current datetime for all courses
+    # (N) arrays to store routing history for full routes: N=courses
+    full_dist_traveled: np.ndarray  # full geodesic distance since start
+    full_time_traveled: np.ndarray  # time elapsed since start
+    time: np.ndarray  # current datetime
 
     course_segments: int  # number of course segments in the range of -180° to 180°
     course_increments_deg: int  # increment between different variants
     prune_sector_deg_half: int  # angular range of course that is considered for pruning (only one half, 0-180°)
     prune_segments: int  # number of course bins that are used for pruning
     prune_symmetry_axis: str  # method to define pruning symmetry axis
-    prune_groups: str   # method to define grouping of route segments before the pruning
+    prune_groups: str  # method to define grouping of route segments before the pruning
     minimisation_criterion: str  # minimisation criterion
 
-    desired_number_of_routes: int
-    current_number_of_routes: int
+    desired_number_of_routes: int  # number of routes requested for multiple-routes approach
+    current_number_of_routes: int  # current number of routes in case of multiple-routes approach
     current_step_routes: pd.DataFrame
     next_step_routes: pd.DataFrame
-    route_list: list
-    pruning_error: bool
+    route_list: list  # list of routes in case of multiple-routes approach
+
+    status: IsoBasedStatus  # container for status and error information
+    routing_step: RoutingStep  # container for variables for single routing step
 
     def __init__(self, config):
         super().__init__(config)
@@ -91,10 +457,6 @@ class IsoBased(RoutingAlg):
         self.time = np.array([self.departure_time])
         self.full_time_traveled = np.array([0]) * u.s
         self.full_dist_traveled = np.array([0]) * u.m
-
-        self.route_reached_destination = False
-        self.route_reached_waypoint = False
-        self.pruning_error = False
 
         self.finish_temp = self.finish
         self.start_temp = self.start
@@ -116,6 +478,9 @@ class IsoBased(RoutingAlg):
 
         self.path_to_route_folder = config.ROUTE_PATH
 
+        self.status = IsoBasedStatus()
+        self.routing_step = RoutingStep()
+
     def print_init(self):
         RoutingAlg.print_init(self)
         logger.info(form.get_log_step('pruning settings', 1))
@@ -129,9 +494,9 @@ class IsoBased(RoutingAlg):
 
     def print_current_status(self):
         logger.info('PRINTING ALG SETTINGS')
-        logger.info('step = ', self.count)
-        logger.info('start', self.start)
-        logger.info('finish', self.finish)
+        logger.info('step = ' + str(self.count))
+        logger.info('start' + str(self.start))
+        logger.info('finish' + str(self.finish))
         logger.info('per-step variables:')
         logger.info(form.get_log_step('lats_per_step = ' + str(self.lats_per_step)))
         logger.info(form.get_log_step('lons_per_step = ' + str(self.lons_per_step)))
@@ -165,17 +530,21 @@ class IsoBased(RoutingAlg):
 
     def current_position(self):
         logger.info('CURRENT POSITION')
-        logger.info('lats = ', self.current_lats)
-        logger.info('lons = ', self.current_lons)
-        logger.info('course = ', self.current_course)
+        logger.info('lats = ', self.routing_step.get_start_point('lat'))
+        logger.info('lons = ', self.routing_step.get_start_point('lon'))
+        logger.info('course = ', self.routing_step.get_start_point('courses'))
         logger.info('full_time_traveled = ', self.full_time_traveled)
 
     def define_courses(self):
-        """TODO: add description
-        _summary_
+        """
+        Initialise variables that store the routing history for the next routing step.
+
+        All variables that store the routing history are extended to match the dimension M = N_routes x course_segments.
+        Variables for single coordinate pairs are repeated for different course segments. The routing_step object is
+        initialised for the current routing step.
         """
 
-        # branch out for multiple headings
+        # branch out for multiple courses
         nof_input_routes = self.lats_per_step.shape[1]
 
         new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
@@ -197,32 +566,55 @@ class IsoBased(RoutingAlg):
         self.time = np.repeat(self.time, self.course_segments + 1, axis=0)
         self.check_course_def()
 
-        # determine new headings - centered around gcrs X0 -> X_prev_step
+        # determine new courses - centered around gcrs X0 -> X_prev_step
         delta_hdgs = np.linspace(-self.course_segments / 2 * self.course_increments_deg,
                                  +self.course_segments / 2 * self.course_increments_deg, self.course_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
 
-        self.current_course = new_course['azi1'] * u.degree  # center courses around gcr
-        self.current_course = np.repeat(self.current_course, self.course_segments + 1)
-        self.current_course = self.current_course - delta_hdgs
-        self.current_course = units.cut_angles(self.current_course)
+        current_course = new_course['azi1'] * u.degree  # center courses around gcr
+        current_course = np.repeat(current_course, self.course_segments + 1)
+        current_course = current_course - delta_hdgs
+        current_course = units.cut_angles(current_course)
+
+        self.routing_step.init_step(
+            lats_start=self.lats_per_step[0],
+            lons_start=self.lons_per_step[0],
+            courses=current_course,
+            time=self.starttime_per_step[0]
+        )
 
     def define_initial_variants(self):
         pass
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         """
-        Progress one isochrone with pruning/optimising route for specific time segment
+        Core function for the initialisation of important evaluations of IsoBased algorithms.
 
-        :param boat: Boat profile
-        :type boat: Boat
+        The function iterates over individual routing steps and initiates the main routing evaluations which are:
+        - define a set of route segments that is to be tested (function: define_courses_per_step)
+        - estimate the fuel consumption rate at the start of the route segments based on weather conditions and\
+            ship type (function: estimate_fuel_consumption, calls Ship module)
+        - move the ship considering that a fixed amount of fuel/time/etc can be consumed (function: move_boat)
+        - evaluate possible constraints (function: check_constraints, calls Constraints module)
+        - select routes that maximise/minimise the evaluation criterion (function: pruning)
+        The class also considers positive constraints like waypoints that need to be passed
+        (function: check_for_positive_constraints).
+
+        In case of successful algorithm execution, the function returns a RouteParams object. It performs
+        evaluations considering the individual routing states. It catches errors, returns an error code as well as the
+        best route at the state of the routing algorithm, at which the error occurred. In case the algorithm is
+        configured to find multiple routes (ISOCHRONE_NUMBER_OF_ROUTES>1), this function returns the best route while
+        all routes that have been found are written to separate json files.
+
+        :param boat: Ship object
+        :type boat: Ship
         :param wt: Weather data
         :type wt: WeatherCond
-        :param constraints_list: List of constraints on the routing
+        :param constraints_list: List of constraints
         :type constraints_list: ConstraintsList
         :param verbose: sets verbosity, defaults to False
         :type verbose: bool, optional
-        :return: Calculated route
+        :return: calculated route
         :rtype: RouteParams
         """
 
@@ -238,168 +630,227 @@ class IsoBased(RoutingAlg):
             logger.info('Step ' + str(self.count))
 
             self.define_courses_per_step()
-            self.move_boat_direct(wt, boat, constraints_list)
+            bs, ship_params = self.estimate_fuel_consumption(boat)
+            self.move_boat(bs, ship_params)
+            self.check_constraints(constraints_list)
+            self.update(ship_params)
 
             # Distinguish situations where the ship reached the final destination and where it reached a waypoint
-            if self.route_reached_destination:
-                logger.info('Initiating last step at routing step ' + str(self.count))
-
-                if self.desired_number_of_routes > 1 and self.current_number_of_routes < self.desired_number_of_routes:
-                    self.find_every_route_reaching_destination()
-                    number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
-
-                    if self.desired_number_of_routes <= number_of_possible_routes:
-                        remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
-                        self.find_routes_reaching_destination_in_current_step(remaining_routes)
-                        break
-                    else:
-                        self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
-                        if self.next_step_routes.shape[0] == 0:
-                            logger.warning('No routes left for execution, terminating!')
-                            break
-
-                        self.set_next_step_routes()
-                        self.pruning_per_step(True)
-                        if self.pruning_error:
-                            break
-                        self.route_reached_destination = False
-                        self.update_fig('p')
-                        self.count += 1
-                        continue
-                else:
+            if self.status.state == "some_reached_destination":
+                self.collect_routes()
+                if not self.status.needs_further_routing:
                     break
 
-            elif self.route_reached_waypoint:
-                logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
-                self.final_pruning()
-                self.expand_axis_for_intermediate()
-                constraints_list.reached_positive()
-                self.finish_temp = constraints_list.get_current_destination()
-                self.start_temp = constraints_list.get_current_start()
-                self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
-                self.route_reached_waypoint = False
-
-                logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
-                    self.finish_temp))
-                self.update_fig('p')
-                self.count += 1
+            elif self.status.state == "reached_waypoint":
+                self.depart_from_waypoint(constraints_list)
                 continue
 
             self.pruning_per_step(True)
-
-            if self.pruning_error:
+            if self.status.error == "pruning_error":
                 break
-            else:
-                self.update_fig('p')
-                self.count += 1
+            self.update_fig('p')
+            self.count += 1
 
-        # if routing steps runs out without reaching destination,
-        # then the last step count isn't executed
-        if not self.route_reached_destination:
-            self.count -= 1
+        route = self.terminate()
+        return route, self.status.get_error_code()
 
-        if self.pruning_error and self.count > 0:
-            self.count = self.count - 1
-            self.revert_to_previous_step()
-
-        # ToDo: harmonize with above/merge with loop over routing steps
-        if self.desired_number_of_routes == 1:
-            self.final_pruning()
-            route = self.terminate()
-            return route
-        else:
-            if not self.route_list:
-                if self.pruning_error:
-                    self.routes_from_previous_step()
-                self.final_pruning()
-                route = self.terminate()
-                return route
-            else:
-                self.route_list.sort(key=lambda x: x.get_full_fuel())
-                return self.route_list[0]
-
-    def move_boat_direct(self, wt: WeatherCond, boat: Boat, constraint_list: ConstraintsList):
+    def move_boat(self, bs, ship_params):
         """
-        Calculate new boat position for current time step based on wind and boat function
+        Move boat to new position based on estimated fuel consumption (or similar).
 
-        :param boat: Boat profile
+        The travel time, fuel consumption and travel distance are estimated and stored in routing_step. Based on
+        these variables, the new ship position is determined without considering constraints. If the ship can reach
+        its (temporary) destination for one test route, all variables of this route are propagated to the destination.
+
+        :param bs: boat speed
+        :type bs: float
+        :param ship_params: ship parameters (fuel consumption, ...)
+        :type ship_params: ShipParams
+        """
+
+        debug = False
+        self.routing_step.courses = units.cut_angles(self.routing_step.get_courses())
+        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
+        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
+        # ToDo: remove debug variable and use logger settings instead
+        if debug:
+            logger.info('delta_time: ' + str(delta_time))
+            logger.info('delta_fuel: ' + str(delta_fuel))
+            logger.info('dist: ' + str(dist))
+            logger.info('state:' + str(self.status.state))
+        self.check_bearing()
+        self.check_land_ahoy(ship_params, bs)
+
+    def estimate_fuel_consumption(self, boat: Boat):
+        """
+        Initiate the estimation of the fuel consumption by the Ship module.
+
+        :param boat: boat object for fuel estimation
         :type boat: Boat
-        :param wt: Weather data
-        :type wt: WeatherCond
-        :param constraints_list: List of constraints on the routing
+        :return: boat speed, calculated ship parameters
+        :rtype: float, ShipParams
+        """
+        bs = boat.get_boat_speed()
+        bs = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
+
+        # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
+        ship_params = boat.get_ship_parameters(
+            courses=self.routing_step.get_courses(),
+            lats=self.routing_step.get_start_point('lat'),
+            lons=self.routing_step.get_start_point('lon'),
+            time=self.routing_step.get_time(),
+            speed=None,
+            unique_coords=True
+        )
+        return bs, ship_params
+
+    def check_constraints(self, constraint_list):
+        """
+        Evaluate whether the new route segments violate constraints.
+
+        The characteristics of the new route segments are sent to the Constraints module for evaluation. The variable
+        routing_step is updated accordingly.
+
+        :param constraint_list: list of constraints
+        :type constraint_list: ConstraintsList
+        """
+
+        debug = False
+
+        is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
+        if (debug):
+            form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
+
+        is_constrained = constraint_list.safe_crossing(self.routing_step.get_start_point('lat'),
+                                                       self.routing_step.get_start_point('lon'),
+                                                       self.routing_step.get_end_point('lat'),
+                                                       self.routing_step.get_end_point('lon'), self.time,
+                                                       is_constrained)
+        if (debug):
+            form.print_step('is_constrained after checking' + str(is_constrained), 1)
+        self.routing_step.update_constraints(is_constrained)
+
+    def update(self, ship_params):
+        """
+        Update all variables that store the routing history for the new position considering the constraints.
+
+        :param ship_params: ship parameters
+        :type ship_params: ShipParams
+        """
+
+        self.update_position()
+        self.update_time()
+        self.update_fuel(ship_params.get_fuel_rate())
+        self.update_shipparams(ship_params)
+
+    def depart_from_waypoint(self, constraints_list):
+        """
+        Initialise variables that store the routing history when departing from an intermediate waypoint.
+
+        :param constraints_list: list of constraints
         :type constraints_list: ConstraintsList
         """
 
-        # get wind speed (tws) and angle (twa)
-        debug = False
+        logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
+        self.final_pruning()
+        self.expand_axis_for_intermediate()
+        constraints_list.reached_positive()
+        self.finish_temp = constraints_list.get_current_destination()
+        self.start_temp = constraints_list.get_current_start()
+        self.gcr_course_temp = self.calculate_gcr(self.start_temp, self.finish_temp) * u.degree
+        self.status.update_state("routing")
 
-        # get boat speed
-        bs = boat.get_boat_speed()
-        bs = np.repeat(bs, (self.get_current_course().shape[0]), axis=0)
+        logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(
+            self.finish_temp))
+        self.update_fig('p')
+        self.count += 1
 
-        # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
-        ship_params = boat.get_ship_parameters(self.get_current_course(), self.get_current_lats(),
-                                               self.get_current_lons(), self.time, None, True)
-        units.cut_angles(self.current_course)
+    def collect_routes(self):
+        """
+        Collect all routes if any has been propagated to destination.
 
-        # ship_params.print()
+        In case of standard algorithm execution (desired_number_of_routes = 1), the status is updated accordingly.
 
-        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
-        # ToDo: remove debug variable and use logger settings instead
-        if debug:
-            logger.info('delta_time: ', delta_time)
-            logger.info('delta_fuel: ', delta_fuel)
-            logger.info('dist: ', dist)
-            logger.info('route_reached_destination:', self.route_reached_destination)
+        In case the algorithm has been configured to find multiple routes (desired_number_of_routes > 1):
+        - it is checked whether the requested number of routes has been found
+        - all route found in the current routing step are written to file
+        - the status is updated accordingly
+        - the algorithm is configured to find further routes if necessary
+        """
+        logger.info('Initiating last step at routing step ' + str(self.count))
 
-        move = self.check_bearing(dist)
+        if self.desired_number_of_routes == 1:
+            self.status.needs_further_routing = False
+            self.status.update_state("all_reached_destination")
+        else:
+            # TODO: delete this if unnessessary
+            if self.current_number_of_routes >= self.desired_number_of_routes:
+                raise ValueError("Something very strange happening here! Take a look.")
+            self.find_every_route_reaching_destination()
+            number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
 
-        if debug:
-            logger.info('move:', move)
+            # if the number of routes aimed at is larger than the number of routes reaching the distination
+            # in this step, collect all routes, otherwise collect only as many as required
+            if self.desired_number_of_routes <= number_of_possible_routes:
+                remaining_routes = self.desired_number_of_routes - self.current_number_of_routes
+                self.find_routes_reaching_destination_in_current_step(remaining_routes)
+                self.status.update_state("all_reached_destination")
+                self.status.needs_further_routing = False
+            else:
+                self.find_routes_reaching_destination_in_current_step(number_of_possible_routes)
+                if self.next_step_routes.shape[0] == 0:
+                    logger.warning('No routes left for execution, terminating!')
+                    self.status.set_error_str('out_of_routes')
+                    self.status.needs_further_routing = False
 
-        if self.route_reached_destination or self.route_reached_waypoint:
+                # organise routes for next step
+                self.set_next_step_routes()
+                self.status.update_state('routing')
+
+    def check_land_ahoy(self, ship_params, bs):
+        """
+        Check whether any of the test routes can reach the destination.
+
+        For every test route, the travel distance of the current routing step is compared to the distance to the
+        (temporary) destination. If the latter distance is smaller, this very route is propagated to the destination.
+
+        """
+        if (self.status.state == "some_reached_destination") or (self.status.state == "reached_waypoint"):
             delta_time_last_step, delta_fuel_last_step, dist_last_step = \
                 self.get_delta_variables_netCDF_last_step(ship_params, bs)
-            if self.route_reached_destination:
+            if (self.status.state == "some_reached_destination"):
                 for i in range(len(self.bool_arr_reached_final)):
                     if self.bool_arr_reached_final[i]:
-                        delta_time[i] = delta_time_last_step[i]
-                        delta_fuel[i] = delta_fuel_last_step[i]
-                        dist[i] = dist_last_step[i]
+                        self.routing_step.delta_time[i] = delta_time_last_step[i]
+                        self.routing_step.delta_fuel[i] = delta_fuel_last_step[i]
+                        self.routing_step.delta_dist[i] = dist_last_step[i]
             else:
-                delta_time = delta_time_last_step
-                delta_fuel = delta_fuel_last_step
-                dist = dist_last_step
+                self.routing_step.delta_time = delta_time_last_step
+                self.routing_step.delta_fuel = delta_fuel_last_step
+                self.routing_step.delta_dist = dist_last_step
 
-        is_constrained = self.check_constraints(move, constraint_list)
-
-        self.update_position(move, is_constrained, dist)
-        self.update_time(delta_time)
-        self.update_fuel(delta_fuel, ship_params.get_fuel_rate())
-        self.update_shipparams(ship_params)
+    #        self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
 
     def find_every_route_reaching_destination(self):
+        # ToDo: move to IsoFuel algorithm
         """
-        This function finds routes reaching the destination in the current last step of routing.
-        First, it creates a dataframe with origin point of the current route segments.
-        The route segments are grouped according to the origin point.
-        'dist' is the distance that could be travelled with available amount of fuel.
-        'dist_dest' is the distance from origin point to the destination.
-        'st_index' is storing the same index order of other nd arrays such as self.lats_per_step
-        before grouping. So that, later it is referred in find_routes_reaching_destination_in_current_step function.
-        (acts as a key from the dataframe to other arrays such as self.lats_per_step )
+        Collect all test routes that can be propagated to the destination (multiple-routes approach).
 
-        Routes from the current step reaching the destination are stored in 'current_step_routes' dataframe.
-        Only the one route segment per branch originating from the same origin point that minimize the fuel is stored
-        in current_step_routes. Routes which are not reaching the destination in the current step are stored in
-        'next_step_routes' dataframe. In this case, all routes originating from the same origin point are stored in
-        the dataframe.
+        This function collects all routes reaching the destination in the current routing step. It
+        - creates a pd.DataFrame with the latitudes, longitudes, travel distance, distance to destination and fuel
+            consumption of the current routing segments
+        - stores the index order of the original 'per_step' arrays for later reference as axis with name 'st_index'
+        - groups the variables of the DataFrame according to matching starting points of the routing segment
+        - stores *only* the best routes per branch that reach the destination in the 'current_step_routes' dataframe.
+        - stores *all* routes that do not reach the destination in the 'next_step_routes' dataframe for further
+          evaluation
+
         """
 
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
-        df_current_last_step['dist'] = self.current_last_step_dist.value    # pandas struggles with units
+        df_current_last_step['dist'] = self.current_last_step_dist.value  # pandas struggles with units
         df_current_last_step['dist_dest'] = self.current_last_step_dist_to_dest.value
         df_current_last_step['fuel'] = self.absolutefuel_per_step[0, :].value
 
@@ -421,7 +872,7 @@ class IsoBased(RoutingAlg):
 
             df_reaching_destination = specific_route_group[
                 specific_route_group['dist'] >= specific_route_group['dist_dest']
-            ]
+                ]
             num_rows = df_reaching_destination.shape[0]
 
             if num_rows > 0:
@@ -434,12 +885,14 @@ class IsoBased(RoutingAlg):
                 self.next_step_routes = pd.concat([self.next_step_routes, specific_route_group], ignore_index=True)
 
     def find_routes_reaching_destination_in_current_step(self, remaining_routes=0):
+        # ToDo: move to IsoFuel algorithm
         """
-        In this function, different routes obtained from 'find_every_route_reaching_destination'
-        and stored in current_step_routes dataframe are sorted by minimum fuel.
-        The number of routes that are selected is specified by the variable remaining_routes.
+        Rank routes that reach the destination and write them to file (multiple-routes approach).
 
-        :param remaining_routes: Variable for saving routes meeting fuel consumption criteria, defaults to 0
+        The number of routes that are selected is specified by the variable remaining_routes. If the figure path
+        is set, the routes are plotted.
+
+        :param remaining_routes: specifies how many routes shall be selected
         :type remaining_routes: int, optional
         """
 
@@ -458,7 +911,12 @@ class IsoBased(RoutingAlg):
                 self.plot_routes(idxs)
 
     def make_route_object(self, idxs):
+        """
+        Generates RouteParams object from 'per_step' variables based on index of test route (multiple-routes approach).
 
+        :param idxs: index of test route
+        :type idxs: int
+        """
         # ToDo: very similar to IsoFuel.final_pruning -> harmonize
 
         try:
@@ -497,7 +955,7 @@ class IsoBased(RoutingAlg):
 
     def plot_routes(self, idxs):
         """
-        Plot every complete individual route that is reaching the destination
+        Plot every complete individual route that is reaching the destination (multiple-routes approach).
 
         :param idxs: loop index
         :type idxs: int
@@ -528,8 +986,7 @@ class IsoBased(RoutingAlg):
 
     def set_next_step_routes(self):
         """
-        Updating all arrays according to the indices of the routes that need to be further
-        processed in the next routing step
+        Update all arrays of test routes that need to be further processed (multiple-routes approach).
         """
 
         # sorting order matters here????
@@ -545,7 +1002,6 @@ class IsoBased(RoutingAlg):
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_course = self.current_course[idxs]
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
@@ -554,8 +1010,7 @@ class IsoBased(RoutingAlg):
 
     def revert_to_previous_step(self):
         """
-        In this function, when all routes are constrained, the arrays are set
-        back to previous step to provide meaningful error message.
+        Revert arrays to previous routing step if all routes are constrained for current step (multiple-routes approach)
         """
 
         last_idx = len(self.lats_per_step)
@@ -573,7 +1028,6 @@ class IsoBased(RoutingAlg):
                                                            col_start=0, col_end=col,
                                                            idxs=None)
             col_len = len(self.lats_per_step[0])
-            self.current_course = np.full(col_len, -99)
             self.full_dist_traveled = np.full(col_len, -99)
             self.full_time_traveled = np.full(col_len, -99)
             self.time = np.full(col_len, -99)
@@ -583,6 +1037,8 @@ class IsoBased(RoutingAlg):
 
     def routes_from_previous_step(self):
         """
+        Collect routes for previous step if all routes are constrained for current step (multiple-routes approach).
+
         When all routes are constrained, unique routes until the current constrained
         routing step are found here. Then, the unique routes are written into json files
         and plotted.
@@ -613,8 +1069,8 @@ class IsoBased(RoutingAlg):
                 unique_key)
             row_min_fuel = specific_route_group.drop_duplicates(subset=['fuel'])
             current_step_routes = pd.concat(
-                    [current_step_routes, row_min_fuel],
-                    ignore_index=True)
+                [current_step_routes, row_min_fuel],
+                ignore_index=True)
         current_step_routes_sort_by_fuel = current_step_routes.sort_values(by=['fuel'])
         route_df = current_step_routes_sort_by_fuel['st_index']
 
@@ -627,6 +1083,7 @@ class IsoBased(RoutingAlg):
                 self.plot_routes(idx)
 
     def update_shipparams(self, ship_params_single_step):
+        """Update ShipParams object. """
         new_rpm = np.vstack((ship_params_single_step.get_rpm(), self.shipparams_per_step.get_rpm()))
         new_power = np.vstack((ship_params_single_step.get_power(), self.shipparams_per_step.get_power()))
         new_speed = np.vstack((ship_params_single_step.get_speed(), self.shipparams_per_step.get_speed()))
@@ -683,6 +1140,7 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_message(new_message)
 
     def check_course_def(self):
+        """ Perform sanity checks for 'per_step' variables. """
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (
                 self.lats_per_step.shape[1] == self.course_per_step.shape[1]) and (
                          self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
@@ -696,7 +1154,25 @@ class IsoBased(RoutingAlg):
                 'define_courses: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-    def get_pruned_indices_statistics(self, bin_stat, bin_edges, bin_number, trim):
+    def get_pruned_indices_statistics(
+            self,
+            bin_stat: np.ndarray,
+            bin_edges: np.ndarray,
+            trim: bool
+    ) -> list[int]:
+        """
+        Collect routes whose travel distance matches the maximum bin entries in the pruning histogram.
+
+        :param bin_stat: bin content of the pruning histogram which is the maximum travel distance per bin
+        :type bin_stat: np.ndarray
+        :param bin_edges: bin edges of the pruning histogram
+        :type bin_edges: np.ndarray
+        :param trim: omit bins with zero bin content for the pruning
+        :type trim: bool
+        :return: list of indices of best routes
+        :rtype: list[int]
+        """
+
         idxs = []
 
         if trim:
@@ -715,16 +1191,20 @@ class IsoBased(RoutingAlg):
 
         return idxs
 
-    def pruning(self, trim, bins):
-        """TODO: add description
-        _summary_
+    def pruning(self, trim: bool, bins: np.ndarray) -> None:
+        """
+        Perform pruning.
 
-        :param trim: _description_
-        :type trim: _type_
-        :param bins: _description_
-        :type bins: _type_
-        :raises ValueError: _description_
-        :raises Exception: _description_
+        Call the methods for larger-direction based, courses-based and branch-based pruning which determine the
+        indices of the routes which perform best after this routing step. Slice the arrays that store the history of
+        the routing procedure such that only the best routes survive.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
+        :type trim: bool, optional
+        :param bins: bin edges for the pruning
+        :type bins: np.ndarray
+        :raises ValueError: if no routes are available for the pruning
+        :raises IndexError: if any array can not be sliced according to the indices that have been found
         """
 
         debug = False
@@ -733,19 +1213,20 @@ class IsoBased(RoutingAlg):
         # ToDo: use logger.debug and args.debug
         if debug:
             print('binning for pruning', bins)
-            print('current courses', self.current_course)
+            print('current courses', self.routing_step.get_courses())
             print('full_dist_traveled', self.full_dist_traveled)
+            print('courses per step ', self.course_per_step)
 
         is_pruned = False
         if self.prune_groups == 'larger_direction':
             logger.info('Executing larger-direction-based pruning.')
             bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
-            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
         if self.prune_groups == 'courses':
             logger.info('Executing courses-based pruning.')
             bin_stat, bin_edges, bin_number = self.courses_based_pruning(bins)
-            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
         if self.prune_groups == 'branch':
             logger.info('Executing branch-based pruning.')
@@ -763,7 +1244,7 @@ class IsoBased(RoutingAlg):
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
             logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
-            self.pruning_error = True
+            self.status.set_error_str('pruning_error')
             return
         elif (valid_pruning_segments < self.prune_segments * 0.1):
             logger.warning(' More than 90% of pruning segments constrained for step ' + str(self.count) + '!')
@@ -777,39 +1258,54 @@ class IsoBased(RoutingAlg):
             self.course_per_step = self.course_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.absolutefuel_per_step = self.absolutefuel_per_step[:, idxs]
-            self.shipparams_per_step.select(idxs)
-
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
-            self.current_course = self.current_course[idxs]
+            self.shipparams_per_step.select(idxs)
+
             self.full_dist_traveled = self.full_dist_traveled[idxs]
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
+
+            self.routing_step.lats = self.routing_step.lats[:, idxs]
+            self.routing_step.lons = self.routing_step.lons[:, idxs]
+            self.routing_step.courses = self.routing_step.courses[idxs]
+            self.routing_step.departure_time = self.routing_step.departure_time[idxs]
+
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
-    def courses_based_pruning(self, bins):
-        """TODO: add description
-        _summary_
+    def courses_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Perform courses-based pruning
 
-        :param bins: _description_
-        :type bins: _type_
-        :return: _description_
-        :rtype: _type_
+        A histogram is filled with the maximum travel distance (argument: statistic = np.nanmax) in dependence of bins
+        of all courses of the route segments in the current routing step. The bin content, bin edges and the bin numbers
+        are returned.
+
+        :param bins: bin edges of the histogram
+        :type bins: np.ndarray
+        :return: bin content, bin edges and bin numbers
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
 
-        bin_stat, bin_edges, bin_number = binned_statistic(self.current_course, self.full_dist_traveled,
+        bin_stat, bin_edges, bin_number = binned_statistic(self.routing_step.get_courses().value,
+                                                           self.full_dist_traveled,
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
-    def larger_direction_based_pruning(self, bins):
-        """TODO: add description
-        _summary_
+    def larger_direction_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Perform larger-direction-based pruning.
 
-        :param bins: _description_
-        :type bins: _type_
-        :return: _description_
-        :rtype: _type_
+        Define an angle referred to as 'larger direction' which is the azimuthal angle from the starting point of the
+        test routes towards the current position. A histogram is filled with the maximum travel distance
+        (argument: statistic = np.nanmax) in dependence of bins of the larger direction. The bin content, bin edges and
+        the bin numbers are returned.
+
+        :param bins: bin edges of the histogram
+        :type bins: np.ndarray
+        :return: bin content, bin edges and bin numbers
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
@@ -820,12 +1316,16 @@ class IsoBased(RoutingAlg):
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
-    def branch_based_pruning(self):
-        """TODO: add description
-        _summary_
+    def branch_based_pruning(self) -> np.ndarray:
+        """
+        Perform branch-based pruning.
 
-        :return: _description_
-        :rtype: _type_
+        Group routes according to the starting points of the last routing segment, i.e. routes that originate from the
+        origin in the last step form a group called "branch". The indices of the routes with maximum travel distance
+        for every branch are collected in an array which is returned.
+
+        :return: indices of routes with maximum distance per branch
+        :rtype: np.ndarray
         """
 
         df_current_last_step = pd.DataFrame()
@@ -858,34 +1358,35 @@ class IsoBased(RoutingAlg):
             idxs.append(max_dist_indxs[0])
         return idxs
 
-    def pruning_per_step(self, trim=True):
+    def pruning_per_step(self, trim: bool = True) -> None:
+        """
+        Initiate pruning. Decide between pruning methods with different symmetry axis.
+        """
         if self.prune_symmetry_axis == 'gcr':
             self.pruning_gcr_centered(trim)
         else:
             self.pruning_headings_centered(trim)
 
-    def pruning_gcr_centered(self, trim=True):
+    def pruning_gcr_centered(self, trim: bool = True) -> None:
         """
-        For every pruning segment, select the route that maximises the distance towards the starting point (or last
-        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is defined
-        based on the gcr
-        of the current 'mean' position towards the (temporary) destination.
+        Initiate pruning with the grand circle route as the symmetry axis.
 
-        :param trim: TODO: add _description_, defaults to True
+        First, the symmetry axis for the binning of the pruning is determined. To do so, it is assumed that the ship
+        travels from the starting point (or last intermediate waypoint) of the routes in the direction of the azimuthal
+        angle gcr_course_temp for the mean full travel distance of all routes. The azimuthal angle of the waypoint that
+        is found in this way towards the destination (or next intermediate waypoint) is defined as the symmetry axis of
+        the pruning i.e. the bins are centered around it. These bins are fed into the function 'pruning' for further
+        evaluation.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
         :type trim: bool, optional
         """
 
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
-            print('Pruning... Pruning symmetry axis defined by gcr')
+            logger.info('Pruning... Pruning symmetry axis defined by gcr')
 
-        # Calculate the auxiliary coordinate for the definition of pruning symmetry axis. The route is propagated
-        # towards the coordinate
-        # which is reached if one travels from the starting point (or last intermediate waypoint) in the direction
-        # of the course defined by the distance between the start point and the destination for the mean distance
-        # travelled
-        # during the current routing step.
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         full_travel_dist = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
@@ -935,20 +1436,22 @@ class IsoBased(RoutingAlg):
 
         self.pruning(trim, bins)
 
-    def pruning_headings_centered(self, trim=True):
+    def pruning_headings_centered(self, trim: bool = True) -> None:
         """
-        For every pruning segment, select the route that maximises the distance towards the starting point (or last
-        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
-        the median of all considered courses.
+        Initiate pruning with a symmetry axis that is determined from the spread of courses.
 
-        :param trim: _description_, defaults to True
+        First, the symmetry axis for the binning of the pruning is determined as the median of the courses of
+        all route segments from the current routing step. Bins are centered around this symmetry axis and the resulting
+        binning is fed into the function 'pruning' for further evaluation.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
         :type trim: bool, optional
         """
 
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
-            print('Pruning... Pruning symmetry axis defined by median of considered headings.')
+            print('Pruning... Pruning symmetry axis defined by median of considered courses.')
 
         # propagate current end points towards temporary destination
         non_zero_idxs = np.where(self.full_dist_traveled != 0)[0]
@@ -1010,9 +1513,6 @@ class IsoBased(RoutingAlg):
         self.course_segments = seg
         self.course_increments_deg = inc * u.degree
 
-    def get_current_course(self):
-        return self.current_course
-
     def get_current_lats(self):
         return self.lats_per_step[0, :]
 
@@ -1055,9 +1555,34 @@ class IsoBased(RoutingAlg):
         :return: Calculated route as a RouteParams object ready to be returned to the user
         :rtype: RouteParams
         """
+        self.status.print()
+
+        if self.status.state == "routing":
+            self.status.set_error_str("destination_not_reached")
+            self.count -= 1
+
+        if self.status.error == "pruning_error":
+            if self.count > 0:
+                self.count = self.count - 1
+                self.revert_to_previous_step()
+
+        if self.desired_number_of_routes == 1:
+            # if a single route is requested, return a single route.
+            self.final_pruning()
+        elif self.route_list:
+            # if multiple routes are requested and the list of routes is filled, return list of routes.
+            self.route_list.sort(key=lambda x: x.get_full_fuel())
+            return self.route_list[0]
+        else:
+            # if multiple routes are requested and the list of routes is emtpy, return route that minimised fuel
+            # of current or previous step.
+            if self.status.error == "pruning_error":
+                self.routes_from_previous_step()
+            self.final_pruning()
+
+        self.check_status(self.shipparams_per_step.get_status(), 'minimum')
 
         super().terminate()
-        self.check_status(self.shipparams_per_step.get_status(), 'minimum')
 
         self.lats_per_step = np.flip(self.lats_per_step, 0)
         self.lons_per_step = np.flip(self.lons_per_step, 0)
@@ -1083,33 +1608,32 @@ class IsoBased(RoutingAlg):
         success_array = []
         success_array = np.where(shipparams_per_step_status == 1)  # Status 1=OK
         if success_array == 0:
-            logger.info('0% of status values of the route segments are successful for Route '+route_name+'!')
+            logger.info('0% of status values of the route segments are successful for Route ' + route_name + '!')
             return
-        success_percentage = (len(success_array[0])/(len(shipparams_per_step_status)-1))*100
+        success_percentage = (len(success_array[0]) / (len(shipparams_per_step_status) - 1)) * 100
         logger.info("{:.2f}".format(success_percentage) + '% of status values '
                                                           'of the route segments are successful for Route '
-                                                          + route_name+'!')
+                    + route_name + '!')
 
-    def update_time(self, delta_time):
-        self.full_time_traveled += delta_time
-        self.time += timedelta(seconds=delta_time)
+    def update_time(self):
+        self.full_time_traveled += self.routing_step.delta_time
+        self.time += timedelta(seconds=self.routing_step.delta_time)
 
-    def check_bearing(self, dist):
-        """TODO: add description
-        _summary_
-
-        :param dist: _description_
-        :type dist: float
+    def check_bearing(self):
+        """
+        TODO: add description
+        :return:
         """
 
         debug = False
 
+        dist = self.routing_step.delta_dist
         ncourses = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
         dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
-    # ToDo: use logger.debug and args.debug
+        # ToDo: use logger.debug and args.debug
         if debug:
             print('dist_to_dest:', dist_to_dest['s12'])
             # print('dist traveled:', dist)
@@ -1117,7 +1641,7 @@ class IsoBased(RoutingAlg):
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(),
-                           self.current_course.value, dist.value)
+                           self.routing_step.get_courses().value, dist.value)
 
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
@@ -1129,7 +1653,7 @@ class IsoBased(RoutingAlg):
             new_lon = np.full(ncourses, self.finish_temp[1])
 
             if reached_final:
-                self.route_reached_destination = True
+                self.status.update_state('some_reached_destination')
                 self.current_last_step_dist = dist.copy()
                 self.current_last_step_dist_to_dest = dist_to_dest['s12']
 
@@ -1141,57 +1665,46 @@ class IsoBased(RoutingAlg):
                         move['lat2'][i] = new_lat[i]
                         move['lon2'][i] = new_lon[i]
             else:
-                self.route_reached_waypoint = True
+                self.status.update_state('reached_waypoint')
                 move['azi2'] = dist_to_dest['azi1'].value
                 move['lat2'] = new_lat
                 move['lon2'] = new_lon
 
-        return move
+        self.routing_step.update_end_step(lats=move['lat2'], lons=move['lon2'])
 
-    def check_constraints(self, move, constraint_list):
-        debug = False
-
-        is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
-        if (debug):
-            form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
-        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], self.lons_per_step[0], move['lat2'],
-                                                       move['lon2'], self.time, is_constrained)
-        if (debug):
-            form.print_step('is_constrained after checking' + str(is_constrained), 1)
-        return is_constrained
-
-    def update_position(self, move, is_constrained, dist):
+    def update_position(self):
         """
         Update the current position of the ship
-        TODO: add parameter description
-        :param move: _description_
-        :type move: {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}
-        :param is_constrained: _description_
-        :type is_constrained: np.ndarray[bool]
-        :param dist: _description_
-        :type dist: float
         """
 
         debug = False
-        self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
-        self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
+        end_step_lon = self.routing_step.get_end_point('lon')
+        end_step_lat = self.routing_step.get_end_point('lat')
+        dist = self.routing_step.delta_dist
+        is_constrained = self.routing_step.is_constrained
+
+        self.lats_per_step = np.vstack((end_step_lat, self.lats_per_step))
+        self.lons_per_step = np.vstack((end_step_lon, self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
-        self.course_per_step = np.vstack((self.current_course, self.course_per_step))
+        self.course_per_step = np.vstack((self.routing_step.get_courses(), self.course_per_step))
+        self.routing_step.update_end_step(
+            lats=end_step_lat,
+            lons=end_step_lon
+        )
 
         # ToDo: use logger.debug and args.debug
         if debug:
-            print('path of this step' +  # str(move['lat1']) +
-                  # str(move['lon1']) +
-                  str(move['lat2']) + str(move['lon2']))
+            print('path of this step' +
+                  str(end_step_lat) + str(end_step_lon))
             print('dist_per_step', self.dist_per_step)
             print('dist', dist)
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
-        travel_dist = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])  # calculate full distance
+        travel_dist = geod.inverse(start_lats, start_lons, end_step_lat, end_step_lon)  # calculate full distance
         end_lats = np.repeat(self.finish_temp[0], self.lats_per_step.shape[1])
         end_lons = np.repeat(self.finish_temp[1], self.lons_per_step.shape[1])
-        dist_to_dest = geod.inverse(move['lat2'], move['lon2'], end_lats, end_lons)  # calculate full distance
+        dist_to_dest = geod.inverse(end_step_lat, end_step_lon, end_lats, end_lons)  # calculate full distance
 
         # traveled, azimuth of gcr connecting start and new position
         # self.current_variant = gcrs['azi1']
@@ -1213,9 +1726,9 @@ class IsoBased(RoutingAlg):
         if debug:
             print('full_dist_traveled:', self.full_dist_traveled)
 
-    def update_fuel(self, delta_fuel, fuel_rate):
+    def update_fuel(self, fuel_rate):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
-        self.absolutefuel_per_step = np.vstack((delta_fuel, self.absolutefuel_per_step))
+        self.absolutefuel_per_step = np.vstack((self.routing_step.delta_fuel, self.absolutefuel_per_step))
 
     def get_delta_variables(self, boat, wind, bs):
         pass
@@ -1267,7 +1780,7 @@ class IsoBased(RoutingAlg):
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-        if self.pruning_error:
+        if self.status.error == "pruning_error":
             final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
             final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'

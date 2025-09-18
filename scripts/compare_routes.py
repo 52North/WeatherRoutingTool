@@ -4,12 +4,7 @@
 
 import argparse
 import datetime as dt
-import logging
-import os
 
-import matplotlib.pyplot as plt
-
-import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
