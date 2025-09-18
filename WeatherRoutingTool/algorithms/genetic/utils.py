@@ -11,9 +11,9 @@ import math
 
 @functools.cache
 def great_circle_route(
-    src: tuple[float, float],
-    dst: tuple[float, float],
-    distance=100_000.0
+        src: tuple[float, float],
+        dst: tuple[float, float],
+        distance=100_000.0
 ) -> list[tuple[float, float]]:
     """Generate equi-distant waypoints across the Great Circle Route from src to
     dst
@@ -32,7 +32,7 @@ def great_circle_route(
     line = geod.InverseLine(*src, *dst)
     n = int(math.ceil(line.s13 / distance))
     route = []
-    for i in range(n+1):
+    for i in range(n + 1):
         s = min(distance * i, line.s13)
         g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
         route.append((g['lat2'], g['lon2']))
@@ -56,8 +56,8 @@ def great_circle_distance(src, dst) -> float:
 
 
 def geojson_from_route(
-    route: list[tuple[float, float]],
-    save_to: Optional[str] = None
+        route: list[tuple[float, float]],
+        save_to: Optional[str] = None
 ) -> dict:
     """Generate geojson from list of waypoints
 
@@ -90,6 +90,33 @@ def geojson_from_route(
         with open(save_to, 'w') as fp:
             json.dump(geojson, fp)
     return geojson
+
+
+def get_constraints(route, constraint_list):
+    # ToDo: what about time?
+    constraints = np.sum(get_constraints_array(route, constraint_list))
+    return constraints
+
+
+def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
+    """
+    Return constraint violation per waypoint in route
+
+    :param route: Candidate array of waypoints
+    :type route: np.ndarray
+    :return: Array of constraint violations
+    """
+    constraints = np.array([is_neg_constraints(lat, lon, None, constraint_list) for lat, lon in route])
+    return constraints
+
+
+def is_neg_constraints(lat, lon, time, constraint_list):
+    lat = np.array([lat])
+    lon = np.array([lon])
+    is_constrained = [False for i in range(0, lat.shape[0])]
+    is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
+    # print(is_constrained)
+    return 0 if not is_constrained else 1
 
 
 def route_from_geojson(dt: dict) -> list[tuple[float, float]]:

@@ -19,11 +19,35 @@ logger = logging.getLogger("WRT.genetic.population")
 class Population(Sampling):
     """Base Population Class"""
 
-    def __init__(self, default_route: list):
+    def __init__(self, default_route: list, constraints_list: list, pop_size: int):
         super().__init__()
+
+        self.constraints_list = constraints_list
+        self.n_constrained_routes = 0
+        self.pop_size = pop_size
 
         self.src: tuple[float, float] = tuple(default_route[:-2])
         self.dst: tuple[float, float] = tuple(default_route[-2:])
+
+    def check_validity(self, routes):
+        """
+        Check whether the waypoints of the routes violate constraints. Raise a warning for each single route that
+        violates constraints. Raise an error, if more than 50% of all routes violate constraints.
+
+        :param routes: array of routes for initial population
+        """
+
+        n_route = 1
+        for route in routes:
+            constraints = utils.get_constraints(route[0], self.constraints_list)
+
+            if constraints:
+                logger.warning("Initial Route route_" + str(n_route) + " is constrained.")
+                self.n_constrained_routes += 1
+                n_route += 1
+
+        percentage_constrained = self.n_constrained_routes / self.pop_size
+        assert (percentage_constrained < 0.5), "More than 50% of the initial routes are constrained"
 
 
 class GridBasedPopulation(GridMixin, Population):
@@ -35,8 +59,8 @@ class GridBasedPopulation(GridMixin, Population):
      - call print(GridBasedPopulation.mro()) to see the method resolution order
     """
 
-    def __init__(self, default_route, grid):
-        super().__init__(default_route=default_route, grid=grid)
+    def __init__(self, default_route, grid, constraints_list, pop_size):
+        super().__init__(default_route=default_route, grid=grid, constraints_list=constraints_list, pop_size=pop_size)
 
         # ----------
         self.var_type = np.float64
@@ -64,6 +88,8 @@ class GridBasedPopulation(GridMixin, Population):
             routes[i][0] = np.array([
                 self.src, *route[1:-1], self.dst])
 
+        self.check_validity(routes)
+
         return self.X
 
 
@@ -74,8 +100,8 @@ class FromGeojsonPopulation(Population):
     example: route_1.json, route_2.json, route_3.json, ...
     """
 
-    def __init__(self, default_route, routes_dir: str):
-        super().__init__(default_route=default_route)
+    def __init__(self, default_route, routes_dir: str, constraints_list, pop_size):
+        super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
 
         if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
             raise FileNotFoundError("Routes directory not found")
@@ -91,12 +117,11 @@ class FromGeojsonPopulation(Population):
         self.X = routes = np.full((n_samples, 1), None, dtype=object)
 
         for i in range(n_samples):
-            path = os.path.join(self.routes_dir, f"route_{i+1}.json")
+            path = os.path.join(self.routes_dir, f"route_{i + 1}.json")
 
             if not os.path.exists(path):
-                logger.warning(
-                    f"{path} not found. Using Great Circle route instead.")
-                route = utils.great_circle_route(self.src, self.dst)
+                raise ValueError("The number of available routes for the initial population does not match the "
+                                 "population size.")
             else:
                 route = utils.route_from_geojson_file(path)
 
@@ -104,16 +129,18 @@ class FromGeojsonPopulation(Population):
             assert np.array_equal(route[-1], self.dst), "Route not ending at destination"
 
             routes[i, 0] = np.array(route)
+
+        self.check_validity(routes)
         return routes
 
 
 class PopulationFactory:
     @staticmethod
     def get_population(
-        config: Config,
-        boat: Boat,
-        constraints_list: ConstraintsList,
-        wt: WeatherCond,
+            config: Config,
+            boat: Boat,
+            constraints_list: ConstraintsList,
+            wt: WeatherCond,
     ) -> Population:
 
         # wave height grid
@@ -123,17 +150,24 @@ class PopulationFactory:
 
         # population
         population_type = config.GENETIC_POPULATION_TYPE
+        population_size = config.GENETIC_POPULATION_SIZE
 
         match population_type:
             case "grid_based":
                 return GridBasedPopulation(
                     default_route=config.DEFAULT_ROUTE,
-                    grid=wave_height,)
+                    grid=wave_height,
+                    constraints_list=constraints_list,
+                    pop_size=population_size
+                )
 
             case "from_geojson":
                 return FromGeojsonPopulation(
                     default_route=config.DEFAULT_ROUTE,
-                    routes_dir=config.GENETIC_POPULATION_PATH,)
+                    routes_dir=config.GENETIC_POPULATION_PATH,
+                    constraints_list=constraints_list,
+                    pop_size=population_size
+                )
 
             case _:
                 logger.error(f"Population type invalid: {population_type}")
