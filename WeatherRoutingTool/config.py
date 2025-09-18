@@ -61,7 +61,7 @@ class Config(BaseModel):
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
-        ]]
+    ]]
     # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
 
@@ -84,14 +84,15 @@ class Config(BaseModel):
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
 
     INTERMEDIATE_WAYPOINTS: Annotated[
-      list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
-      Field(default_factory=list)]  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
+        list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
+        Field(default_factory=list)]  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
     ISOCHRONE_MAX_ROUTING_STEPS: int = 100  # maximum number of routing steps
     ISOCHRONE_MINIMISATION_CRITERION: Literal['dist', 'squareddist_over_disttodest'] = 'squareddist_over_disttodest'
     # options: 'dist', 'squareddist_over_disttodest'
     ISOCHRONE_NUMBER_OF_ROUTES: int = 1  # integer specifying how many routes should be searched
-    ISOCHRONE_PRUNE_GROUPS: Literal['courses', 'larger_direction', 'branch'] = 'larger_direction'  # can be 'courses',
-    # 'larger_direction', 'branch'
+    ISOCHRONE_PRUNE_GROUPS: Literal[
+        'courses', 'larger_direction', 'branch', 'multiple_routes'] = 'larger_direction'  # can be 'courses',
+    # 'larger_direction', 'branch', 'multiple_routes'
     ISOCHRONE_PRUNE_SECTOR_DEG_HALF: int = 91  # half of the angular range of azimuth angle considered for pruning;
     # not used for branch-based pruning  # noqa: E501
     ISOCHRONE_PRUNE_SEGMENTS: int = 20  # total number of azimuth bins used for pruning in prune sector;
@@ -310,8 +311,8 @@ class Config(BaseModel):
         :rtype: WeatherRoutingTool.config.Config
         """
         if (
-            (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
-            and self.BOAT_TYPE != self.ALGORITHM_TYPE
+                (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
+                and self.BOAT_TYPE != self.ALGORITHM_TYPE
         ):
             raise ValueError("If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased', so must be the other one.")
         return self

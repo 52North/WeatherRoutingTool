@@ -1218,17 +1218,21 @@ class IsoBased(RoutingAlg):
             print('courses per step ', self.course_per_step)
 
         is_pruned = False
-        if self.prune_groups == 'larger_direction':
+        prune_concept = self.prune_groups
+        if self.prune_groups == 'multiple_routes':
+            prune_concept = self.tune_multiple_routes_prunig()
+
+        if prune_concept == 'larger_direction':
             logger.info('Executing larger-direction-based pruning.')
             bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
             idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
-        if self.prune_groups == 'courses':
+        if prune_concept == 'courses':
             logger.info('Executing courses-based pruning.')
             bin_stat, bin_edges, bin_number = self.courses_based_pruning(bins)
             idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
-        if self.prune_groups == 'branch':
+        if prune_concept == 'branch':
             logger.info('Executing branch-based pruning.')
             idxs = self.branch_based_pruning()
             is_pruned = True
@@ -1273,6 +1277,24 @@ class IsoBased(RoutingAlg):
 
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
+
+    def tune_multiple_routes_prunig(self) -> str:
+        """
+        Tune pruning group for multiple-routes approach
+
+        :return: pruning group
+        :rtype: str
+        """
+        prune_concept = 'branch'
+        # use larger-direction-based pruning on a regular basis to get more diversity
+        if (self.count % 10 == 0) or (self.count % 10 == 1) or (self.count < 5):
+            prune_concept = "larger_direction"
+
+        # prohibit larger-direction-based pruning close to destination to prevent decreasing diversity
+        mean_travel_dist = np.mean(self.full_dist_traveled)
+        if mean_travel_dist / self.gcr_dist > 0.8:
+            prune_concept = "branch"
+        return prune_concept
 
     def courses_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
