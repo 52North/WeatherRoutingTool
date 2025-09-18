@@ -184,7 +184,7 @@ class RoutingStep:
         """Update the constraint information."""
         self.is_constrained = constraints
 
-    def get_start_point(self, coord: str ="all") -> np.ndarray | (np.ndarray, np.ndarray):
+    def get_start_point(self, coord: str ="all"):
         """
         Get the coordinates of the starting point.
 
@@ -197,7 +197,7 @@ class RoutingStep:
         """
         return self._get_point(coord, 0)
 
-    def get_end_point(self, coord: str="all") -> np.ndarray | (np.ndarray, np.ndarray):
+    def get_end_point(self, coord: str="all"):
         """
         Get the coordinates of the arrival point.
 
@@ -210,7 +210,7 @@ class RoutingStep:
         """
         return self._get_point(coord, 1)
 
-    def _get_point(self, coord: str="all", position: int =0) -> np.ndarray | (np.ndarray, np.ndarray):
+    def _get_point(self, coord: str="all", position: int =0):
         if coord == "all":
             return (self.lons[position], self.lats[position])
         elif coord == 'lat':
@@ -1010,7 +1010,7 @@ class IsoBased(RoutingAlg):
 
     def revert_to_previous_step(self):
         """
-        Revert arrays to previous routing step if all routes are constrained for current (multiple-routes approach).
+        Revert arrays to previous routing step if all routes are constrained for current step (multiple-routes approach)
         """
 
         last_idx = len(self.lats_per_step)
@@ -1037,6 +1037,8 @@ class IsoBased(RoutingAlg):
 
     def routes_from_previous_step(self):
         """
+        Collect routes for previous step if all routes are constrained for current step (multiple-routes approach).
+
         When all routes are constrained, unique routes until the current constrained
         routing step are found here. Then, the unique routes are written into json files
         and plotted.
@@ -1152,7 +1154,25 @@ class IsoBased(RoutingAlg):
                 'define_courses: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-    def get_pruned_indices_statistics(self, bin_stat, bin_edges, bin_number, trim):
+    def get_pruned_indices_statistics(
+            self,
+            bin_stat : np.ndarray,
+            bin_edges : np.ndarray,
+            trim : bool
+    ) -> list[int]:
+        """
+        Collect routes whose travel distance matches the maximum bin entries in the pruning histogram.
+        
+        :param bin_stat: bin content of the pruning histogram which is the maximum travel distance per bin
+        :type bin_stat: np.ndarray
+        :param bin_edges: bin edges of the pruning histogram
+        :type bin_edges: np.ndarray
+        :param trim: omit bins with zero bin content for the pruning
+        :type trim: bool
+        :return: list of indices of best routes
+        :rtype: list[int]
+        """
+
         idxs = []
 
         if trim:
@@ -1171,16 +1191,20 @@ class IsoBased(RoutingAlg):
 
         return idxs
 
-    def pruning(self, trim, bins):
-        """TODO: add description
-        _summary_
+    def pruning(self, trim : bool, bins : np.ndarray) -> None:
+        """
+        Perform pruning.
 
-        :param trim: _description_
-        :type trim: _type_
-        :param bins: _description_
-        :type bins: _type_
-        :raises ValueError: _description_
-        :raises Exception: _description_
+        Call the methods for larger-direction based, courses-based and branch-based pruning which determine the
+        indices of the routes which perform best after this routing step. Slice the arrays that store the history of
+        the routing procedure such that only the best routes survive.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
+        :type trim: bool, optional
+        :param bins: bin edges for the pruning
+        :type bins: np.ndarray
+        :raises ValueError: if no routes are available for the pruning
+        :raises IndexError: if any array can not be sliced according to the indices that have been found
         """
 
         debug = False
@@ -1197,12 +1221,12 @@ class IsoBased(RoutingAlg):
         if self.prune_groups == 'larger_direction':
             logger.info('Executing larger-direction-based pruning.')
             bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
-            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
         if self.prune_groups == 'courses':
             logger.info('Executing courses-based pruning.')
             bin_stat, bin_edges, bin_number = self.courses_based_pruning(bins)
-            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, bin_number, trim)
+            idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
             is_pruned = True
         if self.prune_groups == 'branch':
             logger.info('Executing branch-based pruning.')
@@ -1250,14 +1274,18 @@ class IsoBased(RoutingAlg):
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
-    def courses_based_pruning(self, bins):
-        """TODO: add description
-        _summary_
+    def courses_based_pruning(self, bins : np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Perform courses-based pruning
 
-        :param bins: _description_
-        :type bins: _type_
-        :return: _description_
-        :rtype: _type_
+        A histogram is filled with the maximum travel distance (argument: statistic = np.nanmax) in dependence of bins
+        of all courses of the route segments in the current routing step. The bin content, bin edges and the bin numbers
+        are returned.
+
+        :param bins: bin edges of the histogram
+        :type bins: np.ndarray
+        :return: bin content, bin edges and bin numbers
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
 
         bin_stat, bin_edges, bin_number = binned_statistic(self.routing_step.get_courses().value,
@@ -1265,14 +1293,19 @@ class IsoBased(RoutingAlg):
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
-    def larger_direction_based_pruning(self, bins):
-        """TODO: add description
-        _summary_
+    def larger_direction_based_pruning(self, bins: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Perform larger-direction-based pruning.
+        
+        Define an angle referred to as 'larger direction' which is the azimuthal angle from the starting point of the 
+        test routes towards the current position. A histogram is filled with the maximum travel distance 
+        (argument: statistic = np.nanmax) in dependence of bins of the larger direction. The bin content, bin edges and
+        the bin numbers are returned.
 
-        :param bins: _description_
-        :type bins: _type_
-        :return: _description_
-        :rtype: _type_
+        :param bins: bin edges of the histogram
+        :type bins: np.ndarray
+        :return: bin content, bin edges and bin numbers
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
@@ -1283,12 +1316,16 @@ class IsoBased(RoutingAlg):
                                                            statistic=np.nanmax, bins=bins)
         return bin_stat, bin_edges, bin_number
 
-    def branch_based_pruning(self):
-        """TODO: add description
-        _summary_
+    def branch_based_pruning(self) -> np.ndarray:
+        """
+        Perform branch-based pruning.
 
-        :return: _description_
-        :rtype: _type_
+        Group routes according to the starting points of the last routing segment, i.e. routes that originate from the
+        origin in the last step form a group called "branch". The indices of the routes with maximum travel distance
+        for every branch are collected in an array which is returned.
+
+        :return: indices of routes with maximum distance per branch
+        :rtype: np.ndarray
         """
 
         df_current_last_step = pd.DataFrame()
@@ -1321,34 +1358,35 @@ class IsoBased(RoutingAlg):
             idxs.append(max_dist_indxs[0])
         return idxs
 
-    def pruning_per_step(self, trim=True):
+    def pruning_per_step(self, trim : bool=True) -> None:
+        """
+        Initiate pruning. Decide between pruning methods with different symmetry axis.
+        """
         if self.prune_symmetry_axis == 'gcr':
             self.pruning_gcr_centered(trim)
         else:
             self.pruning_headings_centered(trim)
 
-    def pruning_gcr_centered(self, trim=True):
+    def pruning_gcr_centered(self, trim : bool=True) -> None:
         """
-        For every pruning segment, select the route that maximises the distance towards the starting point (or last
-        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is defined
-        based on the gcr
-        of the current 'mean' position towards the (temporary) destination.
+        Initiate pruning with the grand circle route as the symmetry axis.
 
-        :param trim: TODO: add _description_, defaults to True
+        First, the symmetry axis for the binning of the pruning is determined. To do so, it is assumed that the ship
+        travels from the starting point (or last intermediate waypoint) of the routes in the direction of the azimuthal
+        angle gcr_course_temp for the mean full travel distance of all routes. The azimuthal angle of the waypoint that
+        is found in this way towards the destination (or next intermediate waypoint) is defined as the symmetry axis of
+        the pruning i.e. the bins are centered around it. These bins are fed into the function 'pruning' for further
+        evaluation.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
         :type trim: bool, optional
         """
 
         # ToDo: use logger.debug and args.debug
         debug = False
         if debug:
-            print('Pruning... Pruning symmetry axis defined by gcr')
+            logger.info('Pruning... Pruning symmetry axis defined by gcr')
 
-        # Calculate the auxiliary coordinate for the definition of pruning symmetry axis. The route is propagated
-        # towards the coordinate
-        # which is reached if one travels from the starting point (or last intermediate waypoint) in the direction
-        # of the course defined by the distance between the start point and the destination for the mean distance
-        # travelled
-        # during the current routing step.
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         full_travel_dist = geod.inverse(start_lats, start_lons, self.lats_per_step[0], self.lons_per_step[0])
@@ -1398,13 +1436,15 @@ class IsoBased(RoutingAlg):
 
         self.pruning(trim, bins)
 
-    def pruning_headings_centered(self, trim=True):
+    def pruning_headings_centered(self, trim : bool=True) -> None:
         """
-        For every pruning segment, select the route that maximises the distance towards the starting point (or last
-        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
-        the median of all considered courses.
+        Initiate pruning with a symmetry axis that is determined from the spread of courses.
 
-        :param trim: _description_, defaults to True
+        First, the symmetry axis for the binning of the pruning is determined as the median of the courses of
+        all route segments from the current routing step. Bins are centered around this symmetry axis and the resulting
+        binning is fed into the function 'pruning' for further evaluation.
+
+        :param trim: omit bins with zero bin content for the pruning, defaults to True
         :type trim: bool, optional
         """
 
