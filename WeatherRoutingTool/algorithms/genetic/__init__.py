@@ -13,6 +13,7 @@ from pymoo.optimize import minimize
 from pymoo.core.result import Result
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -33,6 +34,8 @@ logger = logging.getLogger("WRT.genetic")
 
 
 class Genetic(RoutingAlg):
+    """Genetic Algorithm implementation for Weather Routing Tool"""
+
     def __init__(self, config: Config):
         super().__init__(config)
 
@@ -55,9 +58,21 @@ class Genetic(RoutingAlg):
         self,
         boat: Boat,
         wt: WeatherCond,
-        constraints_list,
+        constraints_list: ConstraintsList,
         verbose=False
     ):
+        """Main routing execution function
+
+        :param boat: Boat config
+        :type boat: Boat
+        :param wt: Weather conditions for the waypoints
+        :type wt: WeatherCond
+        :param constraints_list: List of problem constraints
+        :type constraints_list: ConstraintsList
+        :param verbose: Verbosity setting for logs
+        :type verbose: Optional[bool]
+        """
+
         # inputs
         problem = RoutingProblem(
             departure_time=self.departure_time,
@@ -96,6 +111,8 @@ class Genetic(RoutingAlg):
         duplicates,
         repair,
     ):
+        """Optimization function for the Genetic Algorithm"""
+
         algorithm = NSGA2(
             pop_size=self.pop_size,
             n_offsprings=self.n_offsprings,
@@ -119,6 +136,8 @@ class Genetic(RoutingAlg):
         return res
 
     def terminate(self, res: Result, problem: RoutingProblem):
+        """Genetic Algorithm termination procedures"""
+
         super().terminate()
 
         best_index = res.F.argmin()
@@ -177,12 +196,16 @@ class Genetic(RoutingAlg):
         return route
 
     def print_init(self):
+        """Log messages to print on algorithm initialization"""
+
         logger.info("Initializing Routing......")
         logger.info(f"route from {self.start} to {self.finish}")
         logger.info(formatting.get_log_step(
             f"route from {self.start} to {self.finish}", 1))
 
     def print_current_status(self):
+        """Log messages for running status"""
+
         logger.info("ALGORITHM SETTINGS:")
         logger.info(f"start: {self.start}")
         logger.info(f"finish: {self.finish}")
@@ -191,11 +214,10 @@ class Genetic(RoutingAlg):
         logger.info(f"n_offsprings: {self.n_offsprings}")
 
     def plot_running_metric(self, res):
-        """TODO: add description
-        _summary_
+        """Plot running metrics
 
-        :param res: _description_
-        :type res: _type_
+        :param res: Result object of minimization
+        :type res: pymoo.core.result.Result
         """
 
         running = RunningMetric()
@@ -242,13 +264,12 @@ class Genetic(RoutingAlg):
         pt.close()
 
     def plot_population_per_generation(self, res, best_route):
-        """
-        create figures for every generation of routes
-        TODO: add description for parameters
-        :param res: _description_
+        """Plot figures and save them in WRT_FIGURE_PATH
+
+        :param res: Result of GA minimization
         :type res: pymoo.core.result.Result
-        :param best_route: _description_
-        :type best_route: _type_
+        :param best_route: Optimum route
+        :type best_route: np.ndarray
         """
 
         history = res.history
@@ -270,7 +291,8 @@ class Genetic(RoutingAlg):
 
             last_pop = history[igen].pop.get('X')
 
-            for iroute in range(0, self.pop_size):
+            # for iroute in range(0, self.pop_size):
+            for iroute in range(0, len(last_pop)):
                 if iroute == 0:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],

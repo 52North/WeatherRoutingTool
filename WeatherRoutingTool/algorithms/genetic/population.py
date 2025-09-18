@@ -32,11 +32,14 @@ class GridBasedPopulation(GridMixin, Population):
     Notes on the inheritance:
      - GridMixin has to be inherited first because Sampling isn't designed for multiple inheritance
      - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
-     - call print(GridBasedPopulation.mro()) to see the method resolution order
+     - call `print(GridBasedPopulation.mro())` to see the method resolution order
     """
 
-    def __init__(self, default_route, grid):
+    def __init__(self, default_route, grid, constraints_list, departure_time):
         super().__init__(default_route=default_route, grid=grid)
+
+        self.constraints_list = constraints_list
+        self.departure_time = departure_time
 
         # ----------
         self.var_type = np.float64
@@ -60,18 +63,39 @@ class GridBasedPopulation(GridMixin, Population):
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
 
+            if self.route_constraint_violations(np.array([self.src, *route[1:-1], self.dst])).any():
+                print(f"Population failed {i}")
+
             # match first and last points to src and dst
             routes[i][0] = np.array([
                 self.src, *route[1:-1], self.dst])
 
         return self.X
 
+    def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
+        """Check if route breaks any discrete constraints
+
+        :param route: list of waypoints
+        :dtype route: np.ndarray
+        :return: Boolean array of constraint violations per waypoint
+        :rtype: np.ndarray
+        """
+
+        is_constrained = self.constraints_list.safe_crossing_discrete(
+            route[:-1, 0], route[:-1, 1], route[1:, 0], route[1:, 1],
+            current_time=self.departure_time,
+            is_constrained=[False] * (route.shape[0] - 1), )
+
+        return np.array(is_constrained)
+
 
 class FromGeojsonPopulation(Population):
     """Genetic population from a directory of routes
 
-    NOTE: routes are expected to be named in the following format: `route_{1..N}.json`
-    example: route_1.json, route_2.json, route_3.json, ...
+    NOTE:
+        Routes are expected to be named in the following format: `route_{1..N}.json`
+
+        example: `route_1.json, route_2.json, route_3.json, ...`
     """
 
     def __init__(self, default_route, routes_dir: str):
@@ -128,6 +152,8 @@ class PopulationFactory:
             case "grid_based":
                 return GridBasedPopulation(
                     default_route=config.DEFAULT_ROUTE,
+                    constraints_list=constraints_list,
+                    departure_time=config.DEPARTURE_TIME,
                     grid=wave_height,)
 
             case "from_geojson":

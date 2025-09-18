@@ -43,9 +43,9 @@ def great_circle_distance(src, dst) -> float:
     """Measure great circle distance between src and dst waypoints
 
     :param src: Source waypoint as (lat, lon) pair
-    :type src: Sequence
+    :type src: tuple[float, float]
     :param dst: Destination waypoint as (lat, lon) pair
-    :type dst: Sequence
+    :type dst: tuple[float, float]
     :return: Great circle distance between src and dst
     :rtype: float
     """
@@ -65,7 +65,7 @@ def geojson_from_route(
     :type route: list[tuple[float, float]]
     :param save_to: Specify path to save the geojson to
     :type save_to: str
-    :return: geojson dictionary
+    :return: Geojson dictionary
     :rtype: dict
     """
 
@@ -95,9 +95,9 @@ def geojson_from_route(
 def route_from_geojson(dt: dict) -> list[tuple[float, float]]:
     """Parse list of waypoints from geojson dict
 
-    :param dt: geojson dictionary
+    :param dt: Geojson dictionary
     :type dt: dict
-    :return: list of waypoints as (lat, lon) pair
+    :return: List of waypoints as (lat, lon) pair
     :rtype: list[tuple[float, float]]
     """
 
@@ -126,5 +126,7 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
 
 # ----------
 class RouteDuplicateElimination(ElementwiseDuplicateElimination):
+    """Custom duplicate elimination strategy for routing problem."""
+
     def is_equal(self, a, b):
         return np.array_equal(a.X[0], b.X[0])

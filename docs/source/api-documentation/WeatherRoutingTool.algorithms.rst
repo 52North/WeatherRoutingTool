@@ -20,10 +20,34 @@ WeatherRoutingTool.algorithms.genetic module
    :undoc-members:
    :show-inheritance:
 
-WeatherRoutingTool.algorithms.genetic\_utils module
+WeatherRoutingTool.algorithms.genetic.crossover module
 ---------------------------------------------------
 
-.. automodule:: WeatherRoutingTool.algorithms.genetic_utils
+.. automodule:: WeatherRoutingTool.algorithms.genetic.crossover
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+WeatherRoutingTool.algorithms.genetic.population module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.population
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+WeatherRoutingTool.algorithms.genetic.mutation module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+WeatherRoutingTool.algorithms.genetic.utils module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.utils
    :members:
    :undoc-members:
    :show-inheritance:

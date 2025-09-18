@@ -15,13 +15,15 @@ logger = logging.getLogger("WRT.genetic.crossover")
 # base classes
 # ----------
 class OffspringRejectionCrossover(Crossover):
-    """Offspring-Rejection Crossover Base Class
+    """Offspring—Rejection Crossover Base Class
 
-    Algorithm:
+    Algorithm
+    =========
+
     - Generate offsprings using sub-class' implementation of the `crossover` function
     - Validate if offsprings violate discrete constraints
-        - True — get rid of both offsprings, and return parents
-        - False — return offsprings
+        - if True, get rid of both offsprings, and return parents
+        - if False, return offsprings
     """
 
     def __init__(
@@ -109,70 +111,52 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         return r1, r2
 
 
-class PMX(OffspringRejectionCrossover):
-    """Partially Mapped Crossover"""
+class EdgeRecombinationCrossover(OffspringRejectionCrossover):
+    """Two-point crossover operator with great-circle patching"""
 
     def crossover(self, p1, p2):
-        if p1.shape != p2.shape:
-            logging.info("PMX — Not of equal length")
-            return p1, p2
+        x11 = np.random.randint(1, p1.shape[0] - 2)
+        x12 = np.random.randint(x11 + 1, p1.shape[0] - 1)
 
-        N = min(p1.shape[0], p2.shape[0])
+        x21 = np.random.randint(1, p2.shape[0] - 2)
+        x22 = np.random.randint(x21 + 1, p2.shape[0] - 1)
 
-        # Convert to lists of tuples
-        parent1 = [tuple(row) for row in p1]
-        parent2 = [tuple(row) for row in p2]
+        gcr_dist = 1e6
 
-        # Choose crossover points
-        cx1, cx2 = sorted(np.random.choice(range(N), 2, replace=False))
+        r1 = np.concatenate([
+            p1[:x11],
+            utils.great_circle_route(
+                tuple(p1[x11 - 1]), tuple(p2[x21]), distance=gcr_dist, ),
+            p2[x21:x22],
+            utils.great_circle_route(
+                tuple(p2[x22 - 1]), tuple(p1[x12]), distance=gcr_dist, ),
+            p1[x12:]
+        ])
 
-        # Initialize offspring placeholders
-        child1 = [None] * N
-        child2 = [None] * N
+        r2 = np.concatenate([
+            p2[:x21],
+            utils.great_circle_route(
+                tuple(p2[x21 - 1]), tuple(p1[x11]), distance=gcr_dist, ),
+            p1[x11:x12],
+            utils.great_circle_route(
+                tuple(p1[x12 - 1]), tuple(p2[x22]), distance=gcr_dist, ),
+            p2[x22:]
+        ])
 
-        # Copy the segment
-        for i in range(cx1, cx2):
-            child1[i] = parent2[i]
-            child2[i] = parent1[i]
-
-        # Build mapping for the swapped segments
-        mapping12 = {parent2[i]: parent1[i] for i in range(cx1, cx2)}
-        mapping21 = {parent1[i]: parent2[i] for i in range(cx1, cx2)}
-
-        def resolve(gene, segment, mapping):
-            # Keep resolving until gene is not in the given segment
-            while gene in segment:
-                gene = mapping[gene]
-            return gene
-
-        # Fill remaining positions
-        for i in range(N):
-            if not (cx1 <= i < cx2):
-                g1 = parent1[i]
-                g2 = parent2[i]
-
-                # If g1 is already in the swapped segment of child1, resolve via mapping12
-                if g1 in child1[cx1:cx2]:
-                    g1 = resolve(g1, child1[cx1:cx2], mapping12)
-                child1[i] = g1
-
-                # Likewise for child2
-                if g2 in child2[cx1:cx2]:
-                    g2 = resolve(g2, child2[cx1:cx2], mapping21)
-                child2[i] = g2
-
-        # Convert back to numpy arrays
-        c1 = np.array(child1, dtype=p1.dtype)
-        c2 = np.array(child2, dtype=p1.dtype)
-
-        return c1, c2
+        return r1, r2
 
 
+# ----------
 class CrossoverFactory:
     @staticmethod
     def get_crossover(config: Config, constraints_list: ConstraintsList):
         # inputs
         departure_time = config.DEPARTURE_TIME
+
+        return EdgeRecombinationCrossover(
+            departure_time=departure_time,
+            constraints_list=constraints_list,
+            prob=.8, )
 
         return SinglePointCrossover(
             departure_time=departure_time,
