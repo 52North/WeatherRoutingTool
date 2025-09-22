@@ -4,6 +4,7 @@ import numpy as np
 from pymoo.core.problem import ElementwiseProblem
 
 from WeatherRoutingTool.routeparams import RouteParams
+import WeatherRoutingTool.algorithms.genetic.utils as utils
 
 logger = logging.getLogger('WRT.Genetic')
 
@@ -32,64 +33,12 @@ class RoutingProblem(ElementwiseProblem):
 
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         fuel, _ = self.get_power(x[0])
-        constraints = self.get_constraints(x[0])
+        constraints = utils.get_constraints(x[0], self.constraint_list)
         # print(costs.shape)
         out['F'] = np.column_stack([fuel])
         out['G'] = np.column_stack([constraints])
 
-    def is_neg_constraints(self, lat, lon, time) -> bool:
-        """Check if (lat, lon) pair violates constraints
-
-        :param lat: Latitude
-        :type lat: tuple[float, float]
-        :param lon: Longitude
-        :type lon: tuple[float, float]
-        :param time: Time
-        :type time: datetime
-        :return: True if (lat, lon) violates constraint, False otherwise
-        :rtype: bool
-        """
-
-        lat = np.array([lat])
-        lon = np.array([lon])
-        is_constrained = [False for i in range(0, lat.shape[0])]
-        is_constrained = self.constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-        # print(is_constrained)
-        return bool(is_constrained)
-
-    def get_constraints_array(self, route: np.ndarray) -> np.ndarray:
-        """Return constraint violation per waypoint in route
-
-        :param route: Candidate array of waypoints
-        :type route: np.ndarray
-        :return: Array of constraint violations
-        """
-
-        constraints = np.array([self.is_neg_constraints(lat, lon, None) for lat, lon in route])
-        return constraints
-
-    def get_constraints(self, route) -> int:
-        """Total count of violated constraints
-
-        :param route: Candidate array of waypoints
-        :type route: np.ndarray
-        :return: Total count of violated constraints in the route
-        :rtype: int
-        """
-
-        # ToDo: what about time?
-        constraints = np.sum(self.get_constraints_array(route))
-        return constraints
-
-    def get_power(self, route) -> tuple[float, RouteParams]:
-        """Calculate total power required by the ship to follow the route
-
-        :param route: Candidate array of waypoints
-        :type route: np.ndarray
-        :return: Total power used by the ship to follow the route
-        :rtype: tuple[float, RouteParams]
-        """
-
+    def get_power(self, route):
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],
             route[:, 0],
