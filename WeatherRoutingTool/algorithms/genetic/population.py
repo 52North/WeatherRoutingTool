@@ -37,17 +37,17 @@ class Population(Sampling):
         :param routes: array of routes for initial population
         """
 
-        n_route = 1
-        for route in routes:
+        logger.debug("Validating generated routes")
+
+        for i, route in enumerate(routes):
             constraints = utils.get_constraints(route[0], self.constraints_list)
 
             if constraints:
-                logger.warning("Initial Route route_" + str(n_route) + " is constrained.")
+                logger.warning(f"Initial Route route_{i+1} is constrained.")
                 self.n_constrained_routes += 1
-                n_route += 1
 
         percentage_constrained = self.n_constrained_routes / self.pop_size
-        assert (percentage_constrained < 0.5), "More than 50% of the initial routes are constrained"
+        assert (percentage_constrained < 0.5), f"{self.n_constrained_routes} / {self.pop_size} constrained — More than 50% of the initial routes are constrained"
 
 
 class GridBasedPopulation(GridMixin, Population):
@@ -61,6 +61,23 @@ class GridBasedPopulation(GridMixin, Population):
 
     def __init__(self, default_route, grid, constraints_list, pop_size):
         super().__init__(default_route=default_route, grid=grid, constraints_list=constraints_list, pop_size=pop_size)
+
+        # update nan_mask with constraints_list
+        # ----------
+        nan_mask = np.isnan(self.grid)
+
+        xs, ys = np.where(~nan_mask)
+        fs = np.stack([grid.latitude[xs], grid.longitude[ys]], axis=1)
+
+        rf = fs[
+            np.where(utils.get_constraints_array(fs, constraints_list))]
+
+        for lat, lon in rf:
+            (latindex,), = np.where(lat == grid.latitude.values)
+            (lonindex,), = np.where(lon == grid.longitude.values)
+
+            nan_mask[latindex, lonindex] = True
+        self.grid.data[nan_mask] = np.nan
 
         # ----------
         self.var_type = np.float64
@@ -85,7 +102,7 @@ class GridBasedPopulation(GridMixin, Population):
             _, _, route = self.index_to_coords(route)
 
             # match first and last points to src and dst
-            routes[i][0] = np.array([
+            routes[i, 0] = np.array([
                 self.src, *route[1:-1], self.dst])
 
         self.check_validity(routes)
@@ -100,7 +117,7 @@ class FromGeojsonPopulation(Population):
     example: route_1.json, route_2.json, route_3.json, ...
     """
 
-    def __init__(self, default_route, routes_dir: str, constraints_list, pop_size):
+    def __init__(self, routes_dir: str, default_route, constraints_list, pop_size):
         super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
 
         if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
@@ -137,10 +154,10 @@ class FromGeojsonPopulation(Population):
 class PopulationFactory:
     @staticmethod
     def get_population(
-            config: Config,
-            boat: Boat,
-            constraints_list: ConstraintsList,
-            wt: WeatherCond,
+        config: Config,
+        boat: Boat,
+        constraints_list: ConstraintsList,
+        wt: WeatherCond,
     ) -> Population:
 
         # wave height grid

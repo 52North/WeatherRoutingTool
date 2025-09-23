@@ -92,10 +92,14 @@ def geojson_from_route(
     return geojson
 
 
-def get_constraints(route, constraint_list):
-    # ToDo: what about time?
-    constraints = np.sum(get_constraints_array(route, constraint_list))
-    return constraints
+# constraints
+def is_neg_constraints(lat, lon, time, constraint_list):
+    lat = np.array([lat])
+    lon = np.array([lon])
+    is_constrained = [False for i in range(0, lat.shape[0])]
+    is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
+    # print(is_constrained)
+    return 0 if not is_constrained else 1
 
 
 def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
@@ -106,17 +110,15 @@ def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     :type route: np.ndarray
     :return: Array of constraint violations
     """
-    constraints = np.array([is_neg_constraints(lat, lon, None, constraint_list) for lat, lon in route])
+    constraints = np.array([
+        is_neg_constraints(lat, lon, None, constraint_list) for lat, lon in route])
     return constraints
 
 
-def is_neg_constraints(lat, lon, time, constraint_list):
-    lat = np.array([lat])
-    lon = np.array([lon])
-    is_constrained = [False for i in range(0, lat.shape[0])]
-    is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-    # print(is_constrained)
-    return 0 if not is_constrained else 1
+def get_constraints(route, constraint_list):
+    # ToDo: what about time?
+    constraints = np.sum(get_constraints_array(route, constraint_list))
+    return constraints
 
 
 def route_from_geojson(dt: dict) -> list[tuple[float, float]]:
