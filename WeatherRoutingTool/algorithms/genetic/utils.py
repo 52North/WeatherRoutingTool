@@ -9,6 +9,13 @@ import json
 import math
 
 
+def gcr_distance(src, dst) -> float:
+    geod = Geodesic.WGS84
+
+    rs = geod.Inverse(*src, *dst)
+    return rs["s12"]
+
+
 def great_circle_distance(src, dst) -> float:
     """Measure great circle distance between src and dst waypoints
 

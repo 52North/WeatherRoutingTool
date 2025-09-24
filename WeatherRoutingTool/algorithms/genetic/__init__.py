@@ -74,7 +74,8 @@ class Genetic(RoutingAlg):
 
         mutation = MutationFactory.get_mutation(self.config)
 
-        repair = RepairFactory.get_repair()
+        repair = RepairFactory.get_repair(
+            self.config, constraints_list)
 
         duplicates = utils.RouteDuplicateElimination()
 

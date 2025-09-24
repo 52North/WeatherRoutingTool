@@ -24,9 +24,6 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, W
 # base class
 # ----------
 class Patcher:
-    def __init__(self, config: Config):
-        self.config = config
-
     def patch(self, src, dst):
         pass
 
@@ -34,8 +31,8 @@ class Patcher:
 # patcher variants
 # ----------
 class GreatCircleRoutePatcher(Patcher):
-    def __init__(self, config, dist: float = 100_000.0):
-        super().__init__(config)
+    def __init__(self, dist: float = 100_000.0):
+        super().__init__()
 
         # variables
         self.dist = dist
@@ -62,7 +59,7 @@ class GreatCircleRoutePatcher(Patcher):
             s = min(self.dist * i, line.s13)
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             route.append((g['lat2'], g['lon2']))
-        return [src, *route[1:-1], dst]
+        return np.array([src, *route[1:-1], dst])
 
 
 class IsofuelPatcher(Patcher):
@@ -131,10 +128,11 @@ class IsofuelPatcher(Patcher):
         return wt, boat, water_depth, constraints_list
 
     def __init__(self, config: Config, n_routes: str = "single"):
-        super().__init__(config=config)
+        super().__init__()
 
         # variables
         self.n_routes = n_routes
+        self.config = config
 
         # setup components
         wt, boat, water_depth, constraints_list = self._setup_components(self.config)
