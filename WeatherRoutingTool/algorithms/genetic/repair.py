@@ -96,7 +96,7 @@ class ConstraintViolationRepair(RepairBase):
 
 # orchestration
 # ----------
-class ChainedRepair(Repair):
+class ChainedRepairsOrchestrator(Repair):
     def __init__(self, order):
         super().__init__()
 
@@ -114,7 +114,7 @@ class ChainedRepair(Repair):
 class RepairFactory:
     @staticmethod
     def get_repair(config: Config, constraints_list: ConstraintsList):
-        return ChainedRepair(
+        return ChainedRepairsOrchestrator(
             order=[
                 WaypointsInfillRepair(config),
                 ConstraintViolationRepair(config, constraints_list)

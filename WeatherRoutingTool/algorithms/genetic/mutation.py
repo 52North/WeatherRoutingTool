@@ -126,9 +126,25 @@ class RouteBlendMutation(MutationBase):
         return X
 
 
+# ----------
+class RandomMutationsOrchestrator(MutationBase):
+    def __init__(self, opts, **kw):
+        super().__init__(**kw)
+
+        self.opts = opts
+
+    def _do(self, problem, X, **kw):
+        opt = self.opts[np.random.randint(0, len(self.opts))]
+        return opt._do(problem, X, **kw)
+
+
 # factory
 # ----------
 class MutationFactory:
     @staticmethod
     def get_mutation(config: Config) -> Mutation:
-        return RandomWalkMutation()
+        return RandomMutationsOrchestrator(
+            opts=[
+                RandomWalkMutation(),
+                RouteBlendMutation()
+            ], )

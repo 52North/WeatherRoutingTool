@@ -23,14 +23,14 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, W
 
 # base class
 # ----------
-class Patcher:
+class PatcherBase:
     def patch(self, src, dst):
         pass
 
 
 # patcher variants
 # ----------
-class GreatCircleRoutePatcher(Patcher):
+class GreatCircleRoutePatcher(PatcherBase):
     def __init__(self, dist: float = 100_000.0):
         super().__init__()
 
@@ -62,7 +62,7 @@ class GreatCircleRoutePatcher(Patcher):
         return np.array([src, *route[1:-1], dst])
 
 
-class IsofuelPatcher(Patcher):
+class IsofuelPatcher(PatcherBase):
     """Use the IsoFuel algorithm for route(s) generation
 
     Intuition behind having this as a class:
