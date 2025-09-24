@@ -173,7 +173,7 @@ class IsofuelPatcher:
     @classmethod
     def for_single_route(cls, default_map, **kw):
         cfg = Config.assign_config(
-            path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_population.json")
+            path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json")
 
         cfg.DEFAULT_MAP = default_map
 
