@@ -1052,7 +1052,7 @@ class IsoBased(RoutingAlg):
         df_current_last_step = pd.DataFrame()
         df_current_last_step['st_lat'] = self.lats_per_step[1, :]
         df_current_last_step['st_lon'] = self.lons_per_step[1, :]
-        df_current_last_step['fuel'] = self.shipparams_per_step.get_fuel()[0, :]
+        df_current_last_step['fuel'] = self.shipparams_per_step.get_fuel_rate()[0, :].value
 
         len_df = df_current_last_step.shape[0]
 
