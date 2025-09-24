@@ -21,7 +21,8 @@ class RoutingAlg:
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     departure_time: datetime
-    gcr_course: float  # course of great circle route (0 - 360°)
+    gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
+    gcr_dist: float  # distance of great circle route
 
     fig: matplotlib.figure
     route_ensemble: list
@@ -33,8 +34,8 @@ class RoutingAlg:
         self.finish = (lat_end, lon_end)
         self.departure_time = config.DEPARTURE_TIME
 
-        gcr = self.calculate_gcr(self.start, self.finish)
-        self.gcr_course = gcr * u.degree
+        self.gcr_course, self.gcr_dist = self.calculate_gcr(self.start, self.finish)
+        self.gcr_course = self.gcr_course * u.degree
 
         self.figure_path = get_figure_path()
         plt.switch_backend("Agg")
@@ -59,7 +60,7 @@ class RoutingAlg:
         """
         gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [
             finish[1]])
-        return gcr['azi1']
+        return gcr['azi1'], gcr['s12']
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
         pass

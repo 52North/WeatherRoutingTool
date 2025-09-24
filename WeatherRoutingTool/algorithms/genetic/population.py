@@ -13,6 +13,8 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.algorithms.genetic import utils
 
+from WeatherRoutingTool.algorithms.genetic import patcher
+
 logger = logging.getLogger("WRT.genetic.population")
 
 
@@ -29,6 +31,19 @@ class Population(Sampling):
         self.src: tuple[float, float] = tuple(default_route[:-2])
         self.dst: tuple[float, float] = tuple(default_route[-2:])
 
+    def _do(self, problem, n_samples, **kw):
+        X = self.generate(problem, n_samples, **kw)
+
+        for rt, in X:
+            assert tuple(rt[0]) == self.src, "Source waypoint not matching"
+            assert tuple(rt[-1]) == self.dst, "Destination waypoint not matching"
+
+        self.X = X
+        return self.X
+
+    def generate(self, problem, n_samples, **kw):
+        pass
+
     def check_validity(self, routes):
         """
         Check whether the waypoints of the routes violate constraints. Raise a warning for each single route that
@@ -37,17 +52,20 @@ class Population(Sampling):
         :param routes: array of routes for initial population
         """
 
-        n_route = 1
-        for route in routes:
+        logger.debug("Validating generated routes")
+
+        for i, route in enumerate(routes):
             constraints = utils.get_constraints(route[0], self.constraints_list)
 
             if constraints:
-                logger.warning("Initial Route route_" + str(n_route) + " is constrained.")
+                logger.warning(f"Initial Route route_{i+1} is constrained.")
                 self.n_constrained_routes += 1
-                n_route += 1
 
         percentage_constrained = self.n_constrained_routes / self.pop_size
-        assert (percentage_constrained < 0.5), "More than 50% of the initial routes are constrained"
+
+        assert (percentage_constrained < 0.5), (
+            f"{self.n_constrained_routes} / {self.pop_size} constrained — "
+            "More than 50% of the initial routes are constrained")
 
 
 class GridBasedPopulation(GridMixin, Population):
@@ -62,11 +80,28 @@ class GridBasedPopulation(GridMixin, Population):
     def __init__(self, default_route, grid, constraints_list, pop_size):
         super().__init__(default_route=default_route, grid=grid, constraints_list=constraints_list, pop_size=pop_size)
 
+        # update nan_mask with constraints_list
+        # ----------
+        nan_mask = np.isnan(self.grid)
+
+        xs, ys = np.where(~nan_mask)
+        fs = np.stack([grid.latitude[xs], grid.longitude[ys]], axis=1)
+
+        rf = fs[
+            np.where(utils.get_constraints_array(fs, constraints_list))]
+
+        for lat, lon in rf:
+            (latindex,), = np.where(lat == grid.latitude.values)
+            (lonindex,), = np.where(lon == grid.longitude.values)
+
+            nan_mask[latindex, lonindex] = True
+        self.grid.data[nan_mask] = np.nan
+
         # ----------
         self.var_type = np.float64
 
-    def _do(self, problem, n_samples, **kw):
-        self.X = routes = np.full((n_samples, 1), None, dtype=object)
+    def generate(self, problem, n_samples, **kw):
+        X = np.full((n_samples, 1), None, dtype=object)
 
         _, _, start_indices = self.coords_to_index([self.src])
         _, _, end_indices = self.coords_to_index([self.dst])
@@ -88,12 +123,10 @@ class GridBasedPopulation(GridMixin, Population):
                 logger.warning(f"Population {i} generation failed")
 
             # match first and last points to src and dst
-            routes[i][0] = np.array([
+            X[i, 0] = np.array([
                 self.src, *route[1:-1], self.dst])
 
-        self.check_validity(routes)
-
-        return self.X
+        return X
 
     def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
         """Check if route breaks any discrete constraints
@@ -121,21 +154,21 @@ class FromGeojsonPopulation(Population):
         example: `route_1.json, route_2.json, route_3.json, ...`
     """
 
-    def __init__(self, default_route, routes_dir: str, constraints_list, pop_size):
+    def __init__(self, routes_dir: str, default_route, constraints_list, pop_size):
         super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
 
         if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
             raise FileNotFoundError("Routes directory not found")
         self.routes_dir: str = routes_dir
 
-    def _do(self, problem, n_samples, **kw):
+    def generate(self, problem, n_samples, **kw):
         logger.debug(f"Population from geojson routes: {self.routes_dir}")
 
         # routes are expected to be named in the following format:
         # route_{1..N}.json
         # example: route_1.json, route_2.json, route_3.json, ...
 
-        self.X = routes = np.full((n_samples, 1), None, dtype=object)
+        X = np.full((n_samples, 1), None, dtype=object)
 
         for i in range(n_samples):
             path = os.path.join(self.routes_dir, f"route_{i + 1}.json")
@@ -149,10 +182,37 @@ class FromGeojsonPopulation(Population):
             assert np.array_equal(route[0], self.src), "Route not starting at source"
             assert np.array_equal(route[-1], self.dst), "Route not ending at destination"
 
-            routes[i, 0] = np.array(route)
+            X[i, 0] = np.array(route)
 
-        self.check_validity(routes)
-        return routes
+        return X
+
+
+class IsoFuelPopulation(Population):
+    """Population generation using the Isofuel algorithm"""
+
+    def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
+        super().__init__(
+            default_route=default_route,
+            constraints_list=constraints_list,
+            pop_size=pop_size, )
+
+        self.departure_time = config.DEPARTURE_TIME
+
+        self.patcher = patcher.IsofuelPatcher.for_multiple_routes(
+            default_map=config.DEFAULT_MAP, )
+
+    def generate(self, problem, n_samples, **kw):
+        routes = self.patcher.patch(self.src, self.dst, self.departure_time)
+
+        X = np.full((n_samples, 1), None, dtype=object)
+
+        for i, rt in enumerate((routes)):
+            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+
+        # fallback: fill all other individuals with the same population as the last one
+        for j in range(i + 1, n_samples):
+            X[j, 0] = np.copy(X[j - 1, 0])
+        return X
 
 
 class PopulationFactory:
@@ -176,19 +236,25 @@ class PopulationFactory:
         match population_type:
             case "grid_based":
                 return GridBasedPopulation(
-                    default_route=config.DEFAULT_ROUTE,
                     grid=wave_height,
+                    default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
-                    pop_size=population_size
-                )
+                    pop_size=population_size, )
+
+            case "isofuel":
+                return IsoFuelPopulation(
+                    config=config,
+                    boat=boat,
+                    default_route=config.DEFAULT_ROUTE,
+                    constraints_list=constraints_list,
+                    pop_size=population_size, )
 
             case "from_geojson":
                 return FromGeojsonPopulation(
-                    default_route=config.DEFAULT_ROUTE,
                     routes_dir=config.GENETIC_POPULATION_PATH,
+                    default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
-                    pop_size=population_size
-                )
+                    pop_size=population_size, )
 
             case _:
                 logger.error(f"Population type invalid: {population_type}")

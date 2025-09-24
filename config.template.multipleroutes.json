@@ -1,0 +1,44 @@
+{
+  "DEFAULT_ROUTE": [37.416, -123.607, 48.760, -131.494],
+  "DEPARTURE_TIME": "2023-11-11T11:11Z",
+  "DEFAULT_MAP": [30, -155, 65, -115],
+  "BOAT_DRAUGHT_AFT": 10,
+  "BOAT_DRAUGHT_FORE": 10,
+  "CONSTRAINTS_LIST": ["land_crossing_global_land_mask", "water_depth", "on_map"],
+
+  "TIME_FORECAST": 90,
+  "ROUTING_STEPS": 60,
+  "DELTA_TIME_FORECAST": 3,
+  "DELTA_FUEL": 3000,
+
+  "COURSES_FILE": "/home/<user>/WeatherRoutingTool/<...>",
+  "DEPTH_DATA": "/home/<user>/WeatherRoutingTool/data/depth_data.nc",
+  "WEATHER_DATA": "/home/<user>/WeatherRoutingTool/data/weather_data.nc",
+  "ROUTE_PATH": "/home/<user>/WeatherRoutingTool/<...>",
+  
+  "ALGORITHM_TYPE":"speedy_isobased",
+  "ISOCHRONE_NUMBER_OF_ROUTES": 20,
+  "ISOCHRONE_PRUNE_GROUPS": "multiple_routes",
+  "ISOCHRONE_PRUNE_SEGMENTS": 200,
+
+  "ROUTER_HDGS_SEGMENTS": 30,
+  "ROUTER_HDGS_INCREMENTS_DEG": 6,
+  "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
+  "ISOCHRONE_PRUNE_SEGMENTS": 20,
+
+  "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest",
+  "ISOCHRONE_NUMBER_OF_ROUTES": 1,
+
+  "GENETIC_NUMBER_GENERATIONS": 20,
+  "GENETIC_NUMBER_OFFSPRINGS": 2,
+  "GENETIC_POPULATION_SIZE": 20,
+  "GENETIC_POPULATION_TYPE": "grid_based",
+
+  "BOAT_TYPE": "speedy_isobased",
+  "BOAT_BREADTH": 32,
+  "BOAT_FUEL_RATE": 167,
+  "BOAT_HBR": 30,
+  "BOAT_LENGTH": 180,
+  "BOAT_SMCR_POWER" : 6502,
+  "BOAT_SPEED": 6
+}

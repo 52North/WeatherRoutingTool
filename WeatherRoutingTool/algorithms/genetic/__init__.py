@@ -42,8 +42,10 @@ class Genetic(RoutingAlg):
         self.config = config
 
         # running
-        # self.figure_path = graphics.get_figure_path()
-        self.figure_path = os.path.join(config.ROUTE_PATH, "figs")
+        self.figure_path = graphics.get_figure_path()
+
+        if self.figure_path is not None:
+            os.makedirs(self.figure_path, exist_ok=True)
 
         self.default_map: Map = config.DEFAULT_MAP
 
@@ -87,7 +89,8 @@ class Genetic(RoutingAlg):
 
         mutation = MutationFactory.get_mutation(self.config)
 
-        repair = RepairFactory.get_repair()
+        repair = RepairFactory.get_repair(
+            self.config, constraints_list)
 
         duplicates = utils.RouteDuplicateElimination()
 
@@ -100,7 +103,7 @@ class Genetic(RoutingAlg):
             res=res_minimize,
             problem=problem,)
 
-        return res_terminate
+        return res_terminate, 9
 
     def optimize(
         self,
@@ -291,12 +294,18 @@ class Genetic(RoutingAlg):
 
             last_pop = history[igen].pop.get('X')
 
-            # for iroute in range(0, self.pop_size):
-            for iroute in range(0, len(last_pop)):
+            marker_kw = dict(
+                marker="o",
+                markersize=3,
+                markerfacecolor="gold",
+                markeredgecolor="black", )
+
+            for iroute in range(0, last_pop.shape[0]):
                 if iroute == 0:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
+                        **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         label=f"full population [{last_pop.shape[0]}]", )
 
@@ -304,12 +313,14 @@ class Genetic(RoutingAlg):
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
+                        **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick", )
 
             if igen == (self.n_generations - 1):
                 ax.plot(
                     best_route[:, 1],
                     best_route[:, 0],
+                    **marker_kw,
                     color="blue",
                     label="best route", )
 
