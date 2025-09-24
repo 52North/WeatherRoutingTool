@@ -279,18 +279,30 @@ class Genetic(RoutingAlg):
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
                         color="firebrick",
+                        marker="o",
+                        markersize=4,
+                        markerfacecolor="gold",
+                        markeredgecolor="black",
                         label=f"full population [{last_pop.shape[0]}]", )
 
                 else:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
+                        marker="o",
+                        markersize=4,
+                        markerfacecolor="gold",
+                        markeredgecolor="black",
                         color="firebrick", )
 
             if igen == (self.n_generations - 1):
                 ax.plot(
                     best_route[:, 1],
                     best_route[:, 0],
+                    marker="o",
+                    markersize=4,
+                    markerfacecolor="gold",
+                    markeredgecolor="black",
                     color="blue",
                     label="best route", )
 
