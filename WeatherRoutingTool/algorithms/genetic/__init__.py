@@ -279,7 +279,7 @@ class Genetic(RoutingAlg):
                 markerfacecolor="gold",
                 markeredgecolor="black", )
 
-            for iroute in range(0, self.pop_size):
+            for iroute in range(0, last_pop.shape[0]):
                 if iroute == 0:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],

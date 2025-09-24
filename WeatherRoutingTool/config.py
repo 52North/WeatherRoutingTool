@@ -79,7 +79,7 @@ class Config(BaseModel):
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # number of offsprings for genetic algorithm
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
-    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson'] = 'grid_based'  # type for initial population
+    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial population
     # (options: 'grid_based', 'from_geojson')
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
 
@@ -388,10 +388,10 @@ class Config(BaseModel):
                 map_coords = self.DEFAULT_MAP
                 if map_coords:
                     lat_min, lon_min, lat_max, lon_max = map_coords
-                    if not (lat.min() <= lat_min <= lat.max() and
-                            lat.min() <= lat_max <= lat.max() and
-                            lon.min() <= lon_min <= lon.max() and
-                            lon.min() <= lon_max <= lon.max()):
+                    if not (round(lat.min()) <= lat_min <= round(lat.max()) and
+                            round(lat.min()) <= lat_max <= round(lat.max()) and
+                            round(lon.min()) <= lon_min <= round(lon.max()) and
+                            round(lon.min()) <= lon_max <= round(lon.max())):
                         raise ValueError("Depth data does not cover the map region.")
 
             except Exception as e:
