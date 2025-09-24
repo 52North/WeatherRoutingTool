@@ -88,7 +88,7 @@ class Genetic(RoutingAlg):
             res=res_minimize,
             problem=problem,)
 
-        return res_terminate, 0
+        return res_terminate, 9
 
     def optimize(
         self,
