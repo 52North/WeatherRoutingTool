@@ -1,6 +1,6 @@
 from pymoo.core.mutation import Mutation
 
-from pyproj import Geod
+from geographiclib.geodesic import Geodesic
 import numpy as np
 
 import logging
@@ -37,29 +37,38 @@ class NoMutation(MutationBase):
 class RandomWalkMutation(Mutation):
     def __init__(
             self,
-            ellps: str = "WGS84",
             dist: int = int(1e4),
             n_updates: int = 10,
             **kw
     ):
         super().__init__(**kw)
 
-        self.geod = Geod(ellps=ellps)
+        self.geod = Geodesic.WGS84
         self.dist = dist
         self.n_updates = n_updates
 
     def random_walk(
         self,
-        point,
-        dist: int = int(1e4),
-        bearing: int = 45
+        point: tuple[float, float],
+        dist: float = 1e4,
+        bearing: float = 45.0,
     ) -> tuple[float, float]:
-        """Randomly pick an N4 neighbour of a waypoint"""
+        """Pick an N4 neighbour of a waypoint
 
-        x, y = point
-
-        lat, lon, back_azimuth = self.geod.fwd(x, y, bearing, dist)
-        return lat, lon
+        :param point: (lat, lon) in degrees.
+        :type point: tuple[float, float]
+        :param dist: distance in meters
+        :type dist: float
+        :param bearing: Azimuth in degrees (clockwise from North)
+        :type bearing: float
+        :return: (lat, lon) in degrees.
+        :rtype: tuple[float, float]
+        """
+        lat0, lon0 = point
+        result = self.geod.Direct(lat0, lon0, bearing, dist)
+        lat2 = result["lat2"]
+        lon2 = result["lon2"]
+        return lat2, lon2
 
     def mutate(self, problem, X, **kw):
         for i, (rt,) in enumerate(X):

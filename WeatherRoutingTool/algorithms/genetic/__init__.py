@@ -39,11 +39,10 @@ class Genetic(RoutingAlg):
         self.config = config
 
         # running
-        # self.figure_path = graphics.get_figure_path()
-        self.figure_path = os.path.join(config.ROUTE_PATH, "figs")
+        self.figure_path = graphics.get_figure_path()
 
-        if not os.path.exists(self.figure_path):
-            os.makedirs(self.figure_path)
+        if self.figure_path is not None:
+            os.makedirs(self.figure_path, exist_ok=True)
 
         self.default_map: Map = config.DEFAULT_MAP
 
