@@ -221,7 +221,7 @@ class PopulationFactory:
                     pop_size=population_size, )
 
             case "isofuel":
-                return IsofuelPopulation(
+                return IsoFuelPopulation(
                     config=config,
                     boat=boat,
                     default_route=config.DEFAULT_ROUTE,

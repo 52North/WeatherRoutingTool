@@ -49,10 +49,10 @@ class RandomWalkMutation(Mutation):
         self.n_updates = n_updates
 
     def random_walk(
-            self,
-            point,
-            dist = int(1e4),
-            bearing: int = 45
+        self,
+        point,
+        dist: int = int(1e4),
+        bearing: int = 45
     ) -> tuple[float, float]:
         """Randomly pick an N4 neighbour of a waypoint"""
 

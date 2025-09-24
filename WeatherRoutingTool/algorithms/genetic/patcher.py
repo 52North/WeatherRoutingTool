@@ -13,14 +13,11 @@ from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 
-
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
 
 
@@ -58,8 +55,9 @@ class IsofuelPatcher:
     """Use the IsoFuel algorithm for route(s) generation
 
     Intuition behind having this as a class:
-    1. The Isofuel path finding component can be quite expensive during the preparation stage (defining map, loading data, etc.).
-        Having setup and execution as separate components could help speed things up.
+    1. The Isofuel path finding component can be quite expensive during the
+        preparation stage (defining map, loading data, etc.). Having setup and
+        execution as separate components could help speed things up.
     """
 
     def _setup_components(self, config):
@@ -78,7 +76,6 @@ class IsofuelPatcher:
         # basic settings
         windfile = config.WEATHER_DATA
         depthfile = config.DEPTH_DATA
-        routepath = config.ROUTE_PATH
         time_resolution = config.DELTA_TIME_FORECAST
         time_forecast = config.TIME_FORECAST
         lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
@@ -87,8 +84,13 @@ class IsofuelPatcher:
 
         # *******************************************
         # initialise weather
-        wt = WeatherFactory.get_weather(config._DATA_MODE_WEATHER, windfile, departure_time, time_forecast, time_resolution,
-                                        default_map)
+        wt = WeatherFactory.get_weather(
+            config._DATA_MODE_WEATHER,
+            windfile,
+            departure_time,
+            time_forecast,
+            time_resolution,
+            default_map, )
 
         # *******************************************
         # initialise boat
@@ -97,13 +99,20 @@ class IsofuelPatcher:
 
         # *******************************************
         # initialise constraints
-        water_depth = WaterDepth(config._DATA_MODE_DEPTH, boat.get_required_water_depth(),
-                                default_map, depthfile)
+        water_depth = WaterDepth(
+            config._DATA_MODE_DEPTH,
+            boat.get_required_water_depth(),
+            default_map,
+            depthfile, )
+
         constraints_list = ConstraintsListFactory.get_constraints_list(
-            constraints_string_list=config.CONSTRAINTS_LIST, data_mode=config._DATA_MODE_DEPTH,
+            constraints_string_list=config.CONSTRAINTS_LIST,
+            data_mode=config._DATA_MODE_DEPTH,
             min_depth=boat.get_required_water_depth(),
-            map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS,
-            courses_path=config.COURSES_FILE)
+            map_size=default_map,
+            depthfile=depthfile,
+            waypoints=config.INTERMEDIATE_WAYPOINTS,
+            courses_path=config.COURSES_FILE, )
 
         return wt, boat, water_depth, constraints_list
 
