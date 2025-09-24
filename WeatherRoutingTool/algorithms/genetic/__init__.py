@@ -273,36 +273,33 @@ class Genetic(RoutingAlg):
 
             last_pop = history[igen].pop.get('X')
 
+            marker_kw = dict(
+                marker="o",
+                markersize=3,
+                markerfacecolor="gold",
+                markeredgecolor="black", )
+
             for iroute in range(0, self.pop_size):
                 if iroute == 0:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
+                        **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
-                        marker="o",
-                        markersize=4,
-                        markerfacecolor="gold",
-                        markeredgecolor="black",
                         label=f"full population [{last_pop.shape[0]}]", )
 
                 else:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
-                        marker="o",
-                        markersize=4,
-                        markerfacecolor="gold",
-                        markeredgecolor="black",
+                        **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick", )
 
             if igen == (self.n_generations - 1):
                 ax.plot(
                     best_route[:, 1],
                     best_route[:, 0],
-                    marker="o",
-                    markersize=4,
-                    markerfacecolor="gold",
-                    markeredgecolor="black",
+                    **marker_kw,
                     color="blue",
                     label="best route", )
 
