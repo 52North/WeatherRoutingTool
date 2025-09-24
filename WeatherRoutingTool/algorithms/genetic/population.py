@@ -181,7 +181,7 @@ class IsoFuelPopulation(Population):
             default_map=config.DEFAULT_MAP, )
 
     def generate(self, problem, n_samples, **kw):
-        routes = self.patcher.generate(self.src, self.dst, self.departure_time)
+        routes = self.patcher.patch(self.src, self.dst, self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
 

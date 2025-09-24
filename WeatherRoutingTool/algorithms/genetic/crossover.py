@@ -8,6 +8,7 @@ import logging
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.algorithms.genetic import patcher
 
 logger = logging.getLogger("WRT.genetic.crossover")
 
@@ -49,8 +50,8 @@ class OffspringRejectionCrossover(Crossover):
             o1, o2 = self.crossover(p1.copy(), p2.copy())
 
             if (
-                self.route_constraint_violations(o1).any() or
-                self.route_constraint_violations(o2).any()
+                utils.get_constraints(p1, self.constraints_list) or
+                utils.get_constraints(p2, self.constraints_list)
             ):
                 Y[0, k, 0] = p1
                 Y[1, k, 0] = p2
@@ -90,21 +91,83 @@ class OffspringRejectionCrossover(Crossover):
 class SinglePointCrossover(OffspringRejectionCrossover):
     """Single-point crossover operator with great-circle patching"""
 
-    def crossover(self, p1, p2):
-        xp1 = np.random.randint(1, p1.shape[0] - 1)
-        xp2 = np.random.randint(1, p2.shape[0] - 1)
+    def __init__(self, config: Config, **kw):
+        super().__init__(**kw)
 
-        gcr_dist = 1e6
+        # variables
+        self.config = config
+        self.patch_type = "isofuel"
+
+    def crossover(self, p1, p2):
+        # setup patching
+        match self.patch_type:
+            case "isofuel":
+                patchfn = patcher.IsofuelPatcher.for_single_route(
+                    default_map=self.config.DEFAULT_MAP, )
+            case "gcr":
+                patchfn = patcher.GreatCircleRoutePatcher(
+                    config=self.config,
+                    dist=1e4, )
+            case _:
+                raise ValueError("Invalid patcher type")
+
+        p1x = np.random.randint(1, p1.shape[0] - 1)
+        p2x = np.random.randint(1, p2.shape[0] - 1)
 
         r1 = np.concatenate([
-            p1[:xp1],
-            utils.great_circle_route(tuple(p1[xp1-1]), tuple(p2[xp2]), distance=gcr_dist),
-            p2[xp2:]])
+            p1[:p1x],
+            patchfn.patch(tuple(p1[p1x-1]), tuple(p2[p2x]), self.departure_time),
+            p2[p2x:], ])
 
         r2 = np.concatenate([
-            p2[:xp2],
-            utils.great_circle_route(tuple(p2[xp2-1]), tuple(p1[xp1]), distance=gcr_dist),
-            p1[xp1:]])
+            p2[:p2x],
+            patchfn.patch(tuple(p2[p2x-1]), tuple(p1[p1x]), self.departure_time),
+            p1[p1x:], ])
+
+        return r1, r2
+
+
+class TwoPointCrossover(OffspringRejectionCrossover):
+    """Two-point crossover operator with great-circle patching"""
+
+    def __init__(self, config: Config, **kw):
+        super().__init__(**kw)
+
+        # variables
+        self.config = config
+        self.patch_type = "isofuel"
+
+    def crossover(self, p1, p2):
+        match self.patch_type:
+            case "isofuel":
+                patchfn = patcher.IsofuelPatcher.for_single_route(
+                    default_map=self.config.DEFAULT_MAP, )
+            case "gcr":
+                patchfn = patcher.GreatCircleRoutePatcher(
+                    config=self.config,
+                    dist=1e4, )
+            case _:
+                raise ValueError("Invalid patcher type")
+
+        p1x1 = np.random.randint(1, p1.shape[0] - 4)
+        p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
+
+        p2x1 = np.random.randint(1, p2.shape[0] - 4)
+        p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
+
+        r1 = np.concatenate([
+            p1[:p1x1],
+            patchfn.patch(tuple(p1[p1x1-1]), tuple(p2[p2x1]), self.departure_time),
+            p2[p2x1:p2x2],
+            patchfn.patch(tuple(p2[p2x2]), tuple(p1[p1x2]), self.departure_time),
+            p1[p1x2:], ])
+
+        r2 = np.concatenate([
+            p2[:p2x1],
+            patchfn.patch(tuple(p2[p2x1-1]), tuple(p1[p1x1]), self.departure_time),
+            p1[p1x1:p1x2],
+            patchfn.patch(tuple(p1[p1x2-1]), tuple(p2[p2x2]), self.departure_time),
+            p2[p2x2:], ])
 
         return r1, r2
 
@@ -168,13 +231,22 @@ class PMX(OffspringRejectionCrossover):
         return c1, c2
 
 
+# factory
+# ----------
 class CrossoverFactory:
     @staticmethod
     def get_crossover(config: Config, constraints_list: ConstraintsList):
         # inputs
         departure_time = config.DEPARTURE_TIME
 
+        return TwoPointCrossover(
+            config=config,
+            departure_time=departure_time,
+            constraints_list=constraints_list,
+            prob=.5, )
+
         return SinglePointCrossover(
+            config=config,
             departure_time=departure_time,
             constraints_list=constraints_list,
             prob=.5, )
