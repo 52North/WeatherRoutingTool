@@ -17,6 +17,12 @@ logger = logging.getLogger("WRT.genetic.crossover")
 # base classes
 # ----------
 class CrossoverBase(Crossover):
+    """Base Crossover Class
+
+    Kept for consistency and to provide super-class level management of
+    Crossover implementations.
+    """
+
     def __init__(self, prob=.5):
         super().__init__(n_parents=2, n_offsprings=2, prob=prob)
 
@@ -28,6 +34,11 @@ class OffspringRejectionCrossover(CrossoverBase):
     - Validate if offsprings violate discrete constraints
         - if True, get rid of both offsprings, and return parents
         - if False, return offsprings
+
+    :param departure_time: Time of ship departure (from config)
+    :type departure_time: datetime
+    :param constraints_list: List of constraints
+    :type constraints_list: ConstraintsList
     """
 
     def __init__(
@@ -94,7 +105,11 @@ class OffspringRejectionCrossover(CrossoverBase):
 # crossover implementations
 # ----------
 class SinglePointCrossover(OffspringRejectionCrossover):
-    """Single-point crossover operator with great-circle patching"""
+    """Single-point crossover operator with great-circle patching
+
+    :param config: Configuration for the run
+    :type config: Config
+    """
 
     def __init__(self, config: Config, **kw):
         super().__init__(**kw)
@@ -131,7 +146,11 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 
 
 class TwoPointCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching"""
+    """Two-point crossover operator with great-circle patching
+
+    :param config: Configuration for the run
+    :type config: Config
+    """
 
     def __init__(self, config: Config, **kw):
         super().__init__(**kw)
@@ -174,7 +193,11 @@ class TwoPointCrossover(OffspringRejectionCrossover):
 
 
 class EdgeRecombinationCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching"""
+    """Two-point crossover operator with great-circle patching
+
+    :param config: Configuration for the run
+    :type config: Config
+    """
 
     def __init__(self, config: Config, **kw):
         super().__init__(**kw)
@@ -211,7 +234,11 @@ class EdgeRecombinationCrossover(OffspringRejectionCrossover):
 
 
 class TwoPointCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching"""
+    """Two-point crossover operator with great-circle patching
+
+    :param config: Configuration for the run
+    :type config: Config
+    """
 
     def __init__(self, config: Config, **kw):
         super().__init__(**kw)
@@ -315,6 +342,12 @@ class PMX(OffspringRejectionCrossover):
 #
 # ----------
 class RandomizedCrossoversOrchestrator(CrossoverBase):
+    """Randomly selects one of the provided crossovers during every call to _do
+
+    :param opts: List of Crossover operators
+    :type opts: list[Crossover]
+    """
+
     def __init__(self, opts, **kw):
         super().__init__(**kw)
 

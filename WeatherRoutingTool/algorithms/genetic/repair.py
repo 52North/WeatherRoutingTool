@@ -12,6 +12,15 @@ logger = logging.getLogger("WRT.genetic.repair")
 
 # ----------
 class RepairBase(Repair):
+    """Base Repair class
+
+    Kept for consistency and to provide super-class level management of
+    Repair implementations.
+
+    :param config: Configuration for the run
+    :type config: Config
+    """
+
     def __init__(self, config: Config):
         super().__init__()
 
@@ -21,6 +30,8 @@ class RepairBase(Repair):
         return self.repairfn(problem, X, **kw)
 
     def repairfn(self, problem, X, **kw):
+        """Implemenation of the repair function"""
+
         pass
 
 
@@ -58,6 +69,9 @@ class WaypointsInfillRepair(RepairBase):
 
 class ConstraintViolationRepair(RepairBase):
     """Repair routes by finding a feasible route between constraint violations
+
+    :param config: Configuration for the run
+    :type config: Config
     """
 
     def __init__(self, config: Config, constraints_list, **kw):
@@ -97,6 +111,11 @@ class ConstraintViolationRepair(RepairBase):
 # orchestration
 # ----------
 class ChainedRepairsOrchestrator(Repair):
+    """Executes repairs in the order they are entered in
+
+    :param order: List of Repair implementations to execute in that order
+    :type order: list[Repair]"""
+
     def __init__(self, order):
         super().__init__()
 

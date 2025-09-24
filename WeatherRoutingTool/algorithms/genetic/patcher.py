@@ -25,12 +25,26 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, W
 # ----------
 class PatcherBase:
     def patch(self, src, dst):
+        """Patch a route between `src` and `dst`
+
+        :param src: Source coords as (lat, lon)
+        :type src: tuple[float, float]
+        :param dst: Destination coords as (lat, lon)
+        :type dst: tuple[float, float]
+        """
+
         pass
 
 
 # patcher variants
 # ----------
 class GreatCircleRoutePatcher(PatcherBase):
+    """Produce a set of waypoints along the Great Circle Route between src and dst
+
+    :param dist: Dist between each waypoint in the Great Circle Route
+    :type dist: float
+    """
+
     def __init__(self, dist: float = 100_000.0):
         super().__init__()
 
@@ -63,12 +77,17 @@ class GreatCircleRoutePatcher(PatcherBase):
 
 
 class IsofuelPatcher(PatcherBase):
-    """Use the IsoFuel algorithm for route(s) generation
+    """Use the IsoFuel algorithm to produce a route between src and dst.
 
     Intuition behind having this as a class:
     1. The Isofuel path finding component can be quite expensive during the
         preparation stage (defining map, loading data, etc.). Having setup and
         execution as separate components could help speed things up.
+
+    :param config: Configuration for the run
+    :type config: Config
+    :param n_routes: Type of response expected. Either "single" or "multiple"
+    :type n_routes: str
     """
 
     def _setup_components(self, config):
@@ -174,6 +193,8 @@ class IsofuelPatcher(PatcherBase):
 
     @classmethod
     def for_multiple_routes(cls, default_map, **kw):
+        """Class constructor for multiple routes generation"""
+
         cfg = Config.assign_config(
             path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json")
 
@@ -186,6 +207,8 @@ class IsofuelPatcher(PatcherBase):
 
     @classmethod
     def for_single_route(cls, default_map, **kw):
+        """Class constructor for single route generation"""
+
         cfg = Config.assign_config(
             path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json")
 

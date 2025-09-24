@@ -16,8 +16,8 @@ logger = logging.getLogger("WRT.genetic.mutation")
 class MutationBase(Mutation):
     """Base Mutation Class
 
-    Kept for consistency with how crossover is implemented and to provide
-    super-class level orchestration of Mutation implementations.
+    Kept for consistency and to provide super-class level management of
+    Mutation implementations.
     """
 
     def _do(self, problem, X, **kw):
@@ -30,21 +30,33 @@ class MutationBase(Mutation):
 # mutation variants
 # ----------
 class NoMutation(MutationBase):
+    """Empty Mutation class for testing"""
+
     def mutate(self, problem, X, **kw):
         return super().__init__()
 
 
 class RandomWalkMutation(Mutation):
+    """Moves a random waypoint in an individual in the direction of a random bearing
+    by a distance specified by the `gcr_dist` parameter.
+    The entire task is repeated `n_updates` number of times to produce substantial variation.
+
+    :param gcr_dist: The distance by which to move the point
+    :type gcr_dist: float
+    :param n_updates: Number of iterations to repeat the random walk operation
+    :type n_updates: int
+    """
+
     def __init__(
             self,
-            dist: int = int(1e4),
+            gcr_dist: float = 1e4,
             n_updates: int = 10,
             **kw
     ):
         super().__init__(**kw)
 
         self.geod = Geodesic.WGS84
-        self.dist = dist
+        self.dist = gcr_dist
         self.n_updates = n_updates
 
     def random_walk(
@@ -85,6 +97,10 @@ class RandomWalkMutation(Mutation):
 
 
 class RouteBlendMutation(MutationBase):
+    """Generates a bezier curve between two randomly selected indices and infills
+    it with 2x the number of waypoints previously present in the selected range.
+    """
+
     @staticmethod
     def bezier_curve(control_points, n_points=100):
         """Generate a Bezier curve given control points.
@@ -128,6 +144,12 @@ class RouteBlendMutation(MutationBase):
 
 # ----------
 class RandomMutationsOrchestrator(MutationBase):
+    """Select a mutation operator at random and apply it over the population
+
+    :param opts: List of Mutation classes
+    :type opts: list[Mutation]
+    """
+
     def __init__(self, opts, **kw):
         super().__init__(**kw)
 
