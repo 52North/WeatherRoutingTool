@@ -1,8 +1,8 @@
 from pymoo.core.mutation import Mutation
 
+from pyproj import Geod
 import numpy as np
 
-from copy import deepcopy
 import logging
 import math
 
@@ -32,6 +32,47 @@ class MutationBase(Mutation):
 class NoMutation(MutationBase):
     def mutate(self, problem, X, **kw):
         return super().__init__()
+
+
+class RandomWalkMutation(Mutation):
+    def __init__(
+            self,
+            ellps: str = "WGS84",
+            dist: int = int(1e4),
+            n_updates: int = 10,
+            **kw
+    ):
+        super().__init__(**kw)
+
+        self.geod = Geod(ellps=ellps)
+        self.dist = dist
+        self.n_updates = n_updates
+
+    def random_walk(
+            self,
+            point,
+            dist = int(1e4),
+            bearing: int = 45
+    ) -> tuple[float, float]:
+        """Randomly pick an N4 neighbour of a waypoint"""
+
+        x, y = point
+
+        lat, lon, back_azimuth = self.geod.fwd(x, y, bearing, dist)
+        return lat, lon
+
+    def mutate(self, problem, X, **kw):
+        for i, (rt,) in enumerate(X):
+            for _ in range(self.n_updates):
+                rindex = np.random.randint(1, rt.shape[0] - 1)
+                p1 = rt[rindex]
+
+                p2 = self.random_walk(
+                    point=p1,
+                    dist=self.dist,
+                    bearing=np.random.choice([45, 135, 225, 315]), )
+                rt[rindex] = p2
+        return X
 
 
 class RouteBlendMutation(MutationBase):
@@ -77,7 +118,8 @@ class RouteBlendMutation(MutationBase):
 
 
 # factory
+# ----------
 class MutationFactory:
     @staticmethod
     def get_mutation(config: Config) -> Mutation:
-        return RouteBlendMutation()
+        return RandomWalkMutation()
