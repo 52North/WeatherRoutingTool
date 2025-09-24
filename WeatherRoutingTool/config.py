@@ -388,10 +388,10 @@ class Config(BaseModel):
                 map_coords = self.DEFAULT_MAP
                 if map_coords:
                     lat_min, lon_min, lat_max, lon_max = map_coords
-                    if not (round(lat.min()) <= lat_min <= round(lat.max()) and
-                            round(lat.min()) <= lat_max <= round(lat.max()) and
-                            round(lon.min()) <= lon_min <= round(lon.max()) and
-                            round(lon.min()) <= lon_max <= round(lon.max())):
+                    if not (lat.min() <= lat_min <= lat.max() and
+                            lat.min() <= lat_max <= lat.max() and
+                            lon.min() <= lon_min <= lon.max() and
+                            lon.min() <= lon_max <= lon.max()):
                         raise ValueError("Depth data does not cover the map region.")
 
             except Exception as e:
