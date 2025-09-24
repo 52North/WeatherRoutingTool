@@ -295,6 +295,10 @@ class IsoBasedStatus():
         error_exists = [ierr for ierr in self.available_errors.keys() if ierr == error_str]
         if not error_exists:
             raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
+
+        # prevent overwriting with "pruning_error" if state is "out_of_routes"
+        if self.error == "out_of_routes":
+            return
         self.error = error_str
         self.update_state("error")
 
@@ -646,7 +650,7 @@ class IsoBased(RoutingAlg):
                 continue
 
             self.pruning_per_step(True)
-            if self.status.error == "pruning_error":
+            if (self.status.error == "pruning_error") or (self.status.error == "out_of_routes"):
                 break
             self.update_fig('p')
             self.count += 1
@@ -802,6 +806,7 @@ class IsoBased(RoutingAlg):
                     logger.warning('No routes left for execution, terminating!')
                     self.status.set_error_str('out_of_routes')
                     self.status.needs_further_routing = False
+                    return
 
                 # organise routes for next step
                 self.set_next_step_routes()
