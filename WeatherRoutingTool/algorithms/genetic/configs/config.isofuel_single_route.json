@@ -14,20 +14,18 @@
   "BOAT_DRAUGHT_FORE": 10,
 
   "//": "route",
-  "DEFAULT_ROUTE": [37.50567, 12.304575, 33.82683, 34.31085333],
-  "DEPARTURE_TIME": "2023-08-19T10:32Z",
-  "DEFAULT_MAP": [30, -6, 47, 42],
   "CONSTRAINTS_LIST": [
     "land_crossing_global_land_mask",
-    "water_depth"],
+    "water_depth",
+    "on_map"],
 
   "//": "data",
   "DATA_MODE": "from_file",
 
-  "COURSES_FILE": "./runtime/data/data-02/courses_route.nc",
-  "DEPTH_DATA": "./runtime/data/data-02/depth_data.nc",
-  "WEATHER_DATA": "./runtime/data/data-02/weather_data.nc",
-  "ROUTE_PATH": "./runtime/workdir-isofuel-many/",
+  "COURSES_FILE": "./path/doesnt/exist/data/courses_route.nc",
+  "DEPTH_DATA": "./path/doesnt/exist/data/depth_data.nc",
+  "WEATHER_DATA": "./path/doesnt/exist/data/weather_data.nc",
+  "ROUTE_PATH": "./path/doesnt/exist/workdir-isofuel-mini/",
 
   "TIME_FORECAST": 90,
   "DELTA_TIME_FORECAST": 3,
