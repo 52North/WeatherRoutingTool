@@ -42,6 +42,9 @@ class Genetic(RoutingAlg):
         # self.figure_path = graphics.get_figure_path()
         self.figure_path = os.path.join(config.ROUTE_PATH, "figs")
 
+        if not os.path.exists(self.figure_path):
+            os.makedirs(self.figure_path)
+
         self.default_map: Map = config.DEFAULT_MAP
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
@@ -85,7 +88,7 @@ class Genetic(RoutingAlg):
             res=res_minimize,
             problem=problem,)
 
-        return res_terminate
+        return res_terminate, 0
 
     def optimize(
         self,
