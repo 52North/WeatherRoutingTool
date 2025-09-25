@@ -153,12 +153,12 @@ class IsofuelPatcher(PatcherBase):
         alg = IsoFuel(cfg)
         alg.path_to_route_folder = None
 
+        alg.init_fig(water_depth=self.water_depth, map_size=self.config.DEFAULT_MAP)
+
         min_fuel_route, err_code = alg.execute_routing(
             boat=self.boat,
             wt=self.wt,
             constraints_list=self.constraints_list, )
-
-        alg.init_fig(water_depth=self.water_depth, map_size=self.config.DEFAULT_MAP)
 
         # single route
         if self.n_routes == "single":
