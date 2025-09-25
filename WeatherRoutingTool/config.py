@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Annotated, List, Literal, Optional, Self, Union
 
 import pandas as pd
@@ -113,7 +113,7 @@ class Config(BaseModel):
     DEPTH_DATA: str = None  # path to depth data
     WEATHER_DATA: str = None  # path to weather data
     ROUTE_PATH: str  # path to the folder where the json file with the route will be written
-    CONFIG_PATH: str = None  # path to config file
+    CONFIG_PATH: Union[str, PosixPath] = None  # path to config file
 
     @classmethod
     def validate_config(cls, config_data):
@@ -180,6 +180,9 @@ class Config(BaseModel):
     @field_validator('DEPARTURE_TIME', mode='before')
     @classmethod
     def parse_and_validate_datetime(cls, v):
+        if isinstance(v, datetime):
+            return v
+
         try:
             dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
             return dt

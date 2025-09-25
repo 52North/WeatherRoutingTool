@@ -103,7 +103,7 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         match self.patch_type:
             case "isofuel":
                 patchfn = patcher.IsofuelPatcher.for_single_route(
-                    default_map=self.config.DEFAULT_MAP, )
+                    config=self.config, )
             case "gcr":
                 patchfn = patcher.GreatCircleRoutePatcher(
                     config=self.config,
@@ -141,7 +141,7 @@ class TwoPointCrossover(OffspringRejectionCrossover):
         match self.patch_type:
             case "isofuel":
                 patchfn = patcher.IsofuelPatcher.for_single_route(
-                    default_map=self.config.DEFAULT_MAP, )
+                    config=self.config, )
             case "gcr":
                 patchfn = patcher.GreatCircleRoutePatcher(
                     config=self.config,
