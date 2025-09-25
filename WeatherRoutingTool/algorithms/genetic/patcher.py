@@ -5,8 +5,8 @@ import numpy as np
 
 from pathlib import Path
 from datetime import datetime
-import functools
 import math
+import json
 import os
 
 from WeatherRoutingTool.weather import WeatherCond
@@ -192,13 +192,28 @@ class IsofuelPatcher(PatcherBase):
         return routes
 
     @classmethod
-    def for_multiple_routes(cls, default_map, **kw):
+    def for_multiple_routes(cls, config: Config, **kw):
         """Class constructor for multiple routes generation"""
 
-        cfg = Config.assign_config(
-            path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json")
+        cfg_select = config.model_dump(
+            include=[
+                "DEFAULT_ROUTE",
+                "DEPARTURE_TIME",
+                "DEFAULT_MAP",
 
-        cfg.DEFAULT_MAP = default_map
+                "COURSES_FILE",
+                "DEPTH_DATA",
+                "WEATHER_DATA",
+                "ROUTE_PATH",
+            ], )
+
+        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
+
+        with cfg_path.open() as fp:
+            dt = json.load(fp)
+
+        cfg = Config.model_validate({**dt, **cfg_select})
+        cfg.CONFIG_PATH = cfg_path
 
         for k, v in kw.items():
             setattr(cfg, k, v)
@@ -206,13 +221,28 @@ class IsofuelPatcher(PatcherBase):
         return cls(cfg, n_routes="multiple")
 
     @classmethod
-    def for_single_route(cls, default_map, **kw):
+    def for_single_route(cls, config: Config, **kw):
         """Class constructor for single route generation"""
 
-        cfg = Config.assign_config(
-            path=Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json")
+        cfg_select = config.model_dump(
+            include=[
+                "DEFAULT_ROUTE",
+                "DEPARTURE_TIME",
+                "DEFAULT_MAP",
 
-        cfg.DEFAULT_MAP = default_map
+                "COURSES_FILE",
+                "DEPTH_DATA",
+                "WEATHER_DATA",
+                "ROUTE_PATH",
+            ], )
+
+        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
+
+        with cfg_path.open() as fp:
+            dt = json.load(fp)
+
+        cfg = Config.model_validate({**dt, **cfg_select})
+        cfg.CONFIG_PATH = cfg_path
 
         for k, v in kw.items():
             setattr(cfg, k, v)

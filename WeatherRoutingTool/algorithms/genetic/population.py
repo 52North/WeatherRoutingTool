@@ -208,7 +208,7 @@ class IsoFuelPopulation(Population):
         self.departure_time = config.DEPARTURE_TIME
 
         self.patcher = patcher.IsofuelPatcher.for_multiple_routes(
-            default_map=config.DEFAULT_MAP, )
+            config=config, )
 
     def generate(self, problem, n_samples, **kw):
         routes = self.patcher.patch(self.src, self.dst, self.departure_time)
