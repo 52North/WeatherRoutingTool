@@ -158,6 +158,8 @@ class IsofuelPatcher(PatcherBase):
             wt=self.wt,
             constraints_list=self.constraints_list, )
 
+        alg.init_fig(water_depth=self.water_depth, map_size=self.config.DEFAULT_MAP)
+
         # single route
         if self.n_routes == "single":
             return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step], axis=1)
