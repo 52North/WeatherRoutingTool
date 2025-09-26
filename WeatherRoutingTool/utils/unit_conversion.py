@@ -129,7 +129,7 @@ def get_angle_bins(min_alpha, max_alpha, levels):
     if max_alpha < min_alpha:
         raise ValueError('Maximum angle needs to be larger than minimum angle!')
 
-    result = np.linspace(min_alpha.value, max_alpha.value, int(levels.value)) * u.degree
+    result = np.linspace(min_alpha.value, max_alpha.value, int(levels)) * u.degree
     cut_angles(result)
     return result
 
