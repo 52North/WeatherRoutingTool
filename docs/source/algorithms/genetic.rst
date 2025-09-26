@@ -309,31 +309,6 @@ classes follows the following —
    b. Implementation consistency makes it easier to swap between different
    Patching implementations and maintains clean code
 
-
-Ideal and Nadir points
-^^^^^^^^^^^^^^^^^^^^^^
-
-   Monitoring convergence of the genetic algorithm for explainability
-   can be achieved by graphing the fitness values of the execution of
-   the algorithm.
-
-   Ideal and Nadir points represent the most and least optimum points of
-   the pareto solutions respectively. These can be difficult to measure
-   prior to the execution of the problem but certain assumptions can be
-   made:
-
-   - **Ideal Point** represents the best solution the algorithm can
-     achieve, which we can assume, for our complex problem to be either the
-     *fitness of the isofuel algorithm’s solution* or the *deterministic
-     solution to the grid based approach* can be used to model the
-     performance.
-
-   - **Nadir Point** represents the least optimum points of the Pareto
-     solutions. A deterministically measured optimal route produced by the
-     *recombination of the waypoints of the initial population* can be
-     assumed to be the nadir point; if the genetic algorithm results in a
-     worse configuration, it indicates a problem.
-
 Config Parameters
 -----------------
 
