@@ -4,6 +4,7 @@ import numpy as np
 
 from datetime import datetime
 import logging
+import random
 
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
@@ -15,7 +16,12 @@ logger = logging.getLogger("WRT.genetic.crossover")
 
 # base classes
 # ----------
-class OffspringRejectionCrossover(Crossover):
+class CrossoverBase(Crossover):
+    def __init__(self, prob=.5):
+        super().__init__(n_parents=2, n_offsprings=2, prob=prob)
+
+
+class OffspringRejectionCrossover(CrossoverBase):
     """Offspring-Rejection Crossover Base Class
 
     Algorithm:
@@ -31,7 +37,7 @@ class OffspringRejectionCrossover(Crossover):
         constraints_list: ConstraintsList,
         prob=.5,
     ):
-        super().__init__(n_parents=2, n_offsprings=2, prob=prob)
+        super().__init__(prob=prob)
 
         self.departure_time = departure_time
         self.constraints_list = constraints_list
@@ -91,12 +97,12 @@ class OffspringRejectionCrossover(Crossover):
 class SinglePointCrossover(OffspringRejectionCrossover):
     """Single-point crossover operator with great-circle patching"""
 
-    def __init__(self, config: Config, **kw):
+    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
 
         # variables
         self.config = config
-        self.patch_type = "isofuel"
+        self.patch_type = patch_type
 
     def crossover(self, p1, p2):
         # setup patching
@@ -105,9 +111,7 @@ class SinglePointCrossover(OffspringRejectionCrossover):
                 patchfn = patcher.IsofuelPatcher.for_single_route(
                     config=self.config, )
             case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(
-                    config=self.config,
-                    dist=1e4, )
+                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
             case _:
                 raise ValueError("Invalid patcher type")
 
@@ -130,12 +134,12 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 class TwoPointCrossover(OffspringRejectionCrossover):
     """Two-point crossover operator with great-circle patching"""
 
-    def __init__(self, config: Config, **kw):
+    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
 
         # variables
         self.config = config
-        self.patch_type = "isofuel"
+        self.patch_type = patch_type
 
     def crossover(self, p1, p2):
         match self.patch_type:
@@ -143,9 +147,7 @@ class TwoPointCrossover(OffspringRejectionCrossover):
                 patchfn = patcher.IsofuelPatcher.for_single_route(
                     config=self.config, )
             case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(
-                    config=self.config,
-                    dist=1e4, )
+                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
             case _:
                 raise ValueError("Invalid patcher type")
 
@@ -231,6 +233,19 @@ class PMX(OffspringRejectionCrossover):
         return c1, c2
 
 
+#
+# ----------
+class RandomizedCrossoversOrchestrator(CrossoverBase):
+    def __init__(self, opts, **kw):
+        super().__init__(**kw)
+
+        self.opts = opts
+
+    def _do(self, problem, X, **kw):
+        opt = self.opts[np.random.randint(0, len(self.opts))]
+        return opt._do(problem, X, **kw)
+
+
 # factory
 # ----------
 class CrossoverFactory:
@@ -239,24 +254,18 @@ class CrossoverFactory:
         # inputs
         departure_time = config.DEPARTURE_TIME
 
-        return TwoPointCrossover(
-            config=config,
-            departure_time=departure_time,
-            constraints_list=constraints_list,
-            prob=.5, )
-
-        return SinglePointCrossover(
-            config=config,
-            departure_time=departure_time,
-            constraints_list=constraints_list,
-            prob=.5, )
-
-        # return PMX(
-        #     departure_time=departure_time,
-        #     constraints_list=constraints_list,
-        #     prob=.5, )
-
-        return OffspringRejectionCrossover(
-            departure_time=departure_time,
-            constraints_list=constraints_list,
-            prob=.5, )
+        return RandomizedCrossoversOrchestrator(
+            opts=[
+                TwoPointCrossover(
+                    config=config,
+                    patch_type="gcr",
+                    departure_time=departure_time,
+                    constraints_list=constraints_list,
+                    prob=.5, ),
+                SinglePointCrossover(
+                    config=config,
+                    patch_type="gcr",
+                    departure_time=departure_time,
+                    constraints_list=constraints_list,
+                    prob=.5, ),
+            ], )
