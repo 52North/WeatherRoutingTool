@@ -105,7 +105,7 @@ class OffspringRejectionCrossover(CrossoverBase):
 # crossover implementations
 # ----------
 class SinglePointCrossover(OffspringRejectionCrossover):
-    """Single-point crossover operator with great-circle patching
+    """Single-point Crossover
 
     :param config: Configuration for the run
     :type config: Config
@@ -146,95 +146,7 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 
 
 class TwoPointCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching
-
-    :param config: Configuration for the run
-    :type config: Config
-    """
-
-    def __init__(self, config: Config, **kw):
-        super().__init__(**kw)
-
-        # variables
-        self.config = config
-        self.patch_type = "gcr"
-
-    def crossover(self, p1, p2):
-        match self.patch_type:
-            case "isofuel":
-                patchfn = patcher.IsofuelPatcher.for_single_route(
-                    default_map=self.config.DEFAULT_MAP, )
-            case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
-            case _:
-                raise ValueError("Invalid patcher type")
-
-        p1x1 = np.random.randint(1, p1.shape[0] - 4)
-        p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
-
-        p2x1 = np.random.randint(1, p2.shape[0] - 4)
-        p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
-
-        r1 = np.concatenate([
-            p1[:p1x1],
-            patchfn.patch(tuple(p1[p1x1-1]), tuple(p2[p2x1]), self.departure_time),
-            p2[p2x1:p2x2],
-            patchfn.patch(tuple(p2[p2x2]), tuple(p1[p1x2]), self.departure_time),
-            p1[p1x2:], ])
-
-        r2 = np.concatenate([
-            p2[:p2x1],
-            patchfn.patch(tuple(p2[p2x1-1]), tuple(p1[p1x1]), self.departure_time),
-            p1[p1x1:p1x2],
-            patchfn.patch(tuple(p1[p1x2-1]), tuple(p2[p2x2]), self.departure_time),
-            p2[p2x2:], ])
-
-        return r1, r2
-
-
-class EdgeRecombinationCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching
-
-    :param config: Configuration for the run
-    :type config: Config
-    """
-
-    def __init__(self, config: Config, **kw):
-        super().__init__(**kw)
-
-        # variables
-        self.config = config
-        self.patch_type = "gcr"
-
-    def crossover(self, p1, p2):
-        # setup patching
-        match self.patch_type:
-            case "isofuel":
-                patchfn = patcher.IsofuelPatcher.for_single_route(
-                    default_map=self.config.DEFAULT_MAP, )
-            case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
-            case _:
-                raise ValueError("Invalid patcher type")
-
-        p1x = np.random.randint(1, p1.shape[0] - 1)
-        p2x = np.random.randint(1, p2.shape[0] - 1)
-
-        r1 = np.concatenate([
-            p1[:p1x],
-            patchfn.patch(tuple(p1[p1x-1]), tuple(p2[p2x]), self.departure_time),
-            p2[p2x:], ])
-
-        r2 = np.concatenate([
-            p2[:p2x],
-            patchfn.patch(tuple(p2[p2x-1]), tuple(p1[p1x]), self.departure_time),
-            p1[p1x:], ])
-
-        return r1, r2
-
-
-class TwoPointCrossover(OffspringRejectionCrossover):
-    """Two-point crossover operator with great-circle patching
+    """Two-point Crossover
 
     :param config: Configuration for the run
     :type config: Config

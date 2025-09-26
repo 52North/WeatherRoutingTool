@@ -119,31 +119,11 @@ class GridBasedPopulation(GridMixin, Population):
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
 
-            if self.route_constraint_violations(np.array([self.src, *route[1:-1], self.dst])).any():
-                logger.warning(f"Population {i} generation failed")
-
             # match first and last points to src and dst
             X[i, 0] = np.array([
                 self.src, *route[1:-1], self.dst])
 
         return X
-
-    def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
-        """Check if route breaks any discrete constraints
-
-        :param route: list of waypoints
-        :dtype route: np.ndarray
-        :return: Boolean array of constraint violations per waypoint
-        :rtype: np.ndarray
-        """
-
-        is_constrained = self.constraints_list.safe_crossing_discrete(
-            route[:-1, 0], route[:-1, 1], route[1:, 0], route[1:, 1],
-            current_time=self.departure_time,
-            is_constrained=[False] * (route.shape[0] - 1), )
-
-        return np.array(is_constrained)
-
 
 class FromGeojsonPopulation(Population):
     """Genetic population from a directory of routes
