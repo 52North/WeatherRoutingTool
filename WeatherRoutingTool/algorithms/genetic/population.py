@@ -74,7 +74,7 @@ class GridBasedPopulation(GridMixin, Population):
     Notes on the inheritance:
      - GridMixin has to be inherited first because Sampling isn't designed for multiple inheritance
      - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
-     - call print(GridBasedPopulation.mro()) to see the method resolution order
+     - call `print(GridBasedPopulation.mro())` to see the method resolution order
     """
 
     def __init__(self, default_route, grid, constraints_list, pop_size):
@@ -125,12 +125,16 @@ class GridBasedPopulation(GridMixin, Population):
 
         return X
 
-
 class FromGeojsonPopulation(Population):
     """Genetic population from a directory of routes
 
-    NOTE: routes are expected to be named in the following format: `route_{1..N}.json`
-    example: route_1.json, route_2.json, route_3.json, ...
+    NOTE:
+        Routes are expected to be named in the following format: `route_{1..N}.json`
+
+        example: `route_1.json, route_2.json, route_3.json, ...`
+
+    :param routes_dir: Directory pointing to the routes folder
+    :type routes_dir: str
     """
 
     def __init__(self, routes_dir: str, default_route, constraints_list, pop_size):
@@ -167,7 +171,13 @@ class FromGeojsonPopulation(Population):
 
 
 class IsoFuelPopulation(Population):
-    """Population generation using the Isofuel algorithm"""
+    """Population generation using the IsoFuel algorithm
+
+    Produces initial routes using the IsoFuel algorithm's
+    ISOCHRONE_NUMBER_OF_STEPS configuration. If the number of generated routes
+    is lesser than the expected n_samples number of individuals, the last
+    produced route is repeated until the required number of individuals are met
+    """
 
     def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
         super().__init__(
@@ -197,14 +207,14 @@ class IsoFuelPopulation(Population):
 class PopulationFactory:
     @staticmethod
     def get_population(
-        config: Config,
-        boat: Boat,
-        constraints_list: ConstraintsList,
-        wt: WeatherCond,
+            config: Config,
+            boat: Boat,
+            constraints_list: ConstraintsList,
+            wt: WeatherCond,
     ) -> Population:
 
         # wave height grid
-        lat_res, lon_res = 10, 10
+        lat_res, lon_res = 1, 1
         wave_height = wt.ds.VHM0.isel(time=0)
         wave_height = wave_height[::lat_res, ::lon_res]
 

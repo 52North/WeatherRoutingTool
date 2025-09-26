@@ -10,12 +10,7 @@ logger = logging.getLogger('WRT.Genetic')
 
 
 class RoutingProblem(ElementwiseProblem):
-    """
-    Class definition of the weather routing problem
-    """
-    boat: None
-    constraint_list: None
-    departure_time: None
+    """GA definition of the Weather Routing Problem"""
 
     def __init__(self, departure_time, boat, constraint_list):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
@@ -24,18 +19,18 @@ class RoutingProblem(ElementwiseProblem):
         self.departure_time = departure_time
 
     def _evaluate(self, x, out, *args, **kwargs):
-        """
-        Method defined by pymoo which has to be overridden
+        """Overridden function for population evaluation
+
         :param x: numpy matrix with shape (rows: number of solutions/individuals, columns: number of design variables)
         :type x: numpy matrix
         :param out:
             out['F']: function values, vector of length of number of solutions
             out['G']: constraints
         :type out: dict
-        :param args:
-        :param kwargs:
-        :return:
+        :param *args:
+        :param **kwargs:
         """
+
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         fuel, _ = self.get_power(x[0])
         constraints = utils.get_constraints(x[0], self.constraint_list)
