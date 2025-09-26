@@ -1,0 +1,44 @@
+{
+  "BOAT_DRAUGHT_AFT": 10,
+  "BOAT_DRAUGHT_FORE": 10,
+  "CONSTRAINTS_LIST": [
+    "land_crossing_global_land_mask",
+    "water_depth",
+    "on_map"],
+
+  "TIME_FORECAST": 90,
+  "ROUTING_STEPS": 60,
+  "DELTA_TIME_FORECAST": 3,
+  "DELTA_FUEL": 10000,
+
+  "COURSES_FILE": "./path/doesnt/exist/data/courses_route.nc",
+  "DEPTH_DATA": "./path/doesnt/exist/data/depth_data.nc",
+  "WEATHER_DATA": "./path/doesnt/exist/data/weather_data.nc",
+  "ROUTE_PATH": "./path/doesnt/exist/workdir-genetic",
+
+  "ALGORITHM_TYPE":"speedy_isobased",
+  "ISOCHRONE_NUMBER_OF_ROUTES": 20,
+  "ISOCHRONE_PRUNE_GROUPS": "multiple_routes",
+  "ISOCHRONE_PRUNE_SEGMENTS": 200,
+
+  "ROUTER_HDGS_SEGMENTS": 30,
+  "ROUTER_HDGS_INCREMENTS_DEG": 6,
+  "ISOCHRONE_PRUNE_SECTOR_DEG_HALF": 91,
+  "ISOCHRONE_PRUNE_SEGMENTS": 20,
+
+  "ISOCHRONE_MINIMISATION_CRITERION": "squareddist_over_disttodest",
+
+  "GENETIC_NUMBER_GENERATIONS": 20,
+  "GENETIC_NUMBER_OFFSPRINGS": 2,
+  "GENETIC_POPULATION_SIZE": 20,
+  "GENETIC_POPULATION_TYPE": "grid_based",
+
+  "BOAT_TYPE": "speedy_isobased",
+  "BOAT_BREADTH": 32,
+  "BOAT_FUEL_RATE": 167,
+  "BOAT_HBR": 30,
+  "BOAT_LENGTH": 180,
+  "BOAT_SMCR_POWER" : 6502,
+  "BOAT_SMCR_SPEED" : 7,
+  "BOAT_SPEED": 600
+}

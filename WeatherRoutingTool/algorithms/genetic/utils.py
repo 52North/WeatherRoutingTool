@@ -9,36 +9,6 @@ import json
 import math
 
 
-@functools.cache
-def great_circle_route(
-        src: tuple[float, float],
-        dst: tuple[float, float],
-        distance=100_000.0
-) -> list[tuple[float, float]]:
-    """Generate equi-distant waypoints across the Great Circle Route from src to
-    dst
-
-    :param src: Source waypoint as (lat, lon) pair
-    :type src: tuple[float, float]
-    :param dst: Destination waypoint as (lat, lon) pair
-    :type dst: tuple[float, float]
-    :param distance: Distance between waypoints generated
-    :type distance: float
-    :return: List of waypoints along the great circle (lat, lon)
-    :rtype: list[tuple[float, float]]
-    """
-
-    geod: Geodesic = Geodesic.WGS84
-    line = geod.InverseLine(*src, *dst)
-    n = int(math.ceil(line.s13 / distance))
-    route = []
-    for i in range(n + 1):
-        s = min(distance * i, line.s13)
-        g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
-        route.append((g['lat2'], g['lon2']))
-    return [src, *route[1:-1], dst]
-
-
 def great_circle_distance(src, dst) -> float:
     """Measure great circle distance between src and dst waypoints
 
