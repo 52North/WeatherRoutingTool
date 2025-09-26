@@ -79,8 +79,8 @@ class Config(BaseModel):
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # number of offsprings for genetic algorithm
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
-    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial population
-    # (options: 'grid_based', 'from_geojson')
+    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial
+    # population (options: 'grid_based', 'from_geojson', 'isofuel')
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
 
     INTERMEDIATE_WAYPOINTS: Annotated[

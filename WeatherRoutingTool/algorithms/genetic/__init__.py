@@ -47,7 +47,7 @@ class Genetic(RoutingAlg):
         if self.figure_path is not None:
             os.makedirs(self.figure_path, exist_ok=True)
 
-        self.default_map: Map = config.DEFAULT_MAP
+        self.default_map: Map = Map(*config.DEFAULT_MAP)
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
@@ -325,8 +325,8 @@ class Genetic(RoutingAlg):
                     label="best route", )
 
             ax.legend()
-            ax.set_xlim([self.default_map[1], self.default_map[3]])
-            ax.set_ylim([self.default_map[0], self.default_map[2]])
+            ax.set_xlim([self.default_map.lon1, self.default_map.lon2])
+            ax.set_ylim([self.default_map.lat1, self.default_map.lat2])
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
             pt.savefig(os.path.join(self.figure_path, figname))

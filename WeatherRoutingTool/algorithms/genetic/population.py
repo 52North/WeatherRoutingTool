@@ -125,6 +125,7 @@ class GridBasedPopulation(GridMixin, Population):
 
         return X
 
+
 class FromGeojsonPopulation(Population):
     """Genetic population from a directory of routes
 
