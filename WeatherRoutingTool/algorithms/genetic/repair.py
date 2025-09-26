@@ -83,7 +83,7 @@ class ConstraintViolationRepair(RepairBase):
         # gcr_dist = 1e5
         # patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
 
-        patchfn = patcher.IsofuelPatcher.for_single_route(self.config.DEFAULT_MAP)
+        patchfn = patcher.IsofuelPatcher.for_single_route(config=self.config)
 
         for i, (rt,) in enumerate(X):
             constrained = utils.get_constraints_array(rt, self.constraints_list)

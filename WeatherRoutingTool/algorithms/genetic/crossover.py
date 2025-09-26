@@ -111,12 +111,12 @@ class SinglePointCrossover(OffspringRejectionCrossover):
     :type config: Config
     """
 
-    def __init__(self, config: Config, **kw):
+    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
 
         # variables
         self.config = config
-        self.patch_type = "gcr"
+        self.patch_type = patch_type
 
     def crossover(self, p1, p2):
         # setup patching
@@ -240,12 +240,12 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     :type config: Config
     """
 
-    def __init__(self, config: Config, **kw):
+    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
 
         # variables
         self.config = config
-        self.patch_type = "gcr"
+        self.patch_type = patch_type
 
     def crossover(self, p1, p2):
         match self.patch_type:
@@ -370,11 +370,13 @@ class CrossoverFactory:
             opts=[
                 TwoPointCrossover(
                     config=config,
+                    patch_type="gcr",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
                     prob=.5, ),
                 SinglePointCrossover(
                     config=config,
+                    patch_type="gcr",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
                     prob=.5, ),
