@@ -75,19 +75,14 @@ I. Initial Population Generation
       iv. Repeats this process ``GENETIC_NUMBER_GENERATIONS`` times to get a
          population pool
 
-   b. *Border Following Population (Yet to implement)*
-
-      This helps generate extreme waypoints which follow the boundary of
-      the map and feasible constraints.
-
-   c. *Isofuel Population*
+   b. *Isofuel Population*
 
       This method utilizes the Isofuel algorithm to generate a set of
       routes that reach the destination. The Isofuel algorithm can be
       initialised with the ``ISOCHRONE_NUMBER_OF_ROUTES`` configuration to
       generate multiple possible routes.
 
-   d. *Static Routes*
+   c. *Static Routes*
 
       These are previously generated *GeoJSON* files stored in a directory.
       These can either be manually generated or saved from another
@@ -165,13 +160,12 @@ Reproduction
 
    b. *Two Point Crossover*
 
-      *Two Point Crossover* utilizes two random points such that the
-      patched path avoids any object that produces a constraint violation
-      in between.
+      *Two Point Crossover* utilizes two random points such that the patched
+      path avoids any object that produces a constraint violation in between.
 
-      The choice of the random points don’t always produce the right
-      crossover points for which we make use of **Patching** (look at the
-      *Route Patching* section)
+      We utilize Route Patching (see the Route Patching section) because the
+      chosen random points don't consistently generate crossover points where
+      connecting them wouldn’t violate constraints.
 
       .. figure:: /_static/algorithm_genetic/two_point_crossover.png
 
@@ -207,12 +201,28 @@ Post-processing
 
 6. Repair
 
-   The Repair class is meant to fix infeasible individuals in a
-   population, and return the entire fixed population. Useful for
-   patching paths which have a clear violation.
+   The Repair classes play the role of normalizing routes and fixing constraints
+   violations. The current implementation executes two repair processes in the
+   following order:
 
-   Methods to repair routes are enlisted in the **Route Patching**
-   section below.
+   Methods to repair routes are enlisted in the Route Patching section below.
+
+   a. *WaypointsInfillRepair*
+
+   Repairs routes by infilling them with equi-distant waypoints when adjacent
+   points are farther than the specified distance resolution (gcr_dist)
+
+   This avoids long-distance jumps that may lead to impractical and unfeasible routes.
+
+   .. figure:: /_static/algorithm_genetic/waypoints_infill_repair.png
+
+   b. *ConstraintViolationRepair*
+
+   Repairs routes by identifying waypoints that are undergoing a constraint
+   violation and finds a route around the points using the IsoFuel algorithm
+   (See the *IsoFuel Patcher* in the **Route Patching** section below.)
+
+   .. figure:: /_static/algorithm_genetic/constraints_violation_repair.png
 
    Note — Repair class’ ``_do`` method takes in a population object and
    returns a population object, in both cases the size of the population
@@ -284,6 +294,22 @@ Route Patching
       We parallelize the execution of the Isofuel algorithm to speed up the
       process.
 
+
+**Implementation Notes:**
+
+The intuition behind having Route Patching implementations setup as
+classes follows the following —
+
+   a. Route patching can be quite expensive during both the preparation
+   (defining map, loading configs, etc.) and the execution stage (patching
+   between point A and point B). An Object Oriented implementation of the same
+   helps separate the two processes, avoids redundancy and can contribute to the
+   overall speed in the longer run.
+
+   b. Implementation consistency makes it easier to swap between different
+   Patching implementations and maintains clean code
+
+
 Ideal and Nadir points
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -307,13 +333,6 @@ Ideal and Nadir points
      *recombination of the waypoints of the initial population* can be
      assumed to be the nadir point; if the genetic algorithm results in a
      worse configuration, it indicates a problem.
-
-..
-
-Performance over 10 iterations
-------------------------------
-
-.. figure:: /_static/algorithm_genetic/population_figures.png
 
 Config Parameters
 -----------------

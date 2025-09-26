@@ -44,6 +44,22 @@ WeatherRoutingTool.algorithms.genetic.mutation module
    :undoc-members:
    :show-inheritance:
 
+WeatherRoutingTool.algorithms.genetic.patcher module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.patcher
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+WeatherRoutingTool.algorithms.genetic.repair module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.repair
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 WeatherRoutingTool.algorithms.genetic.utils module
 ---------------------------------------------------
 
