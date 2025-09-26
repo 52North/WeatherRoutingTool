@@ -298,8 +298,7 @@ Route Patching
 **Implementation Notes:**
 
 The intuition behind having Route Patching implementations setup as
-classes follows the following —
-
+classes follows the following:
    a. Route patching can be quite expensive during both the preparation
    (defining map, loading configs, etc.) and the execution stage (patching
    between point A and point B). An Object Oriented implementation of the same
