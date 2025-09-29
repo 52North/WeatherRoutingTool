@@ -186,7 +186,7 @@ Reproduction
 
       .. figure:: /_static/algorithm_genetic/random_walk_mutation.png
 
-   b. *Route Blend Mutation (Not yet Implemented)*
+   b. *Route Blend Mutation*
 
       This process converts a sub path into a smoother route using a
       smoothing function such as Bezier Curves or by replacing a few
@@ -199,7 +199,7 @@ Reproduction
 Post-processing
 ^^^^^^^^^^^^^^^
 
-6. Repair
+1. Repair
 
    The Repair classes play the role of normalizing routes and fixing constraints
    violations. The current implementation executes two repair processes in the
@@ -229,7 +229,7 @@ Post-processing
    should be the same as the one mentioned in the config (config.
    ``GENETIC_POPULATION_SIZE``)
 
-7. Duplicate Removal
+2. Duplicates Removal
 
    Pymoo gets rid of duplicate individuals in a population to maintain
    the diversity in the population pool. This specific function works by

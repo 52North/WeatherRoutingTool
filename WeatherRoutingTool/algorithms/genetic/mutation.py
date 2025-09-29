@@ -36,7 +36,7 @@ class NoMutation(MutationBase):
         return super().__init__()
 
 
-class RandomWalkMutation(Mutation):
+class RandomWalkMutation(MutationBase):
     """Moves a random waypoint in an individual in the direction of a random bearing
     by a distance specified by the `gcr_dist` parameter.
     The entire task is repeated `n_updates` number of times to produce substantial variation.
