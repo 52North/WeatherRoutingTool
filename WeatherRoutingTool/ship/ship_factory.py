@@ -14,8 +14,8 @@ class ShipFactory:
     def get_ship(config):
         ship = None
 
-        logger.info("Initialising of ship type")
         form.print_line()
+        logger.info("Initialising of ship type")
 
         if config.ALGORITHM_TYPE == 'speedy_isobased':
             logger.info('Use speedy isobased model for modeling fuel consumption.')

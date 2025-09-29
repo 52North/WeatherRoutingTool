@@ -142,6 +142,7 @@ class ConstantFuelBoat(Boat):
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('boat fuel rate' + str(self.fuel_rate), 1))
+        form.print_line()
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False

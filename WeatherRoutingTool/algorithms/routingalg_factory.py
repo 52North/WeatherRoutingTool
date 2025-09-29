@@ -15,10 +15,9 @@ class RoutingAlgFactory:
     @staticmethod
     def get_routing_alg(config):
         ra = None
-
+        form.print_line()
         logger.info("Initialising and starting routing procedure. For log output check the files 'info.log' and "
                     "'performance.log'.")
-        form.print_line()
 
         if (config.ALGORITHM_TYPE == 'isofuel') or (config.ALGORITHM_TYPE == 'speedy_isobased'):
             ra = IsoFuel(config)

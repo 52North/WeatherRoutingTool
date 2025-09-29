@@ -57,7 +57,6 @@ class DirectPowerBoat(Boat):
             config_obj = ShipConfig.assign_config(Path(file_name))
         else:
             config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
-        print(config_obj.model_dump(exclude_unset=True))
 
         # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
@@ -87,6 +86,12 @@ class DirectPowerBoat(Boat):
 
         self.weather_path = config_obj.WEATHER_DATA
         self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
+
+    def print_init(self):
+        logger.info(form.get_log_step('SMCR power: ' + str(self.power_at_sp.to(u.kiloWatt)), 1))
+        logger.info(form.get_log_step('SMCR speed: ' + str(self.speed_at_sp), 1))
+        logger.info(form.get_log_step('fuel rate: ' + str(self.fuel_rate.to(u.kg/(u.kiloWatt * u.hour))), 1))
+        form.print_line()
 
     def interpolate_to_true_speed(self, power):
         const = power / (self.speed_at_sp ** (3))

@@ -52,7 +52,7 @@ class ShipConfig(BaseModel):
     def validate_config(cls, config_data):
         try:
             config = cls(**config_data)
-            logger.info("ShipConfig is valid!")
+            logger.debug("ShipConfig is valid!")
             return config
         except ValidationError as e:
             for err in e.errors():

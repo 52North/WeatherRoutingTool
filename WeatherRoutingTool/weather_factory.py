@@ -15,6 +15,9 @@ class WeatherFactory:
     def get_weather(data_mode, file_path, departure_time, time_forecast, time_resolution, default_map, **kwargs):
         wt = None
 
+        form.print_line()
+        logger.info('Initialising weather')
+
         if data_mode == 'from_file':
             logger.info(form.get_log_step('Reading weather data from file:  ' + file_path, 0))
             wt = WeatherCondFromFile(departure_time, time_forecast, time_resolution)
@@ -56,5 +59,6 @@ class WeatherFactory:
             wt.read_dataset(file_path)
 
         wt.check_units()
+        wt.print_init()
 
         return wt

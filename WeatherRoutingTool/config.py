@@ -127,7 +127,7 @@ class Config(BaseModel):
         """
         try:
             config = cls(**config_data)
-            logger.info("Config is valid!")
+            logger.debug("Config is valid!")
             return config
         except ValidationError as e:
             for err in e.errors():

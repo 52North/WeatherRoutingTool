@@ -43,9 +43,6 @@ class WeatherCond:
     ds: xr.Dataset
 
     def __init__(self, time, hours, time_res):
-        form.print_line()
-        logger.info('Initialising weather')
-
         self.time_res = time_res
         self.time_start = time
         self.time_end = time + timedelta(hours=hours)
@@ -53,6 +50,7 @@ class WeatherCond:
         time_passed = self.time_end - self.time_start
         self.time_steps = int(time_passed.total_seconds() / self.time_res.total_seconds())
 
+    def print_init(self):
         logger.info(form.get_log_step('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end), 1))
         logger.info(form.get_log_step('nof time steps ' + str(self.time_steps), 1))
         form.print_line()
@@ -564,7 +562,7 @@ class WeatherCondFromFile(WeatherCond):
     def read_dataset(self, filepath=None):
         if filepath is None:
             raise RuntimeError("filepath must not be None for data_mode = 'from_file'")
-        logger.info(form.get_log_step('Reading dataset from' + str(filepath), 1))
+        logger.debug(form.get_log_step('Reading dataset from' + str(filepath), 1))
         self.ds = xr.open_dataset(filepath)  # self.ds = self.manipulate_dataset()
 
 

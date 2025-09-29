@@ -136,9 +136,9 @@ class ConstraintPars:
         self.bCheckCrossing = True
 
     def print(self):
-        logger.info("Print settings of Constraint Pars:")
-        logger.info(form.get_log_step("resolution=" + str(self.resolution), 1))
-        logger.info(form.get_log_step("bCheckEndPoints=" + str(self.bCheckEndPoints), 1))
+        logger.debug("Print settings of Constraint Pars:")
+        logger.debug(form.get_log_step("resolution=" + str(self.resolution), 1))
+        logger.debug(form.get_log_step("bCheckEndPoints=" + str(self.bCheckEndPoints), 1))
 
 
 class ConstraintsListFactory:
@@ -248,10 +248,13 @@ class ConstraintsList:
             form.print_step(str(self.constraints_crossed[iConst]), 1)
 
     def print_settings(self):
+        form.print_line()
         self.pars.print()
         self.print_active_constraints()
+        form.print_line()
 
     def print_active_constraints(self):
+        logger.info("Constraints activated: ")
         for Const in self.negative_constraints_continuous:
             Const.print_info()
 
@@ -656,7 +659,7 @@ class WaterDepth(NegativeContraint):
         """
 
         # FIXME: if this loads the whole file into memory, apply subsetting already here
-        logger.info(form.get_log_step('Downloading data from file: ' + depth_path, 0))
+        logger.info(form.get_log_step('Downloading depth data from file: ' + depth_path, 0))
         ds_depth = None
         if graphics.get_figure_path():
             ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
