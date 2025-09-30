@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 
 from geographiclib.geodesic import Geodesic
@@ -19,6 +20,8 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
+
+logger = logging.getLogger("WRT.genetic.patcher")
 
 
 # base class
@@ -167,6 +170,11 @@ class IsofuelPatcher(PatcherBase):
             "DEPARTURE_TIME": departure_time
         })
 
+        # make Isofuel algorithm run in quite mode
+        original_log_level = logging.getLogger().level
+        if original_log_level > logging.DEBUG:
+            logging.getLogger().setLevel(logging.ERROR)
+
         # alg is defined in method because route_list is defined per instance,
         # which wouldn't work well when we want to "generate" multiple times
         alg = IsoFuel(cfg)
@@ -178,6 +186,9 @@ class IsofuelPatcher(PatcherBase):
             boat=self.boat,
             wt=self.wt,
             constraints_list=self.constraints_list, )
+
+        # reactivate original logging level
+        logging.getLogger().setLevel(original_log_level)
 
         # single route
         if self.n_routes == "single":

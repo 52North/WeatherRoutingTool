@@ -16,12 +16,12 @@ logger = logging.getLogger('WRT.Config')
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
                    log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'):
     formatter = logging.Formatter(log_format)
-    logging.basicConfig(stream=stream, format=log_format)
-    logger = logging.getLogger('WRT')
+    log_level = logging.INFO
     if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+        log_level = logging.DEBUG
+    logging.basicConfig(stream=stream, format=log_format, level=log_level)
+    logger = logging.getLogger('WRT')
+
     if info_log_file:
         if os.path.isdir(os.path.dirname(info_log_file)):
             fh_info = logging.FileHandler(info_log_file, mode='w')

@@ -1,3 +1,5 @@
+import logging
+
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
 from geographiclib.geodesic import Geodesic
@@ -7,6 +9,8 @@ from typing import Optional
 import functools
 import json
 import math
+
+logger = logging.getLogger("WRT.genetic")
 
 
 def gcr_distance(src, dst) -> float:
