@@ -24,9 +24,12 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, W
 logger = logging.getLogger("WRT.genetic.patcher")
 
 
-# base class
+# Patcher base class
 # ----------
 class PatcherBase:
+    def __init__(self, *args, **kwargs):
+        pass
+
     def patch(self, src, dst):
         """Patch a route between `src` and `dst`
 
@@ -35,8 +38,20 @@ class PatcherBase:
         :param dst: Destination coords as (lat, lon)
         :type dst: tuple[float, float]
         """
-
         pass
+
+
+# Singleton base class
+# ----------
+class SingletonBase(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+
+        return cls._instances[cls]
 
 
 # patcher variants
@@ -47,9 +62,10 @@ class GreatCircleRoutePatcher(PatcherBase):
     :param dist: Dist between each waypoint in the Great Circle Route
     :type dist: float
     """
+    dist: float
 
     def __init__(self, dist: float = 100_000.0):
-        super().__init__()
+        super().__init__(self)
 
         # variables
         self.dist = dist
@@ -93,7 +109,56 @@ class IsofuelPatcher(PatcherBase):
     :type n_routes: str
     """
 
-    def _setup_components(self, config):
+    n_routes: int
+    config: Config
+
+    wt: WeatherCond
+    boat: Boat
+    water_depth: WaterDepth
+    constraints_list: ConstraintsList
+
+    def __init__(self, base_config, n_routes: str = "single"):
+        super().__init__()
+
+        # variables
+        self.n_routes = n_routes
+
+        # setup components
+        self.config = base_config
+        self.config = self._setup_configuration()
+        wt, boat, water_depth, constraints_list = self._setup_components()
+
+        self.wt: WeatherCond = wt
+        self.boat: Boat = boat
+        self.water_depth: WaterDepth = water_depth
+        self.constraints_list: ConstraintsList = constraints_list
+
+    def _setup_configuration(self, n_routes: str = "single"):
+        cfg_select = self.config.model_dump(
+            include=[
+                "DEFAULT_ROUTE",
+                "DEPARTURE_TIME",
+                "DEFAULT_MAP",
+
+                "COURSES_FILE",
+                "DEPTH_DATA",
+                "WEATHER_DATA",
+                "ROUTE_PATH",
+            ], )
+
+        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
+        if n_routes == "multiple":
+            cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
+
+        with cfg_path.open() as fp:
+            dt = json.load(fp)
+
+        cfg = Config.model_validate({**dt, **cfg_select})
+        cfg.CONFIG_PATH = cfg_path
+
+        return cfg
+
+    def _setup_components(self):
         """
         Execute route optimization based on the user-defined configuration.
         After a successful run the final route is saved into the configured folder.
@@ -107,6 +172,7 @@ class IsofuelPatcher(PatcherBase):
 
         # *******************************************
         # basic settings
+        config = self.config
         windfile = config.WEATHER_DATA
         depthfile = config.DEPTH_DATA
         time_resolution = config.DELTA_TIME_FORECAST
@@ -149,21 +215,6 @@ class IsofuelPatcher(PatcherBase):
 
         return wt, boat, water_depth, constraints_list
 
-    def __init__(self, config: Config, n_routes: str = "single"):
-        super().__init__()
-
-        # variables
-        self.n_routes = n_routes
-        self.config = config
-
-        # setup components
-        wt, boat, water_depth, constraints_list = self._setup_components(self.config)
-
-        self.wt: WeatherCond = wt
-        self.boat: Boat = boat
-        self.water_depth: WaterDepth = water_depth
-        self.constraints_list: ConstraintsList = constraints_list
-
     def patch(self, src, dst, departure_time: datetime = None):
         cfg = self.config.model_copy(update={
             "DEFAULT_ROUTE": [*src, *dst],
@@ -204,60 +255,12 @@ class IsofuelPatcher(PatcherBase):
             routes.append(np.stack([rt.lats_per_step, rt.lons_per_step], axis=1))
         return routes
 
-    @classmethod
-    def for_multiple_routes(cls, config: Config, **kw):
-        """Class constructor for multiple routes generation"""
 
-        cfg_select = config.model_dump(
-            include=[
-                "DEFAULT_ROUTE",
-                "DEPARTURE_TIME",
-                "DEFAULT_MAP",
+class GreatCircleRoutePatcherSingleton(GreatCircleRoutePatcher, metaclass=SingletonBase):
+    def __init__(self, dist: float = 100_000.0):
+        super().__init__(dist)
 
-                "COURSES_FILE",
-                "DEPTH_DATA",
-                "WEATHER_DATA",
-                "ROUTE_PATH",
-            ], )
 
-        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
-
-        with cfg_path.open() as fp:
-            dt = json.load(fp)
-
-        cfg = Config.model_validate({**dt, **cfg_select})
-        cfg.CONFIG_PATH = cfg_path
-
-        for k, v in kw.items():
-            setattr(cfg, k, v)
-
-        return cls(cfg, n_routes="multiple")
-
-    @classmethod
-    def for_single_route(cls, config: Config, **kw):
-        """Class constructor for single route generation"""
-
-        cfg_select = config.model_dump(
-            include=[
-                "DEFAULT_ROUTE",
-                "DEPARTURE_TIME",
-                "DEFAULT_MAP",
-
-                "COURSES_FILE",
-                "DEPTH_DATA",
-                "WEATHER_DATA",
-                "ROUTE_PATH",
-            ], )
-
-        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
-
-        with cfg_path.open() as fp:
-            dt = json.load(fp)
-
-        cfg = Config.model_validate({**dt, **cfg_select})
-        cfg.CONFIG_PATH = cfg_path
-
-        for k, v in kw.items():
-            setattr(cfg, k, v)
-
-        return cls(cfg, n_routes="single")
+class IsofuelPatcherSingleton(IsofuelPatcher, metaclass=SingletonBase):
+    def __init__(self, base_config, n_routes: str = "single"):
+        super().__init__(base_config, n_routes)
