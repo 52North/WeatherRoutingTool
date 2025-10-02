@@ -6,6 +6,9 @@ from datetime import timedelta
 import logging
 import os
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from pymoo.util.running_metric import RunningMetric
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
@@ -156,6 +159,7 @@ class Genetic(RoutingAlg):
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
+            self.plot_coverage(res)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -330,6 +334,33 @@ class Genetic(RoutingAlg):
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
             pt.savefig(os.path.join(self.figure_path, figname))
+
+    def plot_coverage(self, res):
+        waypoints = None
+        history = res.history
+
+        # Create an empty plot
+        fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
+        fig, ax = graphics.generate_basemap(
+            fig=fig,
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            title="spatial coverage",
+            show_depth=False, )
+
+        for igen in range(len(history)):
+            last_pop = history[igen].pop.get('X')
+
+            for iroute in range(0, last_pop.shape[0]):
+                if waypoints is None:
+                    waypoints = last_pop[iroute, 0][: , :]
+                waypoints = np.concatenate((waypoints, last_pop[iroute, 0][: , :]), axis = 0)
+
+        sns.scatterplot(x=waypoints[:, 1], y=waypoints[:, 0], s=25, alpha=0.2, edgecolor=None)
+
+        figname = f"spatial_coverage.png"
+        pt.savefig(os.path.join(self.figure_path, figname))
 
     def plot_convergence(self, res):
         """Plot the convergence curve (best objective value per generation)."""
