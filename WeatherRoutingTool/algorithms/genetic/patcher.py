@@ -34,11 +34,12 @@ class PatcherBase:
         :param dst: Destination coords as (lat, lon)
         :type dst: tuple[float, float]
         """
-        pass
+        raise NotImplementedError("This patching method is not implemented.")
 
 
 class SingletonBase(type):
     """
+    TODO: make this thread-safe
     Base class for Singleton implementation of patcher methods.
 
     This is the implementation of a metaclass for those classes for which only a single instance shall be available
@@ -65,12 +66,12 @@ class GreatCircleRoutePatcher(PatcherBase):
     dist: float
 
     def __init__(self, dist: float = 100_000.0):
-        super().__init__(self)
+        super().__init__()
 
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None) -> np.array:
+    def patch(self, src: tuple, dst: tuple) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -78,8 +79,6 @@ class GreatCircleRoutePatcher(PatcherBase):
         :type src: tuple[float, float]
         :param dst: Destination waypoint as (lat, lon) pair
         :type dst: tuple[float, float]
-        :param distance: Distance between waypoints generated
-        :type distance: float
         :return: List of waypoints along the great circle (lat, lon)
         :rtype: np.array[tuple[float, float]]
         """
@@ -133,14 +132,13 @@ class IsofuelPatcher(PatcherBase):
         self.water_depth: WaterDepth = water_depth
         self.constraints_list: ConstraintsList = constraints_list
 
-    def _setup_configuration(self, n_routes: str = "single") -> Config:
+    def _setup_configuration(self) -> Config:
         """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
 
         The configuration is based on the general config file. Based on n_routes, this configuration is overwritten
         by the configuration files for the IsofuelPatcher for single and multiple routes.
 
-        :param n_routes: number of routes that shall be generated; can be "single" or "multiple"
-        :type n_routes: str
+
         :return: config object
         :rtype: Config
         """
@@ -157,7 +155,7 @@ class IsofuelPatcher(PatcherBase):
             ], )
 
         cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
-        if n_routes == "multiple":
+        if self.n_routes == "multiple":
             cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
 
         with cfg_path.open() as fp:
