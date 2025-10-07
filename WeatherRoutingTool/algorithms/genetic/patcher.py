@@ -258,7 +258,7 @@ class IsofuelPatcher(PatcherBase):
             boat=self.boat,
             wt=self.wt,
             constraints_list=self.constraints_list,
-            patch_count = self.patch_count)
+            patch_count=self.patch_count)
 
         # reactivate original logging level
         logging.getLogger().setLevel(original_log_level)

@@ -594,7 +594,7 @@ class IsoBased(RoutingAlg):
             self, boat: Boat,
             wt: WeatherCond,
             constraints_list: ConstraintsList,
-            verbose: bool=False,
+            verbose: bool = False,
             patch_count: int = 0
     ):
         """
@@ -1818,7 +1818,7 @@ class IsoBased(RoutingAlg):
         if self.status.error == "pruning_error":
             final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
-            final_path = self.figure_path + '/' + status + '_fig' + str(self.count)+'.png'
+            final_path = self.figure_path + '/' + status + '_fig' + str(self.count) + '.png'
         logger.info('Save updated figure to ' + final_path)
         plt.savefig(final_path)
 
