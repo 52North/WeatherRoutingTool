@@ -46,6 +46,12 @@ class RoutingAlg:
     def update_fig(self):
         pass
 
+    def clear_figure_path(self):
+        self.figure_path = None
+
+    def set_figure_path(self, path: str):
+        self.figure_path = path
+
     def print_init(self):
         logger.info('Initialising routing:')
         logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish), 1))

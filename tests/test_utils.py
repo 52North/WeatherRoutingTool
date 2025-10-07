@@ -11,7 +11,7 @@ from WeatherRoutingTool.utils.maps import Map
 def test_get_angle_bins_2greater360():
     min_alpha = 380 * u.degree
     max_alpha = 400 * u.degree
-    spacing = 21 * u.degree
+    spacing = 21
 
     result = unit.get_angle_bins(min_alpha, max_alpha, spacing)
 
@@ -23,7 +23,7 @@ def test_get_angle_bins_2greater360():
 def test_get_angle_bins_maxgreater360():
     min_alpha = 260 * u.degree
     max_alpha = 400 * u.degree
-    spacing = 141 * u.degree
+    spacing = 141
 
     result = unit.get_angle_bins(min_alpha, max_alpha, spacing)
 
@@ -35,7 +35,7 @@ def test_get_angle_bins_maxgreater360():
 def test_get_angle_bins_2smaller0():
     min_alpha = -40 * u.degree
     max_alpha = -10 * u.degree
-    spacing = 31 * u.degree
+    spacing = 31
 
     result = unit.get_angle_bins(min_alpha, max_alpha, spacing)
 
@@ -47,7 +47,7 @@ def test_get_angle_bins_2smaller0():
 def test_get_angle_bins_minsmaller0():
     min_alpha = -40 * u.degree
     max_alpha = 20 * u.degree
-    spacing = 61 * u.degree
+    spacing = 61
 
     result = unit.get_angle_bins(min_alpha, max_alpha, spacing)
 
