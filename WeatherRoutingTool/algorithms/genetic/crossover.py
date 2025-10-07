@@ -122,10 +122,9 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         # setup patching
         match self.patch_type:
             case "isofuel":
-                patchfn = patcher.IsofuelPatcher.for_single_route(
-                    config=self.config, )
+                patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
             case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
+                patchfn = patcher.GreatCircleRoutePatcherSingleton(dist=1e5)
             case _:
                 raise ValueError("Invalid patcher type")
 
@@ -162,10 +161,9 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     def crossover(self, p1, p2):
         match self.patch_type:
             case "isofuel":
-                patchfn = patcher.IsofuelPatcher.for_single_route(
-                    config=self.config, )
+                patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
             case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcher(dist=1e5)
+                patchfn = patcher.GreatCircleRoutePatcherSingleton(dist=1e5)
             case _:
                 raise ValueError("Invalid patcher type")
 

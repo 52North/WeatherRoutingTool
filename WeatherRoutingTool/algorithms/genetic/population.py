@@ -58,7 +58,7 @@ class Population(Sampling):
             constraints = utils.get_constraints(route[0], self.constraints_list)
 
             if constraints:
-                logger.warning(f"Initial Route route_{i+1} is constrained.")
+                logger.warning(f"Initial Route route_{i + 1} is constrained.")
                 self.n_constrained_routes += 1
 
         percentage_constrained = self.n_constrained_routes / self.pop_size
@@ -188,8 +188,7 @@ class IsoFuelPopulation(Population):
 
         self.departure_time = config.DEPARTURE_TIME
 
-        self.patcher = patcher.IsofuelPatcher.for_multiple_routes(
-            config=config, )
+        self.patcher = patcher.IsofuelPatcher(base_config=config, n_routes="multiple")
 
     def generate(self, problem, n_samples, **kw):
         routes = self.patcher.patch(self.src, self.dst, self.departure_time)

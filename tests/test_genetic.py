@@ -1,71 +1,39 @@
-import copy
+import os
+from datetime import datetime
+from pathlib import Path
 
-import matplotlib.pyplot as plt
-import pytest
-
-from WeatherRoutingTool.algorithms.genetic.utils import GeneticCrossover
-# from WeatherRoutingTool.algorithms.genetic.utils import GridBasedMutation, GeneticCrossover
-from WeatherRoutingTool.utils import graphics
-
-
-def get_xy_from_tuples(route):
-    x = [x[0] for x in route]
-    y = [x[1] for x in route]
-    return x, y
+from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
+    GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
+from WeatherRoutingTool.config import Config
 
 
-@pytest.mark.parametrize(
-    ("route"),
-    [
-        [(35.3, 16.1), (35.17, 17.2), (35.1, 18.2), (35.0, 19.1), (35.0, 20.3)]
-    ],
-)
-@pytest.mark.genetic
-class TestGenetic:
+def test_isofuelpatcher_singleton():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    src = [38.851, 4.066]
+    dst = [37.901, 8.348]
 
-    @pytest.mark.manual
-    def test_mutate_move(self, route):
-        orig_route = copy.copy(route)
+    departure_time = datetime(2025, 4, 1, 12, 11)
+    pt_one = IsofuelPatcherSingleton(config)
+    pt_two = IsofuelPatcherSingleton(config)
 
-        # mut = GridBasedMutation(None)
-        # res = mut.mutate_move(route)
+    pt_one.patch(src, dst, departure_time)
 
-        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, (35.3, 16.1), (35.0, 20.3), '', False)
+    assert id(pt_two) == id(pt_one)
 
-        x_route, y_route = get_xy_from_tuples(route)
-        x_origroute, y_origroute = get_xy_from_tuples(orig_route)
 
-        ax.plot(y_route, x_route, color="blue")
-        ax.plot(y_origroute, x_origroute, color="orange")
+def test_isofuelpatcher_no_singleton():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    src = [38.851, 4.066]
+    dst = [37.901, 8.348]
 
-        plt.show()
+    departure_time = datetime(2025, 4, 1, 12, 11)
+    pt_one = IsofuelPatcher(config)
+    pt_two = IsofuelPatcher(config)
 
-    @pytest.mark.skip(reason="GA needs to be reviewed.")
-    @pytest.mark.manual
-    def test_crossover_noint(self, route):
-        route1 = [(35.3, 16.1), (36.17, 18.2), (36.1, 19.2), (36.0, 20.1), (35.0, 20.3)]
-        route2 = route
+    pt_one.patch(src, dst, departure_time)
 
-        cross = GeneticCrossover()
-        child1, child2 = cross.crossover_noint(route1, route2)
-
-        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, (35.3, 16.1), (35.0, 20.3), '', False)
-
-        x_route1, y_route1 = get_xy_from_tuples(route1)
-        x_route2, y_route2 = get_xy_from_tuples(route2)
-        x_child1, y_child1 = get_xy_from_tuples(child1)
-        x_child2, y_child2 = get_xy_from_tuples(child2)
-
-        ax.plot(y_route1, x_route1, color="blue", label='parent 1', linewidth=3)
-        ax.plot(y_route2, x_route2, color="orange", label='parent 2', linewidth=3)
-        ax.plot(y_child1, x_child1, color="red", label='child 1', linestyle='dashed', linewidth=3)
-        ax.plot(y_child2, x_child2, color="green", label='child 2', linestyle='dashed', linewidth=3)
-
-        ax.legend()
-        plt.show()
+    assert id(pt_two) != id(pt_one)

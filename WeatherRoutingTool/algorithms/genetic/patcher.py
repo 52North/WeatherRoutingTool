@@ -1,52 +1,69 @@
-import logging
-from typing import Union
-
-from geographiclib.geodesic import Geodesic
-import numpy as np
-
-from pathlib import Path
-from datetime import datetime
-import math
 import json
+import logging
+import math
 import os
+from datetime import datetime
+from pathlib import Path
 
-from WeatherRoutingTool.weather import WeatherCond
-from WeatherRoutingTool.ship.ship import Boat
-from WeatherRoutingTool.constraints.constraints import ConstraintsList
+import numpy as np
+from geographiclib.geodesic import Geodesic
 
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
-from WeatherRoutingTool.ship.ship_factory import ShipFactory
-from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintsListFactory, WaterDepth
+from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.utils.maps import Map
-from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
+from WeatherRoutingTool.weather import WeatherCond
+from WeatherRoutingTool.weather_factory import WeatherFactory
 
 logger = logging.getLogger("WRT.genetic.patcher")
 
 
-# base class
-# ----------
 class PatcherBase:
-    def patch(self, src, dst):
-        """Patch a route between `src` and `dst`
+    """Base class for route patching"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def patch(self, src: tuple, dst: tuple):
+        """Obtain waypoints between `src` and `dst`.
 
         :param src: Source coords as (lat, lon)
         :type src: tuple[float, float]
         :param dst: Destination coords as (lat, lon)
         :type dst: tuple[float, float]
         """
+        raise NotImplementedError("This patching method is not implemented.")
 
-        pass
+
+class SingletonBase(type):
+    """
+    TODO: make this thread-safe
+    Base class for Singleton implementation of patcher methods.
+
+    This is the implementation of a metaclass for those classes for which only a single instance shall be available
+    during runtime.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+
+        return cls._instances[cls]
 
 
 # patcher variants
 # ----------
 class GreatCircleRoutePatcher(PatcherBase):
-    """Produce a set of waypoints along the Great Circle Route between src and dst
+    """Produce a set of waypoints along the Great Circle Route between src and dst.
 
     :param dist: Dist between each waypoint in the Great Circle Route
     :type dist: float
     """
+    dist: float
 
     def __init__(self, dist: float = 100_000.0):
         super().__init__()
@@ -54,7 +71,7 @@ class GreatCircleRoutePatcher(PatcherBase):
         # variables
         self.dist = dist
 
-    def patch(self, src, dst, departure_time: datetime = None):
+    def patch(self, src: tuple, dst: tuple) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -62,10 +79,8 @@ class GreatCircleRoutePatcher(PatcherBase):
         :type src: tuple[float, float]
         :param dst: Destination waypoint as (lat, lon) pair
         :type dst: tuple[float, float]
-        :param distance: Distance between waypoints generated
-        :type distance: float
         :return: List of waypoints along the great circle (lat, lon)
-        :rtype: list[tuple[float, float]]
+        :rtype: np.array[tuple[float, float]]
         """
 
         geod: Geodesic = Geodesic.WGS84
@@ -93,20 +108,76 @@ class IsofuelPatcher(PatcherBase):
     :type n_routes: str
     """
 
-    def _setup_components(self, config):
-        """
-        Execute route optimization based on the user-defined configuration.
-        After a successful run the final route is saved into the configured folder.
+    n_routes: int
+    config: Config
 
-        :param config: validated configuration
-        :type config: WeatherRoutingTool.config.Config
-        :return: None
+    wt: WeatherCond
+    boat: Boat
+    water_depth: WaterDepth
+    constraints_list: ConstraintsList
+
+    def __init__(self, base_config: Config, n_routes: str = "single") -> None:
+        super().__init__()
+
+        # variables
+        self.n_routes = n_routes
+
+        # setup components
+        self.config = base_config
+        self.config = self._setup_configuration()
+        wt, boat, water_depth, constraints_list = self._setup_components()
+
+        self.wt: WeatherCond = wt
+        self.boat: Boat = boat
+        self.water_depth: WaterDepth = water_depth
+        self.constraints_list: ConstraintsList = constraints_list
+
+    def _setup_configuration(self) -> Config:
+        """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
+
+        The configuration is based on the general config file. Based on n_routes, this configuration is overwritten
+        by the configuration files for the IsofuelPatcher for single and multiple routes.
+
+
+        :return: config object
+        :rtype: Config
         """
-        # prof = cProfile.Profile()
-        # prof.enable()
+        cfg_select = self.config.model_dump(
+            include=[
+                "DEFAULT_ROUTE",
+                "DEPARTURE_TIME",
+                "DEFAULT_MAP",
+
+                "COURSES_FILE",
+                "DEPTH_DATA",
+                "WEATHER_DATA",
+                "ROUTE_PATH",
+            ], )
+
+        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
+        if self.n_routes == "multiple":
+            cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
+
+        with cfg_path.open() as fp:
+            dt = json.load(fp)
+
+        cfg = Config.model_validate({**dt, **cfg_select})
+        cfg.CONFIG_PATH = cfg_path
+
+        return cfg
+
+    def _setup_components(self) -> tuple[WeatherCond, Boat, WaterDepth, ConstraintsList]:
+        """
+        Initialise the modules for weather conditions, fuel consumption and constraints that are necessary for the
+        execution of the Isofuel algorithm.
+
+        :return: modules for weather conditions, fuel consumption & constraints
+        :rtype: tuple(WeatherCond, Boat, WaterDepth, ConstraintsList)
+        """
 
         # *******************************************
         # basic settings
+        config = self.config
         windfile = config.WEATHER_DATA
         depthfile = config.DEPTH_DATA
         time_resolution = config.DELTA_TIME_FORECAST
@@ -128,7 +199,6 @@ class IsofuelPatcher(PatcherBase):
         # *******************************************
         # initialise boat
         boat = ShipFactory.get_ship(config)
-        # boat = ConstantFuelBoat(init_mode="from_dict", config_dict=config.model_dump())
 
         # *******************************************
         # initialise constraints
@@ -149,22 +219,20 @@ class IsofuelPatcher(PatcherBase):
 
         return wt, boat, water_depth, constraints_list
 
-    def __init__(self, config: Config, n_routes: str = "single"):
-        super().__init__()
-
-        # variables
-        self.n_routes = n_routes
-        self.config = config
-
-        # setup components
-        wt, boat, water_depth, constraints_list = self._setup_components(self.config)
-
-        self.wt: WeatherCond = wt
-        self.boat: Boat = boat
-        self.water_depth: WaterDepth = water_depth
-        self.constraints_list: ConstraintsList = constraints_list
-
     def patch(self, src, dst, departure_time: datetime = None):
+        """
+        Produce a set of waypoints between src and dst using the IsoFuel algorithm.
+
+        :param src: Source waypoint as (lat, lon) pair
+        :type src: tuple[float, float]
+        :param dst: Destination waypoint as (lat, lon) pair
+        :type dst: tuple[float, float]
+        :param departure_time: departure time from src
+        :type departure_time: datetime
+        :return: List of waypoints or list of multiple routes connecting src and dst
+        :rtype: np.array[tuple[float, float]] or list[np.array[tuple[float, float]]]
+        """
+
         cfg = self.config.model_copy(update={
             "DEFAULT_ROUTE": [*src, *dst],
             "DEPARTURE_TIME": departure_time
@@ -204,60 +272,16 @@ class IsofuelPatcher(PatcherBase):
             routes.append(np.stack([rt.lats_per_step, rt.lons_per_step], axis=1))
         return routes
 
-    @classmethod
-    def for_multiple_routes(cls, config: Config, **kw):
-        """Class constructor for multiple routes generation"""
 
-        cfg_select = config.model_dump(
-            include=[
-                "DEFAULT_ROUTE",
-                "DEPARTURE_TIME",
-                "DEFAULT_MAP",
+class GreatCircleRoutePatcherSingleton(GreatCircleRoutePatcher, metaclass=SingletonBase):
+    """Implementation class for GreatCircleRoutePatcher that allows only a single instance."""
 
-                "COURSES_FILE",
-                "DEPTH_DATA",
-                "WEATHER_DATA",
-                "ROUTE_PATH",
-            ], )
+    def __init__(self, dist: float = 100_000.0):
+        super().__init__(dist)
 
-        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_multiple_routes.json"
 
-        with cfg_path.open() as fp:
-            dt = json.load(fp)
+class IsofuelPatcherSingleton(IsofuelPatcher, metaclass=SingletonBase):
+    """Implementation class for IsofuelPatcher that allows only a single instance."""
 
-        cfg = Config.model_validate({**dt, **cfg_select})
-        cfg.CONFIG_PATH = cfg_path
-
-        for k, v in kw.items():
-            setattr(cfg, k, v)
-
-        return cls(cfg, n_routes="multiple")
-
-    @classmethod
-    def for_single_route(cls, config: Config, **kw):
-        """Class constructor for single route generation"""
-
-        cfg_select = config.model_dump(
-            include=[
-                "DEFAULT_ROUTE",
-                "DEPARTURE_TIME",
-                "DEFAULT_MAP",
-
-                "COURSES_FILE",
-                "DEPTH_DATA",
-                "WEATHER_DATA",
-                "ROUTE_PATH",
-            ], )
-
-        cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
-
-        with cfg_path.open() as fp:
-            dt = json.load(fp)
-
-        cfg = Config.model_validate({**dt, **cfg_select})
-        cfg.CONFIG_PATH = cfg_path
-
-        for k, v in kw.items():
-            setattr(cfg, k, v)
-
-        return cls(cfg, n_routes="single")
+    def __init__(self, base_config, n_routes: str = "single"):
+        super().__init__(base_config, n_routes)
