@@ -2,6 +2,9 @@
 
 Contributing
 ============
+CLA guidelines
+-----------
+Please be aware that we can only consider pull requests of authors who consider 52North's `CLA guidelines <https://52north.org/software/licensing/cla-guidelines/>`_ and, in particular, fill the 52North Contributor License Agreement.
 
 Style guide
 -----------
