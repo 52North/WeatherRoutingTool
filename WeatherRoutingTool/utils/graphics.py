@@ -1,3 +1,5 @@
+import csv
+
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import matplotlib.pyplot as plt
@@ -300,3 +302,10 @@ def plot_genetic_algorithm_initial_population(src, dest, routes):
         for i in range(0, len(routes)):
             ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
         plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
+
+def write_graph_to_csv(path, x, y):
+    with open(path, 'w', newline='') as csvfile:
+        graphwriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+        for i in range(0, len(x)):
+            graphwriter.writerow([x[i], y[i]])

@@ -237,7 +237,7 @@ class Genetic(RoutingAlg):
         delta_ideal = np.full(self.n_generations, -99.)
         for algorithm in res.history:
             running.update(algorithm)
-            delta_f = running.delta_f
+
             if igen > 0:
                 delta_nadir[igen] = running.delta_nadir[igen-1]
                 delta_ideal[igen] = running.delta_ideal[igen-1]
@@ -245,9 +245,18 @@ class Genetic(RoutingAlg):
                 delta_nadir[igen] = 0
                 delta_ideal[igen] = 0
 
-            x_f = (np.arange(len(delta_f)) + 1)
-            ax.plot(x_f, delta_f, label="t=%s (*)" % (igen + 1), alpha=0.9, linewidth=3)
             igen = igen + 1
+            if igen == self.n_generations:
+              delta_f = running.delta_f
+              x_f = (np.arange(len(delta_f)) + 1)
+
+              # plot png
+              ax.plot(x_f, delta_f, label="t=%s (*)" % (igen + 1), alpha=0.9, linewidth=3)
+
+              # write to csv
+              graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_running_metric.csv'), x_f,
+                                          delta_f)
+
         ax.set_yscale("symlog")
         ax.legend()
 
@@ -375,8 +384,11 @@ class Genetic(RoutingAlg):
             else:
                 best_f.append(np.min(F))
 
+        n_gen = np.arange(1, len(best_f) + 1)
+
+        # plot png
         pt.figure(figsize=graphics.get_standard('fig_size'))
-        pt.plot(np.arange(1, len(best_f) + 1), best_f, marker='o')
+        pt.plot(n_gen, best_f, marker='o')
         pt.xlabel('Generation')
         pt.ylabel('Best Objective Value')
         pt.title('Convergence Plot')
@@ -384,3 +396,6 @@ class Genetic(RoutingAlg):
         pt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
         pt.cla()
         pt.close()
+
+        # write to csv
+        graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_convergence.csv'), n_gen, best_f)
