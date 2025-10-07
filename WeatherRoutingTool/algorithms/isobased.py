@@ -590,7 +590,13 @@ class IsoBased(RoutingAlg):
     def define_initial_variants(self):
         pass
 
-    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
+    def execute_routing(
+            self, boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose: bool=False,
+            patch_count: int = 0
+    ):
         """
         Core function for the initialisation of important evaluations of IsoBased algorithms.
 
@@ -618,6 +624,8 @@ class IsoBased(RoutingAlg):
         :type constraints_list: ConstraintsList
         :param verbose: sets verbosity, defaults to False
         :type verbose: bool, optional
+        :param patch_count: counter for calls to execute_routing to prevent figure overwriting in case of multiple calls
+        :type patch_count: int, optional
         :return: calculated route
         :rtype: RouteParams
         """
@@ -652,7 +660,7 @@ class IsoBased(RoutingAlg):
             self.pruning_per_step(True)
             if (self.status.error == "pruning_error") or (self.status.error == "out_of_routes"):
                 break
-            self.update_fig('p')
+            self.update_fig(f'patch{patch_count}')
             self.count += 1
 
         route = self.terminate()
@@ -1810,7 +1818,7 @@ class IsoBased(RoutingAlg):
         if self.status.error == "pruning_error":
             final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
-            final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
+            final_path = self.figure_path + '/' + status + '_fig' + str(self.count)+'.png'
         logger.info('Save updated figure to ' + final_path)
         plt.savefig(final_path)
 

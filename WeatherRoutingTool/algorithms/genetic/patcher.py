@@ -71,7 +71,7 @@ class GreatCircleRoutePatcher(PatcherBase):
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple) -> np.ndarray:
+    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -108,7 +108,8 @@ class IsofuelPatcher(PatcherBase):
     :type n_routes: str
     """
 
-    n_routes: int
+    n_routes: str
+    patch_count: int
     config: Config
 
     wt: WeatherCond
@@ -121,6 +122,7 @@ class IsofuelPatcher(PatcherBase):
 
         # variables
         self.n_routes = n_routes
+        self.patch_count = 0
 
         # setup components
         self.config = base_config
@@ -232,6 +234,7 @@ class IsofuelPatcher(PatcherBase):
         :return: List of waypoints or list of multiple routes connecting src and dst
         :rtype: np.array[tuple[float, float]] or list[np.array[tuple[float, float]]]
         """
+        self.patch_count += 1
 
         cfg = self.config.model_copy(update={
             "DEFAULT_ROUTE": [*src, *dst],
@@ -247,13 +250,15 @@ class IsofuelPatcher(PatcherBase):
         # which wouldn't work well when we want to "generate" multiple times
         alg = IsoFuel(cfg)
         alg.path_to_route_folder = None
+        alg.clear_figure_path()
 
         alg.init_fig(water_depth=self.water_depth, map_size=Map(*self.config.DEFAULT_MAP))
 
         min_fuel_route, err_code = alg.execute_routing(
             boat=self.boat,
             wt=self.wt,
-            constraints_list=self.constraints_list, )
+            constraints_list=self.constraints_list,
+            patch_count = self.patch_count)
 
         # reactivate original logging level
         logging.getLogger().setLevel(original_log_level)
