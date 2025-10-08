@@ -2,10 +2,12 @@ import csv
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import os
+import pandas as pd
 from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
@@ -16,6 +18,11 @@ graphics_options = {'font_size': 20, 'fig_size': (12, 10)}
 
 def get_standard(var):
     return graphics_options[var]
+
+def get_standard_fig():
+    fig = Figure(figsize=get_standard('fig_size'), dpi=100)
+    matplotlib.rcParams.update({'font.size': get_standard('font_size')})
+    return fig
 
 
 def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
