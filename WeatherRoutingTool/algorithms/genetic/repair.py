@@ -5,7 +5,8 @@ import logging
 
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.genetic import utils, patcher
+from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.repair")
 
@@ -20,6 +21,8 @@ class RepairBase(Repair):
     :param config: Configuration for the run
     :type config: Config
     """
+
+    config: Config
 
     def __init__(self, config: Config):
         super().__init__()
@@ -80,10 +83,16 @@ class ConstraintViolationRepair(RepairBase):
         self.constraints_list = constraints_list
 
     def repairfn(self, problem, X, **kw):
+
+        # TODO: investigate methods to make GreatCircleRoutePatcher consider constraints
         # gcr_dist = 1e5
         # patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
 
-        patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
+        patchfn =PatchFactory.get_patcher(
+            patch_type="isofuel_singleton",
+            config = self.config,
+            application="ConstraintViolationRepair"
+        )
 
         for i, (rt,) in enumerate(X):
             constrained = utils.get_constraints_array(rt, self.constraints_list)

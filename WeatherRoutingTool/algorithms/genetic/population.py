@@ -12,8 +12,7 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.algorithms.genetic import utils
-
-from WeatherRoutingTool.algorithms.genetic import patcher
+from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.population")
 
@@ -188,7 +187,7 @@ class IsoFuelPopulation(Population):
 
         self.departure_time = config.DEPARTURE_TIME
 
-        self.patcher = patcher.IsofuelPatcher(base_config=config, n_routes="multiple")
+        self.patcher = PatchFactory.get_patcher(config = config, patch_type="isofuel_multiple_routes", application="initial population")
 
     def generate(self, problem, n_samples, **kw):
         routes = self.patcher.patch(self.src, self.dst, self.departure_time)

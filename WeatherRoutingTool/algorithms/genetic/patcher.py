@@ -290,3 +290,28 @@ class IsofuelPatcherSingleton(IsofuelPatcher, metaclass=SingletonBase):
 
     def __init__(self, base_config, n_routes: str = "single"):
         super().__init__(base_config, n_routes)
+
+# factory
+# ----------
+class PatchFactory:
+    @staticmethod
+    def get_patcher(
+            patch_type: str,
+            application: str='application undefined',
+            config: Config=None,
+            dist: float=1e5
+    ) -> PatcherBase:
+
+        if patch_type=="gcr_singleton":
+            logger.debug(f'Setting patch type of genetic algorithm for {application} to "gcr_singleton".')
+            return GreatCircleRoutePatcherSingleton(dist=dist)
+
+        if patch_type=="isofuel_singleton":
+            logger.debug(f'Setting patch type of genetic algorithm for {application} to "isofuel_singleton".')
+            return IsofuelPatcherSingleton(base_config=config)
+
+        if patch_type=="isofuel_multiple_routes":
+            logger.debug(f'Setting patch type of genetic algorithm for {application} to "isofuel_multiple_routes".')
+            return IsofuelPatcher(base_config=config, n_routes="multiple")
+
+        raise NotImplementedError(f'The patch type {patch_type} is not implemented.')

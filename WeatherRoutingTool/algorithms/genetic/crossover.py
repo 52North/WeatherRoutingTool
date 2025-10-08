@@ -11,6 +11,8 @@ from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic import patcher
 
+from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
+
 logger = logging.getLogger("WRT.genetic.crossover")
 
 
@@ -120,13 +122,7 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 
     def crossover(self, p1, p2):
         # setup patching
-        match self.patch_type:
-            case "isofuel":
-                patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
-            case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcherSingleton(dist=1e5)
-            case _:
-                raise ValueError("Invalid patcher type")
+        patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="SP crossover")
 
         p1x = np.random.randint(1, p1.shape[0] - 1)
         p2x = np.random.randint(1, p2.shape[0] - 1)
@@ -159,13 +155,7 @@ class TwoPointCrossover(OffspringRejectionCrossover):
         self.patch_type = patch_type
 
     def crossover(self, p1, p2):
-        match self.patch_type:
-            case "isofuel":
-                patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
-            case "gcr":
-                patchfn = patcher.GreatCircleRoutePatcherSingleton(dist=1e5)
-            case _:
-                raise ValueError("Invalid patcher type")
+        patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="TP crossover")
 
         p1x1 = np.random.randint(1, p1.shape[0] - 4)
         p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
@@ -280,13 +270,13 @@ class CrossoverFactory:
             opts=[
                 TwoPointCrossover(
                     config=config,
-                    patch_type="gcr",
+                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
                     prob=.5, ),
                 SinglePointCrossover(
                     config=config,
-                    patch_type="gcr",
+                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
                     prob=.5, ),

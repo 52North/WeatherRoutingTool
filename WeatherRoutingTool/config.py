@@ -87,6 +87,7 @@ class Config(BaseModel):
     GENETIC_MUTATION_TYPE: List[Literal[
         'random', 'random_walk', 'route_blend', 'no_mutation'
     ]] = ['random']
+    GENETIC_CROSSOVER_PATCHER: Literal['gcr','isofuel'] = 'isofuel'
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
