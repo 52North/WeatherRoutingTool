@@ -133,8 +133,31 @@ class ChainedRepairsOrchestrator(Repair):
 class RepairFactory:
     @staticmethod
     def get_repair(config: Config, constraints_list: ConstraintsList):
-        return ChainedRepairsOrchestrator(
-            order=[
-                WaypointsInfillRepair(config),
-                ConstraintViolationRepair(config, constraints_list)
-            ], )
+
+        if config.GENETIC_REPAIR_TYPE == ["no_repair"]:
+            logger.debug('Setting repair type of genetic algorithm to "no_repair".')
+            return None
+
+        if "waypoints_infill" in config.GENETIC_REPAIR_TYPE and "constraint_violation" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to [waypoints_infill & constraint_violation]')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    WaypointsInfillRepair(config),
+                    ConstraintViolationRepair(config, constraints_list)
+                ], )
+
+        if "waypoints_infill" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to "waypoints_infill".')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    WaypointsInfillRepair(config),
+                ], )
+
+        if "constraint_violation" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to "constraint_violation".')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    ConstraintViolationRepair(config, constraints_list)
+                ], )
+
+        return NotImplementedError(f'The repair type {config.GENETIC_REPAIR_TYPE} is not implemented.')

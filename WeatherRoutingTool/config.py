@@ -82,6 +82,9 @@ class Config(BaseModel):
     GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial
     # population (options: 'grid_based', 'from_geojson', 'isofuel')
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
+    GENETIC_REPAIR_TYPE: List[Literal[
+        'waypoints_infill', 'constraint_violation', 'no_repair'
+    ]] = ["waypoints_infill", "constraint_violation"]
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
@@ -278,6 +281,13 @@ class Config(BaseModel):
     def check_numeric_values_positivity(cls, v, info: ValidationInfo):
         if v <= 0:
             raise ValueError(f"'{info.field_name}' must be greater than zero, got {v}")
+        return v
+
+    @field_validator('GENETIC_REPAIR_TYPE', mode='after')
+    @classmethod
+    def check_genetic_repair_type(cls, v):
+        if "no_repair" in v and len(v) > 1:
+            raise ValueError(f"'repair types of genetic algorithm can not be paired with 'no_repair', got {v}")
         return v
 
     @field_validator('ROUTER_HDGS_SEGMENTS', mode='after')
