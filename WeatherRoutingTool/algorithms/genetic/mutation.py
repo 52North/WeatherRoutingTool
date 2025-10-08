@@ -1,10 +1,9 @@
-from pymoo.core.mutation import Mutation
-
-from geographiclib.geodesic import Geodesic
-import numpy as np
-
 import logging
 import math
+
+import numpy as np
+from geographiclib.geodesic import Geodesic
+from pymoo.core.mutation import Mutation
 
 from WeatherRoutingTool.config import Config
 
@@ -24,7 +23,7 @@ class MutationBase(Mutation):
         return self.mutate(problem, X, **kw)
 
     def mutate(self, problem, X, **kw):
-        return X
+        raise NotImplementedError('No mutation method is implemented for the base class.')
 
 
 # mutation variants
@@ -33,8 +32,7 @@ class NoMutation(MutationBase):
     """Empty Mutation class for testing"""
 
     def mutate(self, problem, X, **kw):
-        return super().__init__()
-
+        return X
 
 class RandomWalkMutation(MutationBase):
     """Moves a random waypoint in an individual in the direction of a random bearing
@@ -165,8 +163,25 @@ class RandomMutationsOrchestrator(MutationBase):
 class MutationFactory:
     @staticmethod
     def get_mutation(config: Config) -> Mutation:
-        return RandomMutationsOrchestrator(
-            opts=[
-                RandomWalkMutation(),
-                RouteBlendMutation()
-            ], )
+
+        if "no_mutation" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "no_mutation".')
+            return NoMutation()
+
+        if "random" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "random".')
+            return RandomMutationsOrchestrator(
+                opts=[
+                    RandomWalkMutation(),
+                    RouteBlendMutation()
+                ], )
+
+        if "random_walk" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
+            return RandomWalkMutation()
+
+        if "route_blend" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
+            return RouteBlendMutation()
+
+        raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

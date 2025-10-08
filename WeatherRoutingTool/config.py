@@ -75,7 +75,6 @@ class Config(BaseModel):
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
-    GENETIC_MUTATION_TYPE: Literal['grid_based'] = 'grid_based'  # type for mutation (options: 'grid_based')
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # number of offsprings for genetic algorithm
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
@@ -85,6 +84,9 @@ class Config(BaseModel):
     GENETIC_REPAIR_TYPE: List[Literal[
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
+    GENETIC_MUTATION_TYPE: List[Literal[
+        'random', 'random_walk', 'route_blend', 'no_mutation'
+    ]] = ['random']
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
@@ -288,6 +290,16 @@ class Config(BaseModel):
     def check_genetic_repair_type(cls, v):
         if "no_repair" in v and len(v) > 1:
             raise ValueError(f"'repair types of genetic algorithm can not be paired with 'no_repair', got {v}")
+        return v
+
+    @field_validator('GENETIC_MUTATION_TYPE', mode='after')
+    @classmethod
+    def check_genetic_mutation_type(cls, v):
+        if "no_mutation" in v and len(v) > 1:
+            raise ValueError(f"'mutation types of genetic algorithm can not be paired with 'no_mutation', got {v}")
+
+        if "random" in v and len(v) > 1:
+            raise ValueError(f"'mutation types of genetic algorithm can not be paired with 'random', got {v}")
         return v
 
     @field_validator('ROUTER_HDGS_SEGMENTS', mode='after')
