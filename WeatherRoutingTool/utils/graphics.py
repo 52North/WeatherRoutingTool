@@ -19,6 +19,7 @@ graphics_options = {'font_size': 20, 'fig_size': (12, 10)}
 def get_standard(var):
     return graphics_options[var]
 
+
 def get_standard_fig():
     fig = Figure(figsize=get_standard('fig_size'), dpi=100)
     matplotlib.rcParams.update({'font.size': get_standard('font_size')})
@@ -133,9 +134,9 @@ def get_colour(i):
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
     if i > 18:
         print('Are you sure that you want to have so many curves in one plot?!')
-        i = i-18
+        i = i - 18
     if i > 9:
-        i = i-9
+        i = i - 9
         print('Currently only 11 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))
     return colours[i]
@@ -217,7 +218,7 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
     centres = np.array([]) * u.meter
     contents = np.array([])
     if power_type == 'fuel':
-        contents = contents * u.kg/u.meter
+        contents = contents * u.kg / u.meter
     else:
         contents = contents * u.Watt
     cent_temp = 0 * u.meter
@@ -238,7 +239,7 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
             contents = np.append(contents, cont_temp)
             cent_temp = cent_temp + bin_widths[i] / 2
         else:
-            if not i == (bin_widths.shape[0]-1):
+            if not i == (bin_widths.shape[0] - 1):
                 raise ValueError('Unexpected behaviour!')
             bin_widths = bin_widths[:-1]
 
@@ -309,6 +310,7 @@ def plot_genetic_algorithm_initial_population(src, dest, routes):
         for i in range(0, len(routes)):
             ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
         plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
+
 
 def write_graph_to_csv(path, x, y):
     with open(path, 'w', newline='') as csvfile:

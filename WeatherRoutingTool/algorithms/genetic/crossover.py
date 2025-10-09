@@ -41,18 +41,40 @@ class OffspringRejectionCrossover(CrossoverBase):
     :type departure_time: datetime
     :param constraints_list: List of constraints
     :type constraints_list: ConstraintsList
+    :param Nof_crossover_tries: counter for number of crossover tries
+    :type Nof_crossover_tries: int
+    :param Nof_crossover_success: counter for number of successful crossovers
+    :type Nof_crossover_success: int
+    :param crossover_type: crossover type
+    :type crossover_type: str
     """
 
+    departure_time: datetime
+    constraints_list: ConstraintsList
+
+    Nof_crossover_tries: int
+    Nof_crossover_success: int
+    crossover_type: str
+
     def __init__(
-        self,
-        departure_time: datetime,
-        constraints_list: ConstraintsList,
-        prob=.5,
+            self,
+            departure_time: datetime,
+            constraints_list: ConstraintsList,
+            prob=.5,
+            crossover_type="unnamed"
     ):
         super().__init__(prob=prob)
 
         self.departure_time = departure_time
         self.constraints_list = constraints_list
+        self.Nof_crossover_tries = 0
+        self.Nof_crossover_success = 0
+        self.crossover_type = crossover_type
+
+    def print_crossover_statistics(self):
+        logger.info(f'{self.crossover_type} statistics:')
+        logger.info('Nof_crossover_tries: ' + str(self.Nof_crossover_tries))
+        logger.info('Nof_crossover_success: ' + str(self.Nof_crossover_success))
 
     def _do(self, problem, X, **kw):
         # n_parents assumed to be 2
@@ -62,26 +84,30 @@ class OffspringRejectionCrossover(CrossoverBase):
         Y = np.full_like(X, None, dtype=object)
 
         for k in range(n_matings):
+            self.Nof_crossover_tries += 1
+
             p1 = X[0, k, 0]
             p2 = X[1, k, 0]
 
             o1, o2 = self.crossover(p1.copy(), p2.copy())
 
             if (
-                utils.get_constraints(p1, self.constraints_list) or
-                utils.get_constraints(p2, self.constraints_list)
+                    utils.get_constraints(p1, self.constraints_list) or
+                    utils.get_constraints(p2, self.constraints_list)
             ):
                 Y[0, k, 0] = p1
                 Y[1, k, 0] = p2
             else:
                 Y[0, k, 0] = o1
                 Y[1, k, 0] = o2
+
+                self.Nof_crossover_success += 1
         return Y
 
     def crossover(
-        self,
-        p1: np.ndarray,
-        p2: np.ndarray
+            self,
+            p1: np.ndarray,
+            p2: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """Sub-class' implementation of the crossover function"""
 
@@ -129,12 +155,12 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 
         r1 = np.concatenate([
             p1[:p1x],
-            patchfn.patch(tuple(p1[p1x-1]), tuple(p2[p2x]), self.departure_time),
+            patchfn.patch(tuple(p1[p1x - 1]), tuple(p2[p2x]), self.departure_time),
             p2[p2x:], ])
 
         r2 = np.concatenate([
             p2[:p2x],
-            patchfn.patch(tuple(p2[p2x-1]), tuple(p1[p1x]), self.departure_time),
+            patchfn.patch(tuple(p2[p2x - 1]), tuple(p1[p1x]), self.departure_time),
             p1[p1x:], ])
 
         return r1, r2
@@ -165,16 +191,16 @@ class TwoPointCrossover(OffspringRejectionCrossover):
 
         r1 = np.concatenate([
             p1[:p1x1],
-            patchfn.patch(tuple(p1[p1x1-1]), tuple(p2[p2x1]), self.departure_time),
+            patchfn.patch(tuple(p1[p1x1 - 1]), tuple(p2[p2x1]), self.departure_time),
             p2[p2x1:p2x2],
             patchfn.patch(tuple(p2[p2x2]), tuple(p1[p1x2]), self.departure_time),
             p1[p1x2:], ])
 
         r2 = np.concatenate([
             p2[:p2x1],
-            patchfn.patch(tuple(p2[p2x1-1]), tuple(p1[p1x1]), self.departure_time),
+            patchfn.patch(tuple(p2[p2x1 - 1]), tuple(p1[p1x1]), self.departure_time),
             p1[p1x1:p1x2],
-            patchfn.patch(tuple(p1[p1x2-1]), tuple(p2[p2x2]), self.departure_time),
+            patchfn.patch(tuple(p1[p1x2 - 1]), tuple(p2[p2x2]), self.departure_time),
             p2[p2x2:], ])
 
         return r1, r2
@@ -257,6 +283,10 @@ class RandomizedCrossoversOrchestrator(CrossoverBase):
         opt = self.opts[np.random.randint(0, len(self.opts))]
         return opt._do(problem, X, **kw)
 
+    def print_crossover_statistics(self):
+        for opt in self.opts:
+            opt.print_crossover_statistics()
+
 
 # factory
 # ----------
@@ -273,11 +303,13 @@ class CrossoverFactory:
                     patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
-                    prob=.5, ),
+                    prob=.5,
+                    crossover_type="TP crossover", ),
                 SinglePointCrossover(
                     config=config,
                     patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                     departure_time=departure_time,
                     constraints_list=constraints_list,
-                    prob=.5, ),
+                    prob=.5,
+                    crossover_type="SP crossover", ),
             ], )

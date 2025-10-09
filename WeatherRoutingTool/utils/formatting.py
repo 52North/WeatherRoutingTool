@@ -29,6 +29,11 @@ def print_current_time(function: str, start_time: time.time):
     print('Time after ' + function + ':' + str(time_passed))
 
 
+def get_current_time(start_time: time.time):
+    time_passed = time.time() - start_time
+    return time_passed
+
+
 def get_point_from_string(point):
     lat, lon = point.split(',')
     return float(lat), float(lon)

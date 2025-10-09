@@ -34,6 +34,7 @@ class NoMutation(MutationBase):
     def mutate(self, problem, X, **kw):
         return X
 
+
 class RandomWalkMutation(MutationBase):
     """Moves a random waypoint in an individual in the direction of a random bearing
     by a distance specified by the `gcr_dist` parameter.
@@ -58,10 +59,10 @@ class RandomWalkMutation(MutationBase):
         self.n_updates = n_updates
 
     def random_walk(
-        self,
-        point: tuple[float, float],
-        dist: float = 1e4,
-        bearing: float = 45.0,
+            self,
+            point: tuple[float, float],
+            dist: float = 1e4,
+            bearing: float = 45.0,
     ) -> tuple[float, float]:
         """Pick an N4 neighbour of a waypoint
 
@@ -116,7 +117,7 @@ class RouteBlendMutation(MutationBase):
         curve = np.zeros((n_points, 2))
 
         for i in range(n + 1):
-            bernstein = math.comb(n, i) * (t**i) * ((1 - t) ** (n - i))
+            bernstein = math.comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
             curve += np.outer(bernstein, control_points[i])
 
         return curve

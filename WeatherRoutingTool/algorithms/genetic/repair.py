@@ -47,13 +47,13 @@ class WaypointsInfillRepair(RepairBase):
 
     def repairfn(self, problem, X, **kw):
         gcr_dist = 1e5
-        patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
+        patchfn = PatchFactory.get_patcher(patch_type="gcr", dist=gcr_dist, application="WaypointsInfillRepair")
 
         for i, (rt,) in enumerate(X):
             route = []
 
             for j in range(rt.shape[0] - 1):
-                p1, p2 = rt[[j, j+1]]
+                p1, p2 = rt[[j, j + 1]]
                 d = utils.gcr_distance(p1, p2)
 
                 # patch with new waypoints if the distance between any 2
@@ -88,9 +88,9 @@ class ConstraintViolationRepair(RepairBase):
         # gcr_dist = 1e5
         # patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
 
-        patchfn =PatchFactory.get_patcher(
+        patchfn = PatchFactory.get_patcher(
             patch_type="isofuel_singleton",
-            config = self.config,
+            config=self.config,
             application="ConstraintViolationRepair"
         )
 
