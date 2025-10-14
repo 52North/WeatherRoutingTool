@@ -251,8 +251,8 @@ class IsofuelPatcher(PatcherBase):
         alg = IsoFuel(cfg)
         alg.path_to_route_folder = None
         alg.clear_figure_path()
-
-        alg.init_fig(water_depth=self.water_depth, map_size=Map(*self.config.DEFAULT_MAP))
+        if original_log_level == logging.DEBUG:
+            alg.init_fig(water_depth=self.water_depth, map_size=Map(*self.config.DEFAULT_MAP))
 
         min_fuel_route, err_code = alg.execute_routing(
             boat=self.boat,

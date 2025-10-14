@@ -659,12 +659,13 @@ class WaterDepth(NegativeContraint):
         """
 
         # FIXME: if this loads the whole file into memory, apply subsetting already here
+        # FIXME: can we delete the chunks for figure generation completely?
         logger.info(form.get_log_step('Downloading depth data from file: ' + depth_path, 0))
         ds_depth = None
-        if graphics.get_figure_path():
-            ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
-        else:
-            ds_depth = xr.open_dataset(depth_path)
+        # if graphics.get_figure_path():
+        #    ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        # else:
+        ds_depth = xr.open_dataset(depth_path)
         return ds_depth
 
     def set_draught(self, depth):
@@ -723,13 +724,13 @@ class WaterDepth(NegativeContraint):
         ds_depth = self.depth_data.coarsen(latitude=10, longitude=10, boundary="exact").mean()
         ds_depth_coarsened = ds_depth.compute()
 
-        self.depth_data = ds_depth_coarsened.where(
+        ds_depth_coarsened = ds_depth_coarsened.where(
             (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) & (
                     ds_depth_coarsened.longitude > self.map_size.lon1) & (
                     ds_depth_coarsened.longitude < self.map_size.lon2) & (ds_depth_coarsened.z < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = self.depth_data["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+        cp = ds_depth_coarsened["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
                                                 transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label="Wassertiefe (m)", pad=0.1)
 
