@@ -43,10 +43,8 @@ class Genetic(RoutingAlg):
 
         # running
         self.figure_path = graphics.get_figure_path()
-
         if self.figure_path is not None:
             os.makedirs(self.figure_path, exist_ok=True)
-
         self.default_map: Map = Map(*config.DEFAULT_MAP)
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
@@ -74,6 +72,11 @@ class Genetic(RoutingAlg):
         :param verbose: Verbosity setting for logs
         :type verbose: Optional[bool]
         """
+
+        plt.set_loglevel(level='warning') # deactivate matplotlib debug messages if debug mode activated
+        if self.config.GENETIC_FIX_RANDOM_SEED:
+            logger.info('Fixing random seed for genetic algorithm.')
+            np.random.seed(1)
 
         # inputs
         problem = RoutingProblem(
@@ -166,7 +169,7 @@ class Genetic(RoutingAlg):
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
-            self.plot_coverage(res)
+            self.plot_coverage(res, best_route)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -350,18 +353,20 @@ class Genetic(RoutingAlg):
             figname = f"genetic_algorithm_generation {igen:02}.png"
             plt.savefig(os.path.join(self.figure_path, figname))
 
-    def plot_coverage(self, res):
+    def plot_coverage(self, res, best_route):
         waypoints = None
         history = res.history
 
         # Create an empty plot
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
             fig=fig,
             depth=None,
             start=self.start,
             finish=self.finish,
-            title="spatial coverage",
+            title="",
             show_depth=False, )
 
         for igen in range(len(history)):
@@ -372,7 +377,10 @@ class Genetic(RoutingAlg):
                     waypoints = last_pop[iroute, 0][:, :]
                 waypoints = np.concatenate((waypoints, last_pop[iroute, 0][:, :]), axis=0)
 
-        sns.scatterplot(x=waypoints[:, 1], y=waypoints[:, 0], s=25, alpha=0.2, edgecolor=None)
+        sns.scatterplot(x=waypoints[:, 1], y=waypoints[:, 0], s=25, alpha=0.2, edgecolor=None, label="all waypoints")
+        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", )
+        legend = plt.legend(title="routes", loc="upper left")
+        legend.get_frame().set_alpha(1)  # Slightly transparent
 
         figname = "spatial_coverage.png"
         plt.savefig(os.path.join(self.figure_path, figname))
