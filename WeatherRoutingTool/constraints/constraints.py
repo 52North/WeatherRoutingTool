@@ -379,8 +379,8 @@ class ConstraintsList:
 
         is_constrained = np.array(is_constrained)
 
-        logger.debug('Entering continuous checks')
-        logger.debug('Length of latitudes: ' + str(len(lat_start)))
+        # logger.debug('Entering continuous checks')
+        # logger.debug('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end)

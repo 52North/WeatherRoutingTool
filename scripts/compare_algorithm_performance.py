@@ -1,22 +1,25 @@
 import argparse
+import os
 
 import WeatherRoutingTool.utils.graphics as graphics
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def compare_ga_convergence(paths, names):
+def compare_ga_convergence(paths, names, figuredir):
     graph_pd = None
     for i_path in range(0, len(paths)):
         pd_temp = pd.read_csv(filepath_or_buffer=paths[i_path], sep=" ", names=["n_gen", names[i_path]])
+        pd_temp = pd_temp.set_index('n_gen')
         if graph_pd is None:
             graph_pd = pd_temp
         else:
-            graph_pd = graph_pd.set_index('n_gen').join(pd_temp.set_index('n_gen'), on="n_gen")
+            graph_pd = graph_pd.join(pd_temp, on="n_gen")
 
-    fig = graphics.get_standard_fig()
+    graphics.get_standard_fig()
     graph_pd.plot()
     plt.show()
+    # plt.savefig(os.path.join(figuredir, 'convergence.png'))
 
 
 if __name__ == "__main__":
@@ -42,14 +45,12 @@ if __name__ == "__main__":
                                     "Same ordering as for flag --file-list.",
                                nargs="*", required=True, type=str)
 
-
     # read arguments
     args = parser.parse_args()
     figurefile = args.figure_dir
     csv_list = args.csv_list
     hist_list = args.hist_list
     name_list = args.name_list
-
 
     # catch faulty configuration
     found_hist = False
@@ -68,4 +69,4 @@ if __name__ == "__main__":
         raise ValueError('Every histogram needs a name for the legend.')
 
     if hist_dict["convergence"]:
-        compare_ga_convergence(csv_list, name_list)
+        compare_ga_convergence(csv_list, name_list, figurefile)

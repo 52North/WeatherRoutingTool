@@ -282,7 +282,7 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
     ax.add_feature(cf.LAND)
     ax.add_feature(cf.COASTLINE)
     ax.gridlines(draw_labels=True)
-    # ax.set_extent((-1500000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
+    ax.set_extent((-300000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
 
     if start is not None:
         ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
