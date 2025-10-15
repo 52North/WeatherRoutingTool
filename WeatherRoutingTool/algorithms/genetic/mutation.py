@@ -177,7 +177,7 @@ class MutationFactory:
                     RouteBlendMutation()
                 ], )
 
-        if "random_walk" in config.GENETIC_MUTATION_TYPE:
+        if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
             return RandomWalkMutation()
 

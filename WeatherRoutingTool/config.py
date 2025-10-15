@@ -85,8 +85,8 @@ class Config(BaseModel):
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
     GENETIC_MUTATION_TYPE: Literal[
-        'random', 'random_walk', 'route_blend', 'no_mutation'
-    ] = ['random']
+        'random', 'rndm_walk', 'route_blend', 'no_mutation'
+    ] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
 
