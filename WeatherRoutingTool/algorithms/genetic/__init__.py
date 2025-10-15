@@ -73,7 +73,7 @@ class Genetic(RoutingAlg):
         :type verbose: Optional[bool]
         """
 
-        plt.set_loglevel(level='warning') # deactivate matplotlib debug messages if debug mode activated
+        plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
             np.random.seed(1)

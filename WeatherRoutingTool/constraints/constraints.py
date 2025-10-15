@@ -731,7 +731,7 @@ class WaterDepth(NegativeContraint):
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
         cp = ds_depth_coarsened["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                                                transform=ccrs.PlateCarree())
+                                                   transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label="Wassertiefe (m)", pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
@@ -943,11 +943,12 @@ class SeamarkCrossing(ContinuousCheck):
 
         if is_stay_on_map:
             bbox_wkt = self.set_map_bbox(map_size)
-            query = ["SELECT * FROM " + self.schema + ".nodes "
-                     "WHERE ST_Intersects(geom, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
+            query = ["SELECT * FROM " + self.schema +
+                     ".nodes WHERE ST_Intersects(geom, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
                      + f" AND ({category_clause} OR tags -> " + tags + ")",
-                     "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
-                     "WHERE ST_Intersects(linestring, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
+                     "SELECT *, linestring AS geom FROM " + self.schema +
+                     ".ways WHERE ST_Intersects(linestring, ST_GeomFromText('{}', 4326))".format(
+                         bbox_wkt)
                      + f" AND ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
         else:
