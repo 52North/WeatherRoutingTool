@@ -1,10 +1,9 @@
-from pymoo.core.mutation import Mutation
-
-from geographiclib.geodesic import Geodesic
-import numpy as np
-
 import logging
 import math
+
+import numpy as np
+from geographiclib.geodesic import Geodesic
+from pymoo.core.mutation import Mutation
 
 from WeatherRoutingTool.config import Config
 
@@ -24,7 +23,7 @@ class MutationBase(Mutation):
         return self.mutate(problem, X, **kw)
 
     def mutate(self, problem, X, **kw):
-        return X
+        raise NotImplementedError('No mutation method is implemented for the base class.')
 
 
 # mutation variants
@@ -33,7 +32,7 @@ class NoMutation(MutationBase):
     """Empty Mutation class for testing"""
 
     def mutate(self, problem, X, **kw):
-        return super().__init__()
+        return X
 
 
 class RandomWalkMutation(MutationBase):
@@ -60,10 +59,10 @@ class RandomWalkMutation(MutationBase):
         self.n_updates = n_updates
 
     def random_walk(
-        self,
-        point: tuple[float, float],
-        dist: float = 1e4,
-        bearing: float = 45.0,
+            self,
+            point: tuple[float, float],
+            dist: float = 1e4,
+            bearing: float = 45.0,
     ) -> tuple[float, float]:
         """Pick an N4 neighbour of a waypoint
 
@@ -118,7 +117,7 @@ class RouteBlendMutation(MutationBase):
         curve = np.zeros((n_points, 2))
 
         for i in range(n + 1):
-            bernstein = math.comb(n, i) * (t**i) * ((1 - t) ** (n - i))
+            bernstein = math.comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
             curve += np.outer(bernstein, control_points[i])
 
         return curve
@@ -165,8 +164,25 @@ class RandomMutationsOrchestrator(MutationBase):
 class MutationFactory:
     @staticmethod
     def get_mutation(config: Config) -> Mutation:
-        return RandomMutationsOrchestrator(
-            opts=[
-                RandomWalkMutation(),
-                RouteBlendMutation()
-            ], )
+
+        if "no_mutation" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "no_mutation".')
+            return NoMutation()
+
+        if "random" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "random".')
+            return RandomMutationsOrchestrator(
+                opts=[
+                    RandomWalkMutation(),
+                    RouteBlendMutation()
+                ], )
+
+        if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
+            return RandomWalkMutation()
+
+        if "route_blend" in config.GENETIC_MUTATION_TYPE:
+            logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
+            return RouteBlendMutation()
+
+        raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

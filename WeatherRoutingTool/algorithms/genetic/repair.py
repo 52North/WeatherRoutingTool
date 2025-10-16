@@ -5,7 +5,8 @@ import logging
 
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.genetic import utils, patcher
+from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.repair")
 
@@ -20,6 +21,8 @@ class RepairBase(Repair):
     :param config: Configuration for the run
     :type config: Config
     """
+
+    config: Config
 
     def __init__(self, config: Config):
         super().__init__()
@@ -44,13 +47,13 @@ class WaypointsInfillRepair(RepairBase):
 
     def repairfn(self, problem, X, **kw):
         gcr_dist = 1e5
-        patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
+        patchfn = PatchFactory.get_patcher(patch_type="gcr", dist=gcr_dist, application="WaypointsInfillRepair")
 
         for i, (rt,) in enumerate(X):
             route = []
 
             for j in range(rt.shape[0] - 1):
-                p1, p2 = rt[[j, j+1]]
+                p1, p2 = rt[[j, j + 1]]
                 d = utils.gcr_distance(p1, p2)
 
                 # patch with new waypoints if the distance between any 2
@@ -80,10 +83,16 @@ class ConstraintViolationRepair(RepairBase):
         self.constraints_list = constraints_list
 
     def repairfn(self, problem, X, **kw):
+
+        # TODO: investigate methods to make GreatCircleRoutePatcher consider constraints
         # gcr_dist = 1e5
         # patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
 
-        patchfn = patcher.IsofuelPatcherSingleton(base_config=self.config)
+        patchfn = PatchFactory.get_patcher(
+            patch_type="isofuel_singleton",
+            config=self.config,
+            application="ConstraintViolationRepair"
+        )
 
         for i, (rt,) in enumerate(X):
             constrained = utils.get_constraints_array(rt, self.constraints_list)
@@ -133,8 +142,31 @@ class ChainedRepairsOrchestrator(Repair):
 class RepairFactory:
     @staticmethod
     def get_repair(config: Config, constraints_list: ConstraintsList):
-        return ChainedRepairsOrchestrator(
-            order=[
-                WaypointsInfillRepair(config),
-                ConstraintViolationRepair(config, constraints_list)
-            ], )
+
+        if config.GENETIC_REPAIR_TYPE == ["no_repair"]:
+            logger.debug('Setting repair type of genetic algorithm to "no_repair".')
+            return None
+
+        if "waypoints_infill" in config.GENETIC_REPAIR_TYPE and "constraint_violation" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to [waypoints_infill & constraint_violation]')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    WaypointsInfillRepair(config),
+                    ConstraintViolationRepair(config, constraints_list)
+                ], )
+
+        if "waypoints_infill" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to "waypoints_infill".')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    WaypointsInfillRepair(config),
+                ], )
+
+        if "constraint_violation" in config.GENETIC_REPAIR_TYPE:
+            logger.debug('Setting repair type of genetic algorithm to "constraint_violation".')
+            return ChainedRepairsOrchestrator(
+                order=[
+                    ConstraintViolationRepair(config, constraints_list)
+                ], )
+
+        return NotImplementedError(f'The repair type {config.GENETIC_REPAIR_TYPE} is not implemented.')

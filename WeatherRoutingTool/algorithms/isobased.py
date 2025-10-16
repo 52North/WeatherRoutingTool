@@ -1786,12 +1786,12 @@ class IsoBased(RoutingAlg):
             ds_depth = water_depth.depth_data.coarsen(latitude=10, longitude=10, boundary='trim').mean()
             ds_depth_coarsened = ds_depth.compute()
 
-            self.depth = ds_depth_coarsened.where(
+            ds_depth_coarsened = ds_depth_coarsened.where(
                 (ds_depth_coarsened.latitude > map_size.lat1) & (ds_depth_coarsened.latitude < map_size.lat2) &
                 (ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) &
                 (ds_depth_coarsened.z < 0), drop=True)
 
-        self.fig, self.ax = graphics.generate_basemap(self.fig, self.depth, self.start, self.finish)
+        self.fig, self.ax = graphics.generate_basemap(self.fig, ds_depth_coarsened, self.start, self.finish)
 
         final_path = self.figure_path + '/fig0.png'
         logger.info('Save start figure to ' + final_path)
@@ -1800,9 +1800,6 @@ class IsoBased(RoutingAlg):
     def update_fig(self, status):
         if self.figure_path is None:
             return
-        fig = self.fig
-        self.ax.remove()
-        fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
 
         latitudes = self.lats_per_step.copy()
         longitudes = self.lons_per_step.copy()

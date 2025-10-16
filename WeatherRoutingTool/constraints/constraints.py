@@ -379,8 +379,8 @@ class ConstraintsList:
 
         is_constrained = np.array(is_constrained)
 
-        logger.debug('Entering continuous checks')
-        logger.debug('Length of latitudes: ' + str(len(lat_start)))
+        # logger.debug('Entering continuous checks')
+        # logger.debug('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
             is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end)
@@ -659,12 +659,13 @@ class WaterDepth(NegativeContraint):
         """
 
         # FIXME: if this loads the whole file into memory, apply subsetting already here
+        # FIXME: can we delete the chunks for figure generation completely?
         logger.info(form.get_log_step('Downloading depth data from file: ' + depth_path, 0))
         ds_depth = None
-        if graphics.get_figure_path():
-            ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
-        else:
-            ds_depth = xr.open_dataset(depth_path)
+        # if graphics.get_figure_path():
+        #    ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
+        # else:
+        ds_depth = xr.open_dataset(depth_path)
         return ds_depth
 
     def set_draught(self, depth):
@@ -723,14 +724,14 @@ class WaterDepth(NegativeContraint):
         ds_depth = self.depth_data.coarsen(latitude=10, longitude=10, boundary="exact").mean()
         ds_depth_coarsened = ds_depth.compute()
 
-        self.depth_data = ds_depth_coarsened.where(
+        ds_depth_coarsened = ds_depth_coarsened.where(
             (ds_depth_coarsened.latitude > self.map_size.lat1) & (ds_depth_coarsened.latitude < self.map_size.lat2) & (
                     ds_depth_coarsened.longitude > self.map_size.lon1) & (
                     ds_depth_coarsened.longitude < self.map_size.lon2) & (ds_depth_coarsened.z < 0), drop=True, )
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = self.depth_data["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                                                transform=ccrs.PlateCarree())
+        cp = ds_depth_coarsened["z"].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                                   transform=ccrs.PlateCarree())
         fig.colorbar(cp, ax=ax, shrink=0.7, label="Wassertiefe (m)", pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
@@ -942,11 +943,12 @@ class SeamarkCrossing(ContinuousCheck):
 
         if is_stay_on_map:
             bbox_wkt = self.set_map_bbox(map_size)
-            query = ["SELECT * FROM " + self.schema + ".nodes "
-                     "WHERE ST_Intersects(geom, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
+            query = ["SELECT * FROM " + self.schema +
+                     ".nodes WHERE ST_Intersects(geom, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
                      + f" AND ({category_clause} OR tags -> " + tags + ")",
-                     "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
-                     "WHERE ST_Intersects(linestring, ST_GeomFromText('{}', 4326))".format(bbox_wkt)
+                     "SELECT *, linestring AS geom FROM " + self.schema +
+                     ".ways WHERE ST_Intersects(linestring, ST_GeomFromText('{}', 4326))".format(
+                         bbox_wkt)
                      + f" AND ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
         else:
