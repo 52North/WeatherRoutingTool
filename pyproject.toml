@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "WeatherRoutingTool"
-version = "0.1"
+version = "0.1.0"
 authors = [
   { name="52N authors", email="info@52north.org" },
 ]
-description = "Python package for weather routing"
+description = "Python package for weather routing optimization"
 readme = "README.md"
 #license = { file="LICENSE" }
 requires-python = ">=3.11"
@@ -21,8 +21,52 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
+[project.scripts]
+wrt = "WeatherRoutingTool.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "black>=23.0",
+    "mypy>=1.0",
+    "pre-commit>=3.0",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "flake8",
+    "psycopg2",
+]
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme>=1.0",
+]
+env = [
+    "python-dotenv>=1.0.0",
+]
+
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 include = ["WeatherRoutingTool*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "genetic: tests for genetic algorithm",
+    "maripower: tests that need maripower support",
+    "manual: tests that produce figures as output",
+]
+addopts = "-ra --tb=short --strict-markers"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.black]
+line-length = 120
+target-version = ['py311', 'py312', 'py313']

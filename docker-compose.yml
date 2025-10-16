@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  wrt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weather-routing-tool
+    volumes:
+      # Mount config and data directories
+      - ./config.json:/app/config.json:ro
+      - ./data:/app/data:ro
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      # Environment variables from .env file
+      - WRT_FIGURE_PATH=/app/output
+      - WRT_DB_HOST=${WRT_DB_HOST:-postgres}
+      - WRT_DB_DATABASE=${WRT_DB_DATABASE:-wrt_db}
+      - WRT_DB_USERNAME=${WRT_DB_USERNAME:-wrt_user}
+      - WRT_DB_PASSWORD=${WRT_DB_PASSWORD:-wrt_password}
+      - WRT_DB_PORT=${WRT_DB_PORT:-5432}
+      - CMEMS_USERNAME=${CMEMS_USERNAME}
+      - CMEMS_PASSWORD=${CMEMS_PASSWORD}
+    depends_on:
+      - postgres
+    command: ["-f", "config.json"]
+    networks:
+      - wrt-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: wrt-postgres
+    environment:
+      POSTGRES_DB: ${WRT_DB_DATABASE:-wrt_db}
+      POSTGRES_USER: ${WRT_DB_USERNAME:-wrt_user}
+      POSTGRES_PASSWORD: ${WRT_DB_PASSWORD:-wrt_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${WRT_DB_PORT:-5432}:5432"
+    networks:
+      - wrt-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${WRT_DB_USERNAME:-wrt_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  wrt-network:
+    driver: bridge
