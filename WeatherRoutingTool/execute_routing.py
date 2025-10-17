@@ -1,5 +1,6 @@
 # import cProfile
 from datetime import datetime
+from pathlib import Path
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
@@ -65,12 +66,13 @@ def execute_routing(config):
     # routing
     min_fuel_route, error_code = min_fuel_route.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
-    min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
+    out_dir = Path(routepath)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    min_fuel_route.return_route_to_API(str(out_dir / f"{min_fuel_route.route_type}.json"))
 
     if config.ROUTE_POSTPROCESSING:
         postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
         min_fuel_route_postprocessed = postprocessed_route.post_process_route()
-        min_fuel_route_postprocessed.return_route_to_API(routepath + '/' + str(min_fuel_route_postprocessed.route_type)
-                                                         + '_postprocessed' + ".json")
+        min_fuel_route_postprocessed.return_route_to_API(str(out_dir / f"{min_fuel_route_postprocessed.route_type}_postprocessed.json"))
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')

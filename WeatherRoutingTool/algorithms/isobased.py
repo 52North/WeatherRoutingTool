@@ -1,13 +1,15 @@
 from datetime import timedelta
+import logging
 
 import numpy as np
+import pandas as pd
 from geovectorslib import geod
 from scipy.stats import binned_statistic
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
-from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams

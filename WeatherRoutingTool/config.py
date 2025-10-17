@@ -14,11 +14,11 @@ logger = logging.getLogger('WRT.Config')
 
 
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
-                   log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'):
+                   log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s', log_level=None):
     formatter = logging.Formatter(log_format)
-    log_level = logging.INFO
-    if debug:
-        log_level = logging.DEBUG
+    # Determine log level
+    if log_level is None:
+        log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(stream=stream, format=log_format, level=log_level)
     logger = logging.getLogger('WRT')
 
@@ -164,13 +164,17 @@ class Config(BaseModel):
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
                     config.CONFIG_PATH = path
+                # Apply environment variable overrides if present
+                cls._apply_env_overrides(config)
                 return config
             else:
                 logger.info(f"Given path to config json file: {path}")
                 raise ValueError("Path to config doesn't exist")
         elif init_mode == 'from_dict':
             if config_dict is not None:
-                return cls.validate_config(config_dict)
+                config = cls.validate_config(config_dict)
+                cls._apply_env_overrides(config)
+                return config
             else:
                 raise ValueError("You chose init_mode = 'from_dict' but config_dict has no value")
         else:
@@ -192,15 +196,32 @@ class Config(BaseModel):
     @field_validator('COURSES_FILE', 'ROUTE_PATH', mode='after')
     @classmethod
     def validate_path_exists(cls, v, info: ValidationInfo):
+        # Validate and (where meaningful) create directories
         if info.field_name == 'COURSES_FILE':
-            if info.data.get('BOAT_TYPE') != 'CBT':
+            # Only required for CBT/maripower runs
+            if info.data.get('BOAT_TYPE') != 'CBT' or not v:
                 return v
             else:
                 path = Path(os.path.dirname(v))
+                is_dir = True
+        elif info.field_name == 'ROUTE_PATH':
+            path = Path(v)
+            is_dir = True
         else:
             path = Path(v)
-        if not path.exists():
+            is_dir = False
+
+        if is_dir and not path.exists():
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                raise ValueError(f"Failed to create directory '{path}': {e}")
+        elif not path.exists():
             raise ValueError(f"Path doesn't exist: {path}")
+
+        # Check writability for directories
+        if is_dir and not os.access(path, os.W_OK):
+            raise ValueError(f"Path is not writable: {path}")
         return str(path)
 
     @field_validator('DEFAULT_ROUTE', mode='after')
@@ -286,6 +307,35 @@ class Config(BaseModel):
         if not (v > 0 and v % 2 == 0):
             raise ValueError("'ROUTER_HDGS_SEGMENTS' must be a positive even integer.")
         return v
+
+    @classmethod
+    def _apply_env_overrides(cls, config: 'Config') -> None:
+        """Apply environment variable overrides with prefix WRT_."""
+        mapping = {
+            'WRT_ALGORITHM_TYPE': 'ALGORITHM_TYPE',
+            'WRT_BOAT_TYPE': 'BOAT_TYPE',
+            'WRT_ROUTE_PATH': 'ROUTE_PATH',
+            'WRT_WEATHER_DATA': 'WEATHER_DATA',
+            'WRT_DEPTH_DATA': 'DEPTH_DATA',
+            'WRT_DELTA_TIME_FORECAST': 'DELTA_TIME_FORECAST',
+            'WRT_TIME_FORECAST': 'TIME_FORECAST',
+        }
+        for env_key, field in mapping.items():
+            if env_key in os.environ and os.environ[env_key]:
+                value = os.environ[env_key]
+                try:
+                    # basic casting for numeric fields
+                    if field in {'DELTA_TIME_FORECAST', 'TIME_FORECAST'}:
+                        value = float(value)
+                    setattr(config, field, value)
+                except Exception:
+                    logger.warning(f"Failed to apply environment override for {field} from {env_key}")
+
+    @classmethod
+    def export_json_schema(cls, path: Union[str, Path]) -> None:
+        schema = cls.model_json_schema()
+        path = Path(path)
+        path.write_text(json.dumps(schema, indent=2))
 
     @model_validator(mode='after')
     def check_route_on_map(self) -> Self:

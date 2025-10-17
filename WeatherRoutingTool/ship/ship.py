@@ -31,6 +31,9 @@ class Boat:
         self.draught_aft = config_obj.BOAT_DRAUGHT_AFT * u.meter
         self.draught_fore = config_obj.BOAT_DRAUGHT_FORE * u.meter
 
+        # cache for lazily opened weather dataset
+        self._weather_ds = None
+
     def get_required_water_depth(self):
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
         return needs_water_depth.value
@@ -47,8 +50,19 @@ class Boat:
     def set_boat_speed(self, speed):
         self.speed = speed
 
+    def _get_weather_ds(self):
+        if self.weather_path is None:
+            return None
+        if self._weather_ds is None:
+            try:
+                self._weather_ds = xr.open_dataset(self.weather_path, chunks="auto")
+            except Exception:
+                # Fallback without dask
+                self._weather_ds = xr.open_dataset(self.weather_path)
+        return self._weather_ds
+
     def evaluate_weather(self, ship_params, lats, lons, time):
-        weather_data = xr.open_dataset(self.weather_path)
+        weather_data = self._get_weather_ds()
         n_coords = len(lats)
 
         wave_height = []

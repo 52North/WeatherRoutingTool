@@ -10,6 +10,7 @@ try:
 except ImportError:
     pass  # python-dotenv not installed, skip .env loading
 
+import logging
 from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool._version import __version__
@@ -24,17 +25,21 @@ def main():
   wrt -f config.json
   wrt --validate-config config.json
   wrt -f config.json --debug --dry-run
+  wrt --export-schema wrt.schema.json
         """)
     
     parser.add_argument('--version', action='version', version=f'WeatherRoutingTool {__version__}')
     parser.add_argument('-f', '--file', help="Config file path (absolute or relative)", type=str)
     parser.add_argument('--validate-config', help="Validate config file and exit", action='store_true')
+    parser.add_argument('--export-schema', help="Export JSON schema of Config model to file", type=str)
     parser.add_argument('--dry-run', help="Validate config and setup without executing routing", action='store_true')
     parser.add_argument('--warnings-log-file',
                         help="Log file path for warnings and above", type=str)
     parser.add_argument('--info-log-file',
                         help="Log file path for info and above", type=str)
     parser.add_argument('--debug', help="Enable debug mode", action='store_true')
+    parser.add_argument('-v', '--verbose', help="Verbose logging (INFO)", action='store_true')
+    parser.add_argument('-q', '--quiet', help="Quiet mode (WARN only)", action='store_true')
     parser.add_argument('--filter-warnings', 
                         help="Warning filter action",
                         choices=['default', 'error', 'ignore', 'always', 'module', 'once'],
@@ -45,6 +50,16 @@ def main():
     # Set warning filter early
     warnings.filterwarnings(args.filter_warnings)
     
+    # Export schema mode
+    if args.export_schema:
+        try:
+            Config.export_json_schema(args.export_schema)
+            print(f"✓ Schema exported to: {args.export_schema}")
+            return 0
+        except Exception as e:
+            print(f"✗ Failed to export schema: {e}", file=sys.stderr)
+            return 1
+
     # Validate-only mode
     if args.validate_config:
         if not args.file:
@@ -65,7 +80,14 @@ def main():
         parser.error("-f/--file is required (unless using --validate-config)")
     
     # Initialize logging
-    set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
+    log_level = None
+    if args.quiet:
+        log_level =  logging.WARNING
+    elif args.debug:
+        log_level = logging.DEBUG
+    elif args.verbose:
+        log_level = logging.INFO
+    set_up_logging(args.info_log_file, args.warnings_log_file, args.debug, log_level=log_level)
     
     # Load and validate config
     try:
