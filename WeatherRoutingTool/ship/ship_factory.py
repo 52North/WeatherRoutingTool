@@ -33,7 +33,7 @@ class ShipFactory:
             raise NotImplementedError('Ship type SAL is not yet supported!')
 
         if not ship:
-            raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '
+            raise NotImplementedError('The ship type "' + str(config.BOAT_TYPE) + '", that you requested is '
                                                                                   'not implemented.')
         ship.load_data()
         ship.check_data_meaningful()

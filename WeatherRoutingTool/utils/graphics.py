@@ -1,5 +1,6 @@
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
@@ -8,6 +9,8 @@ from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 from PIL import Image
+
+logger = logging.getLogger('WRT.graphics')
 
 graphics_options = {'font_size': 20, 'fig_size': (12, 10)}
 
@@ -40,7 +43,7 @@ def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
 
     # Add gcrs between provided points to the map figure.
     path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
-    print(path)
+    logger.debug(f"GCR points: {path}")
     for i in range(n_maps):
         ax = fig.add_subplot(n_maps + 1, 1, i + 1, projection=ccrs.PlateCarree())
         ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
@@ -123,12 +126,12 @@ def get_colour(i):
     colours = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
     if i > 18:
-        print('Are you sure that you want to have so many curves in one plot?!')
+        logger.warning('Are you sure that you want to have so many curves in one plot?!')
         i = i-18
     if i > 9:
         i = i-9
-        print('Currently only 11 different colours available. Will use one that has already been used before: '
-              'Colour=' + str(i))
+        logger.warning(f'Currently only 11 different colours available. Will use one that has already been used before: '
+                       f'Colour={i}')
     return colours[i]
 
 
@@ -136,8 +139,8 @@ def get_marker(i):
     markers = ['o', 's', 'd', 'P', 'D', 'x', 'p']
     if i > 6:
         i = i - 7
-        print('Currently only 5 different colours available. Will use one that has already been used before: '
-              'Colour=' + str(i))
+        logger.warning(f'Currently only 7 different markers available. Will use one that has already been used before: '
+                       f'Marker={i}')
     return markers[i]
 
 
@@ -170,7 +173,7 @@ def merge_figs(path, ncounts):
 
     for iIm in range(1, ncounts + 1):
         impath = path + 'fig' + str(iIm) + 'p.png'
-        print('Reading image ', impath)
+        logger.info(f'Reading image {impath}')
         im_temp = Image.open(impath)
         im_plot = plt.imshow(im_temp)
         image_list.append([im_plot])
