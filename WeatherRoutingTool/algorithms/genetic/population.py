@@ -18,7 +18,7 @@ logger = logging.getLogger("WRT.genetic.population")
 
 
 class Population(Sampling):
-    """Base Population Class"""
+    """Base Class for generating the initial population."""
 
     def __init__(self, default_route: list, constraints_list: list, pop_size: int):
         super().__init__()

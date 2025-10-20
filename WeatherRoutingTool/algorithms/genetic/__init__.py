@@ -9,6 +9,7 @@ import seaborn as sns
 from astropy import units as u
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
+from pymoo.operators.selection.rnd import RandomSelection
 from pymoo.optimize import minimize
 from pymoo.termination import get_termination
 from pymoo.util.running_metric import RunningMetric
@@ -19,6 +20,7 @@ from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
 from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
 from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
+from WeatherRoutingTool.algorithms.genetic.selection import RandomTournamentSelection
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic import utils
 
@@ -128,6 +130,7 @@ class Genetic(RoutingAlg):
             repair=repair,
             eliminate_duplicates=duplicates,
             return_least_infeasible=False,
+            #selection=RandomTournamentSelection()
         )
 
         termination = get_termination("n_gen", self.n_generations)

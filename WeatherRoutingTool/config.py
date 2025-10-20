@@ -75,8 +75,9 @@ class Config(BaseModel):
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
-    GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
-    GENETIC_NUMBER_OFFSPRINGS: int = 2  # number of offsprings for genetic algorithm
+    # options for GA
+    GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
+    GENETIC_NUMBER_OFFSPRINGS: int = 2  # total number of offsprings for every generation
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
     GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial
     # population (options: 'grid_based', 'from_geojson', 'isofuel')
