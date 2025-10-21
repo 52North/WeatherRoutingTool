@@ -71,7 +71,9 @@ class GreatCircleRoutePatcher(PatcherBase):
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None) -> np.ndarray:
+
+
+    def patch(self, src: tuple, dst: tuple, npoints=None, departure_time: datetime = None) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -85,12 +87,24 @@ class GreatCircleRoutePatcher(PatcherBase):
 
         geod: Geodesic = Geodesic.WGS84
         line = geod.InverseLine(*src, *dst)
-        n = int(math.ceil(line.s13 / self.dist))
+
+       # print('full dist: ', line.s13)
+       # print('src: ', src)
+       # print('dst: ', dst)
+        if npoints:
+            self.dist = line.s13/npoints
+        else:
+            npoints = int(math.ceil(line.s13 / self.dist))
+       # print('dist: ', self.dist)
+       # print('npoints: ', npoints)
+
         route = []
-        for i in range(n + 1):
+        for i in range(npoints + 1):
             s = min(self.dist * i, line.s13)
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             route.append((g['lat2'], g['lon2']))
+
+       #     print('lat, lon', str(g['lat2']) + ',' +  str(g['lon2']))
         return np.array([src, *route[1:-1], dst])
 
 
@@ -298,9 +312,9 @@ class PatchFactory:
     @staticmethod
     def get_patcher(
             patch_type: str,
+            dist: float=10e4,
             application: str = 'application undefined',
-            config: Config = None,
-            dist: float = 1e5
+            config: Config = None
     ) -> PatcherBase:
 
         if patch_type == "gcr_singleton":
