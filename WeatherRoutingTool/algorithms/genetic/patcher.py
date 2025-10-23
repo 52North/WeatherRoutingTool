@@ -312,14 +312,13 @@ class PatchFactory:
     @staticmethod
     def get_patcher(
             patch_type: str,
-            dist: float=10e4,
             application: str = 'application undefined',
             config: Config = None
     ) -> PatcherBase:
 
         if patch_type == "gcr_singleton":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "gcr_singleton".')
-            return GreatCircleRoutePatcherSingleton(dist=dist)
+            return GreatCircleRoutePatcherSingleton()
 
         if patch_type == "isofuel_singleton":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "isofuel_singleton".')
@@ -331,6 +330,6 @@ class PatchFactory:
 
         if patch_type == "gcr":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "gcr".')
-            return GreatCircleRoutePatcher(dist=dist)
+            return GreatCircleRoutePatcher()
 
         raise NotImplementedError(f'The patch type {patch_type} is not implemented.')
