@@ -263,13 +263,13 @@ class MutationFactory:
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
                 opts=[
-                    RandomWalkMutation(),
+                    RandomWalkMutation(config),
                     RouteBlendMutation()
                 ], )
 
         if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
-            return RandomWalkMutation()
+            return RandomWalkMutation(config)
 
         if "route_blend" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')

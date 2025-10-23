@@ -73,7 +73,7 @@ class GreatCircleRoutePatcher(PatcherBase):
 
 
 
-    def patch(self, src: tuple, dst: tuple, npoints=None, departure_time: datetime = None) -> np.ndarray:
+    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None, npoints=None, ) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -91,7 +91,7 @@ class GreatCircleRoutePatcher(PatcherBase):
        # print('full dist: ', line.s13)
        # print('src: ', src)
        # print('dst: ', dst)
-        if npoints:
+        if not npoints == None:
             self.dist = line.s13/npoints
         else:
             npoints = int(math.ceil(line.s13 / self.dist))
