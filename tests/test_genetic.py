@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
-from WeatherRoutingTool.algorithms.genetic.mutation import RandomWalkMutation
+from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation
 import  WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
+
 
 
 def test_isofuelpatcher_singleton():
@@ -55,7 +56,7 @@ def test_random_walk_mutation():
     config = Config.assign_config(Path(configpath))
     np.random.seed(1)
 
-    mt = RandomWalkMutation(config, )
+    mt = RandomPlateauMutation(config, )
 
     route1 = np.array([
         [35.199, 15.490],
@@ -116,7 +117,7 @@ def test_random_walk_mutation_refusal():
     config = Config.assign_config(Path(configpath))
     np.random.seed(1)
 
-    mt = RandomWalkMutation(config, )
+    mt = RandomPlateauMutation(config, )
 
     route1 = np.array([
         [35.199, 15.490],
