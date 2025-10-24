@@ -10,6 +10,12 @@ import pandas as pd
 import xarray as xr
 from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
 
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
+
 logger = logging.getLogger('WRT.Config')
 
 
@@ -141,7 +147,7 @@ class Config(BaseModel):
             raise
 
     @classmethod
-    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
+    def assign_config(cls, path=None, init_mode='from_json', config_dict=None, load_env=True):
         """
         Check input type of config data and run validate_config
 
@@ -151,19 +157,30 @@ class Config(BaseModel):
         :type init_mode: str, optional
         :param config_dict: dict with config data, defaults to None
         :type config_dict: dict, optional
+        :param load_env: Load .env file if available, defaults to True
+        :type load_env: bool, optional
         :raises ValueError: Path to json file doesn't exist although chosen as input type for config
         :raises ValueError: Dict doesn't exist although chosen as input type for config
         :raises ValueError: Mode chosen as input type for config doesn't exist
         :return: Validated config
         :rtype: WeatherRoutingTool.config.Config
         """
+        # Load environment variables from .env file if available
+        if load_env and DOTENV_AVAILABLE:
+            env_file = Path('.env')
+            if env_file.exists():
+                load_dotenv(env_file)
+                logger.debug(f"Loaded environment variables from {env_file}")
 
         if init_mode == 'from_json':
-            if Path(path).exists():
-                with path.open("r") as f:
+            if path is None:
+                raise ValueError("Path must be provided when init_mode is 'from_json'")
+            path_obj = Path(path)
+            if path_obj.exists():
+                with path_obj.open("r") as f:
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
-                    config.CONFIG_PATH = path
+                    config.CONFIG_PATH = str(path_obj)
                 # Apply environment variable overrides if present
                 cls._apply_env_overrides(config)
                 return config
