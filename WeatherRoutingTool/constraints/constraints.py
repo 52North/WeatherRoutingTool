@@ -271,7 +271,7 @@ class ConstraintsList:
             return False
 
     def have_negative(self):
-        if self.neg_size > 0:
+        if (self.neg_dis_size + self.neg_cont_size) > 0:
             return True
         else:
             return False

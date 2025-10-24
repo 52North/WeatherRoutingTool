@@ -1,11 +1,14 @@
 from datetime import datetime
+import logging
 
 import matplotlib
+import matplotlib.pyplot as plt
 from astropy import units as u
 from geovectorslib import geod
 from matplotlib.figure import Figure
 
-from WeatherRoutingTool.constraints.constraints import *
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.constraints.constraints import ConstraintsList, NegativeContraint
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.weather import WeatherCond
@@ -69,9 +72,11 @@ class RoutingAlg:
         return gcr['azi1'], gcr['s12']
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
-        pass
+        """Execute the routing algorithm. Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement execute_routing method")
 
     def check_for_positive_constraints(self, constraint_list):
+        """Check for positive constraints. Can be overridden by subclasses."""
         pass
 
     def terminate(self, **kwargs):
@@ -83,7 +88,9 @@ class RoutingAlg:
         pass
 
     def check_destination(self):
+        """Check if destination was reached. Can be overridden by subclasses."""
         pass
 
     def check_positive_power(self):
+        """Check if power values are positive. Can be overridden by subclasses."""
         pass

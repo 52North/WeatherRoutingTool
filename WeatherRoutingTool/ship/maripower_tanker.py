@@ -125,8 +125,8 @@ class MariPowerTanker(Boat):
             return
 
         if debug:
-            print('maripower weather adapter: reading weather data from ', self.weather_path)
-            print('writing converted data to ', self.weather_path_maripower)
+            logger.debug(f'maripower weather adapter: reading weather data from {self.weather_path}')
+            logger.debug(f'writing converted data to {self.weather_path_maripower}')
 
         ds = xr.open_dataset(self.weather_path)
 
@@ -149,14 +149,14 @@ class MariPowerTanker(Boat):
         ds_cut = xr.merge([ds_cut, vcurrent])
 
         if debug:
-            print('new data: ', ds_cut)
+            logger.debug(f'new data: {ds_cut}')
 
         ds_cut.to_netcdf(self.weather_path_maripower)
         ds_cut.close()
         ds.close()
 
     def set_ship_property(self, variable, value):
-        print('Setting ship property ' + variable + ' to ' + str(value))
+        logger.info('Setting ship property ' + variable + ' to ' + str(value))
         setattr(self.hydro_model, variable, value)
 
     def print_init(self):

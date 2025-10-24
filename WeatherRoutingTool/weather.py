@@ -61,9 +61,15 @@ class WeatherCond:
 
     @time_res.setter
     def time_res(self, value):
-        if (value < 3):
+        # Normalize value to numeric hours if it's a timedelta
+        if isinstance(value, timedelta):
+            value_hours = value.total_seconds() / 3600
+        else:
+            value_hours = value
+        
+        if value_hours < 3:
             raise ValueError('Resolution below 3h not possible')
-        self._time_res = timedelta(hours=value)
+        self._time_res = timedelta(hours=value_hours)
         logger.info(form.get_log_step('time resolution: ' + str(self._time_res) + ' hours', 1))
 
     @property

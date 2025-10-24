@@ -5,9 +5,12 @@
 import argparse
 import datetime as dt
 
+import matplotlib.pyplot as plt
+
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils import graphics
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
