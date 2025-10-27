@@ -1,16 +1,26 @@
-from astropy import units as u
-import matplotlib.pyplot as pt
-import numpy as np
-
-from datetime import timedelta
 import logging
 import os
+import time
+from datetime import timedelta
 
-from pymoo.util.running_metric import RunningMetric
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from astropy import units as u
 from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.termination import get_termination
-from pymoo.optimize import minimize
 from pymoo.core.result import Result
+from pymoo.optimize import minimize
+from pymoo.termination import get_termination
+from pymoo.util.running_metric import RunningMetric
+
+import WeatherRoutingTool.utils.formatting as formatting
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
+from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
+from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
+from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
+from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
+from WeatherRoutingTool.algorithms.genetic import utils
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
@@ -19,16 +29,6 @@ from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
-
-from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
-from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
-from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
-from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
-from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
-from WeatherRoutingTool.algorithms.genetic import utils
-
-import WeatherRoutingTool.utils.formatting as formatting
-import WeatherRoutingTool.utils.graphics as graphics
 
 logger = logging.getLogger("WRT.genetic")
 
@@ -43,10 +43,8 @@ class Genetic(RoutingAlg):
 
         # running
         self.figure_path = graphics.get_figure_path()
-
         if self.figure_path is not None:
             os.makedirs(self.figure_path, exist_ok=True)
-
         self.default_map: Map = Map(*config.DEFAULT_MAP)
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
@@ -57,11 +55,11 @@ class Genetic(RoutingAlg):
         self.pop_size = config.GENETIC_POPULATION_SIZE
 
     def execute_routing(
-        self,
-        boat: Boat,
-        wt: WeatherCond,
-        constraints_list: ConstraintsList,
-        verbose=False
+            self,
+            boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose=False
     ):
         """Main routing execution function
 
@@ -75,14 +73,19 @@ class Genetic(RoutingAlg):
         :type verbose: Optional[bool]
         """
 
+        plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
+        if self.config.GENETIC_FIX_RANDOM_SEED:
+            logger.info('Fixing random seed for genetic algorithm.')
+            np.random.seed(1)
+
         # inputs
         problem = RoutingProblem(
             departure_time=self.departure_time,
             boat=boat,
-            constraint_list=constraints_list,)
+            constraint_list=constraints_list, )
 
         initial_population = PopulationFactory.get_population(
-            self.config, boat, constraints_list, wt,)
+            self.config, boat, constraints_list, wt, )
 
         crossover = CrossoverFactory.get_crossover(
             self.config, constraints_list)
@@ -101,18 +104,18 @@ class Genetic(RoutingAlg):
         # terminate
         res_terminate = self.terminate(
             res=res_minimize,
-            problem=problem,)
+            problem=problem, )
 
         return res_terminate, 9
 
     def optimize(
-        self,
-        problem,
-        initial_population,
-        crossover,
-        mutation,
-        duplicates,
-        repair,
+            self,
+            problem,
+            initial_population,
+            crossover,
+            mutation,
+            duplicates,
+            repair,
     ):
         """Optimization function for the Genetic Algorithm"""
 
@@ -129,12 +132,22 @@ class Genetic(RoutingAlg):
 
         termination = get_termination("n_gen", self.n_generations)
 
-        res = minimize(
+        start_time = time.time()
+
+        algorithm.setup(
             problem=problem,
             algorithm=algorithm,
             termination=termination,
             save_history=True,
             verbose=True, )
+
+        while algorithm.has_next():
+            algorithm.next()
+
+        # print statistics
+        res = algorithm.result()
+        algorithm.mating.crossover.print_crossover_statistics()
+        logger.info('Time after minimisation: ' + str(formatting.get_current_time(start_time)))
 
         return res
 
@@ -156,6 +169,7 @@ class Genetic(RoutingAlg):
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
+            self.plot_coverage(res, best_route)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -172,8 +186,7 @@ class Genetic(RoutingAlg):
         courses = waypoint_coords['courses']
         start_times = waypoint_coords['start_times']
         travel_times = waypoint_coords['travel_times']
-        arrival_time = start_times[-1] + \
-            timedelta(seconds=dists[-1].value / speed.value)
+        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / speed.value)
 
         dists = np.append(dists, -99 * u.meter)
         courses = np.append(courses, -99 * u.degree)
@@ -181,7 +194,7 @@ class Genetic(RoutingAlg):
         travel_times = np.append(travel_times, -99 * u.second)
 
         route = RouteParams(
-            count=npoints-1,
+            count=npoints - 1,
             start=self.start,
             finish=self.finish,
             gcr=None,
@@ -225,46 +238,55 @@ class Genetic(RoutingAlg):
 
         running = RunningMetric()
 
-        pt.rcParams['font.size'] = graphics.get_standard('font_size')
-        fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
         igen = 0
         delta_nadir = np.full(self.n_generations, -99.)
         delta_ideal = np.full(self.n_generations, -99.)
         for algorithm in res.history:
             running.update(algorithm)
-            delta_f = running.delta_f
+
             if igen > 0:
-                delta_nadir[igen] = running.delta_nadir[igen-1]
-                delta_ideal[igen] = running.delta_ideal[igen-1]
+                delta_nadir[igen] = running.delta_nadir[igen - 1]
+                delta_ideal[igen] = running.delta_ideal[igen - 1]
             else:
                 delta_nadir[igen] = 0
                 delta_ideal[igen] = 0
 
-            x_f = (np.arange(len(delta_f)) + 1)
-            ax.plot(x_f, delta_f, label="t=%s (*)" % (igen + 1), alpha=0.9, linewidth=3)
             igen = igen + 1
+            if igen == self.n_generations:
+                delta_f = running.delta_f
+                x_f = (np.arange(len(delta_f)) + 1)
+
+                # plot png
+                ax.plot(x_f, delta_f, label="t=%s (*)" % (igen + 1), alpha=0.9, linewidth=3)
+
+                # write to csv
+                graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_running_metric.csv'), x_f,
+                                            delta_f)
+
         ax.set_yscale("symlog")
         ax.legend()
 
         ax.set_xlabel("Generation")
         ax.set_ylabel("Δf", rotation=0)
-        pt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_running_metric.png'))
-        pt.cla()
-        pt.close()
+        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_running_metric.png'))
+        plt.cla()
+        plt.close()
 
-        fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         x_ni = np.arange(self.n_generations)
         ax.plot(x_ni, delta_nadir)
-        pt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_delta_nadir.png'))
-        pt.cla()
-        pt.close()
+        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_delta_nadir.png'))
+        plt.cla()
+        plt.close()
 
-        fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
         ax.plot(x_ni, delta_ideal)
-        pt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_delta_ideal.png'))
-        pt.cla()
-        pt.close()
+        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_delta_ideal.png'))
+        plt.cla()
+        plt.close()
 
     def plot_population_per_generation(self, res, best_route):
         """Plot figures and save them in WRT_FIGURE_PATH
@@ -276,10 +298,10 @@ class Genetic(RoutingAlg):
         """
 
         history = res.history
-        fig, ax = pt.subplots(figsize=graphics.get_standard('fig_size'))
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
         for igen in range(len(history)):
-            pt.rcParams['font.size'] = graphics.get_standard('font_size')
+            plt.rcParams['font.size'] = graphics.get_standard('font_size')
             figtitlestr = 'Population of Generation ' + str(igen + 1)
 
             ax.remove()
@@ -329,7 +351,39 @@ class Genetic(RoutingAlg):
             ax.set_ylim([self.default_map.lat1, self.default_map.lat2])
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
-            pt.savefig(os.path.join(self.figure_path, figname))
+            plt.savefig(os.path.join(self.figure_path, figname))
+
+    def plot_coverage(self, res, best_route):
+        waypoints = None
+        history = res.history
+
+        # Create an empty plot
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
+        fig, ax = graphics.generate_basemap(
+            fig=fig,
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            title="",
+            show_depth=False, )
+
+        for igen in range(len(history)):
+            last_pop = history[igen].pop.get('X')
+
+            for iroute in range(0, last_pop.shape[0]):
+                if waypoints is None:
+                    waypoints = last_pop[iroute, 0][:, :]
+                waypoints = np.concatenate((waypoints, last_pop[iroute, 0][:, :]), axis=0)
+
+        sns.scatterplot(x=waypoints[:, 1], y=waypoints[:, 0], s=25, alpha=0.2, edgecolor=None, label="all waypoints")
+        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", )
+        legend = plt.legend(title="routes", loc="upper left")
+        legend.get_frame().set_alpha(1)  # Slightly transparent
+
+        figname = "spatial_coverage.png"
+        plt.savefig(os.path.join(self.figure_path, figname))
 
     def plot_convergence(self, res):
         """Plot the convergence curve (best objective value per generation)."""
@@ -344,12 +398,18 @@ class Genetic(RoutingAlg):
             else:
                 best_f.append(np.min(F))
 
-        pt.figure(figsize=graphics.get_standard('fig_size'))
-        pt.plot(np.arange(1, len(best_f) + 1), best_f, marker='o')
-        pt.xlabel('Generation')
-        pt.ylabel('Best Objective Value')
-        pt.title('Convergence Plot')
-        pt.grid(True)
-        pt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
-        pt.cla()
-        pt.close()
+        n_gen = np.arange(1, len(best_f) + 1)
+
+        # plot png
+        plt.figure(figsize=graphics.get_standard('fig_size'))
+        plt.plot(n_gen, best_f, marker='o')
+        plt.xlabel('Generation')
+        plt.ylabel('Best Objective Value')
+        plt.title('Convergence Plot')
+        plt.grid(True)
+        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
+        plt.cla()
+        plt.close()
+
+        # write to csv
+        graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_convergence.csv'), n_gen, best_f)
