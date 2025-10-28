@@ -65,7 +65,7 @@ class GreatCircleRoutePatcher(PatcherBase):
     """
     dist: float
 
-    def __init__(self, dist: float = 100_000.0):
+    def __init__(self, dist: float = 10_000.0):
         super().__init__()
 
         # variables
@@ -147,6 +147,12 @@ class IsofuelPatcher(PatcherBase):
         self.boat: Boat = boat
         self.water_depth: WaterDepth = water_depth
         self.constraints_list: ConstraintsList = constraints_list
+
+        self.patchfn_gcr = PatchFactory.get_patcher(
+            patch_type="gcr_singleton",
+            config=self.config,
+            application="Isofuel patcher"
+        )
 
     def _setup_configuration(self) -> Config:
         """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
@@ -277,6 +283,11 @@ class IsofuelPatcher(PatcherBase):
         # reactivate original logging level
         logging.getLogger().setLevel(original_log_level)
 
+        # fall-back to gcr patching if Isofuel algorithm can not provide valid results
+        if err_code > 0:
+            logger.debug('Falling back to gcr patching!')
+            return self.patchfn_gcr.patch(src, dst, departure_time)
+
         # single route
         if self.n_routes == "single":
             return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step], axis=1)
@@ -295,7 +306,7 @@ class IsofuelPatcher(PatcherBase):
 class GreatCircleRoutePatcherSingleton(GreatCircleRoutePatcher, metaclass=SingletonBase):
     """Implementation class for GreatCircleRoutePatcher that allows only a single instance."""
 
-    def __init__(self, dist: float = 100_000.0):
+    def __init__(self, dist: float = 10_000.0):
         super().__init__(dist)
 
 
