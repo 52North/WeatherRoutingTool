@@ -118,10 +118,9 @@ b. Crossover
    When a crossover operation fails to produce feasible offspring, we
    can either (1) Repair the offspring in the Repair section of the code
    or, (2) Return the parents as is to negate this reproduction process
-   and redo from **Selection**.
-
-   Weather Routing Tool’s OffspringRejectionCrossover base class chooses
-   to dismiss the crossover when it fails to produce feasible offsprings
+   and redo from **Selection**. If ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, Weather Routing Tool’s
+   ``OffspringRejectionCrossover`` will accept all crossover attempts. If, however, ``GENETIC_REPAIR_TYPE``
+   is set to ``no_repair``, crossovers will be rejected if they fail to produce feasible offsprings
    through the following algorithm:
 
    I.  Generate offsprings using a child class' implementation of the
@@ -132,7 +131,8 @@ b. Crossover
        A. if True — refuse both offsprings, and return the parents
        B. if False — return offsprings
 
-   The following crossover types are implementations of the same:
+   The following crossover types are implementations of ``OffspringRejectionCrossover``. For every crossover scenario,
+   the algorithm chooses on a random basis which of the two approaches is executed.
 
    *Single Point Crossover*
 
@@ -154,30 +154,54 @@ b. Crossover
 
       .. figure:: /_static/algorithm_genetic/two_point_crossover.png
 
+
+
 c. Mutation
 
    Mutation produces unexpected variability in the initial route to
    introduce diversity and improve the chances of the optimum route
    reaching global optima.
 
-   The Weather Routing Tool considers the following few Mutation
-   approaches:
+   As for ``OffspringRejectionCrossover``, the base class ``MutationConstraintRejection`` rejects or accepts
+   offspring based on the config variable ``GENETIC_REPAIR_TYPE``. The user can choose from different mutation approaches
+   by setting the config variable ``GENETIC_MUTATION_TYPE``. For the setting ``random``, the algorithm
+   chooses for every mutation scenario whether route-blend or random-plateau mutation is executed. The following single
+   mutation stategies are available:
 
    *Random Walk Mutation*
 
       When looking at the waypoints as belonging to a grid, the Random Walk
       Mutation moves a random waypoint to one of its N-4 neighbourhood
-      positions.
+      positions. Selected by ``GENETIC_MUTATION_TYPE=rndm_walk``.
 
       .. figure:: /_static/algorithm_genetic/random_walk_mutation.png
+
+   *Random Plateau Mutation*
+
+      This method is based on the Random Walk Mutation. A set of four waypoints is selected:
+
+        - a *plateau center* that is chosen on a random basis,
+        - the *plateau edges* which is are the waypoints ``plateau_size``/2 waypoints before and behind the plateau center,
+        - two *connectors* which are the waypoints ``plateau_slope`` before and behind the plateau edges.
+      The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions. A *plateau* is
+      drawn by connecting the following waypoints by a great circle route
+        - the first connector to the mutated original waypoint,
+        - the mutated original waypoint and the mutated waypoint partner,
+        - the mutated waypoint partner and the second connector.
+      Selected by ``GENETIC_MUTATION_TYPE=rndm_plateau``.
+
+      .. figure:: /_static/algorithm_genetic/random_plateau_mutation.png
+
 
    *Route Blend Mutation*
 
       This process converts a sub path into a smoother route using a
       smoothing function such as Bezier Curves or by replacing a few
-      waypoints using the Great Circle Route.
+      waypoints using the Great Circle Route. Selected by ``GENETIC_MUTATION_TYPE=route_blend``.
 
       .. figure:: /_static/algorithm_genetic/route_blend_mutation.png
+
+
 
 ..
 
