@@ -86,15 +86,10 @@ class GreatCircleRoutePatcher(PatcherBase):
         geod: Geodesic = Geodesic.WGS84
         line = geod.InverseLine(*src, *dst)
 
-        # print('full dist: ', line.s13)
-        # print('src: ', src)
-        # print('dst: ', dst)
         if not npoints == None:
             self.dist = line.s13 / npoints
         else:
             npoints = int(math.ceil(line.s13 / self.dist))
-        # print('dist: ', self.dist)
-        # print('npoints: ', npoints)
 
         route = []
         for i in range(npoints + 1):
@@ -102,7 +97,6 @@ class GreatCircleRoutePatcher(PatcherBase):
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             route.append((g['lat2'], g['lon2']))
 
-        #     print('lat, lon', str(g['lat2']) + ',' +  str(g['lon2']))
         return np.array([src, *route[1:-1], dst])
 
 
