@@ -20,7 +20,6 @@ from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
 from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
 from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
-from WeatherRoutingTool.algorithms.genetic.selection import RandomTournamentSelection
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic import utils
 

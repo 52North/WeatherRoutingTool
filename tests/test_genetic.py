@@ -6,10 +6,12 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
+import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.utils.graphics as graphics
+
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation
-import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 
 
@@ -52,13 +54,14 @@ def test_isofuelpatcher_no_singleton():
 '''
 
 
-def test_random_walk_mutation():
+def test_random_plateau_mutation():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     np.random.seed(1)
 
-    mt = RandomPlateauMutation(config, )
+    mt = RandomPlateauMutation(config=config, constraints_list = constraint_list)
 
     route1 = np.array([
         [35.199, 15.490],
@@ -112,17 +115,20 @@ def test_random_walk_mutation():
 
 
 '''
-    test whether routes are returned as they are if they are too short
+    test whether routes are returned as they are by genetic.mutation.RandomPlateauMutation.mutate() if they are too 
+    short for random plateau mutation
 '''
 
 
-def test_random_walk_mutation_refusal():
+def test_random_plateau_mutation_refusal():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
     np.random.seed(1)
 
-    mt = RandomPlateauMutation(config, )
+    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
 
     route1 = np.array([
         [35.199, 15.490],
