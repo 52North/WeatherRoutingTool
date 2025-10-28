@@ -182,17 +182,16 @@ class RandomPlateauMutation(MutationConstraintRejection):
         return lat2, lon2
 
     def mutate(self, problem, rt, **kw):
-        '''
+        """
         Function vor RandomPlateauMutation.
 
         :params X: route matrix
         :type X: np.array([[route_0], [route_1], ...]) with route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
                  X.shape = (n_routes, 1, n_waypoints, 2)
                  access i'th route as X[i,0] and the j'th coordinate pair off the i'th route as X[i,0][j, :]
-        '''
+        """
 
         for _ in range(0, self.n_updates):
-            # print('rt: ', rt)
             plateau_length = 2 * self.plateau_slope + self.plateau_size
             if len(rt[0]) < plateau_length + 1:  # only mutate routes that are long enough
                 continue
@@ -203,12 +202,6 @@ class RandomPlateauMutation(MutationConstraintRejection):
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
             i_slope_start = int(i_plateau_start - self.plateau_slope)
             i_slope_end = int(i_plateau_end + self.plateau_slope)
-
-            # print('index: ', rindex)
-            # print('plateau slope start: ', i_slope_start)
-            # print('plateau start: ', i_plateau_start)
-            # print('plateau end: ', i_plateau_end)
-            # print('plateau slope end: ', i_slope_end)
 
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
@@ -224,12 +217,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
                 dist=self.dist,
                 bearing=bearing
             )
-            # print('mutated p1: ', rt[i_plateau_start])
-            # print('mutated p2: ', rt[i_plateau_end])
 
             # obtain subsections, slope & plateau via gcr patching
             dist_one_orig = rt[:i_slope_start]
-            # print('shape_dist_one_orig: ', dist_one_orig.shape)
+
             if i_slope_start == 0:
                 dist_one_orig = [rt[0]]
             dist_one_patched = self.patchfn.patch(
@@ -250,11 +241,6 @@ class RandomPlateauMutation(MutationConstraintRejection):
             dist_two_orig = rt[i_slope_end:]
 
             # combine subsections
-            # print('dist_one_orig: ', dist_one_orig)
-            # print('dist_one_patched: ', dist_one_patched)
-            # print('dist_plateau: ', dist_plateau_patched)
-            # print('dist_two_patched: ', dist_two_patched)
-            # print('dist_two_orig: ', dist_two_orig)
             rt = np.concatenate([
                 dist_one_orig,
                 dist_one_patched[1:],
