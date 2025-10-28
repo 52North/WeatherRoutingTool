@@ -43,25 +43,35 @@ class MutationConstraintRejection(Mutation):
     :type mutation_type: str
     :param constraints_list: list of Constraints to be validated
     :type constraints_list: ConstraintsList
+    :param constraints_rejection: reject routes that violate constraints, defaults to true
+    :type constraints_rejection: bool
     """
 
     Nof_mutation_tries: int
     Nof_mutation_success: int
     mutation_type: str
     constraints_list: ConstraintsList
+    constraints_rejection: bool
 
     def __init__(
             self,
+            mutation_type: str,
+            config: Config,
             constraints_list: ConstraintsList,
-            mutation_type:str = 'undefined_mutation',
             prob:float=1.0,
             prob_var:float=None
     ):
         super().__init__(prob=prob, prob_var=prob_var)
+
         self.constraints_list = constraints_list
         self.mutation_type = mutation_type
         self.Nof_mutation_tries = 0
         self.Nof_mutation_success = 0
+        self.constraints_rejection = True
+        self.config = config
+
+        if not (config.GENETIC_REPAIR_TYPE == ["no_repair"]):
+            self.constraints_rejection = False
 
     def print_mutation_statistics(self):
         logger.info(f'{self.mutation_type} statistics:')
@@ -86,7 +96,7 @@ class MutationConstraintRejection(Mutation):
             self.Nof_mutation_tries += 1
             mut_temp = self.mutate(problem, rt, **kw)
 
-            if not utils.get_constraints(mut_temp, self.constraints_list):
+            if (not utils.get_constraints(mut_temp, self.constraints_list)) or  (self.constraints_rejection == False):
                 self.Nof_mutation_success += 1
                 X[i,0] = mut_temp
 
@@ -124,32 +134,26 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
     def __init__(
             self,
-            config: Config,
-            constraints_list: ConstraintsList,
             gcr_dist: float = 1e5,
             n_updates: int = 1,
             plateau_size: int = 3,
             plateau_slope: int = 2,
-            prob: float = 1.0,
-            prob_var: float = None
+            **kw
     ):
         super().__init__(
-            constraints_list = constraints_list,
-            prob=prob,
-            prob_var=prob_var,
-            mutation_type="RandomPlateauMutation"
+            mutation_type="RandomPlateauMutation",
+            **kw
         )
 
         if plateau_size % 2 != 1:
             raise ValueError('The plateau_size of RandomPlateauMutation needs to be an uneven number!')
 
-        self.config = config
         self.n_updates = n_updates
         self.plateau_size = plateau_size  # uneven
         self.plateau_slope = plateau_slope
 
         self.dist = gcr_dist
-        self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config, application="Random walk mutation")
+        self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config, application="Route plateau mutation")
 
 
     def random_walk(
@@ -267,15 +271,11 @@ class RouteBlendMutation(MutationConstraintRejection):
 
     def __init__(
             self,
-            constraints_list: ConstraintsList,
-            prob: float = 1.0,
-            prob_var: float = None
+            **kw
     ):
         super().__init__(
-            constraints_list=constraints_list,
-            prob=prob,
-            prob_var=prob_var,
-            mutation_type="RouteBlendMutation"
+            mutation_type="RouteBlendMutation",
+            **kw
         )
 
     @staticmethod
@@ -331,17 +331,13 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def __init__(
             self,
-            constraints_list: ConstraintsList,
             gcr_dist: float = 1e4,
             n_updates: int = 10,
-            prob: float = 1.0,
-            prob_var: float = None
+            **kw
     ):
         super().__init__(
-            prob = prob,
-            prob_var=prob_var,
             mutation_type="RandomWalkMutation",
-            constraints_list=constraints_list
+            **kw
         )
 
         self.dist = gcr_dist
@@ -400,6 +396,10 @@ class RandomMutationsOrchestrator(MutationBase):
         opt = self.opts[np.random.randint(0, len(self.opts))]
         return opt._do(problem, X, **kw)
 
+    def print_mutation_statistics(self):
+        for opt in self.opts:
+            opt.print_mutation_statistics()
+
 
 # factory
 # ----------
@@ -418,20 +418,20 @@ class MutationFactory:
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
                 opts=[
-                    RandomPlateauMutation(config, constraints_list),
-                    RouteBlendMutation(constraints_list)
+                    RandomPlateauMutation(config=config, constraints_list=constraints_list),
+                    RouteBlendMutation(config=config, constraints_list=constraints_list)
                 ], )
 
         if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
-            return RandomWalkMutation(config, constraints_list)
+            return RandomWalkMutation(config=config, constraints_list=constraints_list)
 
         if "rndm_plateau" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "random_plateau".')
-            return RandomPlateauMutation(config, constraints_list)
+            return RandomPlateauMutation(config=config, constraints_list=constraints_list)
 
         if "route_blend" in config.GENETIC_MUTATION_TYPE:
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
-            return RouteBlendMutation(constraints_list)
+            return RouteBlendMutation(config=config, constraints_list=constraints_list)
 
         raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

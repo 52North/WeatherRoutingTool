@@ -51,13 +51,17 @@ class OffspringRejectionCrossover(CrossoverBase):
 
     departure_time: datetime
     constraints_list: ConstraintsList
+    config: Config
 
     Nof_crossover_tries: int
     Nof_crossover_success: int
     crossover_type: str
 
+    constraints_rejection: bool
+
     def __init__(
             self,
+            config: Config,
             departure_time: datetime,
             constraints_list: ConstraintsList,
             prob=.5,
@@ -70,6 +74,11 @@ class OffspringRejectionCrossover(CrossoverBase):
         self.Nof_crossover_tries = 0
         self.Nof_crossover_success = 0
         self.crossover_type = crossover_type
+        self.constraints_rejection = True
+        self.config = config
+
+        if not (config.GENETIC_REPAIR_TYPE == ["no_repair"]):
+            self.constraints_rejection = False
 
     def print_crossover_statistics(self):
         logger.info(f'{self.crossover_type} statistics:')
@@ -92,8 +101,9 @@ class OffspringRejectionCrossover(CrossoverBase):
             o1, o2 = self.crossover(p1.copy(), p2.copy())
 
             if (
-                    utils.get_constraints(o1, self.constraints_list) or
-                    utils.get_constraints(o2, self.constraints_list)
+                    (utils.get_constraints(o1, self.constraints_list) or
+                    utils.get_constraints(o2, self.constraints_list)) and
+                    self.constraints_rejection
             ):
                 Y[0, k, 0] = p1
                 Y[1, k, 0] = p2
@@ -139,11 +149,8 @@ class SinglePointCrossover(OffspringRejectionCrossover):
     :type config: Config
     """
 
-    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
+    def __init__(self, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
-
-        # variables
-        self.config = config
         self.patch_type = patch_type
 
     def crossover(self, p1, p2):
@@ -173,11 +180,9 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     :type config: Config
     """
 
-    def __init__(self, config: Config, patch_type: str = "gcr", **kw):
+    def __init__(self, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
 
-        # variables
-        self.config = config
         self.patch_type = patch_type
 
     def crossover(self, p1, p2):
