@@ -185,10 +185,25 @@ class RandomPlateauMutation(MutationConstraintRejection):
         """
         Function vor RandomPlateauMutation.
 
-        :params X: route matrix
-        :type X: np.array([[route_0], [route_1], ...]) with route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
-                 X.shape = (n_routes, 1, n_waypoints, 2)
-                 access i'th route as X[i,0] and the j'th coordinate pair off the i'th route as X[i,0][j, :]
+        A set of four waypoints is selected:
+
+        - a plateau center that is chosen on a random basis,
+        - two plateau edges which are the waypoints plateau_size/2 waypoints before and behind the plateau center,
+        - two connectors which are the waypoints plateau_slope before and behind the plateau edges.
+
+        The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions as for random-walk
+        mutation. A plateau is drawn by connecting the plateau edges to the connectors and to each other via great circle
+        routes.
+
+        Only routes which are long enough are mutated. Routes which are smaller or of size
+        2 * self.plateau_slope + self.plateau_size are returned as they are.
+
+        :param problem: routing problem
+        :type: RoutingProblem
+        :params rt: route to be mutated
+        :type rt: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :return: mutated route
+        :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
         """
 
         for _ in range(0, self.n_updates):
