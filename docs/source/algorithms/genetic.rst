@@ -27,6 +27,7 @@ The genetic algorithm follows these steps (a, b):
 
    a. Repair
    b. Remove Duplicates
+
 3. Fitness Evaluation
 
 
@@ -53,7 +54,7 @@ References.
 ..
 
 1. Initial Population Generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    The Initial Population critically influences the performance of the
    genetic algorithm. In general, the more diverse the population, the
@@ -102,7 +103,7 @@ References.
 ..
 
 2. Reproduction
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 a. Selection
 
@@ -178,16 +179,15 @@ c. Mutation
 
    *Random Plateau Mutation*
 
-      This method is based on the Random Walk Mutation. A set of four waypoints is selected:
+      A set of four waypoints is selected:
 
         - a *plateau center* that is chosen on a random basis,
-        - the *plateau edges* which is are the waypoints ``plateau_size``/2 waypoints before and behind the plateau center,
+        - two *plateau edges* which are the waypoints ``plateau_size``/2 waypoints before and behind the plateau center,
         - two *connectors* which are the waypoints ``plateau_slope`` before and behind the plateau edges.
-      The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions. A *plateau* is
-      drawn by connecting the following waypoints by a great circle route
-        - the first connector to the mutated original waypoint,
-        - the mutated original waypoint and the mutated waypoint partner,
-        - the mutated waypoint partner and the second connector.
+
+      The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions as for random-walk
+      mutation. A *plateau* is drawn by connecting the plateau edges to the connectors and to each other via great circle
+      routes.
       Selected by ``GENETIC_MUTATION_TYPE=rndm_plateau``.
 
       .. figure:: /_static/algorithm_genetic/random_plateau_mutation.png
@@ -206,7 +206,7 @@ c. Mutation
 ..
 
 3. Post-processing
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 a. Repair
 
@@ -252,7 +252,7 @@ b. Duplicates Removal
 ..
 
 4. Fitness Evaluation
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
    **RoutingProblem** is Weather Routing Tool’s implementation of the
    route optimization problem necessary for defining the evaluation
