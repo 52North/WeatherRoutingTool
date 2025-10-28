@@ -100,11 +100,9 @@ class OffspringRejectionCrossover(CrossoverBase):
 
             o1, o2 = self.crossover(p1.copy(), p2.copy())
 
-            if (
-                    (utils.get_constraints(o1, self.constraints_list) or
-                    utils.get_constraints(o2, self.constraints_list)) and
-                    self.constraints_rejection
-            ):
+            if ((utils.get_constraints(o1, self.constraints_list) or
+                 utils.get_constraints(o2, self.constraints_list)) and
+                    self.constraints_rejection):
                 Y[0, k, 0] = p1
                 Y[1, k, 0] = p2
             else:

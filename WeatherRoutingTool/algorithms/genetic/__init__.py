@@ -129,7 +129,6 @@ class Genetic(RoutingAlg):
             repair=repair,
             eliminate_duplicates=duplicates,
             return_least_infeasible=False,
-            #selection=RandomTournamentSelection()
         )
 
         termination = get_termination("n_gen", self.n_generations)

@@ -10,8 +10,8 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory, PatcherBase
 
-
 logger = logging.getLogger("WRT.genetic.mutation")
+
 
 class MutationBase(Mutation):
     """Base Mutation Class
@@ -19,11 +19,13 @@ class MutationBase(Mutation):
     Kept for consistency and to provide super-class level management of
     Mutation implementations.
     """
-    def __init__(self, prob:float=1.0, prob_var:float=None):
+
+    def __init__(self, prob: float = 1.0, prob_var: float = None):
         super().__init__(prob, prob_var)
 
     def _do(self, problem, X, **kw):
         raise NotImplementedError('No mutation method is implemented for MutationBase.')
+
 
 class MutationConstraintRejection(Mutation):
     """
@@ -58,8 +60,8 @@ class MutationConstraintRejection(Mutation):
             mutation_type: str,
             config: Config,
             constraints_list: ConstraintsList,
-            prob:float=1.0,
-            prob_var:float=None
+            prob: float = 1.0,
+            prob_var: float = None
     ):
         super().__init__(prob=prob, prob_var=prob_var)
 
@@ -96,9 +98,9 @@ class MutationConstraintRejection(Mutation):
             self.Nof_mutation_tries += 1
             mut_temp = self.mutate(problem, rt, **kw)
 
-            if (not utils.get_constraints(mut_temp, self.constraints_list)) or  (self.constraints_rejection == False):
+            if (not utils.get_constraints(mut_temp, self.constraints_list)) or (not self.constraints_rejection):
                 self.Nof_mutation_success += 1
-                X[i,0] = mut_temp
+                X[i, 0] = mut_temp
 
         return X
 
@@ -153,8 +155,8 @@ class RandomPlateauMutation(MutationConstraintRejection):
         self.plateau_slope = plateau_slope
 
         self.dist = gcr_dist
-        self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config, application="Route plateau mutation")
-
+        self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config,
+                                                application="Route plateau mutation")
 
     def random_walk(
             self,
@@ -189,9 +191,8 @@ class RandomPlateauMutation(MutationConstraintRejection):
                  access i'th route as X[i,0] and the j'th coordinate pair off the i'th route as X[i,0][j, :]
         '''
 
-
         for _ in range(0, self.n_updates):
-            #print('rt: ', rt)
+            # print('rt: ', rt)
             plateau_length = 2 * self.plateau_slope + self.plateau_size
             if len(rt[0]) < plateau_length + 1:  # only mutate routes that are long enough
                 continue
@@ -203,11 +204,11 @@ class RandomPlateauMutation(MutationConstraintRejection):
             i_slope_start = int(i_plateau_start - self.plateau_slope)
             i_slope_end = int(i_plateau_end + self.plateau_slope)
 
-            #print('index: ', rindex)
-            #print('plateau slope start: ', i_slope_start)
-            #print('plateau start: ', i_plateau_start)
-            #print('plateau end: ', i_plateau_end)
-            #print('plateau slope end: ', i_slope_end)
+            # print('index: ', rindex)
+            # print('plateau slope start: ', i_slope_start)
+            # print('plateau start: ', i_plateau_start)
+            # print('plateau end: ', i_plateau_end)
+            # print('plateau slope end: ', i_slope_end)
 
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
@@ -223,12 +224,12 @@ class RandomPlateauMutation(MutationConstraintRejection):
                 dist=self.dist,
                 bearing=bearing
             )
-            #print('mutated p1: ', rt[i_plateau_start])
-            #print('mutated p2: ', rt[i_plateau_end])
+            # print('mutated p1: ', rt[i_plateau_start])
+            # print('mutated p2: ', rt[i_plateau_end])
 
             # obtain subsections, slope & plateau via gcr patching
             dist_one_orig = rt[:i_slope_start]
-            #print('shape_dist_one_orig: ', dist_one_orig.shape)
+            # print('shape_dist_one_orig: ', dist_one_orig.shape)
             if i_slope_start == 0:
                 dist_one_orig = [rt[0]]
             dist_one_patched = self.patchfn.patch(
@@ -249,11 +250,11 @@ class RandomPlateauMutation(MutationConstraintRejection):
             dist_two_orig = rt[i_slope_end:]
 
             # combine subsections
-            #print('dist_one_orig: ', dist_one_orig)
-            #print('dist_one_patched: ', dist_one_patched)
-            #print('dist_plateau: ', dist_plateau_patched)
-            #print('dist_two_patched: ', dist_two_patched)
-            #print('dist_two_orig: ', dist_two_orig)
+            # print('dist_one_orig: ', dist_one_orig)
+            # print('dist_one_patched: ', dist_one_patched)
+            # print('dist_plateau: ', dist_plateau_patched)
+            # print('dist_two_patched: ', dist_two_patched)
+            # print('dist_two_orig: ', dist_two_orig)
             rt = np.concatenate([
                 dist_one_orig,
                 dist_one_patched[1:],
@@ -316,6 +317,7 @@ class RouteBlendMutation(MutationConstraintRejection):
             [rt[:p1], self.bezier_curve(rt[p1:p2], n_points), rt[p2:]], axis=0)
         return rt
 
+
 class RandomWalkMutation(MutationConstraintRejection):
     """Moves a random waypoint in an individual in the direction of a random bearing
     by a distance specified by the `gcr_dist` parameter.
@@ -344,10 +346,10 @@ class RandomWalkMutation(MutationConstraintRejection):
         self.n_updates = n_updates
 
     def random_walk(
-        self,
-        point: tuple[float, float],
-        dist: float = 1e4,
-        bearing: float = 45.0,
+            self,
+            point: tuple[float, float],
+            dist: float = 1e4,
+            bearing: float = 45.0,
     ) -> tuple[float, float]:
         """Pick an N4 neighbour of a waypoint
 
@@ -366,8 +368,7 @@ class RandomWalkMutation(MutationConstraintRejection):
         lon2 = result["lon2"]
         return lat2, lon2
 
-    def mutate(self, problem, X, **kw):
-
+    def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
             rindex = np.random.randint(1, rt.shape[0] - 1)
             p1 = rt[rindex]
@@ -376,6 +377,7 @@ class RandomWalkMutation(MutationConstraintRejection):
                 point=p1,
                 dist=self.dist,
                 bearing=np.random.choice([45, 135, 225, 315]), )
+            rt[rindex] = p2
         return rt
 
 
