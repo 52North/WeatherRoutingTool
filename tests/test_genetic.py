@@ -61,7 +61,7 @@ def test_random_plateau_mutation():
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     np.random.seed(1)
 
-    mt = RandomPlateauMutation(config=config, constraints_list = constraint_list)
+    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
 
     route1 = np.array([
         [35.199, 15.490],
@@ -115,7 +115,7 @@ def test_random_plateau_mutation():
 
 
 '''
-    test whether routes are returned as they are by genetic.mutation.RandomPlateauMutation.mutate() if they are too 
+    test whether routes are returned as they are by genetic.mutation.RandomPlateauMutation.mutate() if they are too
     short for random plateau mutation
 '''
 

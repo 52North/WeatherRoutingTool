@@ -13,10 +13,6 @@ from WeatherRoutingTool.utils.maps import Map
 
 set_up_logging()
 
-
-
-
-
 '''
     test adding of negative constraint to ConstraintsList.negativ_constraints
 '''

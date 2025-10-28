@@ -14,12 +14,6 @@ try:
 except ModuleNotFoundError:
     pass  # maripower installation is optional
 
-def generate_dummy_constraint_list():
-    pars = ConstraintPars()
-    pars.resolution = 1. / 10
-
-    constraint_list = ConstraintsList(pars)
-    return constraint_list
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
