@@ -277,8 +277,9 @@ Route Patching
    *Disadvantages —*
 
       It cannot handle complex route navigation, e.g., if there’s a
-      landmass in between the waypoints. It is left to the calling function
-      to update the waypoints.
+      landmass in between the waypoints, the patched route will violate constraints and \
+      will be discarded during evaluation. \
+      It is left to the calling function to update the waypoints.
 
 2. *Isofuel Algorithm*
 
@@ -290,7 +291,8 @@ Route Patching
 
    *Disadvantages —*
 
-      Can be very slow and can fail based on the isofuel configuration.
+      Can be very slow and can fail based on the isofuel configuration. In case of failing, the
+      algorithm will fall back to patching via the great circle route.
 
    *Can be used if —*
 
