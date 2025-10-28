@@ -17,15 +17,18 @@ The genetic algorithm follows these steps (a, b):
 
 1. Population Generation aka. Sampling
 
-2. Fitness Evaluation
-
-3. Repeat over ``GENETIC_NUMBER_GENERATIONS`` —
+2. Reproduction: Repeat over ``GENETIC_NUMBER_GENERATIONS`` —
 
    a. Selection
    b. Crossover
    c. Mutation
-   d. Repair
-   e. Remove Duplicates
+
+3. Post-processing
+
+   a. Repair
+   b. Remove Duplicates
+3. Fitness Evaluation
+
 
 The repeating component of the algorithm is repeated until a
 **termination condition** is met. The termination condition can be
@@ -49,10 +52,8 @@ References.
 
 ..
 
-Preparation
-^^^^^^^^^^^
-
-I. Initial Population Generation
+1. Initial Population Generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    The Initial Population critically influences the performance of the
    genetic algorithm. In general, the more diverse the population, the
@@ -64,16 +65,13 @@ I. Initial Population Generation
 
    a. *Grid Based Population*
 
-      This approach uses a deterministic approach to produce an initial
-        population:
+      This approach uses a deterministic approach to produce an initial population:
 
       i. Breaks down the map into a set of waypoints
-      ii. Shuffles the weather condition map on these waypoints to get a
-         shuffled grid
-      iii. Generates a path from source to destination using *skimage*\ ’s
-         ``route_through_array`` method to find a plausible route
-      iv. Repeats this process ``GENETIC_NUMBER_GENERATIONS`` times to get a
-         population pool
+      ii. Shuffles the weather condition map on these waypoints to get a shuffled grid
+      iii. Generates a path from source to destination using *skimage*\ ’s ``route_through_array`` \
+           method to find a plausible route
+      iv. Repeats this process ``GENETIC_NUMBER_GENERATIONS`` times to get a population pool
 
    b. *Isofuel Population*
 
@@ -101,30 +99,17 @@ I. Initial Population Generation
        falls back to generating a Great Circle Route from source to
        destination.
 
-2. Fitness Evaluation
+..
 
-   **RoutingProblem** is Weather Routing Tool’s implementation of the
-   route optimization problem necessary for defining the evaluation
-   criteria for the routing problem.
-
-   The ``_evaluate`` function measures the provided **individual**\ ’s
-   fitness F and the constraints G .
-
-   - Fitness (F) — is a list of floats representing the fitness evaluation
-     of the **individual** *per objective* (fuel, distance, etc.)
-
-   - Constraints (G) — is a list of floats represents the total constraint
-     violations per constraint (specified by the ``constraints_list`` value)
-
-Reproduction
+2. Reproduction
 ^^^^^^^^^^^^
 
-3. Selection
+a. Selection
 
    The **Tournament Selection** process produces N (in our case N=2)
    high fitness individuals that are to undergo crossover and mutation
 
-4. Crossover
+b. Crossover
 
    Crossover aims to produce two offspring from two parents such that
    the offspring explore a route that’s a combination of the two of
@@ -149,7 +134,7 @@ Reproduction
 
    The following crossover types are implementations of the same:
 
-   a. *Single Point Crossover*
+   *Single Point Crossover*
 
       *Single Point Crossover* is a simple approach to crossover where a
       **single point of crossover** is picked at random from both of the
@@ -158,7 +143,7 @@ Reproduction
 
       .. figure:: /_static/algorithm_genetic/single_point_crossover.png
 
-   b. *Two Point Crossover*
+   *Two Point Crossover*
 
       *Two Point Crossover* utilizes two random points such that the patched
       path avoids any object that produces a constraint violation in between.
@@ -169,7 +154,7 @@ Reproduction
 
       .. figure:: /_static/algorithm_genetic/two_point_crossover.png
 
-5. Mutation
+c. Mutation
 
    Mutation produces unexpected variability in the initial route to
    introduce diversity and improve the chances of the optimum route
@@ -178,7 +163,7 @@ Reproduction
    The Weather Routing Tool considers the following few Mutation
    approaches:
 
-   a. *Random Walk Mutation*
+   *Random Walk Mutation*
 
       When looking at the waypoints as belonging to a grid, the Random Walk
       Mutation moves a random waypoint to one of its N-4 neighbourhood
@@ -186,7 +171,7 @@ Reproduction
 
       .. figure:: /_static/algorithm_genetic/random_walk_mutation.png
 
-   b. *Route Blend Mutation*
+   *Route Blend Mutation*
 
       This process converts a sub path into a smoother route using a
       smoothing function such as Bezier Curves or by replacing a few
@@ -196,10 +181,10 @@ Reproduction
 
 ..
 
-Post-processing
+3. Post-processing
 ^^^^^^^^^^^^^^^
 
-1. Repair
+a. Repair
 
    The Repair classes play the role of normalizing routes and fixing constraints
    violations. The current implementation executes two repair processes in the
@@ -207,7 +192,7 @@ Post-processing
 
    Methods to repair routes are enlisted in the Route Patching section below.
 
-   a. *WaypointsInfillRepair*
+   *WaypointsInfillRepair*
 
    Repairs routes by infilling them with equi-distant waypoints when adjacent
    points are farther than the specified distance resolution (gcr_dist)
@@ -216,7 +201,7 @@ Post-processing
 
    .. figure:: /_static/algorithm_genetic/waypoints_infill_repair.png
 
-   b. *ConstraintViolationRepair*
+   *ConstraintViolationRepair*
 
    Repairs routes by identifying waypoints that are undergoing a constraint
    violation and finds a route around the points using the IsoFuel algorithm
@@ -229,7 +214,7 @@ Post-processing
    should be the same as the one mentioned in the config (config.
    ``GENETIC_POPULATION_SIZE``)
 
-2. Duplicates Removal
+b. Duplicates Removal
 
    Pymoo gets rid of duplicate individuals in a population to maintain
    the diversity in the population pool. This specific function works by
@@ -239,6 +224,24 @@ Post-processing
    Note — If duplicates remove all individuals, the entire reproduction
    process is repeated. Repeats can occur a maximum of a 100 times,
    after which the genetic algorithm reaches **early termination**.
+
+..
+
+4. Fitness Evaluation
+^^^^^^^^^^^^^^^^^^
+
+   **RoutingProblem** is Weather Routing Tool’s implementation of the
+   route optimization problem necessary for defining the evaluation
+   criteria for the routing problem.
+
+   The ``_evaluate`` function measures the provided **individual**\ ’s
+   fitness F and the constraints G .
+
+   - Fitness (F) — is a list of floats representing the fitness evaluation
+     of the **individual** *per objective* (fuel, distance, etc.)
+
+   - Constraints (G) — is a list of floats represents the total constraint
+     violations per constraint (specified by the ``constraints_list`` value)
 
 Concepts
 --------
