@@ -336,18 +336,27 @@ classes follows the following:
 Config Parameters
 -----------------
 
-1. ``GENETIC_NUMBER_GENERATIONS`` — Max number of generations
+1. ``GENETIC_NUMBER_GENERATIONS`` — Max number of generations.
 
-2. ``GENETIC_NUMBER_OFFSPRINGS`` — Number of offsprings
+2. ``GENETIC_NUMBER_OFFSPRINGS`` — Number of offsprings.
 
-3. ``GENETIC_POPULATION_SIZE`` — Population size of the genetic algorithm
+3. ``GENETIC_POPULATION_SIZE`` — Population size of the genetic algorithm.
 
-4. ``GENETIC_POPULATION_TYPE`` — Population generation method for the
+4. ``GENETIC_POPULATION_TYPE`` — Population generation method for the.
    genetic algorithm
 
-   a. ``GENETIC_POPULATION_PATH`` — Path to population directory when
+   a. ``GENETIC_POPULATION_PATH`` — Path to population directory when.
       ``GENETIC_POPULATION_TYPE`` is “\ *from_geojson*\ ”
 
+5.  ``GENETIC_REPAIR_TYPE`` - Repair strategy for genetic algorithm.
+
+6.  ``GENETIC_MUTATION_TYPE`` - Mutation strategy.
+
+7.  ``GENETIC_CROSSOVER_PATCHER`` - Patching strategy for crossover.
+
+8.  ``GENETIC_FIX_RANDOM_SEED`` - Handling of random seed.
+
+For more details on the configuration variables, please check the general section on Configuration.
 
 Useful References
 -----------------
