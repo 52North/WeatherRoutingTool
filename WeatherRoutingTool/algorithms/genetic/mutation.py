@@ -34,8 +34,8 @@ class MutationConstraintRejection(Mutation):
     - generate offsprings using sub-class' implementation of ``crossover`` function,
     - rejects offspring that violates constraints based on the config variable ``GENETIC_REPAIR_TYPE``
 
-        - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that violates
-          constraints is rejected such that the parents are returned,
+        - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that
+        violates constraints is rejected such that the parents are returned,
         - if ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, ``constraints_rejection`` is set to ``False``
           and all crossover candidates are accepted,
     - counts the number of tried and successful mutations (ignoring mutation probability handled by base class Mutation)
@@ -236,12 +236,13 @@ class RandomPlateauMutation(MutationConstraintRejection):
         A set of four waypoints is selected:
 
         - a plateau center that is chosen on a random basis,
-        - two plateau edges which are the waypoints ``self.plateau_size``/2 waypoints before and behind the plateau center,
+        - two plateau edges which are the waypoints ``self.plateau_size``/2 waypoints before and behind the plateau
+          center,
         - two connectors which are the waypoints ``self.plateau_slope`` before and behind the plateau edges.
 
         The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions as for random-walk
-        mutation. A plateau is drawn by connecting the plateau edges to the connectors and to each other via great circle
-        routes.
+        mutation. A plateau is drawn by connecting the plateau edges to the connectors and to each other via great
+        circle routes.
 
         Only routes which are long enough are mutated. Routes which are smaller or of size
         ``2 * self.plateau_slope + self.plateau_size`` are returned as they are.

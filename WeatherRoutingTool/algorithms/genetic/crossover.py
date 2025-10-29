@@ -35,8 +35,8 @@ class OffspringRejectionCrossover(CrossoverBase):
     - generate offsprings using sub-class' implementation of ``crossover`` function,
     - rejects offspring that violates constraints based on the config variable ``GENETIC_REPAIR_TYPE``
 
-        - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that violates
-          constraints is rejected such that the parents are returned,
+        - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that
+          violates constraints is rejected such that the parents are returned,
         - if ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, ``constraints_rejection`` is set to ``False``
           and all crossover candidates are accepted,
     - counts the number of tried and successful crossovers.
