@@ -140,18 +140,16 @@ b. Crossover
       *Single Point Crossover* is a simple approach to crossover where a
       **single point of crossover** is picked at random from both of the
       parents, and a route is patched from the *crossover point of parent
-      1* to the *crossover point of parent 2* and vice versa.
+      1* to the *crossover point of parent 2* and vice versa. The route patcher for the crossover
+      can be chosen via the config variable ``GENETIC_CROSSOVER_PATCHER``.
 
       .. figure:: /_static/algorithm_genetic/single_point_crossover.png
 
    *Two Point Crossover*
 
       *Two Point Crossover* utilizes two random points such that the patched
-      path avoids any object that produces a constraint violation in between.
-
-      We utilize Route Patching (see the Route Patching section) because the
-      chosen random points don't consistently generate crossover points where
-      connecting them wouldn’t violate constraints.
+      path avoids any object that produces a constraint violation in between. As for Single Point Crossover,
+      the route patcher can be chosen via the config variable ``GENETIC_CROSSOVER_PATCHER``.
 
       .. figure:: /_static/algorithm_genetic/two_point_crossover.png
 
@@ -173,7 +171,7 @@ c. Mutation
 
       When looking at the waypoints as belonging to a grid, the Random Walk
       Mutation moves a random waypoint to one of its N-4 neighbourhood
-      positions. Selected by ``GENETIC_MUTATION_TYPE=rndm_walk``.
+      positions. Can be selected via ``GENETIC_MUTATION_TYPE=rndm_walk``.
 
       .. figure:: /_static/algorithm_genetic/random_walk_mutation.png
 
@@ -188,7 +186,7 @@ c. Mutation
       The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions as for random-walk
       mutation. A *plateau* is drawn by connecting the plateau edges to the connectors and to each other via great circle
       routes.
-      Selected by ``GENETIC_MUTATION_TYPE=rndm_plateau``.
+      Can be selected via ``GENETIC_MUTATION_TYPE=rndm_plateau``.
 
       .. figure:: /_static/algorithm_genetic/random_plateau_mutation.png
 
@@ -197,7 +195,7 @@ c. Mutation
 
       This process converts a sub path into a smoother route using a
       smoothing function such as Bezier Curves or by replacing a few
-      waypoints using the Great Circle Route. Selected by ``GENETIC_MUTATION_TYPE=route_blend``.
+      waypoints using the Great Circle Route. Can be selected via ``GENETIC_MUTATION_TYPE=route_blend``.
 
       .. figure:: /_static/algorithm_genetic/route_blend_mutation.png
 
