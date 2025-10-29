@@ -265,11 +265,9 @@ b. Duplicates Removal
    - Constraints (G) — is a list of floats represents the total constraint
      violations per constraint (specified by the ``constraints_list`` value)
 
-Concepts
---------
-
 Route Patching
-^^^^^^^^^^^^^^
+--------------
+
 
    Route Patching is an important concept that comes up as a necessity
    across the genetic implementation. This system has uses within
