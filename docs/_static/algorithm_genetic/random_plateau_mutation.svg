@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="random_plateau_mutation.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.3167154"
+     inkscape:cx="265.43322"
+     inkscape:cy="543.77736"
+     inkscape:window-width="2490"
+     inkscape:window-height="1403"
+     inkscape:window-x="1990"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible;"
+       id="marker26728"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path26726" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker2998"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path2996" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="Arrow1Mend"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path2694" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Lstart"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path2685" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend-9"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path2694-2" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g1194"
+       transform="translate(-1.3196872,37.792234)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 46.128771,136.01145 6.474058,6.47406"
+       id="path1022-6-6"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 46.082746,142.41853 6.474058,-6.47406"
+       id="path1022-3-7-2"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <g
+       id="g1194-5-7"
+       transform="translate(8.327553,26.245488)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-6-6" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-2-5" />
+    </g>
+    <g
+       id="g1194-5-6"
+       transform="translate(18.413026,15.920003)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-6-9" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-2-3" />
+    </g>
+    <g
+       id="g1194-5-74"
+       transform="translate(44.653728,-0.60157)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-6-5" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-2-2" />
+    </g>
+    <g
+       id="g1194-5-4"
+       transform="translate(84.381284,-6.1001565)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-6-43" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-2-0" />
+    </g>
+    <g
+       id="g1194-5-78"
+       transform="translate(103.75557,-6.2842875)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-6-68" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-2-8" />
+    </g>
+    <g
+       id="g1194-9"
+       transform="translate(50.243287,25.561565)"
+       style="stroke-width:0.4;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-1" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-27" />
+    </g>
+    <g
+       id="g1194-9-9"
+       transform="translate(30.373317,6.340917)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-1-4" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-27-78" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 97.832175,124.9683 6.474055,6.47406"
+       id="path1022-6-1-6"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 97.78615,131.37538 6.47406,-6.47406"
+       id="path1022-3-7-27-1"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 128.47732,110.45314 6.47406,6.47406"
+       id="path1022-6-1-5"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 128.43129,116.86022 6.47406,-6.47406"
+       id="path1022-3-7-27-92"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 144.78685,106.50258 6.47406,6.47406"
+       id="path1022-6-1-9"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 144.74082,112.90966 6.47406,-6.47406"
+       id="path1022-3-7-27-7"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <g
+       id="g1194-9-3"
+       transform="translate(132.77285,-0.10651194)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-1-61" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-27-2" />
+    </g>
+    <g
+       id="g1194-0"
+       transform="translate(-17.258834,42.094638)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-9" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-3" />
+    </g>
+    <g
+       id="g1194-0-6"
+       transform="translate(152.77829,-2.5026615)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-9-8" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-3-9" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 63.116649,132.6368 6.474058,6.47406"
+       id="path1022-6-0"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:0.4,0.4;stroke-dashoffset:0"
+       d="m 63.070624,139.04388 6.474058,-6.47406"
+       id="path1022-3-7-6"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:0.5,0.5;stroke-dashoffset:0;stroke-opacity:1"
+       id="path1718"
+       cx="84.76825"
+       cy="132.13989"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#f87707;stroke-width:0.6;stroke-miterlimit:4;stroke-dasharray:0.6,0.6;stroke-dashoffset:0;stroke-opacity:1"
+       id="path1718-2"
+       cx="101.13344"
+       cy="128.31789"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.499999;stroke-opacity:1"
+       id="path1718-43"
+       cx="64.878815"
+       cy="112.92289"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.499999;stroke-opacity:1"
+       id="path1718-14"
+       cx="97.650063"
+       cy="100.53063"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <g
+       id="g1194-9-32"
+       transform="translate(82.95096,13.162053)"
+       style="stroke-width:0.4;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-1-0" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.4, 0.4;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-27-6" />
+    </g>
+    <g
+       id="g1194-9-9-1"
+       transform="translate(63.08099,-6.0585945)"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.32716,103.2919 6.474058,6.47406"
+         id="path1022-6-1-4-5" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 31.281135,109.69898 6.474058,-6.47406"
+         id="path1022-3-7-27-78-5" />
+    </g>
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:0.5,0.5;stroke-dashoffset:0;stroke-opacity:1"
+       id="path1718-4"
+       cx="117.27729"
+       cy="119.55367"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.499999;stroke-opacity:1"
+       id="path1718-3"
+       cx="33.153225"
+       cy="144.29784"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <ellipse
+       style="fill:none;stroke:#0000ff;stroke-width:0.499999;stroke-opacity:1"
+       id="path1718-1"
+       cx="167.3911"
+       cy="106.4034"
+       rx="5.1156964"
+       ry="4.9811044"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Mend)"
+       d="m 78.866644,127.06848 -9.12356,-8.09761"
+       id="path3199"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Mend-9)"
+       d="m 112.28762,113.95971 -9.12357,-8.09761"
+       id="path3199-0"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.23333px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#f87707;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="92.856186"
+       y="137.23618"
+       id="text11123"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317"><tspan
+         sodipodi:role="line"
+         id="tspan11121"
+         style="stroke-width:0.264583;fill:#f87707;fill-opacity:1"
+         x="92.856186"
+         y="137.23618">plateau center</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.23333px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="110.61591"
+       y="158.74997"
+       id="text20341"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317"><tspan
+         sodipodi:role="line"
+         id="tspan20339"
+         style="fill:#0000ff;fill-opacity:1;stroke-width:0.264583"
+         x="110.61591"
+         y="158.74997">plateau edges</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.23333px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="114.20921"
+       y="177.661"
+       id="text24899"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317"><tspan
+         sodipodi:role="line"
+         id="tspan24897"
+         style="fill:#0000ff;fill-opacity:1;stroke-width:0.264583"
+         x="114.20921"
+         y="177.661">conntectors</tspan></text>
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker26728)"
+       d="M 116.32536,154.47812 88.039529,138.95792"
+       id="path26716"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker2998)"
+       d="M 135.38008,153.7033 122.74645,126.69941"
+       id="path26720"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker2998)"
+       d="M 116.02333,173.06637 40.129833,148.71475"
+       id="path26722"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;marker-end:url(#marker26728)"
+       d="m 134.11744,173.6332 33.18934,-60.62632"
+       id="path26724"
+       inkscape:export-filename="/home/kdemmich/1_Projekte/TwinShip/4_Figures/Skizzen/Random_Plateau_Mutation.png"
+       inkscape:export-xdpi="317"
+       inkscape:export-ydpi="317" />
+  </g>
+</svg>

@@ -13,15 +13,6 @@ from WeatherRoutingTool.utils.maps import Map
 
 set_up_logging()
 
-
-def generate_dummy_constraint_list():
-    pars = ConstraintPars()
-    pars.resolution = 1. / 10
-
-    constraint_list = ConstraintsList(pars)
-    return constraint_list
-
-
 '''
     test adding of negative constraint to ConstraintsList.negativ_constraints
 '''
@@ -30,7 +21,7 @@ def generate_dummy_constraint_list():
 def test_add_neg_constraint():
     land_crossing = LandCrossing()
 
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing, 'continuous')
     assert len(constraint_list.negative_constraints_continuous) == 1
     assert constraint_list.neg_cont_size == 1
@@ -51,7 +42,7 @@ def test_safe_endpoint_land_crossing():
     wave_height.current_wave_height = np.array([5, 5])
 
     is_constrained = [False for i in range(0, lat.shape[0])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
@@ -74,7 +65,7 @@ def test_safe_endpoint_wave_heigth():
     wave_height.current_wave_height = np.array([11, 11])
 
     is_constrained = [False for i in range(0, lat.shape[0])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
@@ -97,7 +88,7 @@ def test_safe_crossing_land_crossing():
     wave_height.current_wave_height = np.array([5, 5])
 
     is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
@@ -120,7 +111,7 @@ def test_safe_crossing_wave_height():
     wave_height.current_wave_height = np.array([5, 11])
 
     is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
@@ -139,7 +130,7 @@ def test_safe_waterdepth():
     # waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(waterdepth)
     is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
@@ -161,7 +152,7 @@ def test_safe_crossing_shape_return():
     wave_height.current_wave_height = np.array([5, 11])
 
     is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_crossing_discrete(lat[1, :], lat[0, :], lon[1, :], lon[0, :], time,
@@ -193,7 +184,7 @@ def test_check_constraints_land_crossing():
     wave_height.current_wave_height = np.array([5, 5])
 
     # is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(wave_height)
     ra.check_constraints(constraint_list)
@@ -210,7 +201,7 @@ def test_safe_crossing_continuous():
     test_mod2 = RunTestContinuousChecks(test_case2)
     dummy_lats = [0, 0, 0, 0, 0]
 
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(test_mod1, "continuous")
     constraint_list.add_neg_constraint(test_mod2, "continuous")
     is_constrained = constraint_list.safe_crossing_continuous(dummy_lats, dummy_lats, dummy_lats, dummy_lats,
@@ -234,7 +225,7 @@ def test_check_crossing_status_errror():
     coursesfile = os.path.join(dirname, 'data/CoursesRouteStatus.nc')
     statusCodeError = StatusCodeError(coursesfile)
 
-    constraint_list = generate_dummy_constraint_list()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(statusCodeError, 'continuous')
 
     is_constrained = constraint_list.negative_constraints_continuous[0].check_crossing(ref_lat, ref_lon)

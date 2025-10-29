@@ -65,13 +65,13 @@ class GreatCircleRoutePatcher(PatcherBase):
     """
     dist: float
 
-    def __init__(self, dist: float = 100_000.0):
+    def __init__(self, dist: float = 10_000.0):
         super().__init__()
 
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None) -> np.ndarray:
+    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None, npoints=None, ) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -85,12 +85,18 @@ class GreatCircleRoutePatcher(PatcherBase):
 
         geod: Geodesic = Geodesic.WGS84
         line = geod.InverseLine(*src, *dst)
-        n = int(math.ceil(line.s13 / self.dist))
+
+        if not npoints == None:
+            self.dist = line.s13 / npoints
+        else:
+            npoints = int(math.ceil(line.s13 / self.dist))
+
         route = []
-        for i in range(n + 1):
+        for i in range(npoints + 1):
             s = min(self.dist * i, line.s13)
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             route.append((g['lat2'], g['lon2']))
+
         return np.array([src, *route[1:-1], dst])
 
 
@@ -133,6 +139,12 @@ class IsofuelPatcher(PatcherBase):
         self.boat: Boat = boat
         self.water_depth: WaterDepth = water_depth
         self.constraints_list: ConstraintsList = constraints_list
+
+        self.patchfn_gcr = PatchFactory.get_patcher(
+            patch_type="gcr_singleton",
+            config=self.config,
+            application="Isofuel patcher"
+        )
 
     def _setup_configuration(self) -> Config:
         """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
@@ -263,6 +275,11 @@ class IsofuelPatcher(PatcherBase):
         # reactivate original logging level
         logging.getLogger().setLevel(original_log_level)
 
+        # fall-back to gcr patching if Isofuel algorithm can not provide valid results
+        if err_code > 0:
+            logger.debug('Falling back to gcr patching!')
+            return self.patchfn_gcr.patch(src, dst, departure_time)
+
         # single route
         if self.n_routes == "single":
             return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step], axis=1)
@@ -281,7 +298,7 @@ class IsofuelPatcher(PatcherBase):
 class GreatCircleRoutePatcherSingleton(GreatCircleRoutePatcher, metaclass=SingletonBase):
     """Implementation class for GreatCircleRoutePatcher that allows only a single instance."""
 
-    def __init__(self, dist: float = 100_000.0):
+    def __init__(self, dist: float = 10_000.0):
         super().__init__(dist)
 
 
@@ -299,13 +316,12 @@ class PatchFactory:
     def get_patcher(
             patch_type: str,
             application: str = 'application undefined',
-            config: Config = None,
-            dist: float = 1e5
+            config: Config = None
     ) -> PatcherBase:
 
         if patch_type == "gcr_singleton":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "gcr_singleton".')
-            return GreatCircleRoutePatcherSingleton(dist=dist)
+            return GreatCircleRoutePatcherSingleton()
 
         if patch_type == "isofuel_singleton":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "isofuel_singleton".')
@@ -317,6 +333,6 @@ class PatchFactory:
 
         if patch_type == "gcr":
             logger.debug(f'Setting patch type of genetic algorithm for {application} to "gcr".')
-            return GreatCircleRoutePatcher(dist=dist)
+            return GreatCircleRoutePatcher()
 
         raise NotImplementedError(f'The patch type {patch_type} is not implemented.')
