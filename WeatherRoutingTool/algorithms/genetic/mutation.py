@@ -31,27 +31,35 @@ class MutationConstraintRejection(Mutation):
     """
     Base class for Mutation with candidate rejection if mutated routes validate constraints.
 
-    - Generate mutated candidates using sub-class' implementation of the `mutate` function
-    - Validate if mutated candidates violate discrete constraints
-        - if True, return original route
-        - if False, return mutated route
+    - generate offsprings using sub-class' implementation of ``crossover`` function,
+    - rejects offspring that violates constraints based on the config variable ``GENETIC_REPAIR_TYPE``
+
+        - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that violates
+          constraints is rejected such that the parents are returned,
+        - if ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, ``constraints_rejection`` is set to ``False``
+          and all crossover candidates are accepted,
     - counts the number of tried and successful mutations (ignoring mutation probability handled by base class Mutation)
 
-    :param Nof_mutation_tries: number of initiated mutations
+
+    :param Nof_mutation_tries: Number of initiated mutations.
     :type Nof_mutation_tries: int
-    :param Nof_mutation_success: number of mutations that do not violate constraints
+    :param Nof_mutation_success: Number of mutations that do not violate constraints.
     :type Nof_mutation_success: int
-    :param mutation_type: name of the mutation type (optional)
+    :param mutation_type: Name of the mutation type (optional).
     :type mutation_type: str
-    :param constraints_list: list of Constraints to be validated
+    :param constraints_list: List of constraints to be validated.
     :type constraints_list: ConstraintsList
-    :param constraints_rejection: reject routes that violate constraints, defaults to true
+    :param constraints_rejection: If ``True``, crossover candidates that violate constraints are rejected. If ``False``,
+        all crossover candidates are accepted. The variable is set based on config variable ``GENETIC_REPAIR_TYPE``.
+        Defaults to ``True``.
     :type constraints_rejection: bool
     """
 
     Nof_mutation_tries: int
     Nof_mutation_success: int
+
     mutation_type: str
+
     constraints_list: ConstraintsList
     constraints_rejection: bool
 
@@ -63,6 +71,20 @@ class MutationConstraintRejection(Mutation):
             prob: float = 1.0,
             prob_var: float = None
     ):
+        """
+            Initialisation function for MutationConstraintRejection.
+
+            :param mutation_type: Name of mutation strategy.
+            :type mutation_type: str
+            :param config: Config object.
+            :type config: Config
+            :param constraints_list: List of constraint objects.
+            :type constraints_list: ConstraintsList
+            :param prob: Mutation probability.
+            :type prob: Real(BoundedVariable)
+            :param prob_var: Range of mutation probability.
+            :type prob: Real(BoundedVariable)
+        """
         super().__init__(prob=prob, prob_var=prob_var)
 
         self.constraints_list = constraints_list
@@ -84,14 +106,14 @@ class MutationConstraintRejection(Mutation):
         """
         Implementation of mutation of route matrix with candidate rejection if mutated routes validate constraints.
 
-        :param problem: routing problem
+        :param problem: Routing problem.
         :type: RoutingProblem
-        :param X: route matrix
-        :type X: np.array([[route_0], [route_1], ...]) with route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
-                 X.shape = (n_routes, 1, n_waypoints, 2)
-                 access i'th route as X[i,0] and the j'th coordinate pair off the i'th route as X[i,0][j, :]
-        :return: mutated route matrix
-        :rtype: same as for X
+        :param X: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
+            ``route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...])``. X.shape = (n_routes, 1, n_waypoints, 2).
+            Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
+        :type X: np.array
+        :return: Mutated route matrix. Same structure as for ``X``.
+        :rtype: np.array
         """
 
         for i, (rt,) in enumerate(X):
@@ -111,22 +133,33 @@ class MutationConstraintRejection(Mutation):
 # mutation variants
 # ----------
 class NoMutation(MutationBase):
-    """Empty Mutation class for testing"""
+    """Empty Mutation class for testing."""
 
     def _do(self, problem, X, **kw):
         return X
 
 
 class RandomPlateauMutation(MutationConstraintRejection):
-    """Moves a random waypoint in an individual in the direction of a random bearing
-    by a distance specified by the `gcr_dist` parameter.
-    The entire task is repeated `n_updates` number of times to produce substantial variation.
-
-    :param gcr_dist: The distance by which to move the point
-    :type gcr_dist: float
-    :param n_updates: Number of iterations to repeat the random walk operation
-    :type n_updates: int
     """
+    Mutates Routes by adding a 'plateau'.
+
+    Selects a waypoint on a random basis and calls it the 'plateau center'. The route is tilted around this plateau
+    center such that the shape resembles a plateau.
+
+    :param Config: Config object.
+    :type Config: Config
+    :param dist: Distance by which the plateau edges are mutated.
+    :type dist: float
+    :param n_updates: Number of plateaus that are introduced.
+    :type n_updates: int
+    :param plateau_size: Number of waypoints that form the top of the plateau.
+    :type plateau_size: int
+    :param plateau_slope: Number of waypoints that form the side of the plateau.
+    :type plateau_slope: int
+    :param patchnf: Gcr patcher for connecting plateau edges and connectors.
+    :type patchnf: PatcherBase
+    """
+
     config: Config
     dist: float
     n_updates: int
@@ -142,6 +175,20 @@ class RandomPlateauMutation(MutationConstraintRejection):
             plateau_slope: int = 2,
             **kw
     ):
+        """
+            Initialisation function for RandomPlateauMutation.
+
+            For definition of kw see description on MutationConstraintRejection.
+
+            :param dist: Distance by which the plateau edges are mutated.
+            :type dist: float
+            :param n_updates: Number of plateaus that are introduced.
+            :type n_updates: int
+            :param plateau_size: Number of waypoints that form the top of the plateau.
+            :type plateau_size: int
+            :param plateau_slope: Number of waypoints that form the side of the plateau.
+            :type plateau_slope: int
+        """
         super().__init__(
             mutation_type="RandomPlateauMutation",
             **kw
@@ -164,7 +211,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
             dist: float = 1e4,
             bearing: float = 45.0,
     ) -> tuple[float, float]:
-        """Pick an N4 neighbour of a waypoint
+        """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
         :type point: tuple[float, float]
@@ -175,6 +222,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :return: (lat, lon) in degrees.
         :rtype: tuple[float, float]
         """
+
         lat0, lon0 = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
@@ -188,15 +236,15 @@ class RandomPlateauMutation(MutationConstraintRejection):
         A set of four waypoints is selected:
 
         - a plateau center that is chosen on a random basis,
-        - two plateau edges which are the waypoints plateau_size/2 waypoints before and behind the plateau center,
-        - two connectors which are the waypoints plateau_slope before and behind the plateau edges.
+        - two plateau edges which are the waypoints ``self.plateau_size``/2 waypoints before and behind the plateau center,
+        - two connectors which are the waypoints ``self.plateau_slope`` before and behind the plateau edges.
 
         The plateau edges are moved in the same direction to one of their N-4 neighbourhood positions as for random-walk
         mutation. A plateau is drawn by connecting the plateau edges to the connectors and to each other via great circle
         routes.
 
         Only routes which are long enough are mutated. Routes which are smaller or of size
-        2 * self.plateau_slope + self.plateau_size are returned as they are.
+        ``2 * self.plateau_slope + self.plateau_size`` are returned as they are.
 
         :param problem: routing problem
         :type: RoutingProblem
@@ -267,7 +315,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
 
 class RouteBlendMutation(MutationConstraintRejection):
-    """Generates a bezier curve between two randomly selected indices and infills
+    """
+    Mutates routes by smoothening with a bezier curve.
+
+    Generates a bezier curve between two randomly selected indices and infills
     it with 2x the number of waypoints previously present in the selected range.
     """
 
@@ -275,6 +326,11 @@ class RouteBlendMutation(MutationConstraintRejection):
             self,
             **kw
     ):
+        """
+            Initialisation function for RouteBlendMutation.
+
+            For definition of kw see description on MutationConstraintRejection.
+        """
         super().__init__(
             mutation_type="RouteBlendMutation",
             **kw
@@ -320,7 +376,10 @@ class RouteBlendMutation(MutationConstraintRejection):
 
 
 class RandomWalkMutation(MutationConstraintRejection):
-    """Moves a random waypoint in an individual in the direction of a random bearing
+    """
+    Mutates routes by moving single waypoints on a random basis.
+
+    Moves a random waypoint in an individual in the direction of a random bearing
     by a distance specified by the `gcr_dist` parameter.
     The entire task is repeated `n_updates` number of times to produce substantial variation.
 
@@ -338,6 +397,16 @@ class RandomWalkMutation(MutationConstraintRejection):
             n_updates: int = 10,
             **kw
     ):
+        """
+            Initialisation function for RouteBlendMutation.
+
+            For definition of kw see description on MutationConstraintRejection.
+
+            :param gcr_dist: The distance by which to move the point
+            :type gcr_dist: float
+            :param n_updates: Number of iterations to repeat the random walk operation
+            :type n_updates: int
+        """
         super().__init__(
             mutation_type="RandomWalkMutation",
             **kw
@@ -352,7 +421,7 @@ class RandomWalkMutation(MutationConstraintRejection):
             dist: float = 1e4,
             bearing: float = 45.0,
     ) -> tuple[float, float]:
-        """Pick an N4 neighbour of a waypoint
+        """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
         :type point: tuple[float, float]
@@ -384,9 +453,9 @@ class RandomWalkMutation(MutationConstraintRejection):
 
 # ----------
 class RandomMutationsOrchestrator(MutationBase):
-    """Select a mutation operator at random and apply it over the population
+    """Select a mutation operator at random and apply it to the population.
 
-    :param opts: List of Mutation classes
+    :param opts: List of Mutation classes.
     :type opts: list[Mutation]
     """
 
