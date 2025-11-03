@@ -687,6 +687,7 @@ class FakeWeather(WeatherCond):
         lat_start = self.map_size.lat1
         lat_end = self.map_size.lat1 + self.coord_res * (n_lat_values - 1)
         lat = np.linspace(lat_start, lat_end, n_lat_values)
+        print('lats: ', lat)
 
         n_lon_values = ceil(round(self.map_size.lon2 - self.map_size.lon1, 5) / self.coord_res) + 1
         lon_start = self.map_size.lon1
@@ -704,6 +705,11 @@ class FakeWeather(WeatherCond):
         n_depth_values = 1
         depth = np.array([0.494])
 
+        n_height_above_ground = 3
+        height_above_ground = np.linspace(10, 30, 3)
+
+        print('height_above_ground: ', height_above_ground)
+
         # initialise variables
         vtotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['vtotal'])
         utotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['utotal'])
@@ -716,16 +722,17 @@ class FakeWeather(WeatherCond):
         Temperature_surface = np.full((n_lat_values, n_lon_values, n_time_values),
                                       self.var_dict['Temperature_surface'])
 
-        uwind = np.full((n_lat_values, n_lon_values, n_time_values),
+        uwind = np.full((n_lat_values, n_lon_values, n_time_values, n_height_above_ground),
                         self.var_dict['u-component_of_wind_height_above_ground'])
-        vwind = np.full((n_lat_values, n_lon_values, n_time_values),
+        vwind = np.full((n_lat_values, n_lon_values, n_time_values, n_height_above_ground),
                         self.var_dict['v-component_of_wind_height_above_ground'])
 
         Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values),
                                               self.var_dict['Pressure_reduced_to_MSL_msl'])
 
         # create dataset
-        data_vars = dict(vtotal=(["latitude", "longitude", "time", "depth"], vtotal),
+        data_vars = dict(
+                         vtotal=(["latitude", "longitude", "time", "depth"], vtotal),
                          utotal=(["latitude", "longitude", "time", "depth"], utotal),
                          thetao=(["latitude", "longitude", "time", "depth"], thetao),
                          so=(["latitude", "longitude", "time", "depth"], so),
@@ -735,13 +742,19 @@ class FakeWeather(WeatherCond):
                          VTPK=(["latitude", "longitude", "time"], VTPK),
                          Temperature_surface=(["latitude", "longitude", "time"], Temperature_surface),
 
-                         uwind=(["latitude", "longitude", "time"], uwind),
-                         vwind=(["latitude", "longitude", "time"], vwind),
+                         uwind=(["latitude", "longitude", "time", "height_above_ground"], uwind),
+                         vwind=(["latitude", "longitude", "time", "height_above_ground"], vwind),
 
                          Pressure_reduced_to_MSL_msl=(["latitude", "longitude", "time"], Pressure_reduced_to_MSL_msl),
                          )
-        coords = dict(latitude=(["latitude"], lat), longitude=(["longitude"], lon), time=(["time"], time),
-                      depth=(["depth"], depth))
+        coords = dict(
+            latitude=(["latitude"], lat),
+            longitude=(["longitude"], lon),
+            time=(["time"], time),
+            depth=(["depth"], depth),
+            height_above_ground=(["height_above_ground"], height_above_ground)
+        )
+
         attrs = dict(description="Necessary descriptions added here.")
 
         ds = xr.Dataset(data_vars, coords, attrs)
@@ -762,9 +775,47 @@ class FakeWeather(WeatherCond):
                         'vwind': 'v-component_of_wind_height_above_ground'})
 
         self.ds = ds
+        self.plot_wind_weather(self.time_start)
 
     def write_data(self, filepath):
         logger.info('Writing weather data to file ' + str(filepath))
         self.ds.to_netcdf(filepath)
         self.ds.close()
         return filepath
+
+    def plot_wind_weather(self,time, rebinx=5, rebiny=5):
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
+        fig, ax = graphics.generate_basemap(fig=fig, depth=None, show_depth=False)
+
+        u = self.ds['u-component_of_wind_height_above_ground'].sel(
+            time=time,
+            latitude=slice(self.map_size.lat1, self.map_size.lat2),
+            longitude=slice(self.map_size.lon1, self.map_size.lon2),
+            height_above_ground=10
+        )
+        v = self.ds['v-component_of_wind_height_above_ground'].sel(
+            time=time,
+            latitude=slice(self.map_size.lat1, self.map_size.lat2),
+            longitude=slice(self.map_size.lon1, self.map_size.lon2),
+            height_above_ground = 10
+        )
+
+        u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
+        v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
+
+        windspeed = np.sqrt(u ** 2 + v ** 2)
+        windspeed.plot(alpha=0.5)
+
+        plt.title(f'wind speed and direction at {time}')
+        plt.rcParams['font.size'] = '20'
+        plt.ylabel('latitude (°N)', fontsize=20)
+        plt.xlabel('longitude (°W)', fontsize=20)
+        for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+            label.set_fontsize(20)
+        x = windspeed.coords['longitude'].values
+        y = windspeed.coords['latitude'].values
+        # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
+        plt.barbs(x, y, u.values, v.values, clim=[0, 20])
+        plt.show()
