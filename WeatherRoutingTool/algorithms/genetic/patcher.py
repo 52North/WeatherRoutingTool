@@ -166,6 +166,9 @@ class IsofuelPatcher(PatcherBase):
                 "DEPTH_DATA",
                 "WEATHER_DATA",
                 "ROUTE_PATH",
+                "BOAT_UNDER_KEEL_CLEARANCE",
+                "BOAT_DRAUGHT_AFT",
+                "BOAT_DRAUGHT_FORE"
             ], )
 
         cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
