@@ -614,13 +614,26 @@ class RouteParams:
         return self.time
 
     def get_full_fuel(self):
-        full_fuel = 0
+        full_fuel = 0 * u.kg
         for ipoint in range(0, self.count):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
             fuel_per_step = self.ship_params_per_step.fuel_rate[ipoint] * time_passed * u.second
             full_fuel = full_fuel + fuel_per_step
 
         return full_fuel
+
+    def get_mean_power(self):
+        power_sum = 0
+        count = 0
+        for ipoint in range(0, self.count):
+            power_per_step = self.ship_params_per_step.power[ipoint]
+            power_sum = power_sum + power_per_step
+            count +=1
+        if count > 0:
+            return power_sum/count
+        else:
+            return 0 * u.kW*u.hour
+
 
     @classmethod
     def from_gzip_file(cls, filename):
