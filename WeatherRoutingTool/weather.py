@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import time
 from datetime import datetime, timedelta
@@ -108,6 +109,57 @@ class WeatherCond:
     def read_dataset(self, filepath=None):
         pass
 
+    def plot_wind_weather(self,time, rebinx=5, rebiny=5):
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
+        fig, ax = graphics.generate_basemap(fig=fig, depth=None, show_depth=False)
+
+        u = self.ds['u-component_of_wind_height_above_ground'].sel(
+            time=time,
+            latitude=slice(self.map_size.lat1, self.map_size.lat2),
+            longitude=slice(self.map_size.lon1, self.map_size.lon2),
+            height_above_ground=10
+        )
+        v = self.ds['v-component_of_wind_height_above_ground'].sel(
+            time=time,
+            latitude=slice(self.map_size.lat1, self.map_size.lat2),
+            longitude=slice(self.map_size.lon1, self.map_size.lon2),
+            height_above_ground = 10
+        )
+
+        u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
+        v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
+
+        windspeed = np.sqrt(u ** 2 + v ** 2)
+        windspeed.plot(alpha=0.5)
+
+        plt.title("")
+        plt.rcParams['font.size'] = '20'
+        plt.ylabel('latitude (°N)', fontsize=20)
+        plt.xlabel('longitude (°W)', fontsize=20)
+
+        for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+            label.set_fontsize(20)
+        x = windspeed.coords['longitude'].values
+        y = windspeed.coords['latitude'].values
+        #plt.quiver(x, y, u.values, v.values, clim=[0, 20])
+        cp=plt.barbs(x, y, u.values, v.values, clim=[0, 20])
+
+        plt.show()
+
+    def get_theta_from_uv(self, u, v):
+        theta = 180 + 180/np.pi*np.arctan2(u,v)
+        theta = theta%360
+        return theta
+
+    def get_u(self, theta, windspeed):
+        theta = theta*np.pi/180
+        return -np.abs(windspeed) * np.sin(theta)
+
+    def get_v(self, theta, windspeed):
+        theta = theta*np.pi/180
+        return -np.abs(windspeed) * np.cos(theta)
 
 class WeatherCondEnvAutomatic(WeatherCond):
 
@@ -657,7 +709,7 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
-    def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None):
+    def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None, gauß_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
@@ -670,6 +722,7 @@ class FakeWeather(WeatherCond):
             'Pressure_reduced_to_MSL_msl': 0
         }
         self.coord_res = coord_res
+        self.gauß_dict = gauß_dict
 
         self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero=var_list_zero)
 
@@ -708,8 +761,6 @@ class FakeWeather(WeatherCond):
         n_height_above_ground = 3
         height_above_ground = np.linspace(10, 30, 3)
 
-        print('height_above_ground: ', height_above_ground)
-
         # initialise variables
         vtotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['vtotal'])
         utotal = np.full((n_lat_values, n_lon_values, n_time_values, n_depth_values), self.var_dict['utotal'])
@@ -726,6 +777,18 @@ class FakeWeather(WeatherCond):
                         self.var_dict['u-component_of_wind_height_above_ground'])
         vwind = np.full((n_lat_values, n_lon_values, n_time_values, n_height_above_ground),
                         self.var_dict['v-component_of_wind_height_above_ground'])
+
+        if self.gauß_dict:
+            uwind, vwind = self.add_gauß_to_wind(
+                uwind,
+                vwind,
+                lon_start,
+                lat_start,
+                n_lon_values,
+                n_lat_values,
+                n_time_values,
+                n_height_above_ground
+            )
 
         Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values),
                                               self.var_dict['Pressure_reduced_to_MSL_msl'])
@@ -777,45 +840,60 @@ class FakeWeather(WeatherCond):
         self.ds = ds
         self.plot_wind_weather(self.time_start)
 
+    def add_gauß_to_wind(self, uwind, vwind, lon_start, lat_start, n_lon_values, n_lat_values, n_time_values, n_height_above_ground):
+        wind_speed_orig = np.sqrt(uwind ** 2 + vwind ** 2)
+        wind_speed_orig_mean = wind_speed_orig.mean()
+        vwind_orig = vwind.mean()
+        wind_speed_max_target = self.gauß_dict["target_height"] - wind_speed_orig_mean
+
+        if wind_speed_max_target < 0:
+            raise ValueError('Target wind speed is smaller than mean of wind data.')
+
+        # coordinate transformation
+        ind_gauß_x, ind_gauß_y = self.get_index(self.gauß_dict["lat"], self.gauß_dict["lon"], lon_start, lat_start)
+        del_target_width = np.rint(self.gauß_dict["target_width"] / self.coord_res)
+
+        # obtain gauß and add to baseline
+        x, y = np.meshgrid(np.linspace(0, n_lon_values - 1, n_lon_values),
+                           np.linspace(0, n_lat_values - 1, n_lat_values))
+        gauß_temp = np.exp(
+            -((x - ind_gauß_y) ** 2 + (y - ind_gauß_x) ** 2) / (2 * del_target_width)) * wind_speed_max_target
+        gauß_temp[gauß_temp < 0.00001] = 0
+        gauß = gauß_temp + wind_speed_orig_mean
+
+        # calculate u and v components for original and modified wind angle
+        theta_orig = self.get_theta_from_uv(uwind[0, 0, 0, 0], vwind[0, 0, 0, 0])
+        v_updated_newtheta = self.get_v(self.gauß_dict["theta"], gauß)
+        u_updated_newtheta = self.get_u(self.gauß_dict["theta"], gauß)
+        v_updated = self.get_v(theta_orig, gauß)
+        u_updated = self.get_u(theta_orig, gauß)
+        v_updated = np.where(v_updated == vwind_orig, v_updated, v_updated_newtheta)
+        u_updated = np.where(v_updated == vwind_orig, u_updated, u_updated_newtheta)
+
+        # correct dimensionality
+        v_updated = np.tile(v_updated, (n_time_values, n_height_above_ground, 1, 1))
+        v_updated = np.moveaxis(v_updated, 2, 0)
+        v_updated = np.moveaxis(v_updated, 3, 1)
+        vwind = v_updated
+
+        u_updated = np.tile(u_updated, (n_time_values, n_height_above_ground, 1, 1))
+        u_updated = np.moveaxis(u_updated, 2, 0)
+        u_updated = np.moveaxis(u_updated, 3, 1)
+        uwind = u_updated
+
+        return uwind, vwind
+
+    def get_index(self, lat, lon, start_lon, start_lat):
+        del_coord = self.coord_res
+        i_lon = int(np.rint((lon-start_lon)/del_coord))
+        i_lat = int(np.rint((lat-start_lat)/del_coord))
+
+        return i_lat, i_lon
+
     def write_data(self, filepath):
         logger.info('Writing weather data to file ' + str(filepath))
         self.ds.to_netcdf(filepath)
         self.ds.close()
         return filepath
 
-    def plot_wind_weather(self,time, rebinx=5, rebiny=5):
-        fig, ax = plt.subplots(figsize=(12, 7))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig=fig, depth=None, show_depth=False)
 
-        u = self.ds['u-component_of_wind_height_above_ground'].sel(
-            time=time,
-            latitude=slice(self.map_size.lat1, self.map_size.lat2),
-            longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground=10
-        )
-        v = self.ds['v-component_of_wind_height_above_ground'].sel(
-            time=time,
-            latitude=slice(self.map_size.lat1, self.map_size.lat2),
-            longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground = 10
-        )
-
-        u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-        v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-
-        windspeed = np.sqrt(u ** 2 + v ** 2)
-        windspeed.plot(alpha=0.5)
-
-        plt.title(f'wind speed and direction at {time}')
-        plt.rcParams['font.size'] = '20'
-        plt.ylabel('latitude (°N)', fontsize=20)
-        plt.xlabel('longitude (°W)', fontsize=20)
-        for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-            label.set_fontsize(20)
-        x = windspeed.coords['longitude'].values
-        y = windspeed.coords['latitude'].values
-        # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
-        plt.barbs(x, y, u.values, v.values, clim=[0, 20])
-        plt.show()
