@@ -6,12 +6,14 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintsListFactory, WaterDepth
 from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
@@ -117,6 +119,7 @@ class IsofuelPatcher(PatcherBase):
     n_routes: str
     patch_count: int
     config: Config
+    config_boat_dict: dict
 
     wt: WeatherCond
     boat: Boat
@@ -132,7 +135,7 @@ class IsofuelPatcher(PatcherBase):
 
         # setup components
         self.config = base_config
-        self.config = self._setup_configuration()
+        self._setup_configuration()
         wt, boat, water_depth, constraints_list = self._setup_components()
 
         self.wt: WeatherCond = wt
@@ -179,9 +182,23 @@ class IsofuelPatcher(PatcherBase):
             dt = json.load(fp)
 
         cfg = Config.model_validate({**dt, **cfg_select})
-        cfg.CONFIG_PATH = cfg_path
 
-        return cfg
+        # combine patcher configuration and ship parameters from base configuration relevant for constraints
+        ship_config_base = ShipConfig.assign_config(Path(self.config.CONFIG_PATH))
+        cfg_ship_base = ship_config_base.model_dump(
+            include=[
+                "BOAT_UNDER_KEEL_CLEARANCE",
+                "BOAT_DRAUGHT_AFT",
+                "BOAT_DRAUGHT_FORE"
+            ],
+        )
+        self.config_boat_dict = cfg_ship_base
+
+        # set config path to patcher configuration
+        cfg.CONFIG_PATH = cfg_path
+        self.config = cfg
+        print('self.config: ', cfg)
+        return
 
     def _setup_components(self) -> tuple[WeatherCond, Boat, WaterDepth, ConstraintsList]:
         """
@@ -216,6 +233,9 @@ class IsofuelPatcher(PatcherBase):
         # *******************************************
         # initialise boat
         boat = ShipFactory.get_ship(config)
+        boat.under_keel_clearance = self.config_boat_dict["BOAT_UNDER_KEEL_CLEARANCE"] * u.meter
+        boat.draught_aft = self.config_boat_dict['BOAT_DRAUGHT_AFT'] * u.meter
+        boat.draught_fore = self.config_boat_dict['BOAT_DRAUGHT_FORE'] * u.meter
 
         # *******************************************
         # initialise constraints
