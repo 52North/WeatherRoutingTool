@@ -411,6 +411,7 @@ class RouteParams:
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label
             )
+            ax.set_ylim(0, 0.05)
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
