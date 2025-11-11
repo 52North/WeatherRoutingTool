@@ -299,7 +299,7 @@ class IsofuelPatcher(PatcherBase):
         logging.getLogger().setLevel(original_log_level)
 
         # fall-back to gcr patching if Isofuel algorithm can not provide valid results
-        if err_code > 0:
+        if (err_code > 0) and (self.n_routes == 'single'):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
