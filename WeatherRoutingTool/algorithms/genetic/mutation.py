@@ -29,34 +29,34 @@ class MutationBase(Mutation):
 
 class MutationConstraintRejection(Mutation):
     """
-    Base class for Mutation with candidate rejection if mutated routes validate constraints.
+    Base class for Mutation with candidate rejection if mutated routes violate constraints.
 
-    - generate offsprings using sub-class' implementation of ``crossover`` function,
+    - generate offsprings using sub-class' implementation of ``mutation`` function,
     - rejects offspring that violates constraints based on the config variable ``GENETIC_REPAIR_TYPE``
 
         - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that
         violates constraints is rejected such that the parents are returned,
         - if ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, ``constraints_rejection`` is set to ``False``
-          and all crossover candidates are accepted,
+          and all mutated candidates are accepted,
     - counts the number of tried and successful mutations (ignoring mutation probability handled by base class Mutation)
 
 
-    :param Nof_mutation_tries: Number of initiated mutations.
-    :type Nof_mutation_tries: int
-    :param Nof_mutation_success: Number of mutations that do not violate constraints.
-    :type Nof_mutation_success: int
+    :param nof_mutation_tries: Number of initiated mutations.
+    :type nof_mutation_tries: int
+    :param nof_mutation_success: Number of mutations that do not violate constraints.
+    :type nof_mutation_success: int
     :param mutation_type: Name of the mutation type (optional).
     :type mutation_type: str
     :param constraints_list: List of constraints to be validated.
     :type constraints_list: ConstraintsList
-    :param constraints_rejection: If ``True``, crossover candidates that violate constraints are rejected. If ``False``,
-        all crossover candidates are accepted. The variable is set based on config variable ``GENETIC_REPAIR_TYPE``.
+    :param constraints_rejection: If ``True``, mutated candidates that violate constraints are rejected. If ``False``,
+        all mutated candidates are accepted. The variable is set based on config variable ``GENETIC_REPAIR_TYPE``.
         Defaults to ``True``.
     :type constraints_rejection: bool
     """
 
-    Nof_mutation_tries: int
-    Nof_mutation_success: int
+    nof_mutation_tries: int
+    nof_mutation_success: int
 
     mutation_type: str
 
@@ -89,8 +89,8 @@ class MutationConstraintRejection(Mutation):
 
         self.constraints_list = constraints_list
         self.mutation_type = mutation_type
-        self.Nof_mutation_tries = 0
-        self.Nof_mutation_success = 0
+        self.nof_mutation_tries = 0
+        self.nof_mutation_success = 0
         self.constraints_rejection = True
         self.config = config
 
@@ -99,8 +99,8 @@ class MutationConstraintRejection(Mutation):
 
     def print_mutation_statistics(self):
         logger.info(f'{self.mutation_type} statistics:')
-        logger.info('Nof_mutation_tries: ' + str(self.Nof_mutation_tries))
-        logger.info('Nof_mutation_success: ' + str(self.Nof_mutation_success))
+        logger.info('nof_mutation_tries: ' + str(self.nof_mutation_tries))
+        logger.info('nof_mutation_success: ' + str(self.nof_mutation_success))
 
     def _do(self, problem, X, **kw):
         """
@@ -117,11 +117,11 @@ class MutationConstraintRejection(Mutation):
         """
 
         for i, (rt,) in enumerate(X):
-            self.Nof_mutation_tries += 1
+            self.nof_mutation_tries += 1
             mut_temp = self.mutate(problem, rt, **kw)
 
             if (not utils.get_constraints(mut_temp, self.constraints_list)) or (not self.constraints_rejection):
-                self.Nof_mutation_success += 1
+                self.nof_mutation_success += 1
                 X[i, 0] = mut_temp
 
         return X

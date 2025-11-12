@@ -45,10 +45,10 @@ class OffspringRejectionCrossover(CrossoverBase):
     :type departure_time: datetime
     :param constraints_list: List of constraints.
     :type constraints_list: ConstraintsList
-    :param Nof_crossover_tries: Counter for number of crossover tries.
-    :type Nof_crossover_tries: int
-    :param Nof_crossover_success: Counter for number of successful crossovers.
-    :type Nof_crossover_success: int
+    :param nof_crossover_tries: Counter for number of crossover tries.
+    :type nof_crossover_tries: int
+    :param nof_crossover_success: Counter for number of successful crossovers.
+    :type nof_crossover_success: int
     :param crossover_type: Crossover type.
     :type crossover_type: str
     :param constraints_rejection: If ``True``, crossover candidates that violate constraints are rejected. If ``False``,
@@ -61,8 +61,8 @@ class OffspringRejectionCrossover(CrossoverBase):
     constraints_list: ConstraintsList
     config: Config
 
-    Nof_crossover_tries: int
-    Nof_crossover_success: int
+    nof_crossover_tries: int
+    nof_crossover_success: int
     crossover_type: str
 
     constraints_rejection: bool
@@ -79,8 +79,8 @@ class OffspringRejectionCrossover(CrossoverBase):
 
         self.departure_time = departure_time
         self.constraints_list = constraints_list
-        self.Nof_crossover_tries = 0
-        self.Nof_crossover_success = 0
+        self.nof_crossover_tries = 0
+        self.nof_crossover_success = 0
         self.crossover_type = crossover_type
         self.constraints_rejection = True
         self.config = config
@@ -90,8 +90,8 @@ class OffspringRejectionCrossover(CrossoverBase):
 
     def print_crossover_statistics(self):
         logger.info(f'{self.crossover_type} statistics:')
-        logger.info('Nof_crossover_tries: ' + str(self.Nof_crossover_tries))
-        logger.info('Nof_crossover_success: ' + str(self.Nof_crossover_success))
+        logger.info('nof_crossover_tries: ' + str(self.nof_crossover_tries))
+        logger.info('nof_crossover_success: ' + str(self.nof_crossover_success))
 
     def _do(self, problem, X, **kw):
         # n_parents assumed to be 2
@@ -101,7 +101,7 @@ class OffspringRejectionCrossover(CrossoverBase):
         Y = np.full_like(X, None, dtype=object)
 
         for k in range(n_matings):
-            self.Nof_crossover_tries += 1
+            self.nof_crossover_tries += 1
 
             p1 = X[0, k, 0]
             p2 = X[1, k, 0]
@@ -117,7 +117,7 @@ class OffspringRejectionCrossover(CrossoverBase):
                 Y[0, k, 0] = o1
                 Y[1, k, 0] = o2
 
-                self.Nof_crossover_success += 1
+                self.nof_crossover_success += 1
         return Y
 
     def crossover(
