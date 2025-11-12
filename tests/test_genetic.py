@@ -16,7 +16,6 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
-
 def test_isofuelpatcher_singleton():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
@@ -159,10 +158,12 @@ def test_random_plateau_mutation_refusal():
 
     assert np.array_equal(old_route, new_route)
 
+
 '''
-    test whether configuration parameters relevant for the constraint module are not overwritten by config files for 
+    test whether configuration parameters relevant for the constraint module are not overwritten by config files for
     IsofuelPatcher
 '''
+
 
 def test_configuration_isofuel_patcher():
     dirname = os.path.dirname(__file__)
@@ -173,6 +174,6 @@ def test_configuration_isofuel_patcher():
     pt = IsofuelPatcher(base_config=config)
 
     # check correct configuration of ship parameters
-    assert config_ship.BOAT_DRAUGHT_AFT * u.meter== pt.boat.draught_aft
-    assert config_ship.BOAT_DRAUGHT_FORE * u.meter== pt.boat.draught_fore
-    assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter== pt.boat.under_keel_clearance
+    assert config_ship.BOAT_DRAUGHT_AFT * u.meter == pt.boat.draught_aft
+    assert config_ship.BOAT_DRAUGHT_FORE * u.meter == pt.boat.draught_fore
+    assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter == pt.boat.under_keel_clearance

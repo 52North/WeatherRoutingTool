@@ -1642,7 +1642,7 @@ class IsoBased(RoutingAlg):
                             ship_params_per_step=self.shipparams_per_step
                             )
 
-        logger.info('Fuel consumption for best route: '+ str(route.get_full_fuel().value))
+        logger.info('Fuel consumption for best route: ' + str(route.get_full_fuel().value))
         logger.info('Mean power: ' + str(route.get_mean_power()))
 
         return route
