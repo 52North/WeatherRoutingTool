@@ -1,10 +1,19 @@
+import copy
 import os
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+import matplotlib.pyplot as plt
+from astropy import units as u
+
+import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
+from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
 def test_isofuelpatcher_singleton():
@@ -37,3 +46,134 @@ def test_isofuelpatcher_no_singleton():
     pt_one.patch(src, dst, departure_time)
 
     assert id(pt_two) != id(pt_one)
+
+
+'''
+   sanity test for output for genetic.mutation.RandomPlateauMutation.mutate():
+   - does the shape of the output route matrix resemble the shape of the input route matrix
+   - do the starting and end points of all routes match with the input routes
+'''
+
+
+def test_random_plateau_mutation():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    np.random.seed(1)
+
+    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
+
+    route1 = np.array([
+        [35.199, 15.490],
+        [34.804, 16.759],
+        [34.447, 18.381],
+        [34.142, 18.763],
+        [33.942, 21.080],
+        [33.542, 23.024],
+        [33.408, 24.389],
+        [33.166, 26.300],
+        [32.937, 27.859],
+        [32.737, 28.859],
+    ])
+    route2 = np.array([
+        [35.199, 16.490],
+        [34.804, 17.759],
+        [34.447, 19.381],
+        [34.142, 19.763],
+        [33.942, 22.080],
+        [33.542, 23.024],
+        [33.408, 24.389],
+        [33.166, 25.300],
+        [32.937, 26.859],
+        [32.737, 27.859],
+    ])
+    X = np.array([[route1], [route2]])
+
+    old_route = copy.deepcopy(X)
+    new_route = mt.mutate(None, X, )
+
+    # plot figure with original and mutated routes
+    fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+    fig, ax = graphics.generate_basemap(
+        fig=fig,
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.937, 27.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick")
+    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue")
+    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick")
+    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue")
+
+    assert old_route.shape == new_route.shape
+    for i_route in range(old_route.shape[0]):
+        assert np.array_equal(old_route[i_route, 0][-1, :], new_route[i_route, 0][-1, :])
+        assert np.array_equal(old_route[i_route, 0][0, :], new_route[i_route, 0][0, :])
+
+
+'''
+    test whether routes are returned as they are by genetic.mutation.RandomPlateauMutation.mutate() if they are too
+    short for random plateau mutation
+'''
+
+
+def test_random_plateau_mutation_refusal():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
+    np.random.seed(1)
+
+    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
+
+    route1 = np.array([
+        [35.199, 15.490],
+        [34.804, 16.759],
+        [34.447, 18.381],
+        [34.142, 18.763],
+        [33.942, 21.080],
+        [33.542, 23.024],
+        [33.408, 24.389],
+        [33.166, 26.300],
+    ])
+    route2 = np.array([
+        [35.199, 16.490],
+        [34.804, 17.759],
+        [34.447, 19.381],
+        [34.142, 19.763],
+        [33.942, 22.080],
+        [33.542, 23.024],
+        [33.408, 24.389],
+        [33.166, 25.300],
+    ])
+    X = np.array([[route1], [route2]])
+
+    old_route = copy.deepcopy(X)
+    new_route = mt.mutate(None, X, )
+
+    assert np.array_equal(old_route, new_route)
+
+
+'''
+    test whether configuration parameters relevant for the constraint module are not overwritten by config files for
+    IsofuelPatcher
+'''
+
+
+def test_configuration_isofuel_patcher():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    config_ship = ShipConfig.assign_config(Path(configpath))
+
+    pt = IsofuelPatcher(base_config=config)
+
+    # check correct configuration of ship parameters
+    assert config_ship.BOAT_DRAUGHT_AFT * u.meter == pt.boat.draught_aft
+    assert config_ship.BOAT_DRAUGHT_FORE * u.meter == pt.boat.draught_fore
+    assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter == pt.boat.under_keel_clearance

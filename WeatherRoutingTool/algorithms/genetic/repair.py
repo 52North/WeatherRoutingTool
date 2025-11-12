@@ -47,7 +47,7 @@ class WaypointsInfillRepair(RepairBase):
 
     def repairfn(self, problem, X, **kw):
         gcr_dist = 1e5
-        patchfn = PatchFactory.get_patcher(patch_type="gcr", dist=gcr_dist, application="WaypointsInfillRepair")
+        patchfn = PatchFactory.get_patcher(patch_type="gcr", application="WaypointsInfillRepair")
 
         for i, (rt,) in enumerate(X):
             route = []

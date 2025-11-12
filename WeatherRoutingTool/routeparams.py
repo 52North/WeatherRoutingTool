@@ -163,7 +163,7 @@ class RouteParams:
                 properties['speed'] = {'value': self.ship_params_per_step.speed[i].value, 'unit': 'm/s'}
                 properties['engine_power'] = {'value': self.ship_params_per_step.power[i].to("kW").value, 'unit': 'kW'}
                 properties['fuel_consumption'] = {
-                    'value': self.ship_params_per_step.fuel_rate[i].to(u.tonne/u.hour).value,
+                    'value': self.ship_params_per_step.fuel_rate[i].to(u.tonne / u.hour).value,
                     'unit': 't/h'
                 }
                 properties['fuel_type'] = self.ship_params_per_step.fuel_type
@@ -274,10 +274,10 @@ class RouteParams:
             status[ipoint] = property['status']['value']
             message[ipoint] = property['message']['value']
 
-        speed = speed[:-1] * u.meter/u.second
+        speed = speed[:-1] * u.meter / u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
-        fuel_rate = (fuel_rate[:-1] * u.tonne/u.hour).to(u.kg/u.second)
-        rpm = rpm[:-1] * 1/u.minute
+        fuel_rate = (fuel_rate[:-1] * u.tonne / u.hour).to(u.kg / u.second)
+        rpm = rpm[:-1] * 1 / u.minute
         r_wind = r_wind[:-1] * u.newton
         r_calm = r_calm[:-1] * u.newton
         r_waves = r_waves[:-1] * u.newton
@@ -286,11 +286,11 @@ class RouteParams:
         wave_height = wave_height[:-1] * u.meter
         wave_direction = wave_direction[:-1] * u.radian
         wave_period = wave_period[:-1] * u.second
-        u_currents = u_currents[:-1] * u.meter/u.second
-        v_currents = v_currents[:-1] * u.meter/u.second
-        u_wind_speed = u_wind_speed[:-1] * u.meter/u.second
-        v_wind_speed = v_wind_speed[:-1] * u.meter/u.second
-        pressure = pressure[:-1] * u.kg/u.meter/u.second**2
+        u_currents = u_currents[:-1] * u.meter / u.second
+        v_currents = v_currents[:-1] * u.meter / u.second
+        u_wind_speed = u_wind_speed[:-1] * u.meter / u.second
+        v_wind_speed = v_wind_speed[:-1] * u.meter / u.second
+        pressure = pressure[:-1] * u.kg / u.meter / u.second ** 2
         air_temperature = air_temperature[:-1] * u.deg_C
         salinity = salinity[:-1] * u.dimensionless_unscaled
         water_temperature = water_temperature[:-1] * u.deg_C
@@ -407,10 +407,11 @@ class RouteParams:
             # plt.ylabel(power["label"])
             plt.bar(
                 hist_values["bin_centres"].to(u.km).value,
-                hist_values["bin_contents"].to(u.tonne/u.kilometer).value,
+                hist_values["bin_contents"].to(u.tonne / u.kilometer).value,
                 hist_values["bin_widths"].to(u.km).value,
                 fill=False, color=color, edgecolor=color, label=label
             )
+            ax.set_ylim(0, 0.05)
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
@@ -470,7 +471,7 @@ class RouteParams:
         plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios,
                  marker='o', color=color, linewidth=0, label=label)
         plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
-                     xerr=hist_values_nom["bin_widths"].to(u.km).value/2, fmt=' ', color=color, linestyle=None)
+                     xerr=hist_values_nom["bin_widths"].to(u.km).value / 2, fmt=' ', color=color, linestyle=None)
         plt.axhline(y=mean_dev, color=color, linestyle='dashed')
 
         plt.xlabel('travel distance (km)')
@@ -614,7 +615,7 @@ class RouteParams:
         return self.time
 
     def get_full_fuel(self):
-        full_fuel = 0
+        full_fuel = 0 * u.kg
         for ipoint in range(0, self.count):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
             fuel_per_step = self.ship_params_per_step.fuel_rate[ipoint] * time_passed * u.second
@@ -622,22 +623,34 @@ class RouteParams:
 
         return full_fuel
 
+    def get_mean_power(self):
+        power_sum = 0
+        count = 0
+        for ipoint in range(0, self.count):
+            power_per_step = self.ship_params_per_step.power[ipoint]
+            power_sum = power_sum + power_per_step
+            count += 1
+        if count > 0:
+            return power_sum / count
+        else:
+            return 0 * u.kW * u.hour
+
     @classmethod
     def from_gzip_file(cls, filename):
         data = pandas.read_parquet(filename)
         data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
 
-        full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg/u.h
+        full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg / u.h
         mean_engine_load = data['ME_LOAD'].mean()
 
         # select every interval's element from dataset
         interval = 100
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
         sog = sog_data['SOG'].values
-        sog = sog[:-1] * u.Unit('knots')         # delete last element and convert from knots to m/s
-        sog = sog.to(u.meter/u.second)
+        sog = sog[:-1] * u.Unit('knots')  # delete last element and convert from knots to m/s
+        sog = sog.to(u.meter / u.second)
         power = sog_data['ME_LOAD'].values
-        fuel_rate = sog_data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].values * u.kg/u.h
+        fuel_rate = sog_data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].values * u.kg / u.h
 
         # draught = 0.25 * (sog_data['AFTER_DRAUGHT_LEVEL'] + sog_data['FORE_DRAUGHT_LEVEL']
         #                   + sog_data['MIDDRAUGHT_LEVELS'] + sog_data['MIDDRAUGHT_LEVELP'])

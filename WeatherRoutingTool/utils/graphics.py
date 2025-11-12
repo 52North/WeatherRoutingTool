@@ -274,15 +274,16 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
 
     if show_depth:
         level_diff = 10
-        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
-        fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree(),
+                                      cmap='viridis')
+        fig.colorbar(cp, ax=ax, shrink=0.7, label='water depth (m)', pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
 
     ax.add_feature(cf.LAND)
     ax.add_feature(cf.COASTLINE)
     ax.gridlines(draw_labels=True)
-    ax.set_extent((-300000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
+    # ax.set_extent((-300000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
 
     if start is not None:
         ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)

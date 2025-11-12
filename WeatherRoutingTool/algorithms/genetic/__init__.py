@@ -87,10 +87,9 @@ class Genetic(RoutingAlg):
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt, )
 
-        crossover = CrossoverFactory.get_crossover(
-            self.config, constraints_list)
+        crossover = CrossoverFactory.get_crossover(self.config, constraints_list)
 
-        mutation = MutationFactory.get_mutation(self.config)
+        mutation = MutationFactory.get_mutation(self.config, constraints_list)
 
         repair = RepairFactory.get_repair(
             self.config, constraints_list)
@@ -147,6 +146,7 @@ class Genetic(RoutingAlg):
         # print statistics
         res = algorithm.result()
         algorithm.mating.crossover.print_crossover_statistics()
+        algorithm.mating.mutation.print_mutation_statistics()
         logger.info('Time after minimisation: ' + str(formatting.get_current_time(start_time)))
 
         return res

@@ -111,6 +111,8 @@ if __name__ == "__main__":
                                required=False, default=' ', type=str)
     optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
+    optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
+                               type=str)
 
     # read arguments
     args = parser.parse_args()
@@ -118,6 +120,7 @@ if __name__ == "__main__":
     filelist = args.file_list
     rp_str_list = args.name_list
     hist_list = args.hist_list
+    depth_path = args.depth_file
 
     rp_list = []
     for path in filelist:
@@ -139,6 +142,8 @@ if __name__ == "__main__":
             parser.print_help()
             raise ValueError('The option "' + option + '" is not available for plotting!')
         found_hist = False
+
+    print('rp_str_lst: ', rp_str_list)
 
     if len(rp_list) != len(rp_str_list):
         parser.print_help()
@@ -180,9 +185,10 @@ if __name__ == "__main__":
     # plotting routes in depth profile
     if hist_dict['route']:
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_list[0].start, rp_list[0].finish, '', False)
+        fig, ax = graphics.generate_basemap(fig, depth, rp_list[0].start, rp_list[0].finish, '')
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):

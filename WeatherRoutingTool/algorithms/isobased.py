@@ -975,8 +975,13 @@ class IsoBased(RoutingAlg):
         """
 
         fig = self.fig
-        fig, ax = graphics.generate_basemap(self.fig, self.depth, self.start,
-                                            self.finish)
+        fig, ax = graphics.generate_basemap(
+            fig=self.fig,
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            show_depth=False
+        )
 
         lats_per_step = self.lats_per_step[:, idxs]
         lons_per_step = self.lons_per_step[:, idxs]
@@ -1636,6 +1641,9 @@ class IsoBased(RoutingAlg):
                             starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step
                             )
+
+        logger.info('Fuel consumption for best route: ' + str(route.get_full_fuel().value))
+        logger.info('Mean power: ' + str(route.get_mean_power()))
 
         return route
 

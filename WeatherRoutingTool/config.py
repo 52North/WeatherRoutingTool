@@ -75,8 +75,9 @@ class Config(BaseModel):
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
-    GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations for genetic algorithm
-    GENETIC_NUMBER_OFFSPRINGS: int = 2  # number of offsprings for genetic algorithm
+    # options for GA
+    GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
+    GENETIC_NUMBER_OFFSPRINGS: int = 2  # total number of offsprings for every generation
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
     GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial
     # population (options: 'grid_based', 'from_geojson', 'isofuel')
@@ -85,7 +86,7 @@ class Config(BaseModel):
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
     GENETIC_MUTATION_TYPE: Literal[
-        'random', 'rndm_walk', 'route_blend', 'no_mutation'
+        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'no_mutation'
     ] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
