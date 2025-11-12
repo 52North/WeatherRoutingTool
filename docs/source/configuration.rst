@@ -45,9 +45,9 @@ The following lists contain information on each variable which can be set. The c
 - ``DEFAULT_MAP``: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
 - ``DEFAULT_ROUTE``: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
 - ``DEPARTURE_TIME``: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
-- ``DEPTH_DATA``: path to depth data (Attention: if ``DATA_MODE`` is ``automatic`` or ``odc``, this file will be overwritten!)
+- ``DEPTH_DATA``: path to depth data e.g. /user/path-to-data/depth.nc
 - ``ROUTE_PATH``: path to json file to which the route will be written
-- ``WEATHER_DATA``: path to weather data (Attention: if ``DATA_MODE`` is ``automatic`` or ``odc``, this file will be overwritten!)
+- ``WEATHER_DATA``: path to weather data e.g. /user/path-to-data/weather.nc
 - ``BOAT_BREADTH``: ship breadth (m)
 - ``BOAT_FUEL_RATE``: fuel rate at service propulsion point (g/kWh)
 - ``BOAT_HBR``: height of top superstructure (bridge etc.) (m)
@@ -156,19 +156,7 @@ They inherit the top-level loggers' logging level.
 Input data
 ----------
 
-Depending on the power/fuel consumption model used, different sets of environmental data are needed. The data described below are needed for the usage of **mariPower**.
-
-There are three general options on how to provide the necessary input data:
-
-1. The easiest option is to set the config parameter ``DATA_MODE='automatic'``. To use it, valid CMEMS credentials have to be configured using system environment variables (see above). In this case, the WRT will automatically download the necessary weather and ocean data for the chosen temporal and spatial extent and store it in the file specified by the config variable ``WEATHER_DATA``. Moreover, water depth data from [NOAA](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc) is downloaded and stored in the file specified by the config variable ``DEPTH_DATA``.
-
-2. It is also possible to prepare two NetCDF files containing the weather and ocean data and the water depth data and pointing the WRT to these files using the same config variables as before. To do so set ``DATA_MODE='from_file'``. Be sure the temporal and spatial extent is consistent with the other config variables. The `maridatadownloader <https://github.com/52North/maridatadownloader>`_ - which is used by the WRT - can facilitate the preparation.
-
-3. A third option is to set up an `Open Data Cube (ODC) <https://www.opendatacube.org/>`_ instance. To use it set ``DATA_MODE='odc'``. In this case, the data will be extracted from ODC and also stored in the two files as described before.
-
-Be sure that the water depth data is available and configured correctly in order to use the ``water_depth`` option of ``CONSTRAINTS_LIST``.
-
-The following parameters are downloaded automatically or need to be prepared:
+The WRT currently requires data for the water depth as well as the following environmental parameters:
 
 - u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
 - v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
@@ -181,6 +169,19 @@ The following parameters are downloaded automatically or need to be prepared:
 - Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
 - Temperature_surface (temperature at the water surface)
 - so (salinity)
+
+Thereby, the depth data and the weather data need to be wrapped in separate [netCDF](https://www.unidata.ucar.edu/software/netcdf) files.
+If no input data is provided but the config parameters ``DEPTH_DATA`` and ``WEATHER_DATA`` are set to valid paths,
+the data is downloaded automatically from
+
+- depth data: [NOAA](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc)
+- atmospheric weather data: [Global Forecast System](https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php>)
+- oceanic weather data: [Copernicus Marine Data Store](https://data.marine.copernicus.eu/products)
+
+In principle, the WRT can also be used without providing depth data but to it is highly recommended to provide depth information
+to obtain realistic routes. If no depth data is provided, the ``water_depth`` option of ``CONSTRAINTS_LIST``
+can not be used.
+
 
 .. figure:: /_static/sequence_diagram_installation_workflow.png
    :alt: sequence_diagram_installation_workflow

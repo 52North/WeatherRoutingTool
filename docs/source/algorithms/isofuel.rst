@@ -24,7 +24,7 @@ Parameter and variable definitions
 .. figure:: /_static/isofuel_definitions.jpg
    :alt: isofuel_definitions
 
-   Fig.2: Schema for the definition of the most important parameters names for the isofuel algorithm.
+   Fig.2: Schema for the definition of the most important parameter names for the isofuel algorithm.
 
 | ``ISOCHRONE_PRUNE_SEGMENTS`` = number of segments that are used for the pruning process
 | ``ISOCHRONE_PRUNE_SECTOR_DEG_HALF`` = angular range of azimuth angle that is considered for pruning (only one half of it!)
@@ -42,25 +42,26 @@ The pruning is the basis of the optimisation process for the isofuel algorithm. 
 
 1. The definition of the angular region that is used for the pruning. This is specified by the number of pruning segments, the reach of the pruning sector and, most importantly, the angle around which the pruning segments are centered -- in the following refered to as *symmetry axis*
 2. The choice of how route segments are grouped for the pruning.
-3. The minimisation criterion that is used as basis for the pruning.
+3. The optimisation criterion that is used as basis for the pruning.
 
 The Definition of the Symmetry Axis
 -----------------------------------
 
 Two methods for the definition of the symmetry axis can be selected:
 
-1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediat start and end point are utilised.
-2. The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.
+1. The symmetry axis is defined by the grand circle distance between the start point and the destination. In case intermediate waypoints have been defined, the intermediate start and end point are utilised.
 
 .. figure:: /_static/gcr_centered_pruning.png
    :alt: gcr_centered_pruning
+   :width: 400
+   :align: center
 
-   Fig.3: The symmetry axis of the pruning is given by the grand circle distance between global start and end point.
+2. The symmetry axis is defined by the median of the angles  with respect to North of the connecting lines between the end of the route segments and the destination.
 
 .. figure:: /_static/headings_centered_pruning.png
    :alt: headings_centered_pruning
-
-   Fig.4: The symmetry axis of the pruning is given by the median of the angles of the connecting lines between the end of the route segments and the destination.
+   :width: 400
+   :align: center
 
 Grouping Route Segments
 -----------------------
@@ -71,18 +72,32 @@ Route segments are organised in groups before the pruning is performed. Segments
 
 .. figure:: /_static/bearings_based_pruning.png
    :alt: bearings_based_pruning
+   :width: 400
+   :align: center
 
 2. *larger-direction-based*: Route segments are grouped accoding to the angle of the connecting line between the global start point and the end of the route segment.
 
 .. figure:: /_static/larger_direction_based_pruning.png
    :alt: larger_direction_based_pruning
+   :width: 400
+   :align: center
 
 4. *branch-based*: Route segments of one *branch* form a group. Thus all route segments are considered for the pruning. For a particular routing step, a branch is the entity of route segments that originate from one common point.
 
 .. figure:: /_static/branch_based_pruning.png
    :alt: branch_based_pruning
+   :width: 400
+   :align: center
 
-The Minimisation Criterion
+The Optimisation Criterion
 --------------------------
 
-*to be continued*
+The optimisation criterion is the route property based on which routes are selected for the next routing step,
+i.e. the route property that is optimised. The Isofuel algorithm can be configured with one out of two optimisation criteria:
+
+1. `ISOCHRONE_MINIMISATION_CRITERION="squareddist_over_disttodest"`: the square of the total travel distance of the route at the current waypoint over the distance towards the destination
+2. `ISOCHRONE_MINIMISATION_CRITERION="dist"`: the total travel distance of the route
+
+The optimisation criterion 1. has be chosen as default setting as for criterion 2., routes do not experience a drag towards
+the destination and tend to get lost in complex scenarios.
+
