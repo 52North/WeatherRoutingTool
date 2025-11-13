@@ -188,7 +188,7 @@ if __name__ == "__main__":
         depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, depth, rp_list[0].start, rp_list[0].finish, '')
+        fig, ax = graphics.generate_basemap(fig, depth, rp_list[0].start, rp_list[0].finish, '', show_depth=False)
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):

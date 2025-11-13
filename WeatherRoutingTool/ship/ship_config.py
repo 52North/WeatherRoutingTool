@@ -41,6 +41,7 @@ class ShipConfig(BaseModel):
     BOAT_LS1: float = -99  # length of substructure 1 [m]
     BOAT_LS2: float = -99  # length of substructure 2 [m]
     BOAT_OVERLOAD_FACTOR: float = 0
+    BOAT_NNMODEL_PATH: str = ""
     BOAT_PROPULSION_EFFICIENCY: float = 0.63  # propulsion efficiency coefficient in ideal conditions;
     # assuming n_H = 1.05 n_0 = 0.1 n_R = 1
     BOAT_FACTOR_CALM_WATER: float = 1.0  # multiplication factor for the calm water resistance model of maripower

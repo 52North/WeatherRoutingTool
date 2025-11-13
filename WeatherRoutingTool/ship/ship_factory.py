@@ -2,7 +2,7 @@ import logging
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.ship.ship import ConstantFuelBoat
+from WeatherRoutingTool.ship.ship import ConstantFuelBoat, NNBoat
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 
 logger = logging.getLogger('WRT')
@@ -31,6 +31,8 @@ class ShipFactory:
             ship = MariPowerTanker(file_name=config.CONFIG_PATH)
         if config.BOAT_TYPE == 'SAL':
             raise NotImplementedError('Ship type SAL is not yet supported!')
+        if config.BOAT_TYPE =='nnmodel':
+            ship = NNBoat(file_name=config.CONFIG_PATH)
 
         if not ship:
             raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '

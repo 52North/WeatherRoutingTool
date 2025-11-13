@@ -118,7 +118,7 @@ class MariPowerTanker(Boat):
     def weather_adapter(self):
         debug = False
 
-        weather_str = self.weather_path.split('.nc')
+        weather_str = str(self.weather_path).split('.nc')
         self.weather_path_maripower = weather_str[0] + '_maripower.nc'
 
         if os.path.isfile(self.weather_path_maripower):
@@ -161,9 +161,9 @@ class MariPowerTanker(Boat):
 
     def print_init(self):
         logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
-        logger.info(form.get_log_step('path to weather data' + self.weather_path, 1))
-        logger.info(form.get_log_step('path to courses data' + self.courses_path, 1))
-        logger.info(form.get_log_step('path to depth data' + self.depth_path, 1))
+        logger.info(form.get_log_step('path to weather data' + str(self.weather_path), 1))
+        logger.info(form.get_log_step('path to courses data' + str(self.courses_path), 1))
+        logger.info(form.get_log_step('path to depth data' + str(self.depth_path), 1))
 
     def init_hydro_model_single_pars(self):
         self.hydro_model = mariPower.ship.CBT()

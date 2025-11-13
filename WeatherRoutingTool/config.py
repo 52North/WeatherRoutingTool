@@ -56,7 +56,7 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
     # options: 'isofuel', 'genetic', 'speedy_isobased'
 
-    BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
+    BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method', 'nnmodel'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',

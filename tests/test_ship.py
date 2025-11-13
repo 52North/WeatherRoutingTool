@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from astropy import units as u
@@ -9,7 +10,11 @@ import pytest
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.utils.unit_conversion as utils
+
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.evaluateSavedModels import SavedModelEvaluator
+
 
 
 class TestShip:
@@ -258,3 +263,63 @@ def test_invalid_propulsion_efficiency_raises_error():
     invalid_config["BOAT_PROPULSION_EFFICIENCY"] = 1.1  # > 1
     with pytest.raises(ValueError, match="'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1"):
         ShipConfig.assign_config(init_mode='from_dict', config_dict=invalid_config)
+
+
+def test_nnmodel_result_polar_plot():
+    rel_wind_direction = np.linspace(0,360, 37)
+    rel_seaway_direction = np.linspace(0,360, 37)
+    P_perc = np.full(37, -99)
+
+    feature_names = ['STW', 'draft_fp_interpolated_between_low_speeds',
+                     'draft_ap_interpolated_between_low_speeds', 'rel_wind_direction',
+                     'thetao', 'Temperature_surface', 'rel_seaway_direction',
+                     'z', 'Pressure_reduced_to_MSL_msl', 'VHM0', 'VTPK', 'so']
+
+    print('rel_wind_dir: ', rel_wind_direction)
+
+    model_path="/home/kdemmich/3_Software/WRT_GA_GSoC/WeatherRoutingTool/WeatherRoutingTool/ship/greyBox_ME_LOAD_diff_nn_model.pth"
+
+    evaluator = SavedModelEvaluator()
+    info = evaluator.get_model_info(model_path)
+    print('info: ', info)
+
+    for ipoint in range(0,37):
+        input_data = np.array([[
+            7,  # STW
+            10, # draft_fp_interpolated_between_low_speeds
+            10, # draft_fp_interpolated_between_low_speeds
+            rel_wind_direction[ipoint], # rel_wind_direction
+            27, # thetao
+            27, # Temperature_surface
+            rel_seaway_direction[ipoint], # rel_seaway_direction
+            -221,  # z
+            100000, # Pressure_reduced_to_MSL_msl
+            0.61, # VHM0
+            6.24, # VTPK
+            0.0396 # so
+        ]])
+
+        print('input_data: ')
+        i=0
+        for feature in feature_names:
+            print(f'    ' + feature + ': ' + str(input_data[0][i]))
+            i+=1
+
+
+        P_perc[ipoint] =evaluator.evaluate(model_path=model_path, input_data=input_data)
+
+    print('P_perc: ', P_perc)
+
+    fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
+    wind_dir_rad = utils.degree_to_pmpi(rel_wind_direction * u.degree)
+
+    axes[0].plot(wind_dir_rad, P_perc)
+    axes[0].legend()
+    for ax in axes.flatten():
+        ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+        ax.set_theta_zero_location("S")
+        ax.grid(True)
+    axes[0].set_title("Power in % of nominal power", va='bottom')
+
+    plt.show()
+    assert 1==2
