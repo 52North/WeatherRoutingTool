@@ -277,7 +277,7 @@ def test_nnmodel_result_polar_plot():
 
     print('rel_wind_dir: ', rel_wind_direction)
 
-    model_path="/home/kdemmich/3_Software/WRT_GA_GSoC/WeatherRoutingTool/WeatherRoutingTool/ship/greyBox_ME_LOAD_diff_nn_model.pth"
+    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/blackAndGreyboxModels/greyBox_ME_LOAD_diff_nn_model.pth"
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
@@ -288,15 +288,15 @@ def test_nnmodel_result_polar_plot():
             7,  # STW
             10, # draft_fp_interpolated_between_low_speeds
             10, # draft_fp_interpolated_between_low_speeds
-            rel_wind_direction[ipoint], # rel_wind_direction
-            27, # thetao
-            27, # Temperature_surface
-            rel_seaway_direction[ipoint], # rel_seaway_direction
+            rel_wind_direction[ipoint], # rel_wind_direction: 0-360°
+            27, # thetao in C
+            27 + 273, # Temperature_surface in K
+            rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
             -221,  # z
             100000, # Pressure_reduced_to_MSL_msl
-            0.61, # VHM0
+            3, # VHM0
             6.24, # VTPK
-            0.0396 # so
+            39.6 # so 5.63 - 39.8  # *1000 -> g/kg
         ]])
 
         print('input_data: ')
