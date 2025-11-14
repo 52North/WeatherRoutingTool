@@ -88,26 +88,39 @@ class NoLandCrossingAlgorithm:
     threshold: float
     land_buffer: float
     angle_step: float
+    dynamic_parameters: bool
 
     def __init__(self,
                  distance_move: float = 10000,
                  threshold: float = 10000,
                  land_buffer: float = 1000,
-                 angle_step: float = 30):
+                 angle_step: float = 30,
+                 dynamic_parameters: bool = True):
         """
-        :param distance_move: distance used to move midpoint orthogonally
+        :param distance_move: distance in m used to move midpoint orthogonally
         :type distance_move: int or float
-        :param threshold: segment length below which no further division is done to prevent the algorithm to run forever
+        :param threshold: segment length in m below which no further division is done to prevent the algorithm to run
+            forever
         :type threshold: int or float
-        :param land_buffer: buffer distance to check for land
+        :param land_buffer: buffer distance in m to check for land
         :type land_buffer: int or float
-        :param angle_step: angle interval used to check if a point is on land
+        :param angle_step: angle interval in degree used to check if a point is on land
         :type angle_step: int or float
+        :param dynamic_parameters: dynamically adjust the parameters depending on the length of the segment
+        :type dynamic_parameters: bool
         """
         self.distance_move = distance_move
         self.threshold = threshold
         self.land_buffer = land_buffer
         self.angle_step = angle_step
+        self.dynamic_parameters = dynamic_parameters
+
+    def adjust_parameters(self, line_length: float):
+        """
+        :param line_length: line length in m
+        :type line_length: float
+        """
+        self.distance_move = 0.05 * line_length
 
     def is_land(self, point: Point) -> bool:
         """
@@ -179,6 +192,8 @@ class NoLandCrossingAlgorithm:
         if self.has_point_on_land(line):
             logger.info("Segment crosses land. Split segment at midpoint.")
             if line.s13 > self.threshold:
+                if self.dynamic_parameters:
+                    self.adjust_parameters(line.s13)
                 midpoint = get_midpoint(line)
                 over_land = self.is_land(Point(midpoint['lon2'], midpoint['lat2']))
                 logger.info(f"Midpoint {midpoint}.")
