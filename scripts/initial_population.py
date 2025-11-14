@@ -12,49 +12,67 @@ from typing import TypedDict
 import shapely
 from geographiclib.geodesic import Geodesic
 from geographiclib.geodesicline import GeodesicLine
-from global_land_mask import is_land
+from global_land_mask import is_land as is_land_global_land_mask
 from shapely import line_interpolate_point, LineString, Point
 
-
-logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s')
+log_level = logging.DEBUG
+# log_level = logging.INFO
+log_format='%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s'
+formatter = logging.Formatter(log_format)
+logging.basicConfig(stream=sys.stdout, format=log_format)
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-# logger.setLevel(logging.INFO)
+logger.setLevel(log_level)
 
 geod = Geodesic.WGS84
 GeodesicOutmask = TypedDict('GeodesicOutmask', {'lat1': float, 'lat2': float, 'a12': float, 's12': float,
                                                 'azi2': float, 'azi1': float, 'lon1': float, 'lon2': float})
 
 
-def is_close_to_land(point: Point, distance: float = 0, angle_step: float = 30) -> bool:
+def is_land(point: Point, buffer: float = 1000, angle_step: float = 30) -> bool:
     """
-    Check if there is land in the vicinity of a point. The check is done by sampling points
-    on a circle with the given distance as radius in predefined angular steps.
+    Check if the point is on land.
+    If a buffer is specified, check also the surrounding of the point.
+    The check is done by sampling and checking points on a circle with
+    the given buffer distance as radius in predefined angular steps.
 
     :param point:
     :type point: shapely.Point
-    :param distance:
-    :type distance: int or float
+    :param buffer: buffer distance to check for land
+    :type buffer: int or float
     :param angle_step:
     :type angle_step: int or float
     :return:
     :rtype: bool
     """
     # FIXME: could be improved by checking also points on the line between the original point and the point moved
-    #  by the specific distance. With the current implementation islands would be ignored.
-    for angle in [i*angle_step for i in range(math.ceil(360/angle_step))]:
-        p = geod.Direct(point.y, point.x, angle, distance)
-        if is_land(p['lat2'], p['lon2']):
-            return True
+    #  by the specific distance. With the current implementation islands could be ignored.
+    if is_land_global_land_mask(point.y, point.x):
+        return True
+    if buffer > 0:
+        for angle in [i*angle_step for i in range(math.ceil(360/angle_step))]:
+            p = geod.Direct(point.y, point.x, angle, buffer)
+            if is_land_global_land_mask(p['lat2'], p['lon2']):
+                return True
     return False
 
 
-def has_point_on_land(line: GeodesicLine, interval: float = 1000):
+def has_point_on_land(
+        line: GeodesicLine,
+        interval: float = 1000,
+        buffer: float = 1000,
+        angle_step: float = 30
+) -> bool:
     """
+    Check if the line has a point on land.
+
     :param line:
     :type line: geographiclib.geodesicline.GeodesicLine
-    :param interval:
+    :param interval: interval at which points along the line are checked
     :type interval: int or float
+    :param buffer:
+    :type buffer: int or float
+    :param angle_step:
+    :type angle_step: int or float
     :return:
     :rtype: bool
     """
@@ -62,8 +80,7 @@ def has_point_on_land(line: GeodesicLine, interval: float = 1000):
     for i in range(0, n+1):
         s = min(interval * i, line.s13)
         g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
-        # if is_land(g['lat2'], g['lon2']):
-        if is_close_to_land(Point(g['lon2'], g['lat2'])):
+        if is_land(Point(g['lon2'], g['lat2']), buffer, angle_step):
             return True
     return False
 
@@ -113,7 +130,15 @@ def move_point_perpendicular(point: GeodesicOutmask, distance: int | float, cloc
         return Point(new_point['lon2'], new_point['lat2'])
 
 
-def split_segments(start: Point, end: Point, threshold: float, distance: float, point_sequence: list[Point] = None):
+def split_segments(
+        start: Point,
+        end: Point,
+        threshold: float,
+        distance_move: float,
+        point_sequence: list[Point] = None,
+        distance_to_land: float = 1000,
+        angle_step: float = 30
+) -> list[Point]:
     """
     Check if a segment crosses land. Divide segment if it does. The segment is divided at its midpoint.
     If the midpoint is on land it is moved incrementally by a defined distance until it is not on land.
@@ -124,10 +149,14 @@ def split_segments(start: Point, end: Point, threshold: float, distance: float, 
     :type end: shapely.Point
     :param threshold: segment length below which no further division is done to prevent the algorithm to run forever
     :type threshold: int or float
-    :param distance: distance used to move midpoint perpendicular
-    :type distance: int or float
+    :param distance_move: distance used to move midpoint perpendicular
+    :type distance_move: int or float
     :param point_sequence:
     :type point_sequence: list[shapely.Point]
+    :param distance_to_land: distance used to check if a point is close to land
+    :type distance_to_land: int or float
+    :param angle_step: angle interval used to check if a point is close to land
+    :type angle_step: int or float
     """
     logger.info(f"Check segment from {start} to {end}.")
     if point_sequence is None:
@@ -137,32 +166,43 @@ def split_segments(start: Point, end: Point, threshold: float, distance: float, 
         logger.info("Segment crosses land. Split segment at midpoint.")
         if line.s13 > threshold:
             midpoint = get_midpoint(line)
-            # over_land = is_land(midpoint['lat2'], midpoint['lon2'])
-            over_land = is_close_to_land(Point(midpoint['lon2'], midpoint['lat2']))
+            over_land = is_land(Point(midpoint['lon2'], midpoint['lat2']), distance_to_land, angle_step)
             logger.info(f"Midpoint {midpoint}.")
             logger.info(f"Midpoint over land: {over_land}.")
             i = 1
             new_point = Point(midpoint['lon2'], midpoint['lat2'])
             while over_land:
-                logger.debug(f"Iteration {i}: move midpoint perpendicular by {i*distance/1000} km.")
-                dist = i * distance
+                logger.debug(f"Iteration {i}: move midpoint perpendicular by {i*distance_move/1000} km.")
+                dist = i * distance_move
                 p1 = move_point_perpendicular(midpoint, dist)
-                # if not is_land(p1.y, p1.x):
-                if not is_close_to_land(p1):
+                p1_over_land = is_land(p1, distance_to_land, angle_step)
+                p2 = move_point_perpendicular(midpoint, dist, False)
+                p2_over_land = is_land(p2, distance_to_land, angle_step)
+                if not p1_over_land and p2_over_land:
                     new_point = p1
                     break
-                p2 = move_point_perpendicular(midpoint, dist, False)
-                # if not is_land(p2.y, p2.x):
-                if not is_close_to_land(p2):
+                elif p1_over_land and not p2_over_land:
                     new_point = p2
+                    break
+                elif not p1_over_land and not p2_over_land:
+                    # If both points are on water check which of them is better, i.e. the connections of the point to
+                    # the start and end are on water as well.
+                    p1_to_start_cuts_land = has_point_on_land(geod.InverseLine(p1.y, p1.x, start.y, start.x))
+                    p1_to_end_cuts_land = has_point_on_land(geod.InverseLine(p1.y, p1.x, end.y, end.x))
+                    p2_to_start_cuts_land = has_point_on_land(geod.InverseLine(p2.y, p2.x, start.y, start.x))
+                    p2_to_end_cuts_land = has_point_on_land(geod.InverseLine(p2.y, p2.x, end.y, end.x))
+                    if (p1_to_start_cuts_land + p1_to_end_cuts_land) > (p2_to_start_cuts_land + p2_to_end_cuts_land):
+                        new_point = p2
+                    else:
+                        new_point = p1
                     break
                 logger.debug("New point still on land.")
                 i += 1
             logger.info(f"Found new point {new_point}.")
             # Note: the order of the following lines is important to have the correct order of points in the route
-            split_segments(start, new_point, threshold, distance, point_sequence)
+            split_segments(start, new_point, threshold, distance_move, point_sequence, distance_to_land, angle_step)
             point_sequence.append(new_point)
-            split_segments(new_point, end, threshold, distance, point_sequence)
+            split_segments(new_point, end, threshold, distance_move, point_sequence, distance_to_land, angle_step)
         else:
             logger.info(f"Segment length below threshold: {line.s13} m < {threshold} m. No splitting.")
     else:
@@ -177,6 +217,8 @@ def initial_route_generation(
         distance: float,
         filename: str = None,
         waypoints: list[list[Point]] = None,
+        distance_to_land: float = 1000,
+        angle_step: float = 30,
         interpolate: bool = True,
         interp_dist: float = 0.1,
         interp_normalized: bool = True
@@ -197,6 +239,10 @@ def initial_route_generation(
     :type filename: str
     :param waypoints:
     :type waypoints: list[list[Point]]
+    :param distance_to_land: distance used to check if a point is close to land
+    :type distance_to_land: int or float
+    :param angle_step: angle interval used to check if a point is close to land
+    :type angle_step: int or float
     :param interpolate: interpolate the found route at an equal distance
     :type interpolate: bool
     :param interp_dist: interpolation distance in meter
@@ -215,7 +261,7 @@ def initial_route_generation(
             fixed_points = [start] + waypoints[route_idx] + [end]
             for waypoint_idx in range(len(fixed_points)-1):
                 split_segments(fixed_points[waypoint_idx], fixed_points[waypoint_idx+1],
-                               threshold, distance, point_sequence)
+                               threshold, distance, point_sequence, distance_to_land, angle_step)
                 point_sequence.append(fixed_points[waypoint_idx+1])
             if interpolate:
                 point_sequence = interpolate_equal_distance(point_sequence, interp_dist, interp_normalized)
@@ -227,7 +273,7 @@ def initial_route_generation(
                 to_geojson(point_sequence, filename_new)
     else:
         point_sequence = [start]
-        split_segments(start, end, threshold, distance, point_sequence)
+        split_segments(start, end, threshold, distance, point_sequence, distance_to_land, angle_step)
         point_sequence.append(end)
         if interpolate:
             point_sequence = interpolate_equal_distance(point_sequence, interp_dist, interp_normalized)
@@ -244,10 +290,10 @@ def to_geojson(points: list[Point], filename: str = None):
         "features": [
             {
                 "type": "Feature",
-                "properties": {},
-                "geometry": json.loads(shapely.to_geojson(p))
+                "properties": { "id" : i },
+                "geometry": json.loads(shapely.to_geojson(points[i]))
             }
-            for p in points
+            for i in range(len(points))
         ]
     }
     if filename:
@@ -290,7 +336,14 @@ def main():
     distance_move = 10000  # in m
     min_distance = 5000  # in m
     filename = "initial_route.geojson"
-    initial_route_generation(scenario.start, scenario.end, min_distance, distance_move, filename, scenario.waypoints)
+    distance_to_land = 1000  # in m, set to 0 to check only if the point is exactly on land
+    angle_step = 30  # in deg
+    interpolate = False
+    try:
+        initial_route_generation(scenario.start, scenario.end, min_distance, distance_move, filename, scenario.waypoints,
+                                 distance_to_land, angle_step, interpolate)
+    except RecursionError as err:
+        logger.error(err)
 
 
 if __name__ == '__main__':
