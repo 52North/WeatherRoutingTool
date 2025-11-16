@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -41,18 +42,23 @@ class PatcherBase:
 
 class SingletonBase(type):
     """
-    TODO: make this thread-safe
-    Base class for Singleton implementation of patcher methods.
+    Thread-safe metaclass for Singleton implementation of patcher methods.
 
     This is the implementation of a metaclass for those classes for which only a single instance shall be available
-    during runtime.
+    during runtime. Uses double-checked locking to ensure thread safety.
     """
     _instances = {}
+    _lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
+        # First check without lock (fast path)
         if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
+            # Acquire lock for instance creation
+            with SingletonBase._lock:
+                # Double-check inside lock (slow path)
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
 
         return cls._instances[cls]
 
