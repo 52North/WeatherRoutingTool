@@ -357,7 +357,6 @@ class Genetic(RoutingAlg):
             plt.savefig(os.path.join(self.figure_path, figname))
 
     def plot_coverage(self, res, best_route):
-        waypoints = None
         history = res.history
         input_crs = ccrs.PlateCarree()
 
@@ -375,10 +374,9 @@ class Genetic(RoutingAlg):
             for iroute in range(0, last_pop.shape[0]):
                 lats = last_pop[iroute, 0][:, 0]
                 lons = last_pop[iroute, 0][:, 1]
-                ax.plot(lons, lats, color="blue",linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
+                ax.plot(lons, lats, color="blue", linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
 
-
-        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", transform=input_crs )
+        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", transform=input_crs)
         legend = plt.legend(title="routes", loc="upper left")
         legend.get_frame().set_alpha(1)
 

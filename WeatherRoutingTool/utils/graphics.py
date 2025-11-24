@@ -320,21 +320,22 @@ def generate_basemap(
 
     if show_depth:
         level_diff = 10
-        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
-        #fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+        depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
+        # fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
 
     if start is not None:
-        ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10, transform=input_crs)
-        ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10, transform=input_crs)
+        ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10,
+                transform=input_crs)
+        ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10,
+                transform=input_crs)
 
     if show_gcr:
         gcr = get_gcr_points(start[0], start[1], finish[0], finish[1], n_points=10)
         lats_gcr = [x[0] for x in gcr]
         lons_gcr = [x[1] for x in gcr]
         ax.plot(lons_gcr, lats_gcr, color="orange")
-
 
     fig.tight_layout()
     plt.title(title)

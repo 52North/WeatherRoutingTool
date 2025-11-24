@@ -377,7 +377,7 @@ class RouteBlendMutation(MutationConstraintRejection):
         route_length = rt.shape[0]
 
         # only mutate routes that are long enough
-        if  route_length < self.min_length:
+        if route_length < self.min_length:
             return rt
 
         start = np.random.randint(0, route_length - self.min_length)

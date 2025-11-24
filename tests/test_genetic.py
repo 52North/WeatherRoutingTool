@@ -129,8 +129,6 @@ def test_random_plateau_mutation():
 
     plt.show()
 
-    assert 1 == 2
-
 
 '''
     test whether routes are returned as they are by genetic.mutation.RandomPlateauMutation.mutate() if they are too
@@ -197,8 +195,6 @@ def test_bezier_curve_mutation():
         assert np.array_equal(old_route[i_route, 0][0, :], new_route[i_route, 0][0, :])
 
     plt.show()
-
-    assert 1 == 2
 
 
 '''

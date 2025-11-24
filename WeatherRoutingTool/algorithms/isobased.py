@@ -409,9 +409,9 @@ class IsoBased(RoutingAlg):
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
-    fig_survivors: plt.Figure # figure showing the routes that survive a particular optimisation step
-    fig_coverage: plt.Figure # figure with all routes that ever survived an optimisation step
-    fig_coverage_pruning: plt.Figure # figure with all routes that have ever been considered by the optimisation
+    fig_survivors: plt.Figure  # figure showing the routes that survive a particular optimisation step
+    fig_coverage: plt.Figure  # figure with all routes that ever survived an optimisation step
+    fig_coverage_pruning: plt.Figure  # figure with all routes that have ever been considered by the optimisation
     ax_survivors: plt.Axes
     ax_coverage: plt.Axes
     ax_coverage_pruning: plt.Axes
@@ -1489,6 +1489,7 @@ class IsoBased(RoutingAlg):
         new_course = geod.inverse(cat_lats, cat_lons, new_finish_one, new_finish_two)
         mean_course = np.median(new_course['azi1']) * u.degree
 
+        '''
         if debug:
             print('mean course: ', mean_course)
             # plot symmetry axis and boundaries of pruning area
@@ -1498,7 +1499,7 @@ class IsoBased(RoutingAlg):
                                       mean_course - self.prune_sector_deg_half, 1000000)
             upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
                                       mean_course + self.prune_sector_deg_half, 1000000)
-
+        '''
 
         # define pruning area
         bins = units.get_angle_bins(mean_course - self.prune_sector_deg_half,
@@ -1814,18 +1815,17 @@ class IsoBased(RoutingAlg):
         if "pruning" in status:
             # coverage plot before pruning ('all routes ever considered')
             self.ax_coverage_pruning.plot((start_lon, end_lon), (start_lat, end_lat), color="blue",
-                                                    linestyle='-', linewidth=1,
-                                                    transform=input_crs, alpha=0.2)
+                                          linestyle='-', linewidth=1,
+                                          transform=input_crs, alpha=0.2)
             logger.info('Save updated figure to ' + final_path_coverage)
             self.fig_coverage_pruning.savefig(final_path_coverage)
             return
         else:
             # coverage plot after pruning ('all routes that ever survived the optimisation')
             self.ax_coverage.plot((start_lon, end_lon), (start_lat, end_lat), color="blue",
-                                            linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
+                                  linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
             logger.info('Save updated figure to ' + final_path_coverage)
             self.fig_coverage.savefig(final_path_coverage)
-
 
         # plot (only) all survivors of the current routing step (only if status is not pruning to prevent doubling)
         obj = []
