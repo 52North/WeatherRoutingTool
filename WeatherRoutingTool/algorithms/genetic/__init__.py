@@ -3,6 +3,7 @@ import os
 import time
 from datetime import timedelta
 
+import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -296,7 +297,7 @@ class Genetic(RoutingAlg):
         :param best_route: Optimum route
         :type best_route: np.ndarray
         """
-
+        input_crs = ccrs.PlateCarree()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
@@ -307,7 +308,7 @@ class Genetic(RoutingAlg):
             ax.remove()
 
             fig, ax = graphics.generate_basemap(
-                fig=fig,
+                map=self.default_map.get_var_tuple(),
                 depth=None,
                 start=self.start,
                 finish=self.finish,
@@ -329,14 +330,16 @@ class Genetic(RoutingAlg):
                         last_pop[iroute, 0][:, 0],
                         **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
-                        label=f"full population [{last_pop.shape[0]}]", )
+                        label=f"full population [{last_pop.shape[0]}]",
+                        transform=input_crs)
 
                 else:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
                         **(marker_kw if igen != self.n_generations - 1 else {}),
-                        color="firebrick", )
+                        color="firebrick",
+                        transform=input_crs)
 
             if igen == (self.n_generations - 1):
                 ax.plot(
@@ -344,11 +347,11 @@ class Genetic(RoutingAlg):
                     best_route[:, 0],
                     **marker_kw,
                     color="blue",
-                    label="best route", )
+                    label="best route",
+                    transform=input_crs
+                )
 
             ax.legend()
-            ax.set_xlim([self.default_map.lon1, self.default_map.lon2])
-            ax.set_ylim([self.default_map.lat1, self.default_map.lat2])
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
             plt.savefig(os.path.join(self.figure_path, figname))
@@ -356,31 +359,28 @@ class Genetic(RoutingAlg):
     def plot_coverage(self, res, best_route):
         waypoints = None
         history = res.history
+        input_crs = ccrs.PlateCarree()
 
         # Create an empty plot
-        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
-            fig=fig,
+            map=self.default_map.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
-            title="",
             show_depth=False, )
 
         for igen in range(len(history)):
             last_pop = history[igen].pop.get('X')
 
             for iroute in range(0, last_pop.shape[0]):
-                if waypoints is None:
-                    waypoints = last_pop[iroute, 0][:, :]
-                waypoints = np.concatenate((waypoints, last_pop[iroute, 0][:, :]), axis=0)
+                lats = last_pop[iroute, 0][:, 0]
+                lons = last_pop[iroute, 0][:, 1]
+                ax.plot(lons, lats, color="blue",linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
 
-        sns.scatterplot(x=waypoints[:, 1], y=waypoints[:, 0], s=25, alpha=0.2, edgecolor=None, label="all waypoints")
-        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", )
+
+        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", transform=input_crs )
         legend = plt.legend(title="routes", loc="upper left")
-        legend.get_frame().set_alpha(1)  # Slightly transparent
+        legend.get_frame().set_alpha(1)
 
         figname = "spatial_coverage.png"
         plt.savefig(os.path.join(self.figure_path, figname))

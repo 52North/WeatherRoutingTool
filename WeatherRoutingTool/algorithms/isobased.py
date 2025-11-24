@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import matplotlib.pyplot as plt
 import numpy as np
 from geovectorslib import geod
 from scipy.stats import binned_statistic
@@ -408,6 +409,13 @@ class IsoBased(RoutingAlg):
     ncount: int  # total number of routing steps
     count: int  # current routing step
 
+    fig_survivors: plt.Figure # figure showing the routes that survive a particular optimisation step
+    fig_coverage: plt.Figure # figure with all routes that ever survived an optimisation step
+    fig_coverage_pruning: plt.Figure # figure with all routes that have ever been considered by the optimisation
+    ax_survivors: plt.Axes
+    ax_coverage: plt.Axes
+    ax_coverage_pruning: plt.Axes
+
     start_temp: tuple  # temporary starting point considering intermediate waypoints
     finish_temp: tuple  # temporary arrival point considering intermediate waypoints
     gcr_course_temp: tuple  # course of grand circle route towards temporary arrival point
@@ -656,6 +664,8 @@ class IsoBased(RoutingAlg):
             elif self.status.state == "reached_waypoint":
                 self.depart_from_waypoint(constraints_list)
                 continue
+
+            self.update_fig(f'patch{patch_count}_pruning')
 
             self.pruning_per_step(True)
             if (self.status.error == "pruning_error") or (self.status.error == "out_of_routes"):
@@ -974,9 +984,8 @@ class IsoBased(RoutingAlg):
         :type idxs: int
         """
 
-        fig = self.fig
         fig, ax = graphics.generate_basemap(
-            fig=self.fig,
+            map=map_size.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
@@ -1443,29 +1452,6 @@ class IsoBased(RoutingAlg):
             print('current temporary destination: ', self.finish_temp)
             print('mean course', new_course['azi1'])
 
-            fig = self.fig
-            self.ax.remove()
-            fig, self.ax = graphics.generate_basemap(fig, self.depth, self.start, self.finish)
-
-            # plot symmetry axis and boundaries of pruning area
-            symmetry_axis = geod.direct([self.start_temp[0]], [self.start_temp[1]], new_course['azi1'], 1000000)
-            lower_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      new_course['azi1'] - self.prune_sector_deg_half, 1000000)
-            upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
-                                      new_course['azi1'] + self.prune_sector_deg_half, 1000000)
-
-            self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
-                         [self.start_temp[0], symmetry_axis["lat2"]], color="blue")
-            self.ax.plot([self.start_temp[1], lower_bound["lon2"]],
-                         [self.start_temp[0], lower_bound["lat2"]], color="blue")
-            self.ax.plot([self.start_temp[1], upper_bound["lon2"]],
-                         [self.start_temp[0], upper_bound["lat2"]], color="blue")
-
-            if self.figure_path is not None:
-                final_path = self.figure_path + '/fig' + str(self.count) + '_gcr_symmetry_axis.png'
-                logger.info('Saving updated figure to ' + str(final_path))
-                plt.savefig(final_path)
-
         # define pruning area
         azi0s = np.repeat(new_course['azi1'], self.prune_segments + 1)
 
@@ -1513,17 +1499,6 @@ class IsoBased(RoutingAlg):
             upper_bound = geod.direct([self.start_temp[0]], [self.start_temp[1]],
                                       mean_course + self.prune_sector_deg_half, 1000000)
 
-            self.ax.plot([self.start_temp[1], symmetry_axis["lon2"]],
-                         [self.start_temp[0], symmetry_axis["lat2"]], color="blue")
-            self.ax.plot([self.start_temp[1], lower_bound["lon2"]],
-                         [self.start_temp[0], lower_bound["lat2"]], color="blue")
-            self.ax.plot([self.start_temp[1], upper_bound["lon2"]],
-                         [self.start_temp[0], upper_bound["lat2"]], color="blue")
-
-            if self.figure_path is not None:
-                final_path = self.figure_path + '/fig' + str(self.count) + '_median.png'
-                logger.info('Saving updated figure to ' + final_path)
-                plt.savefig(final_path)
 
         # define pruning area
         bins = units.get_angle_bins(mean_course - self.prune_sector_deg_half,
@@ -1641,9 +1616,6 @@ class IsoBased(RoutingAlg):
                             starttime_per_step=self.starttime_per_step[:],
                             ship_params_per_step=self.shipparams_per_step
                             )
-
-        logger.info('Fuel consumption for best route: ' + str(route.get_full_fuel().value))
-        logger.info('Mean power: ' + str(route.get_mean_power()))
 
         return route
 
@@ -1783,10 +1755,6 @@ class IsoBased(RoutingAlg):
         if self.figure_path is None:
             return
         self.showDepth = showDepth
-        plt.rcParams['font.size'] = graphics.get_standard('font_size')
-        self.fig, self.ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        self.ax.axis('off')
-        self.ax.xaxis.set_tick_params(labelsize='large')
 
         if (self.showDepth):
             # decrease resolution and extend of depth data to prevent memory issues when plotting
@@ -1799,7 +1767,29 @@ class IsoBased(RoutingAlg):
                 (ds_depth_coarsened.longitude > map_size.lon1) & (ds_depth_coarsened.longitude < map_size.lon2) &
                 (ds_depth_coarsened.z < 0), drop=True)
 
-        self.fig, self.ax = graphics.generate_basemap(self.fig, ds_depth_coarsened, self.start, self.finish)
+        self.fig_coverage, self.ax_coverage = graphics.generate_basemap(
+            map=map_size.get_var_tuple(),
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            show_depth=False
+        )
+
+        self.fig_coverage_pruning, self.ax_coverage_pruning = graphics.generate_basemap(
+            map=map_size.get_var_tuple(),
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            show_depth=False
+        )
+
+        # plot routes that are currently used for the routing ('survivors')
+        self.fig_survivors, self.ax_survivors = graphics.generate_basemap(
+            map=map_size.get_var_tuple(),
+            depth=ds_depth_coarsened,
+            start=self.start,
+            finish=self.finish
+        )
 
         final_path = self.figure_path + '/fig0.png'
         logger.info('Save start figure to ' + final_path)
@@ -1809,23 +1799,50 @@ class IsoBased(RoutingAlg):
         if self.figure_path is None:
             return
 
+        # add route segments of current routing step to coverage plots
         latitudes = self.lats_per_step.copy()
         longitudes = self.lons_per_step.copy()
+        input_crs = ccrs.PlateCarree()
 
         latitudes_T = latitudes.T
         longitudes_T = longitudes.T
-        # Plotting each route
+
+        (start_lon, start_lat) = self.routing_step.get_start_point()
+        (end_lon, end_lat) = self.routing_step.get_end_point()
+        final_path_coverage = self.figure_path + '/' + status + '_covfig' + str(self.count) + '.png'
+
+        if "pruning" in status:
+            # coverage plot before pruning ('all routes ever considered')
+            self.ax_coverage_pruning.plot((start_lon, end_lon), (start_lat, end_lat), color="blue",
+                                                    linestyle='-', linewidth=1,
+                                                    transform=input_crs, alpha=0.2)
+            logger.info('Save updated figure to ' + final_path_coverage)
+            self.fig_coverage_pruning.savefig(final_path_coverage)
+            return
+        else:
+            # coverage plot after pruning ('all routes that ever survived the optimisation')
+            self.ax_coverage.plot((start_lon, end_lon), (start_lat, end_lat), color="blue",
+                                            linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
+            logger.info('Save updated figure to ' + final_path_coverage)
+            self.fig_coverage.savefig(final_path_coverage)
+
+
+        # plot (only) all survivors of the current routing step (only if status is not pruning to prevent doubling)
+        obj = []
+
         for lat_segment, lon_segment in zip(latitudes_T, longitudes_T):
-            self.ax.plot(lon_segment, lat_segment, color="firebrick", linestyle='-', linewidth=0.6)
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
+            obj_temp, = self.ax_survivors.plot(lon_segment, lat_segment, color="firebrick", linestyle='-',
+                                               linewidth=0.6, transform=input_crs)
+            obj.append(obj_temp)
 
         if self.status.error == "pruning_error":
-            final_path = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
+            final_path_survivors = self.figure_path + '/fig' + str(self.count) + status + '_error.png'
         else:
-            final_path = self.figure_path + '/' + status + '_fig' + str(self.count) + '.png'
-        logger.info('Save updated figure to ' + final_path)
-        plt.savefig(final_path)
+            final_path_survivors = self.figure_path + '/' + status + '_survfig' + str(self.count) + '.png'
+        logger.info('Save updated figure to ' + final_path_survivors)
+        self.fig_survivors.savefig(final_path_survivors)
+        for i in obj:
+            i.remove()
 
     def expand_axis_for_intermediate(self):
         self.lats_per_step = np.expand_dims(self.lats_per_step, axis=1)

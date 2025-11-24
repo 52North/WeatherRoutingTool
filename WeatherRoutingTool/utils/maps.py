@@ -25,3 +25,6 @@ class Map:
         lon1 = self.extend_variable(self.lon1, 'min', width)
         lon2 = self.extend_variable(self.lon2, 'max', width)
         return Map(lat1, lon1, lat2, lon2)
+
+    def get_var_tuple(self):
+        return (self.lat1, self.lat2, self.lon1, self.lon2)

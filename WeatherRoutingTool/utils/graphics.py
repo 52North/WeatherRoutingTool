@@ -269,25 +269,65 @@ def set_graphics_standards(ax):
     return ax
 
 
-def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=True, show_gcr=False):
-    ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+def generate_basemap(
+        map,
+        depth,
+        start=None,
+        finish=None,
+        title='',
+        show_depth=True,
+        show_gcr=False
+):
+    plt.rcParams['font.size'] = get_standard('font_size')
+    (min_lat, max_lat, min_lon, max_lon) = map
+
+    fig = plt.figure(figsize=get_standard('fig_size'))
+    fig_width, fig_height = get_standard('fig_size')
+
+    input_crs = ccrs.PlateCarree()
+    output_crs = ccrs.Mercator()
+    ax = fig.add_subplot(1, 1, 1, projection=output_crs)
+
+    # coordinate extension in Mercator crs
+    x_min, y_min = output_crs.transform_point(min_lon, min_lat, input_crs)  # lower left corner
+    x_max, y_max = output_crs.transform_point(max_lon, max_lat, input_crs)  # upper right corner
+    delta_x = x_max - x_min
+    delta_y = y_max - y_min
+
+    projected_ratio = delta_x / delta_y
+    target_ratio = fig_width / fig_height
+
+    x_min_new, x_max_new = x_min, x_max
+    y_min_new, y_max_new = y_min, y_max
+    if projected_ratio < target_ratio:
+        new_delta_x = delta_y * target_ratio
+        center_x = (x_min + x_max) / 2
+
+        x_min_new = center_x - new_delta_x / 2
+        x_max_new = center_x + new_delta_x / 2
+    elif projected_ratio > target_ratio:
+        new_delta_y = delta_x / target_ratio
+        center_y = (y_min + y_max) / 2
+
+        y_min_new = center_y - new_delta_y / 2
+        y_max_new = center_y + new_delta_y / 2
+
+    ax.set_global()
+    ax.add_feature(cf.LAND)
+    ax.add_feature(cf.COASTLINE)
+    ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    ax.set_extent([x_min_new, x_max_new, y_min_new, y_max_new], crs=output_crs)
 
     if show_depth:
         level_diff = 10
-        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree(),
-                                      cmap='viridis')
-        fig.colorbar(cp, ax=ax, shrink=0.7, label='water depth (m)', pad=0.1)
+        cp = depth['z'].plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff), transform=ccrs.PlateCarree())
+        #fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
 
-    ax.add_feature(cf.LAND)
-    ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True)
-    # ax.set_extent((-300000, 4000000, 3000000, 6000000), crs=ccrs.Mercator())
-
     if start is not None:
-        ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
-        ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10)
+        ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10, transform=input_crs)
+        ax.plot(finish[1], finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10, transform=input_crs)
 
     if show_gcr:
         gcr = get_gcr_points(start[0], start[1], finish[0], finish[1], n_points=10)
@@ -295,8 +335,9 @@ def generate_basemap(fig, depth, start=None, finish=None, title='', show_depth=T
         lons_gcr = [x[1] for x in gcr]
         ax.plot(lons_gcr, lats_gcr, color="orange")
 
-    plt.title(title)
 
+    fig.tight_layout()
+    plt.title(title)
     return fig, ax
 
 

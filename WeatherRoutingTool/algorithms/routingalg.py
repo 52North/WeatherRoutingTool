@@ -8,6 +8,7 @@ from matplotlib.figure import Figure
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
+from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
@@ -27,9 +28,13 @@ class RoutingAlg:
     fig: matplotlib.figure
     route_ensemble: list
     figure_path: str
+    map_ext: Map
 
     def __init__(self, config):
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
+
+        lat_1, lon1, lat2, lon2 = config.DEFAULT_MAP
+        self.map_ext = Map(lat_1, lon1, lat2, lon2)
         self.start = (lat_start, lon_start)
         self.finish = (lat_end, lon_end)
         self.departure_time = config.DEPARTURE_TIME
