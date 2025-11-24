@@ -255,13 +255,18 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
         """
 
-        for _ in range(0, self.n_updates):
-            plateau_length = 2 * self.plateau_slope + self.plateau_size
-            if len(rt[0]) < plateau_length + 1:  # only mutate routes that are long enough
-                continue
+        # test whether input route rt has the correct shape
+        assert len(rt.shape) == 2
+        assert rt.shape[1] == 2
+        route_length = rt.shape[0]
+        plateau_length = 2 * self.plateau_slope + self.plateau_size
 
+        if route_length <= plateau_length + 1:  # only mutate routes that are long enough
+            return rt
+
+        for _ in range(0, self.n_updates):
             # obtain indices for plateau generation
-            rindex = np.random.randint(np.ceil(plateau_length / 2), rt.shape[0] - np.ceil(plateau_length / 2))
+            rindex = np.random.randint(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
             i_slope_start = int(i_plateau_start - self.plateau_slope)
@@ -320,8 +325,11 @@ class RouteBlendMutation(MutationConstraintRejection):
     Mutates routes by smoothening with a bezier curve.
 
     Generates a bezier curve between two randomly selected indices and infills
-    it with 2x the number of waypoints previously present in the selected range.
+    it with the number of waypoints previously present in the selected range.
     """
+
+    max_lengh: int
+    min_length: int
 
     def __init__(
             self,
@@ -332,6 +340,9 @@ class RouteBlendMutation(MutationConstraintRejection):
 
             For definition of kw see description on MutationConstraintRejection.
         """
+
+        self.min_length = 3
+        self.max_length = 10
         super().__init__(
             mutation_type="RouteBlendMutation",
             **kw
@@ -360,19 +371,22 @@ class RouteBlendMutation(MutationConstraintRejection):
         return curve
 
     def mutate(self, problem, rt, **kw):
+        # test shape of input route
+        assert len(rt.shape) == 2
+        assert rt.shape[1] == 2
+        route_length = rt.shape[0]
 
-        for _ in range(3):
-            p1 = np.random.randint(0, rt.shape[0])
-            if rt.shape[0] - p1 <= 3:  # retry
-                continue
+        # only mutate routes that are long enough
+        if  route_length < self.min_length:
+            return rt
 
-            p2 = p1 + np.random.randint(3, min(10, rt.shape[0] - p1))
-            break
+        start = np.random.randint(0, route_length - self.min_length)
+        length = np.random.randint(self.min_length, min(self.max_length, route_length - start))
+        end = start + length
+        n_points = length
 
-        n_points = (p2 - p1) * 2
+        rt = np.concatenate([rt[:start], self.bezier_curve(rt[start:end], n_points), rt[end:]], axis=0)
 
-        rt = np.concatenate(
-            [rt[:p1], self.bezier_curve(rt[p1:p2], n_points), rt[p2:]], axis=0)
         return rt
 
 
