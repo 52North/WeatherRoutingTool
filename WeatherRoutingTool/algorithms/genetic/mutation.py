@@ -1,14 +1,20 @@
+import copy
 import logging
 import math
+import os
 
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 import numpy as np
 from geographiclib.geodesic import Geodesic
 from pymoo.core.mutation import Mutation
 
+import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory, PatcherBase
+from WeatherRoutingTool.utils.maps import Map
 
 logger = logging.getLogger("WRT.genetic.mutation")
 
@@ -166,13 +172,14 @@ class RandomPlateauMutation(MutationConstraintRejection):
     plateau_size: int
     plateau_slope: int
     patchnf: PatcherBase
+    route_count: int
 
     def __init__(
             self,
-            gcr_dist: float = 1e5,
+            gcr_dist: float = 1e4,
             n_updates: int = 1,
             plateau_size: int = 3,
-            plateau_slope: int = 2,
+            plateau_slope: int = 3,
             **kw
     ):
         """
@@ -204,6 +211,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
         self.dist = gcr_dist
         self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config,
                                                 application="Route plateau mutation")
+        self.route_count = 0
 
     def random_walk(
             self,
@@ -254,70 +262,121 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :return: mutated route
         :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
         """
+        debug = False
 
         # test whether input route rt has the correct shape
         assert len(rt.shape) == 2
         assert rt.shape[1] == 2
         route_length = rt.shape[0]
-        plateau_length = 2 * self.plateau_slope + self.plateau_size
+        plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
+        rt_new = np.full(rt.shape, -99.)
 
         if route_length <= plateau_length + 1:  # only mutate routes that are long enough
             return rt
+
+        if debug:
+            print('################################')
+            print('original rt: ', rt)
 
         for _ in range(0, self.n_updates):
             # obtain indices for plateau generation
             rindex = np.random.randint(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
-            i_slope_start = int(i_plateau_start - self.plateau_slope)
-            i_slope_end = int(i_plateau_end + self.plateau_slope)
+            i_slope_start = int(i_plateau_start - self.plateau_slope) + 1
+            i_slope_end = int(i_plateau_end + self.plateau_slope) - 1
+
+            if debug:
+                print('Indices: ')
+                print('     plateau mid: ', rindex)
+                print('     i_slope_start: ', i_slope_start)
+                print('     i_plateau_start: ', i_plateau_start)
+                print('     i_plateau_end: ', i_plateau_end)
+                print('     i_slope_end: ', i_slope_end)
 
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
             p2_orig = rt[i_plateau_end]
-            bearing = np.random.choice([45, 135, 225, 315])
-            rt[i_plateau_start] = self.random_walk(
+            bearing = np.random.randint(0, 360)
+            rt_new[i_plateau_start] = self.random_walk(
                 point=p1_orig,
                 dist=self.dist,
                 bearing=bearing
             )
-            rt[i_plateau_end] = self.random_walk(
+            rt_new[i_plateau_end] = self.random_walk(
                 point=p2_orig,
                 dist=self.dist,
                 bearing=bearing
             )
+            if debug:
+                print('Mutated plateau edges:')
+                print('     point 1: ', rt_new[i_plateau_start])
+                print('     point 2: ', rt_new[i_plateau_end])
 
             # obtain subsections, slope & plateau via gcr patching
             dist_one_orig = rt[:i_slope_start]
-
             if i_slope_start == 0:
                 dist_one_orig = [rt[0]]
-            dist_one_patched = self.patchfn.patch(
+            dist_one_patched_full = self.patchfn.patch(
                 src=tuple(rt[i_slope_start]),
-                dst=tuple(rt[i_plateau_start]),
-                npoints=self.plateau_slope,
+                dst=tuple(rt_new[i_plateau_start]),
+                npoints=self.plateau_slope - 1,
             )
+            dist_one_patched = dist_one_patched_full[:-1]
             dist_plateau_patched = self.patchfn.patch(
-                src=tuple(rt[i_plateau_start]),
-                dst=tuple(rt[i_plateau_end]),
-                npoints=self.plateau_size,
+                src=tuple(rt_new[i_plateau_start]),
+                dst=tuple(rt_new[i_plateau_end]),
+                npoints=self.plateau_size - 1,
             )
-            dist_two_patched = self.patchfn.patch(
-                src=tuple(rt[i_plateau_end]),
+            dist_two_patched_full = self.patchfn.patch(
+                src=tuple(rt_new[i_plateau_end]),
                 dst=tuple(rt[i_slope_end]),
-                npoints=self.plateau_slope,
+                npoints=self.plateau_slope - 1,
             )
-            dist_two_orig = rt[i_slope_end:]
+            dist_two_patched = dist_two_patched_full[1:]
+            dist_two_orig = rt[i_slope_end + 1:]
+
+            if debug:
+                print('Full segments: ')
+                print('     dist_on_orig: ', dist_one_orig)
+                print('     dist_one_patched (full): ', dist_one_patched_full)
+                print('     dist_plateau_patched: ', dist_plateau_patched)
+                print('     dist_two_patched: (full)', dist_two_patched_full)
+                print('     dist_two_orig: ', dist_two_orig)
+
+                print('Cut segments: ')
+                print('     dist_one_patched: ', dist_one_patched)
+                print('     dist_two_patched: ', dist_two_patched)
 
             # combine subsections
-            rt = np.concatenate([
+            rt_new = np.concatenate([
                 dist_one_orig,
-                dist_one_patched[1:],
-                dist_plateau_patched[1:],
-                dist_two_patched[1:],
-                dist_two_orig[1:]
+                dist_one_patched,
+                dist_plateau_patched,
+                dist_two_patched,
+                dist_two_orig
             ])
-        return rt
+
+        if debug:
+            print('mutated rt: ', rt_new)
+            map = Map(rt[0][0], rt[0][1], rt[-1][0], rt[-1][1])
+            input_crs = ccrs.PlateCarree()
+
+            fig, ax = graphics.generate_basemap(
+                map=map.get_var_tuple(),
+                depth=None,
+                start=rt[0],
+                finish=rt[-1],
+                show_depth=False
+            )
+            ax.plot(rt[:, 1], rt[:, 0], color="firebrick", transform=input_crs, marker="o")
+            ax.plot(rt_new[:, 1], rt_new[:, 0], color="blue", transform=input_crs, marker="o")
+            figname = 'mutated_route' + str(self.route_count)
+            figurepath = graphics.get_figure_path()
+            plt.savefig(os.path.join(figurepath, figname))
+            self.route_count += 1
+
+        return rt_new
 
 
 class RouteBlendMutation(MutationConstraintRejection):

@@ -103,6 +103,7 @@ def test_random_plateau_mutation():
     np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
+    mt.dist = 1e5
     X = get_dummy_route_input()
     old_route = copy.deepcopy(X)
     new_route = mt._do(None, X, )
@@ -126,8 +127,6 @@ def test_random_plateau_mutation():
     for i_route in range(old_route.shape[0]):
         assert np.array_equal(old_route[i_route, 0][-1, :], new_route[i_route, 0][-1, :])
         assert np.array_equal(old_route[i_route, 0][0, :], new_route[i_route, 0][0, :])
-
-    plt.show()
 
 
 '''
@@ -193,8 +192,6 @@ def test_bezier_curve_mutation():
     for i_route in range(old_route.shape[0]):
         assert np.array_equal(old_route[i_route, 0][-1, :], new_route[i_route, 0][-1, :])
         assert np.array_equal(old_route[i_route, 0][0, :], new_route[i_route, 0][0, :])
-
-    plt.show()
 
 
 '''
