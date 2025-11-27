@@ -323,10 +323,11 @@ class NNBoat(Boat):
         draught = np.full(array_shape[0], self.draught)
         P_perc = np.full(array_shape[0], -99)
 
-        print('array_shape: ', array_shape[0])
-        print('speed: ', type(speed[0]))
-        print('draugth:', type(draught[0]))
-        print('water_temp: ', type(ship_params.water_temperature[0].value))
+        if debug:
+            print('array_shape: ', array_shape[0])
+            print('speed: ', type(speed[0]))
+            print('draugth:', type(draught[0]))
+            print('water_temp: ', type(ship_params.water_temperature[0].value))
 
         for ipoint in range(len(lats)):
             input_dict = {
@@ -345,13 +346,17 @@ class NNBoat(Boat):
                 'ucomponent_of_wind_height_above_ground': ship_params.u_wind_speed[ipoint].value,  # u_wind
                 'vcomponent_of_wind_height_above_ground': ship_params.v_wind_speed[ipoint].value  # v_wind
             }
-            print('before conversion: ', input_dict)
+            if debug:
+                print('before conversion: ', input_dict)
             input_dict = self.coordinate_transformation(input_dict)
-            print('after conversion: ', input_dict)
+            if debug:
+                print('after conversion: ', input_dict)
             input_data= self.get_input_data(input_dict)
-            print('input_data: ', input_data)
+            if debug:
+                print('input_data: ', input_data)
             P_perc[ipoint] = self.evaluator.evaluate(model_path=self.model_path, input_data=input_data)
-            print('prediction: ', P_perc[ipoint])
+            if debug:
+                print('prediction: ', P_perc[ipoint])
 
         self.P_perc = np.append(self.P_perc, P_perc)
         prediction = P_perc / 100 * self.nominal_power
@@ -359,5 +364,4 @@ class NNBoat(Boat):
         ship_params.power = prediction
         ship_params.fuel_rate = self.fuel_rate * prediction
 
-        ship_params.print()
         return ship_params

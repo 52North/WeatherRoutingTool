@@ -33,6 +33,7 @@ class ShipConfig(BaseModel):
     BOAT_AYV: float = -99  # projected lateral area above the waterline [m]
     BOAT_BS1: float = -99  # breadth of substructure 1 [m]
     BOAT_CMC: float = -99  # horizontal distance from midship section to centre of lateral projected area AYV [m]
+    BOAT_CORRECT_BY_NNMODEL: bool = False # correct maripower by nnmodel
     BOAT_DRAUGHT_AFT: float = 10  # aft draught (draught at rudder) in m
     BOAT_DRAUGHT_FORE: float = 10  # fore draught (draught at forward perpendicular) in m
     BOAT_HC: float = -99  # height of waterline to centre of lateral projected area Ayv [m]

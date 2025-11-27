@@ -12,7 +12,7 @@ from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship.ship import Boat, NNBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
@@ -63,8 +63,9 @@ class MariPowerTanker(Boat):
     depth_path: str  # path to netCDF for depth data
     # FIXME: make separate weather path obsolete
     weather_path_maripower: str  # path to weather data which is converted to maripower requirements
-
     use_depth_data: bool
+    correct_by_nnmodel: bool
+    nnmodel: NNBoat
 
     def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
@@ -86,6 +87,12 @@ class MariPowerTanker(Boat):
 
         self.courses_path = config_obj.COURSES_FILE
         self.weather_path = config_obj.WEATHER_DATA
+
+        self.correct_by_nnmodel = False
+        if config_obj.BOAT_CORRECT_BY_NNMODEL == True:
+            logger.info('Correct maripower by grey-box model.')
+            self.nnmodel = NNBoat(file_name=file_name)
+            self.correct_by_nnmodel = True
 
         # optional variables for maripower
         if not config_obj.DEPTH_DATA == " ":
@@ -564,6 +571,13 @@ class MariPowerTanker(Boat):
         ds = self.get_fuel_netCDF()
         ship_params = self.extract_params_from_netCDF(ds)
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
+
+        if self.correct_by_nnmodel:
+            ship_params_corr = self.nnmodel.get_ship_parameters(courses, lats, lons, time)
+            print(f'Setting power from ' + str(ship_params.power) + ' to ' +
+                  str(ship_params.power + ship_params_corr.power) + ' by adding ' + str(ship_params_corr.power))
+            ship_params.power = ship_params.power + ship_params_corr.power
+
         ds.close()
 
         return ship_params
