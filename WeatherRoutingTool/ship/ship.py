@@ -193,6 +193,7 @@ class NNBoat(Boat):
     draught: float
     nominal_power: float
     P_perc: np.array
+    feature_names: list
 
     def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
         super().__init__(init_mode, file_name, config_dict)
@@ -204,7 +205,7 @@ class NNBoat(Boat):
 
         # mandatory variables
         self.model_path = config_obj.BOAT_NNMODEL_PATH
-        self.draught = (config_obj.BOAT_DRAUGHT_AFT + config_obj.BOAT_DRAUGHT_FORE)/2
+        self.draught = (config_obj.BOAT_DRAUGHT_AFT + config_obj.BOAT_DRAUGHT_FORE) / 2
 
         self.evaluator = SavedModelEvaluator()
         info = self.evaluator.get_model_info(self.model_path)
@@ -213,10 +214,9 @@ class NNBoat(Boat):
         for key, value in info.items():
             print(f"  {key}: {value}")
 
-
         if not config_obj.DEPTH_DATA == " ":
             self.use_depth_data = True
-            self.depth_data =  xr.open_dataset(config_obj.DEPTH_DATA)
+            self.depth_data = xr.open_dataset(config_obj.DEPTH_DATA)
         self.weather_path = config_obj.WEATHER_DATA
 
         self.nominal_power = config_obj.BOAT_SMCR_POWER * u.kiloWatt
@@ -225,23 +225,22 @@ class NNBoat(Boat):
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
         self.P_perc = np.array([])
 
-    def get_polar_plot(self, speed):
-        input_data = np.array([[
-            speed[ipoint],
-            draught[ipoint],
-            draught[ipoint],
-            rel_wind_direction[ipoint].value,
-            ship_params.water_temperature[ipoint].value,
-            ship_params.air_temperature[ipoint].value,
-            rel_seaway_direction[ipoint].value,
-            depth[ipoint],
-            ship_params.pressure[ipoint].value,
-            ship_params.wave_height[ipoint].value,
-            ship_params.wave_period[ipoint].value,
-            ship_params.salinity[ipoint].value
-        ]])
-
-
+        self.feature_names = [
+            'STW',  # speed through water (m/s)
+            'draft_fp_interpolated_between_low_speeds',  # fore draft (m)
+            'draft_ap_interpolated_between_low_speeds',  # after draft (m)
+            'rel_wind_direction',  # relative wind direction (0-360°)
+            'thetao',  # water temperature (°C)
+            'Temperature_surface',  # air temperatrue (°K)
+            'rel_seaway_direction',  # wave direction (0-360°)
+            'z',  # water depth (m)
+            'Pressure_reduced_to_MSL_msl',  # pressure (Pa)
+            'VHM0',  # wave height (m)
+            'VTPK',  # wave period
+            'so',  # salinity
+            'ucomponent_of_wind_height_above_ground',  # u component wind speed (m/s)
+            'vcomponent_of_wind_height_above_ground'  # v component wind speed (m/s)
+        ]
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
         """
@@ -258,12 +257,16 @@ class NNBoat(Boat):
 
         return delta_ang
 
-    def plot_Pperc(self, path):
-        fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-        ax.hist(
-            self.P_perc
-        )
-        plt.savefig(path)
+    def coordinate_transformation(self, input_dict):
+        input_dict['Temperature_surface'] = input_dict['Temperature_surface'] + 274.15
+        input_dict['so'] = input_dict['so'] * 1000
+        return input_dict
+
+    def get_input_data(self, input_dict):
+        input_data = np.array([[]])
+        for feature in input_dict:
+            input_data = np.append(input_data,input_dict[feature])
+        return input_data
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False
@@ -300,16 +303,13 @@ class NNBoat(Boat):
         # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
 
-        feature_names = ['STW', 'draft_fp_interpolated_between_low_speeds',
-                        'draft_ap_interpolated_between_low_speeds', 'rel_wind_direction',
-                        'thetao', 'Temperature_surface', 'rel_seaway_direction',
-                        'z', 'Pressure_reduced_to_MSL_msl', 'VHM0', 'VTPK', 'so']
-
-        absolute_wind_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_wind_speed.value, ship_params.v_wind_speed.value)
+        absolute_wind_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_wind_speed.value,
+                                                                 ship_params.v_wind_speed.value)
         absolute_wind_direction = (absolute_wind_direction % 360) * u.degree
         rel_wind_direction = self.get_relative_wind_dir(courses, absolute_wind_direction)
 
-        absolute_seaway_direction = 180+ 180 / np.pi * np.arctan2(ship_params.u_currents.value, ship_params.v_currents.value)
+        absolute_seaway_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_currents.value,
+                                                                   ship_params.v_currents.value)
         absolute_seaway_direction = (absolute_seaway_direction % 360) * u.degree
         rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
 
@@ -319,7 +319,7 @@ class NNBoat(Boat):
         depth = rounded_ds.to_numpy()
 
         array_shape = ship_params.water_temperature.shape
-        speed = np.full(array_shape[0], self.speed) *1.994
+        speed = np.full(array_shape[0], self.speed) * 1.994
         draught = np.full(array_shape[0], self.draught)
         P_perc = np.full(array_shape[0], -99)
 
@@ -329,27 +329,32 @@ class NNBoat(Boat):
         print('water_temp: ', type(ship_params.water_temperature[0].value))
 
         for ipoint in range(len(lats)):
-            input_data=np.array([[
-                speed[ipoint], # STW
-                draught[ipoint], # draft_fp_interpolated_between_low_speeds
-                draught[ipoint], # draft_ap_interpolated_between_low_speeds
-                rel_wind_direction[ipoint].value, # rel_wind_direction
-                ship_params.water_temperature[ipoint].value, #thetao
-                ship_params.air_temperature[ipoint].value, #Temperature_surface
-                rel_seaway_direction[ipoint].value, # rel_seaway_direction
-                depth[ipoint], # z
-                ship_params.pressure[ipoint].value, #Pressure_reduced_to_MSL_msl
-                ship_params.wave_height[ipoint].value, #VHM0
-                ship_params.wave_period[ipoint].value, #VTPK
-                ship_params.salinity[ipoint].value #so
-            ]])
+            input_dict = {
+                'STW': speed[ipoint],  # STW
+                'draft_fp_interpolated_between_low_speeds': draught[ipoint],  # draft_fp_interpolated_between_low_speeds
+                'draft_ap_interpolated_between_low_speeds': draught[ipoint],  # draft_ap_interpolated_between_low_speeds
+                'rel_wind_direction': rel_wind_direction[ipoint].value,  # rel_wind_direction
+                'thetao': ship_params.water_temperature[ipoint].value,  # thetao
+                'Temperature_surface': ship_params.air_temperature[ipoint].value,  # Temperature_surface
+                'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
+                'z': depth[ipoint],  # z
+                'Pressure_reduced_to_MSL_msl': ship_params.pressure[ipoint].value,  # Pressure_reduced_to_MSL_msl
+                'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
+                'VTPK': ship_params.wave_period[ipoint].value,  # VTPK
+                'so': ship_params.salinity[ipoint].value,  # so
+                'ucomponent_of_wind_height_above_ground': ship_params.u_wind_speed[ipoint].value,  # u_wind
+                'vcomponent_of_wind_height_above_ground': ship_params.v_wind_speed[ipoint].value  # v_wind
+            }
+            print('before conversion: ', input_dict)
+            input_dict = self.coordinate_transformation(input_dict)
+            print('after conversion: ', input_dict)
+            input_data= self.get_input_data(input_dict)
             print('input_data: ', input_data)
             P_perc[ipoint] = self.evaluator.evaluate(model_path=self.model_path, input_data=input_data)
             print('prediction: ', P_perc[ipoint])
 
         self.P_perc = np.append(self.P_perc, P_perc)
-
-        prediction = P_perc/100 * self.nominal_power
+        prediction = P_perc / 100 * self.nominal_power
 
         ship_params.power = prediction
         ship_params.fuel_rate = self.fuel_rate * prediction

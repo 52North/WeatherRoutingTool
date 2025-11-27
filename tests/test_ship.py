@@ -270,20 +270,36 @@ def test_nnmodel_result_polar_plot():
     rel_seaway_direction = np.linspace(0,360, 37)
     P_perc = np.full(37, -99)
 
-    feature_names = ['STW', 'draft_fp_interpolated_between_low_speeds',
-                     'draft_ap_interpolated_between_low_speeds', 'rel_wind_direction',
-                     'thetao', 'Temperature_surface', 'rel_seaway_direction',
-                     'z', 'Pressure_reduced_to_MSL_msl', 'VHM0', 'VTPK', 'so']
+    feature_names = [
+        'STW',
+        'draft_fp_interpolated_between_low_speeds',
+        'draft_ap_interpolated_between_low_speeds',
+        'rel_wind_direction',
+        'thetao',
+        'Temperature_surface',
+        'rel_seaway_direction',
+        'z',
+        'Pressure_reduced_to_MSL_msl',
+        'VHM0',
+        'VTPK',
+        'so',
+        'ucomponent_of_wind_height_above_ground',
+        'vcomponent_of_wind_height_above_ground'
+    ]
 
     print('rel_wind_dir: ', rel_wind_direction)
 
-    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/blackAndGreyboxModels/greyBox_ME_LOAD_diff_nn_model.pth"
+    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/blackboxgreyboxwhiteboxmodelle_251127/blackBox_gp_model_trial_17_rank_1.pth"
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
-    print('info: ', info)
+    windspeed = 20
 
     for ipoint in range(0,37):
+        theta_rad = rel_wind_direction[ipoint] * np.pi / 180
+        u_wind = -np.abs(windspeed) * np.sin(theta_rad)
+        v_wind = -np.abs(windspeed) * np.cos(theta_rad)
+
         input_data = np.array([[
             7,  # STW
             10, # draft_fp_interpolated_between_low_speeds
@@ -296,7 +312,9 @@ def test_nnmodel_result_polar_plot():
             100000, # Pressure_reduced_to_MSL_msl
             3, # VHM0
             6.24, # VTPK
-            39.6 # so 5.63 - 39.8  # *1000 -> g/kg
+            39.6, # so 5.63 - 39.8  # *1000 -> g/kg
+            u_wind, # u-component wind
+            v_wind # v-component wind
         ]])
 
         print('input_data: ')
@@ -308,7 +326,7 @@ def test_nnmodel_result_polar_plot():
 
         P_perc[ipoint] =evaluator.evaluate(model_path=model_path, input_data=input_data)
 
-    print('P_perc: ', P_perc)
+        print('     P_perc: ', P_perc[ipoint])
 
     fig, axes = plt.subplots(1, 2, subplot_kw={'projection': 'polar'})
     wind_dir_rad = utils.degree_to_pmpi(rel_wind_direction * u.degree)
