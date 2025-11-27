@@ -158,7 +158,7 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (30, 10, 40, 35)
+    lat1, lon1, lat2, lon2 = (50, -2, 60, 14.257)
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -188,7 +188,14 @@ if __name__ == "__main__":
         depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, depth, rp_list[0].start, rp_list[0].finish, '')
+        fig, ax = graphics.generate_basemap(
+            default_map.get_var_tuple(),
+            None,
+            rp_list[0].start,
+            rp_list[0].finish,
+            '',
+            False
+        )
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):

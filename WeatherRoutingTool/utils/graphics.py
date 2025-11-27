@@ -313,10 +313,6 @@ def generate_basemap(
         y_max_new = center_y + new_delta_y / 2
 
     ax.set_global()
-    ax.add_feature(cf.LAND)
-    ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-    ax.set_extent([x_min_new, x_max_new, y_min_new, y_max_new], crs=output_crs)
 
     if show_depth:
         level_diff = 10
@@ -336,6 +332,11 @@ def generate_basemap(
         lats_gcr = [x[0] for x in gcr]
         lons_gcr = [x[1] for x in gcr]
         ax.plot(lons_gcr, lats_gcr, color="orange")
+
+    ax.add_feature(cf.LAND)
+    ax.add_feature(cf.COASTLINE)
+    ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    ax.set_extent([x_min_new, x_max_new, y_min_new, y_max_new], crs=output_crs)
 
     fig.tight_layout()
     plt.title(title)

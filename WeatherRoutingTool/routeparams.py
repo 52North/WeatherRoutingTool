@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 
+import cartopy.crs as ccrs
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -345,13 +346,14 @@ class RouteParams:
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
+        input_crs = ccrs.PlateCarree()
         lats = self.lats_per_step
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot')
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot', transform=input_crs)
         else:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
 
         ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour, markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
