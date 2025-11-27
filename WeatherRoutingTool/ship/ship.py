@@ -1,6 +1,8 @@
 import logging
+import os
 from pathlib import Path
 
+import dill
 import numpy as np
 import xarray as xr
 from astropy import units as u
@@ -267,6 +269,20 @@ class NNBoat(Boat):
         for feature in input_dict:
             input_data = np.append(input_data,input_dict[feature])
         return input_data
+
+    def get_fuel_rate_from_power(self, n, P):
+        filepath = "/home/kdemmich/1_Projekte/MariData/3_Code/maripower/mariPower"
+        n = np.full(P.shape, n)
+        power = P.value/1000
+
+        fuel_model = dill.load(
+            open(
+                os.path.join(filepath, "data", "CBT_FOC_of_n_Power_quadratic_311.pickle"), "rb"
+            )
+        )
+
+        fuel_rate = fuel_model.predict_values(np.vstack((n/60, power / 1000)).T).squeeze()  # fuelConsumptionCBT.FuelConsumptionCBT(n,P)
+        return fuel_rate/1000
 
     def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
         debug = False

@@ -576,8 +576,12 @@ class MariPowerTanker(Boat):
             ship_params_corr = self.nnmodel.get_ship_parameters(courses, lats, lons, time)
             print(f'Setting power from ' + str(ship_params.power) + ' to ' +
                   str(ship_params.power + ship_params_corr.power) + ' by adding ' + str(ship_params_corr.power))
-            ship_params.power = ship_params.power + ship_params_corr.power
+            #ship_params.power = ship_params.power + ship_params_corr.power
+            print('old fuel rate: ', ship_params.fuel_rate)
 
+            ship_params.fuel_rate = self.nnmodel.get_fuel_rate_from_power(ship_params.rpm, ship_params.power)
+
+            print('Setting new fuel rate: ', ship_params.fuel_rate)
         ds.close()
 
         return ship_params

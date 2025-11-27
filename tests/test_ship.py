@@ -293,7 +293,7 @@ def test_nnmodel_result_polar_plot():
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
-    windspeed = 20
+    windspeed = 10
 
     for ipoint in range(0,37):
         theta_rad = rel_wind_direction[ipoint] * np.pi / 180
@@ -310,7 +310,7 @@ def test_nnmodel_result_polar_plot():
             rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
             -221,  # z
             100000, # Pressure_reduced_to_MSL_msl
-            3, # VHM0
+            2, # VHM0
             6.24, # VTPK
             39.6, # so 5.63 - 39.8  # *1000 -> g/kg
             u_wind, # u-component wind
