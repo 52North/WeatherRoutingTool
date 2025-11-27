@@ -48,6 +48,31 @@ def test_invalid_path_raises_error(tmp_path):
     assert "Path doesn't exist" in str(excinfo.value)
 
 
+def test_speedy_alg_validation_fails():
+    config_data, _ = load_example_config()
+
+    # Set inconsistent values
+    config_data["ALGORITHM_TYPE"] = "speedy_isobased"
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "If 'ALGORITHM_TYPE' is 'speedy_isobased', 'BOAT_TYPE' has to be 'speedy_isobased'." in str(excinfo.value)
+
+
+def test_genetic_shortest_route_boat_validation_fails():
+    config_data, _ = load_example_config()
+
+    # Set inconsistent values
+    config_data["ALGORITHM_TYPE"] = "genetic_shortest_route"
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "If 'ALGORITHM_TYPE' is 'genetic_shortest_route', 'BOAT_TYPE' has to be 'speedy_isobased'." in str(
+        excinfo.value)
+
+
 def test_speedy_boat_validation_fails():
     config_data, _ = load_example_config()
 
@@ -58,7 +83,8 @@ def test_speedy_boat_validation_fails():
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased'" in str(excinfo.value)
+    assert "'BOAT_TYPE'='speedy_isobased' can only be used together with "
+    "'ALGORITHM_TYPE'='genetic_shortest_route' and 'ALGORITHM_TYPE'='speedy_isobased'." in str(excinfo.value)
 
 
 def test_invalid_route_raises_error():

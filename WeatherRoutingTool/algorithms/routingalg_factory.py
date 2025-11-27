@@ -22,7 +22,7 @@ class RoutingAlgFactory:
         if (config.ALGORITHM_TYPE == 'isofuel') or (config.ALGORITHM_TYPE == 'speedy_isobased'):
             ra = IsoFuel(config)
 
-        if config.ALGORITHM_TYPE == 'genetic':
+        if (config.ALGORITHM_TYPE == 'genetic') or (config.ALGORITHM_TYPE == 'genetic_shortest_route'):
             ra = Genetic(config)
 
         ra.print_init()

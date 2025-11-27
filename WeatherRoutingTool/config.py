@@ -53,7 +53,7 @@ class Config(BaseModel):
     # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
-    ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
+    ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased', 'genetic_shortest_route'] = 'isofuel'
     # options: 'isofuel', 'genetic', 'speedy_isobased'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
@@ -328,11 +328,19 @@ class Config(BaseModel):
         :return: Config object with validated BOAT_TYPE-ALGORITHM_TYPE-compatibility
         :rtype: WeatherRoutingTool.config.Config
         """
-        if (
-                (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
-                and self.BOAT_TYPE != self.ALGORITHM_TYPE
-        ):
-            raise ValueError("If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased', so must be the other one.")
+
+        if self.ALGORITHM_TYPE == 'speedy_isobased' and self.BOAT_TYPE != 'speedy_isobased':
+            raise ValueError("If 'ALGORITHM_TYPE' is 'speedy_isobased', 'BOAT_TYPE' has to be 'speedy_isobased'.")
+
+        if self.ALGORITHM_TYPE == 'genetic_shortest_route' and self.BOAT_TYPE != 'speedy_isobased':
+            raise ValueError(
+                "If 'ALGORITHM_TYPE' is 'genetic_shortest_route', 'BOAT_TYPE' has to be 'speedy_isobased'.")
+
+        if self.BOAT_TYPE == 'speedy_isobased' and self.ALGORITHM_TYPE != 'genetic_shortest_route' and \
+                self.ALGORITHM_TYPE != 'speedy_isobased':
+            raise ValueError("'BOAT_TYPE'='speedy_isobased' can only be used together with "
+                             "'ALGORITHM_TYPE'='genetic_shortest_route' and 'ALGORITHM_TYPE'='speedy_isobased'.")
+
         return self
 
     @model_validator(mode='after')
