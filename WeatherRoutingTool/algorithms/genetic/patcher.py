@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -23,36 +24,29 @@ logger = logging.getLogger("WRT.genetic.patcher")
 
 
 class PatcherBase:
-    """Base class for route patching"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def patch(self, src: tuple, dst: tuple):
-        """Obtain waypoints between `src` and `dst`.
-
-        :param src: Source coords as (lat, lon)
-        :type src: tuple[float, float]
-        :param dst: Destination coords as (lat, lon)
-        :type dst: tuple[float, float]
-        """
-        raise NotImplementedError("This patching method is not implemented.")
+    """Base class for all patcher implementations."""
+    pass
 
 
 class SingletonBase(type):
     """
-    TODO: make this thread-safe
-    Base class for Singleton implementation of patcher methods.
+    Thread-safe base class for Singleton implementation of patcher methods.
 
     This is the implementation of a metaclass for those classes for which only a single instance shall be available
-    during runtime.
+    during runtime. Uses double-checked locking pattern for thread safety.
     """
     _instances = {}
+    _lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
+        # First check without lock (optimization)
         if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
+            # Acquire lock for actual instance creation
+            with SingletonBase._lock:
+                # Double-check pattern: verify again inside lock
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
 
         return cls._instances[cls]
 

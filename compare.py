@@ -6,6 +6,21 @@ from WeatherRoutingTool.algorithms.data_utils import *
 import xarray as xr
 import numpy as np
 
+def calculate_course_for_lat_lon(lats, lons):
+    """
+    Calculate course (bearing) between consecutive latitude and longitude points.
+    Returns a numpy array of bearings in degrees.
+    """
+    lats = np.radians(lats)
+    lons = np.radians(lons)
+    dlon = np.diff(lons)
+    x = np.sin(dlon) * np.cos(lats[1:])
+    y = np.cos(lats[:-1]) * np.sin(lats[1:]) - np.sin(lats[:-1]) * np.cos(lats[1:]) * np.cos(dlon)
+    initial_bearing = np.arctan2(x, y)
+    initial_bearing = np.degrees(initial_bearing)
+    compass_bearing = (initial_bearing + 360) % 360
+    return compass_bearing
+
 if __name__ == "__main__":
 
     def shipParamsPerDist(routeparams):
