@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 from math import ceil
 
+import cartopy.crs as ccrs
 import datacube
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,10 +111,12 @@ class WeatherCond:
         pass
 
     def plot_wind_weather(self, time, rebinx=5, rebiny=5):
-        fig, ax = plt.subplots(figsize=(12, 7))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig=fig, depth=None, show_depth=False)
+        input_crs = ccrs.PlateCarree()
+        fig, ax = graphics.generate_basemap(
+            map=self.map_size.get_var_tuple(),
+            depth=None,
+            show_depth=False
+        )
 
         u = self.ds['u-component_of_wind_height_above_ground'].sel(
             time=time,
@@ -132,19 +135,13 @@ class WeatherCond:
         v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
 
         windspeed = np.sqrt(u ** 2 + v ** 2)
-        windspeed.plot(alpha=0.5)
-
-        plt.title("")
-        plt.rcParams['font.size'] = '20'
-        plt.ylabel('latitude (°N)', fontsize=20)
-        plt.xlabel('longitude (°W)', fontsize=20)
 
         for label in (ax.get_xticklabels() + ax.get_yticklabels()):
             label.set_fontsize(20)
         x = windspeed.coords['longitude'].values
         y = windspeed.coords['latitude'].values
         # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
-        plt.barbs(x, y, u.values, v.values, clim=[0, 20])
+        ax.barbs(x, y, u.values, v.values, clim=[0, 20], transform=input_crs)
 
         plt.show()
 
