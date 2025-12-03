@@ -154,3 +154,32 @@ def test_return_widened_map(input, output):
     assert widened_map.lon1 == output[1]
     assert widened_map.lat2 == output[2]
     assert widened_map.lon2 == output[3]
+
+def test_find_coord_index():
+    arr = np.linspace(0., 5., num=50)
+    start_ind, end_ind = unit.get_coord_index(0.15, 4.05, arr)
+
+    assert start_ind == 1
+    assert end_ind == 39
+
+def test_find_coord_index_equal():
+    arr = np.linspace(0., 5., num=50)
+
+    with pytest.raises(ValueError) as excinfo:
+        start_ind, end_ind = unit.get_coord_index(0.15, 0.15, arr)
+
+    assert "Start index and end index are the same!" in str(excinfo.value)
+
+@pytest.mark.parametrize("start_coord,end_coord, not_in_array", [
+    (0.15, 6, 6),
+    (-1, 4, -1),
+    (-1, 6, -1)
+])
+def test_find_coord_index_out_of_range(start_coord, end_coord, not_in_array):
+    arr = np.linspace(0., 5., num=50)
+
+    with pytest.raises(ValueError) as excinfo:
+        start_ind, end_ind = unit.get_coord_index(start_coord, end_coord, arr)
+
+    error_message = 'Coordinate not in array: '
+    assert error_message in str(excinfo.value)

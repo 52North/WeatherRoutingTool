@@ -153,3 +153,25 @@ def downsample_dataframe(data, interval):
     data['clustered_index'] = indices.tolist()
     resampled_data = data.groupby('clustered_index').mean()
     return resampled_data
+
+def get_coord_index(start_coord, end_coord, coord_array):
+    start_ind = -1
+    end_ind = -1
+    for icoord in range(len(coord_array)-1):
+        if start_coord > coord_array[icoord] and start_coord <= coord_array[icoord+1]:
+            start_ind = icoord
+
+        if end_coord > coord_array[icoord] and end_coord <= coord_array[icoord+1]:
+            end_ind = icoord
+
+
+    if start_ind < 0:
+        raise ValueError('Coordinate not in array: ', start_coord)
+
+    if end_ind < 0:
+        raise ValueError('Coordinate not in array: ', end_coord)
+
+    if start_ind == end_ind:
+        raise ValueError('Start index and end index are the same!')
+
+    return start_ind, end_ind
