@@ -82,29 +82,6 @@ def geojson_from_route(
             json.dump(geojson, fp)
     return geojson
 
-
-# constraints
-def is_neg_constraints(lat, lon, time, constraint_list):
-    """Check if the given point is constrained by the constraints_list
-
-    :param lat: Latitude of the point
-    :type lat: float
-    :param lat: Longitude of the point
-    :type lat: float
-    :param time: Datetime of the provided point data
-    :type time: datetime.datetime
-    :param constraints_list: Constraints list passed in by the config
-    :type constraints_list: ConstraintsList
-    """
-
-    lat = np.array([lat])
-    lon = np.array([lon])
-    is_constrained = [False for i in range(0, lat.shape[0])]
-    is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-    # print(is_constrained)
-    return 0 if not is_constrained else 1
-
-
 def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     """Return constraint violation per waypoint in route
 
@@ -112,10 +89,17 @@ def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     :type route: np.ndarray
     :return: Array of constraint violations
     """
+    lat = route[:, 0]
+    lon = route[:, 1]
+    is_constrained = [False for i in range(0, lat.shape[0] -1)]
 
-    constraints = np.array([
-        is_neg_constraints(lat, lon, None, constraint_list) for lat, lon in route])
-    return constraints
+    lat_start = lat[:-1]
+    lat_end = lat[1:]
+    lon_start = lon[:-1]
+    lon_end = lon[1:]
+
+    is_constrained = constraint_list.safe_crossing(lat_start, lon_start, lat_end, lon_end, None, is_constrained)
+    return is_constrained
 
 
 def get_constraints(route, constraint_list):

@@ -11,9 +11,10 @@ from astropy import units as u
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
-    GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
+    GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.utils.maps import Map
 
@@ -235,3 +236,42 @@ def test_configuration_isofuel_patcher():
     assert config_ship.BOAT_DRAUGHT_AFT * u.meter == pt.boat.draught_aft
     assert config_ship.BOAT_DRAUGHT_FORE * u.meter == pt.boat.draught_fore
     assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter == pt.boat.under_keel_clearance
+
+
+def test_constraint_violation_repair():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    input_crs = ccrs.PlateCarree()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    np.random.seed(2)
+
+    patchfn = PatchFactory.get_patcher(
+        patch_type="isofuel_singleton",
+        config=config,
+        application="ConstraintViolationRepair"
+    )
+    repairfn = ConstraintViolationRepair(config, constraint_list)
+    X = get_dummy_route_input()
+    old_route = copy.deepcopy(X)
+    is_constrained=[False, True, True, True, False, True, True, False, False]
+    new_route = repairfn.repair_single_route(X[0,0], patchfn, is_constrained)
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+
+    ax.plot(new_route[:, 1], new_route[:, 0], color="blue", transform=input_crs, marker='o')
+    ax.plot(old_route[0,0][:, 1], old_route[0,0][:, 0], color="firebrick", transform=input_crs, marker='o')
+    assert np.array_equal(new_route[0],  old_route[0,0][0])
+    assert np.array_equal(new_route[-2], old_route[0,0][-2])
+    assert np.array_equal(new_route[-1], old_route[0,0][-1])
+

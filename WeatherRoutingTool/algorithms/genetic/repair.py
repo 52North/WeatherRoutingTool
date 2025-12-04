@@ -83,10 +83,16 @@ class ConstraintViolationRepair(RepairBase):
         self.constraints_list = constraints_list
 
     def repairfn(self, problem, X, **kw):
+        """
+        Request constraint validation and repairing of routes.
 
-        # TODO: investigate methods to make GreatCircleRoutePatcher consider constraints
-        # gcr_dist = 1e5
-        # patchfn = patcher.GreatCircleRoutePatcher(dist=gcr_dist)
+        :param X: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
+            ``route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...])``. X.shape = (n_routes, 1, n_waypoints, 2).
+            Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
+        :type X: np.array
+        :return: Repaired route matrix. Same structure as for ``X``.
+        :rtype: np.array
+        """
 
         patchfn = PatchFactory.get_patcher(
             patch_type="isofuel_singleton",
@@ -96,25 +102,83 @@ class ConstraintViolationRepair(RepairBase):
 
         for i, (rt,) in enumerate(X):
             constrained = utils.get_constraints_array(rt, self.constraints_list)
-            nr = [rt[[0]]]
-
-            p = 0
-
-            for j in range(1, constrained.shape[0]):
-                v = constrained[j]
-
-                if v != 0:
-                    continue
-
-                if j - p > 1:
-                    _r = patchfn.patch(rt[p], rt[j], self.config.DEPARTURE_TIME)
-                    nr.append(_r[1:])
-                else:
-                    nr.append(rt[[j]])
-                p = j
-
-            X[i, 0] = np.concatenate(nr, axis=0)
+            X[i, 0] = self.repair_single_route(rt, patchfn, constrained)
         return X
+
+    def repair_single_route(self, rt, patchfn, constrained):
+        """
+        Repairing route segments which are violating constraints.
+
+        The function loops through ``constrained``. While looping, it stores the index of the last valid
+        waypoint in ``prev_seg_end`` and fills the list ``output_route_segs`` with valid route segments:
+            - If a segment is constrained, the variable ``on_constraint`` is set to ``True``.
+            - If a segment is not constrained and ``on_constraint==False``, the waypoint at the end of the route segment
+              is added to ``output_route_segs``.
+            - If a segment is not constrained and ``on_constraint==True``, the ship did just pass a constrained area.
+              Thus, the patcher is called to connect the last valid waypoint to the current starting point of the route
+              segment. The resulting route segment and the last waypoint of the current segment are added to
+              ``output_route_segs``.
+
+
+        :params rt: Route to be repaired.
+        :type rt: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :params patchfn: route Patcher
+        :type patchfn: PatcherBase
+        :params constrained: Results of checks for constraint violations for each route segment.
+        :type constrained: np.array
+        :return: Repaired route. Same structure as for ``rt``.
+        :rtype: np.array
+        """
+        # check for correct input shape of rt
+        assert len(rt.shape) == 2
+        assert rt.shape[1] == 2
+        debug = True
+
+        prev_seg_end = 0
+        on_constraint = False
+        output_route_segs = [np.array([rt[0]])]
+
+        if debug:
+            print('rt: ', rt)
+            print('output_route_segs: ', output_route_segs)
+
+        for seg_i in range(0, len(constrained)):
+            seg_start = seg_i
+            seg_end = seg_i + 1
+
+            if debug:
+                print('seg_start: ', seg_start)
+                print('seg_end: ', seg_end)
+                print('on_constrained: ', on_constraint)
+                print('constrained: ', constrained[seg_i])
+                print('prev_constraint: ', prev_seg_end)
+                print('')
+
+            if not constrained[seg_i]:
+                if on_constraint:
+                    # just passed constrained area -> call patcher
+                    _r = patchfn.patch(rt[prev_seg_end], rt[seg_start], self.config.DEPARTURE_TIME)
+                    if debug:
+                        print(' adding _r: ',_r)
+
+                    output_route_segs.append(_r)
+                    output_route_segs.append([rt[seg_end]])
+                    on_constraint = False
+                    prev_seg_end = seg_end
+                else:
+                    # on valid route segment
+                    if debug:
+                        print('rt[seg_end]: ', rt[seg_end])
+                    output_route_segs.append([rt[seg_end]])
+                    prev_seg_end = seg_end
+            else:
+                # currently passing constrained area
+                on_constraint = True
+
+        output_route = np.concatenate(output_route_segs, axis=0)
+        if debug:
+            print('output_route shape: ', output_route)
+        return output_route
 
 
 # orchestration
