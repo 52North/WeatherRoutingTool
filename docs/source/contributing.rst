@@ -20,8 +20,9 @@ Example:
 
 .. code-block:: python
 
-    This is a reStructuredText style.
     """
+    This is a reStructuredText style.
+
     :param param1: first param
     :type param1: type of first param
     :return: description of what is returned
