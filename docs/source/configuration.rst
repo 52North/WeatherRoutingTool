@@ -179,7 +179,7 @@ If no input data is provided but the config parameters ``DEPTH_DATA`` and ``WEAT
 the data is downloaded automatically from
 
 - depth data: [NOAA](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc)
-- atmospheric weather data: [Global Forecast System](https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php>)
+- atmospheric weather data: [Global Forecast System](https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php)
 - oceanic weather data: [Copernicus Marine Data Store](https://data.marine.copernicus.eu/products)
 
 In principle, the WRT can also be used without providing depth data but to it is highly recommended to provide depth information

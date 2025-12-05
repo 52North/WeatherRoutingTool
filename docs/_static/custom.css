@@ -1,0 +1,16 @@
+/* Custom CSS for WeatherRoutingTool documentation */
+
+/* Increase maximum width for better readability on large screens */
+.wy-nav-content {
+    max-width: 1200px !important;
+}
+
+/* Improve table spacing */
+table.docutils {
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+table.docutils td, table.docutils th {
+    padding: 8px 16px;
+}
