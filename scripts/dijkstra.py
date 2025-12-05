@@ -55,7 +55,8 @@ class DijkstraAlgorithm:
         self.bbox = (min(self.longitude), min(self.latitude), min(self.longitude), min(self.latitude))
 
     def execute_routing(self, start: tuple[float, float], end: tuple[float, float],
-                        bbox: tuple[float, float, float, float] = None, method='dijkstra'):
+                        bbox: tuple[float, float, float, float] = None, method='dijkstra',
+                        no_neighbors: int = 1):
         if bbox:
             # FIXME: might need to reload the mask
             self.subset_bbox(bbox)
@@ -67,6 +68,7 @@ class DijkstraAlgorithm:
         end_lat = self.latitude[np.argmin(np.abs(self.latitude - end[1]))]
         print(f"Create graph for bounding box {bbox}")
         graph = nx.Graph()
+        neighbors = list(range(-no_neighbors, no_neighbors+1, 1))
         # ToDo: speed up by looping over every second lon/lat value?
         for xx in range(len(self.longitude)):
             for yy in range(len(self.latitude)):
@@ -75,7 +77,8 @@ class DijkstraAlgorithm:
                     continue
                 lon = float(self.longitude[xx])
                 lat = float(self.latitude[yy])
-                for ii, jj in product([-1, 0, 1], [-1, 0, 1]):
+                for ii, jj in product(neighbors, neighbors):
+                    # FIXME: check land crossing if no_neighbors > 1
                     if ii == jj == 0:
                         continue
                     # point outside grid
@@ -126,5 +129,5 @@ if __name__ == "__main__":
     # end = (11, 57.5)
 
     algo = DijkstraAlgorithm(input_filename)
-    shortest_path = algo.execute_routing(start, end, bbox)
+    shortest_path = algo.execute_routing(start, end, bbox, no_neighbors=1)
     points_to_geojson(shortest_path, output_filename, step=1)
