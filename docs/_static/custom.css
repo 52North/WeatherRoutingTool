@@ -1,0 +1,13 @@
+.wy-nav-content {
+    max-width: 1200px !important;
+}
+
+table.docutils {
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+table.docutils td,
+table.docutils th {
+    padding: 8px 16px;
+}
