@@ -362,7 +362,7 @@ class RouteParams:
 
     def get_power_type(self, power_type):
         if power_type == 'power':
-            return {"value": self.ship_params_per_step.get_power(), "label": 'power consumption', "unit": u.Watt}
+            return {"value": self.ship_params_per_step.get_power(), "label": 'power consumption (kW)', "unit": u.Watt}
         if power_type == 'fuel':
             return {"value": self.get_fuel_per_dist(), "label": "fuel consumption", "unit": u.kg}
 
@@ -474,10 +474,10 @@ class RouteParams:
                  marker='o', color=color, linewidth=0, label=label)
         plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
                      xerr=hist_values_nom["bin_widths"].to(u.km).value / 2, fmt=' ', color=color, linestyle=None)
-        plt.axhline(y=mean_dev, color=color, linestyle='dashed')
+        #plt.axhline(y=mean_dev, color=color, linestyle='dashed')
 
         plt.xlabel('travel distance (km)')
-        plt.ylabel(power_nom["label"] + ' data/model')
+        plt.ylabel(power_nom["label"] + ' scipy shortest/model')
         plt.xticks()
 
     def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
