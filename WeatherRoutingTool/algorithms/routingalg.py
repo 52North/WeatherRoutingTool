@@ -22,6 +22,7 @@ class RoutingAlg:
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     departure_time: datetime
+    arrival_time: datetime
     gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
     gcr_dist: float  # distance of great circle route
 
@@ -29,6 +30,8 @@ class RoutingAlg:
     route_ensemble: list
     figure_path: str
     map_ext: Map
+
+    boat_speed: float
 
     def __init__(self, config):
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
@@ -38,12 +41,18 @@ class RoutingAlg:
         self.start = (lat_start, lon_start)
         self.finish = (lat_end, lon_end)
         self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
 
         self.gcr_course, self.gcr_dist = self.calculate_gcr(self.start, self.finish)
         self.gcr_course = self.gcr_course * u.degree
 
         self.figure_path = get_figure_path()
         plt.switch_backend("Agg")
+
+        self.boat_speed = config.BOAT_SPEED * u.meter/u.second
+
+    def get_boat_speed(self, dists=None):
+        return self.boat_speed
 
     def init_fig(self, **kwargs):
         pass

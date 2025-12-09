@@ -54,9 +54,11 @@ class Config(BaseModel):
 
     # Other configuration
     ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased', 'genetic_shortest_route'] = 'isofuel'
+    ARRIVAL_TIME:  datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
     # options: 'isofuel', 'genetic', 'speedy_isobased'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
+    BOAT_SPEED: float = -99.  # boat speed [m/s]
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
@@ -185,7 +187,7 @@ class Config(BaseModel):
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
             raise ValueError(msg)
 
-    @field_validator('DEPARTURE_TIME', mode='before')
+    @field_validator('DEPARTURE_TIME', 'ARRIVAL_TIME', mode='before')
     @classmethod
     def parse_and_validate_datetime(cls, v):
         if isinstance(v, datetime):
@@ -424,4 +426,24 @@ class Config(BaseModel):
                 raise ValueError(f"Failed to validate depth data: {e}")
         else:
             self._DATA_MODE_DEPTH = 'automatic'
+        return self
+
+    @field_validator('BOAT_SPEED', mode='after')
+    @classmethod
+    def check_boat_speed(cls, v):
+        if v > 10:
+            logger.warning(
+                "Your 'BOAT_SPEED' is higher than 10 m/s."
+                " Have you considered that this program works with m/s?")
+        return v
+
+    @model_validator(mode='after')
+    def check_speed_determination(self) -> Self:
+        if self.ARRIVAL_TIME=='9999-99-99T99:99Z' and self.BOAT_SPEED==-99.:
+            raise ValueError('Please specify either the boat speed or the arrival time')
+        if not self.ARRIVAL_TIME=='9999-99-99T99:99Z' and not self.BOAT_SPEED==-99.:
+            raise ValueError('Please specify either the boat speed or the arrival time and not both.')
+        if not self.ARRIVAL_TIME=='9999-99-99T99:99Z' and self.ALGORITHM_TYPE!='genetic':
+            raise ValueError('The determination of the speed from the arrival time is only possible for the'
+                             ' genetic algorithm')
         return self
