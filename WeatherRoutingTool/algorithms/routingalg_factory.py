@@ -3,6 +3,7 @@ import logging
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.genetic import Genetic
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
+from WeatherRoutingTool.algorithms.dijkstra import DijkstraGlobalLandMask
 
 logger = logging.getLogger('WRT')
 
@@ -24,6 +25,9 @@ class RoutingAlgFactory:
 
         if (config.ALGORITHM_TYPE == 'genetic') or (config.ALGORITHM_TYPE == 'genetic_shortest_route'):
             ra = Genetic(config)
+
+        if config.ALGORITHM_TYPE == 'dijkstra':
+            ra = DijkstraGlobalLandMask(config)
 
         ra.print_init()
         return ra

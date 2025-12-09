@@ -119,7 +119,7 @@ class RouteParams:
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
-    def return_route_to_API(self, filename):
+    def write_to_geojson(self, filename):
         rp_dict = {}
         rp_dict['type'] = 'FeatureCollection'
         feature_list = []

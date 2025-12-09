@@ -7,5 +7,6 @@ Algorithms
    :maxdepth: 2
    :caption: Contents:
 
+   dijkstra
    genetic
    isofuel

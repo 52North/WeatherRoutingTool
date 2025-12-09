@@ -6,6 +6,7 @@ from geovectorslib import geod
 from matplotlib.figure import Figure
 
 from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
@@ -73,7 +74,13 @@ class RoutingAlg:
             finish[1]])
         return gcr['azi1'], gcr['s12']
 
-    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
+    def execute_routing(
+            self,
+            boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose=False
+    ) -> RouteParams:
         pass
 
     def check_for_positive_constraints(self, constraint_list):
