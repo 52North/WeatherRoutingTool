@@ -132,7 +132,7 @@ class ConstraintViolationRepair(RepairBase):
         # check for correct input shape of rt
         assert len(rt.shape) == 2
         assert rt.shape[1] == 2
-        debug = True
+        debug = False
 
         prev_seg_end = 0
         on_constraint = False

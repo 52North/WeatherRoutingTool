@@ -59,6 +59,7 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
 
 def lat_lon_from_file(filename):
     with open(filename) as file:
+        print('reading file: ', filename)
         rp_dict = json.load(file)
 
     point_list = rp_dict['features']
