@@ -255,8 +255,8 @@ def test_constraint_violation_repair():
     repairfn = ConstraintViolationRepair(config, constraint_list)
     X = get_dummy_route_input()
     old_route = copy.deepcopy(X)
-    is_constrained=[False, True, True, True, False, True, True, False, False]
-    new_route = repairfn.repair_single_route(X[0,0], patchfn, is_constrained)
+    is_constrained = [False, True, True, True, False, True, True, False, False]
+    new_route = repairfn.repair_single_route(X[0, 0], patchfn, is_constrained)
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
@@ -270,8 +270,7 @@ def test_constraint_violation_repair():
     )
 
     ax.plot(new_route[:, 1], new_route[:, 0], color="blue", transform=input_crs, marker='o')
-    ax.plot(old_route[0,0][:, 1], old_route[0,0][:, 0], color="firebrick", transform=input_crs, marker='o')
-    assert np.array_equal(new_route[0],  old_route[0,0][0])
-    assert np.array_equal(new_route[-2], old_route[0,0][-2])
-    assert np.array_equal(new_route[-1], old_route[0,0][-1])
-
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs, marker='o')
+    assert np.array_equal(new_route[0], old_route[0, 0][0])
+    assert np.array_equal(new_route[-2], old_route[0, 0][-2])
+    assert np.array_equal(new_route[-1], old_route[0, 0][-1])

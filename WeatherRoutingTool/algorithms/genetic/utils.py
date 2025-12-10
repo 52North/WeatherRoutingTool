@@ -82,6 +82,7 @@ def geojson_from_route(
             json.dump(geojson, fp)
     return geojson
 
+
 def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     """Return constraint violation per waypoint in route
 
@@ -91,7 +92,7 @@ def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     """
     lat = route[:, 0]
     lon = route[:, 1]
-    is_constrained = [False for i in range(0, lat.shape[0] -1)]
+    is_constrained = [False for i in range(0, lat.shape[0] - 1)]
 
     lat_start = lat[:-1]
     lat_end = lat[1:]

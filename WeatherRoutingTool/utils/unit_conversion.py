@@ -154,6 +154,7 @@ def downsample_dataframe(data, interval):
     resampled_data = data.groupby('clustered_index').mean()
     return resampled_data
 
+
 def get_coord_index(start_coord, end_coord, coord_array):
     start_ind = -1
     end_ind = -1
@@ -163,7 +164,6 @@ def get_coord_index(start_coord, end_coord, coord_array):
 
         if end_coord > coord_array[icoord] and end_coord <= coord_array[icoord+1]:
             end_ind = icoord
-
 
     if start_ind < 0:
         raise ValueError('Coordinate not in array: ', start_coord)

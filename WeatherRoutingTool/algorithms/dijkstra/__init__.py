@@ -149,7 +149,7 @@ class DijkstraGlobalLandMask(RoutingAlg):
                     if ii == jj == 0:
                         continue
                     # point outside grid
-                    if  (xx+ii < 0) or (xx+ii > len(self.longitude)-1) or (yy+jj < 0) or (yy+jj > len(self.latitude)-1):
+                    if (xx+ii < 0) or (xx+ii > len(self.longitude)-1) or (yy+jj < 0) or (yy+jj > len(self.latitude)-1):
                         continue
                     # point on land
                     if not self.mask[yy + jj, xx + ii]:

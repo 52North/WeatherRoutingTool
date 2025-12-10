@@ -468,13 +468,13 @@ class RouteParams:
             )
 
         hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
-        mean_dev = hist_values_ratios.mean()
+        # mean_dev = hist_values_ratios.mean()
 
         plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios,
                  marker='o', color=color, linewidth=0, label=label)
         plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
                      xerr=hist_values_nom["bin_widths"].to(u.km).value / 2, fmt=' ', color=color, linestyle=None)
-        #plt.axhline(y=mean_dev, color=color, linestyle='dashed')
+        # plt.axhline(y=mean_dev, color=color, linestyle='dashed')
 
         plt.xlabel('travel distance (km)')
         plt.ylabel(power_nom["label"] + ' scipy shortest/model')

@@ -20,6 +20,7 @@ from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
+
 def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
     boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
     boat.speed = sog
@@ -32,7 +33,7 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
     finish = (lat[-1], lon[-1])
 
     # add arrival at destination to 'start_times'
-    travel_time = timedelta(seconds= waypoint_dict['travel_times'][-1].to("second").value)
+    travel_time = timedelta(seconds=waypoint_dict['travel_times'][-1].to("second").value)
     waypoint_dict['start_times'] = np.append(
         waypoint_dict['start_times'],
         waypoint_dict['start_times'][-1] + travel_time
@@ -57,6 +58,7 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
         print('Writing file: ', filename)
         rp.return_route_to_API(filename)
 
+
 def lat_lon_from_file(filename):
     with open(filename) as file:
         print('reading file: ', filename)
@@ -75,13 +77,17 @@ def lat_lon_from_file(filename):
 
     return lats_per_step, lons_per_step
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     required_args = parser.add_argument_group('required arguments')
     optional_args = parser.add_argument_group('optional arguments')
-    required_args.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
-    required_args.add_argument('-r-in', '--input_route', help="Route file name (absolute path)", required=True, type=str)
-    required_args.add_argument('-r-out', '--output_route', help="Route file name (absolute path)", required=True, type=str)
+    required_args.add_argument('-f', '--file', help="Config file name (absolute path)",
+                               required=True, type=str)
+    required_args.add_argument('-r-in', '--input_route', help="Route file name (absolute path)",
+                               required=True, type=str)
+    required_args.add_argument('-r-out', '--output_route', help="Route file name (absolute path)",
+                               required=True, type=str)
 
     set_up_logging()
 
