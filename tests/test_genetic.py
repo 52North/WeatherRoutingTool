@@ -18,6 +18,14 @@ from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepa
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.utils.maps import Map
 
+# FIXME: the following test functions fail if LaTeX is not installed:
+#   - tests/test_genetic.py::test_random_plateau_mutation
+#   - tests/test_genetic.py::test_bezier_curve_mutation
+#   - tests/test_genetic.py::test_constraint_violation_repair
+#  In the GH Actions workflow, we install the packages texlive, texlive-latex-extra and cm-super to make sure the
+#  tests are passing. However, this leads to additional traffic when running the workflow. It would be better to
+#  exclude plotting in the tests or adapt it so that LaTeX doesn't need to be installed.
+
 
 def test_isofuelpatcher_singleton():
     dirname = os.path.dirname(__file__)

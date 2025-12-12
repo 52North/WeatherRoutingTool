@@ -56,7 +56,7 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
     if geojsondir:
         filename = output_route
         print('Writing file: ', filename)
-        rp.return_route_to_API(filename)
+        rp.write_to_geojson(filename)
 
 
 def lat_lon_from_file(filename):
