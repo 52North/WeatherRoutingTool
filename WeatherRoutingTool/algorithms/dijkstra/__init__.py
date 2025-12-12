@@ -1,11 +1,15 @@
 import json
 import logging
 from itertools import product
+from math import ceil, gcd
+from typing import Generator
 
 import networkx as nx
 import numpy as np
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
+from geographiclib.geodesicline import GeodesicLine
+from global_land_mask import is_land
 from shapely import Point, to_geojson
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
@@ -56,7 +60,7 @@ class DijkstraGlobalLandMask(RoutingAlg):
     """
     Grd-based Dijkstra algorithm implementation.
     The graph is created using the global land mask (https://github.com/toddkarin/global-land-mask) grid
-    by connecting each grid point to a specified number of neighbors.
+    by connecting each grid point to a configurable number of neighbors.
     """
     mask: np.array
     longitude: np.array
@@ -65,10 +69,17 @@ class DijkstraGlobalLandMask(RoutingAlg):
     res_lon: float
 
     def __init__(self, config):
+        """
+        :param config:
+        :type config: WeatherRoutingTool.config.Config
+        :return: None
+        :rtype: NoneType
+        """
         super().__init__(config)
         self.config = config
         self.nof_neighbors = config.DIJKSTRA_NOF_NEIGHBORS
         self.step = config.DIJKSTRA_STEP
+        self.interval = 1000
         self.read_mask(config.DIJKSTRA_MASK_FILE)
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
@@ -87,7 +98,6 @@ class DijkstraGlobalLandMask(RoutingAlg):
         path_sub = [path[i] for i in range_including_last_element(path, self.step)]
         lons, lats = list(zip(*path_sub))
 
-        # np.zeros(len(path_sub)-1)
         ship_params = ShipParams(
             speed=np.zeros(len(path_sub)-1) * u.meter/u.second,
             fuel_rate=np.zeros(len(path_sub)-1) * u.kg/u.second,
@@ -129,14 +139,28 @@ class DijkstraGlobalLandMask(RoutingAlg):
         )
         return route, 0
 
+    def get_neighbors_to_connect(self) -> Generator[tuple[int, int], None, None]:
+        """
+        Get neighboring nodes the node in question should be connected to by an edge.
+        Self-loops and axial (horizontal and vertical) and diagonal multiples are disregarded.
+        """
+        neighbors = list(product(range(-self.nof_neighbors, self.nof_neighbors+1, 1), repeat=2))
+        for ii, jj in neighbors:
+            if gcd(abs(ii), abs(jj)) != 1:
+                pass
+            else:
+                yield ii, jj
+
     def get_graph(self) -> nx.Graph:
+        """
+        Create an undirected graph without multiple (parallel) edges.
+        """
         # FIXME: might need to reload the mask
         self.subset_bbox()
         logger.info(f"Create graph for bounding box {self.map_ext.get_var_tuple()}")
         graph = nx.Graph()
-        neighbors = list(range(-self.nof_neighbors, self.nof_neighbors+1, 1))
+        neighbors = list(self.get_neighbors_to_connect())
         # ToDo: speed up by looping over every second lon/lat value?
-        # ToDo: for horizontal/vertical moves do not add multiple edges
         for xx in range(len(self.longitude)):
             for yy in range(len(self.latitude)):
                 # point on land
@@ -144,18 +168,20 @@ class DijkstraGlobalLandMask(RoutingAlg):
                     continue
                 lon = float(self.longitude[xx])
                 lat = float(self.latitude[yy])
-                for ii, jj in product(neighbors, neighbors):
-                    # FIXME: check land crossing if nof_neighbors > 1
-                    if ii == jj == 0:
-                        continue
+                # connect the point to its neighbors
+                for ii, jj in neighbors:
                     # point outside grid
                     if (xx+ii < 0) or (xx+ii > len(self.longitude)-1) or (yy+jj < 0) or (yy+jj > len(self.latitude)-1):
                         continue
-                    # point on land
-                    if not self.mask[yy + jj, xx + ii]:
-                        continue
                     lon_ = float(self.longitude[xx+ii])
                     lat_ = float(self.latitude[yy+jj])
+                    # point on land (included in "has_point_on_land")
+                    # if not self.mask[yy + jj, xx + ii]:
+                    #     continue
+                    # start/end point or points along the edge on land
+                    if self.has_point_on_land(geod.InverseLine(lat, lon, lat_, lon_)):
+                        continue
+                    # ToDo: check if this is really necessary or if networkX.Graph is doing this check implicitly
                     if graph.has_edge((lon, lat), (lon_, lat_)):
                         continue
                     distance = geod.Inverse(lat, lon, lat_, lon_)['s12']
@@ -163,6 +189,26 @@ class DijkstraGlobalLandMask(RoutingAlg):
                     graph.add_edge((lon, lat), (lon_, lat_), distance=distance)
         # self.save_graph(graph, "dijkstra_graph.geojson")
         return graph
+
+    def has_point_on_land(
+            self,
+            line: GeodesicLine,
+    ) -> bool:
+        """
+        Check if the line has a point on land. The check is done for points along the line with the configured interval
+        and always includes the start and end point of the line.
+        :param line:
+        :type line: geographiclib.geodesicline.GeodesicLine
+        :return:
+        :rtype: bool
+        """
+        n = int(ceil(line.s13 / self.interval))
+        for i in range(0, n+1):
+            s = min(self.interval * i, line.s13)
+            g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            if is_land(g['lat2'], g['lon2']):
+                return True
+        return False
 
     def read_mask(self, mask_file):
         # Mask shape: 21600 (lat) * 43200 (lon) = 933,120,000
