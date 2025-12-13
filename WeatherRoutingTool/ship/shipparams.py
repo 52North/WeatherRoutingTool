@@ -2,11 +2,18 @@ import logging
 
 import numpy as np
 from astropy import units as u
+from WeatherRoutingTool.ship.weatherparams import WeatherParams
 
 logger = logging.getLogger('WRT.ship')
 
 
 class ShipParams():
+    """
+    Container for ship performance parameters.
+    
+    Weather parameters are now separated into a WeatherParams object, but backward
+    compatibility is maintained through property accessors.
+    """
     fuel_rate: np.ndarray  # (kg/s)
     power: np.ndarray  # (W)
     rpm: np.ndarray  # (rpm)
@@ -16,25 +23,23 @@ class ShipParams():
     r_waves: np.ndarray  # (N)
     r_shallow: np.ndarray  # (N)
     r_roughness: np.ndarray  # (N)
-    wave_height: np.ndarray  # (m)
-    wave_direction: np.ndarray  # (radian)
-    wave_period: np.ndarray  # (s)
-    u_currents: np.ndarray  # (m/s)
-    v_currents: np.ndarray  # (m/s)
-    u_wind_speed: np.ndarray  # (m/s)
-    v_wind_speed: np.ndarray  # (m/s)
-    pressure: np.ndarray  # Pa
-    air_temperature: np.ndarray  # °C
-    salinity: np.ndarray  # dimensionless (kg/kg)
-    water_temperature: np.ndarray  # °C
-    status: np.array
-    message: np.ndarray
+    
+    # Weather parameters are now stored in separate WeatherParams object
+    weather: WeatherParams
 
     fuel_type: str
 
     def __init__(self, fuel_rate, power, rpm, speed, r_calm, r_wind, r_waves, r_shallow, r_roughness, wave_height,
                  wave_direction, wave_period, u_currents, v_currents, u_wind_speed, v_wind_speed, pressure,
-                 air_temperature, salinity, water_temperature, status, message):
+                 air_temperature, salinity, water_temperature, status, message, weather=None):
+        """
+        Initialize ShipParams.
+        
+        Args:
+            weather: Optional WeatherParams object. If provided, individual weather parameters are ignored.
+                    If not provided, weather parameters are created from individual arguments (backward compatible).
+        """
+        # Ship-specific parameters
         self.fuel_rate = fuel_rate
         self.power = power
         self.rpm = rpm
@@ -44,21 +49,134 @@ class ShipParams():
         self.r_waves = r_waves
         self.r_shallow = r_shallow
         self.r_roughness = r_roughness
-        self.wave_height = wave_height
-        self.wave_direction = wave_direction
-        self.wave_period = wave_period
-        self.u_currents = u_currents
-        self.v_currents = v_currents
-        self.u_wind_speed = u_wind_speed
-        self.v_wind_speed = v_wind_speed
-        self.pressure = pressure
-        self.air_temperature = air_temperature
-        self.salinity = salinity
-        self.water_temperature = water_temperature
-        self.status = status
-        self.message = message
+
+        # Weather parameters - use provided WeatherParams or create from individual params
+        if weather is not None:
+            self.weather = weather
+        else:
+            # Backward compatibility: create WeatherParams from individual parameters
+            self.weather = WeatherParams(
+                wave_height=wave_height,
+                wave_direction=wave_direction,
+                wave_period=wave_period,
+                u_currents=u_currents,
+                v_currents=v_currents,
+                u_wind_speed=u_wind_speed,
+                v_wind_speed=v_wind_speed,
+                pressure=pressure,
+                air_temperature=air_temperature,
+                salinity=salinity,
+                water_temperature=water_temperature,
+                status=status,
+                message=message
+            )
 
         self.fuel_type = 'HFO'
+
+    # Property accessors for backward compatibility - delegate to weather object
+    @property
+    def wave_height(self):
+        return self.weather.wave_height
+    
+    @wave_height.setter
+    def wave_height(self, value):
+        self.weather.wave_height = value
+    
+    @property
+    def wave_direction(self):
+        return self.weather.wave_direction
+    
+    @wave_direction.setter
+    def wave_direction(self, value):
+        self.weather.wave_direction = value
+    
+    @property
+    def wave_period(self):
+        return self.weather.wave_period
+    
+    @wave_period.setter
+    def wave_period(self, value):
+        self.weather.wave_period = value
+    
+    @property
+    def u_currents(self):
+        return self.weather.u_currents
+    
+    @u_currents.setter
+    def u_currents(self, value):
+        self.weather.u_currents = value
+    
+    @property
+    def v_currents(self):
+        return self.weather.v_currents
+    
+    @v_currents.setter
+    def v_currents(self, value):
+        self.weather.v_currents = value
+    
+    @property
+    def u_wind_speed(self):
+        return self.weather.u_wind_speed
+    
+    @u_wind_speed.setter
+    def u_wind_speed(self, value):
+        self.weather.u_wind_speed = value
+    
+    @property
+    def v_wind_speed(self):
+        return self.weather.v_wind_speed
+    
+    @v_wind_speed.setter
+    def v_wind_speed(self, value):
+        self.weather.v_wind_speed = value
+    
+    @property
+    def pressure(self):
+        return self.weather.pressure
+    
+    @pressure.setter
+    def pressure(self, value):
+        self.weather.pressure = value
+    
+    @property
+    def air_temperature(self):
+        return self.weather.air_temperature
+    
+    @air_temperature.setter
+    def air_temperature(self, value):
+        self.weather.air_temperature = value
+    
+    @property
+    def salinity(self):
+        return self.weather.salinity
+    
+    @salinity.setter
+    def salinity(self, value):
+        self.weather.salinity = value
+    
+    @property
+    def water_temperature(self):
+        return self.weather.water_temperature
+    
+    @water_temperature.setter
+    def water_temperature(self, value):
+        self.weather.water_temperature = value
+    
+    @property
+    def status(self):
+        return self.weather.status
+    
+    @status.setter
+    def status(self, value):
+        self.weather.status = value
+    
+    @property
+    def message(self):
+        return self.weather.message
+    
+    @message.setter
+    def message(self, value):
+        self.weather.message = value
 
     @classmethod
     def set_default_array(cls):
@@ -163,6 +281,8 @@ class ShipParams():
         logger.info('message' + str(self.message))
 
     def define_courses(self, courses_segments):
+        """Expand arrays for course segments."""
+        # Ship parameters
         self.speed = np.repeat(self.speed, courses_segments + 1, axis=1)
         self.fuel_rate = np.repeat(self.fuel_rate, courses_segments + 1, axis=1)
         self.power = np.repeat(self.power, courses_segments + 1, axis=1)
@@ -172,19 +292,9 @@ class ShipParams():
         self.r_waves = np.repeat(self.r_waves, courses_segments + 1, axis=1)
         self.r_shallow = np.repeat(self.r_shallow, courses_segments + 1, axis=1)
         self.r_roughness = np.repeat(self.r_roughness, courses_segments + 1, axis=1)
-        self.wave_height = np.repeat(self.wave_height, courses_segments + 1, axis=1)
-        self.wave_direction = np.repeat(self.wave_direction, courses_segments + 1, axis=1)
-        self.wave_period = np.repeat(self.wave_period, courses_segments + 1, axis=1)
-        self.u_currents = np.repeat(self.u_currents, courses_segments + 1, axis=1)
-        self.v_currents = np.repeat(self.v_currents, courses_segments + 1, axis=1)
-        self.u_wind_speed = np.repeat(self.u_wind_speed, courses_segments + 1, axis=1)
-        self.v_wind_speed = np.repeat(self.v_wind_speed, courses_segments + 1, axis=1)
-        self.pressure = np.repeat(self.pressure, courses_segments + 1, axis=1)
-        self.air_temperature = np.repeat(self.air_temperature, courses_segments + 1, axis=1)
-        self.salinity = np.repeat(self.salinity, courses_segments + 1, axis=1)
-        self.water_temperature = np.repeat(self.water_temperature, courses_segments + 1, axis=1)
-        self.status = np.repeat(self.status, courses_segments + 1, axis=1)
-        self.message = np.repeat(self.message, courses_segments + 1, axis=1)
+        
+        # Weather parameters - delegate to weather object
+        self.weather.define_courses(courses_segments)
 
     def get_power(self):
         return self.power
@@ -322,6 +432,8 @@ class ShipParams():
         self.message = new_message
 
     def select(self, idxs):
+        """Select specific indices from the arrays."""
+        # Ship parameters
         self.speed = self.speed[:, idxs]
         self.fuel_rate = self.fuel_rate[:, idxs]
         self.power = self.power[:, idxs]
@@ -331,22 +443,13 @@ class ShipParams():
         self.r_waves = self.r_waves[:, idxs]
         self.r_shallow = self.r_shallow[:, idxs]
         self.r_roughness = self.r_roughness[:, idxs]
-        self.wave_height = self.wave_height[:, idxs]
-        self.wave_direction = self.wave_direction[:, idxs]
-        self.wave_period = self.wave_period[:, idxs]
-        self.u_currents = self.u_currents[:, idxs]
-        self.v_currents = self.v_currents[:, idxs]
-        self.u_wind_speed = self.u_wind_speed[:, idxs]
-        self.v_wind_speed = self.v_wind_speed[:, idxs]
-        self.pressure = self.pressure[:, idxs]
-        self.air_temperature = self.air_temperature[:, idxs]
-        self.salinity = self.salinity[:, idxs]
-        self.water_temperature = self.water_temperature[:, idxs]
-        self.status = self.status[:, idxs]
-        self.message = self.message[:, idxs]
+        
+        # Weather parameters - delegate to weather object
+        self.weather.select(idxs)
 
     def flip(self):
-        # should be replaced by more careful implementation
+        """Flip and append dummy values to arrays."""
+        # Ship parameters - remove last, flip, append dummy
         self.speed = self.speed[:-1]
         self.fuel_rate = self.fuel_rate[:-1]
         self.power = self.power[:-1]
@@ -356,19 +459,6 @@ class ShipParams():
         self.r_waves = self.r_waves[:-1]
         self.r_shallow = self.r_shallow[:-1]
         self.r_roughness = self.r_roughness[:-1]
-        self.wave_height = self.wave_height[:-1]
-        self.wave_direction = self.wave_direction[:-1]
-        self.wave_period = self.wave_period[:-1]
-        self.u_currents = self.u_currents[:-1]
-        self.v_currents = self.v_currents[:-1]
-        self.u_wind_speed = self.u_wind_speed[:-1]
-        self.v_wind_speed = self.v_wind_speed[:-1]
-        self.pressure = self.pressure[:-1]
-        self.air_temperature = self.air_temperature[:-1]
-        self.salinity = self.salinity[:-1]
-        self.water_temperature = self.water_temperature[:-1]
-        self.status = self.status[:-1]
-        self.message = self.message[:-1]
 
         self.speed = np.flip(self.speed, 0)
         self.fuel_rate = np.flip(self.fuel_rate, 0)
@@ -379,19 +469,6 @@ class ShipParams():
         self.r_waves = np.flip(self.r_waves, 0)
         self.r_shallow = np.flip(self.r_shallow, 0)
         self.r_roughness = np.flip(self.r_roughness, 0)
-        self.wave_height = np.flip(self.wave_height, 0)
-        self.wave_direction = np.flip(self.wave_direction, 0)
-        self.wave_period = np.flip(self.wave_period, 0)
-        self.u_currents = np.flip(self.u_currents, 0)
-        self.v_currents = np.flip(self.v_currents, 0)
-        self.u_wind_speed = np.flip(self.u_wind_speed, 0)
-        self.v_wind_speed = np.flip(self.v_wind_speed, 0)
-        self.pressure = np.flip(self.pressure, 0)
-        self.air_temperature = np.flip(self.air_temperature, 0)
-        self.salinity = np.flip(self.salinity, 0)
-        self.water_temperature = np.flip(self.water_temperature, 0)
-        self.status = np.flip(self.status, 0)
-        self.message = np.flip(self.message, 0)
 
         self.speed = np.append(self.speed, -99 * self.speed.unit)
         self.fuel_rate = np.append(self.fuel_rate, -99 * self.fuel_rate.unit)
@@ -402,21 +479,14 @@ class ShipParams():
         self.r_waves = np.append(self.r_waves, -99 * self.r_waves.unit)
         self.r_shallow = np.append(self.r_shallow, -99 * self.r_shallow.unit)
         self.r_roughness = np.append(self.r_roughness, -99 * self.r_roughness.unit)
-        self.wave_height = np.append(self.wave_height, -99 * self.wave_height.unit)
-        self.wave_direction = np.append(self.wave_direction, -99 * self.wave_direction.unit)
-        self.wave_period = np.append(self.wave_period, -99 * self.wave_period.unit)
-        self.u_currents = np.append(self.u_currents, -99 * self.u_currents.unit)
-        self.v_currents = np.append(self.v_currents, -99 * self.v_currents.unit)
-        self.u_wind_speed = np.append(self.u_wind_speed, -99 * self.u_wind_speed.unit)
-        self.v_wind_speed = np.append(self.v_wind_speed, -99 * self.v_wind_speed.unit)
-        self.pressure = np.append(self.pressure, -99 * self.pressure.unit)
-        self.air_temperature = np.append(self.air_temperature, -99 * self.air_temperature.unit)
-        self.salinity = np.append(self.salinity, -99 * self.salinity.unit)
-        self.water_temperature = np.append(self.water_temperature, -99 * self.water_temperature.unit)
-        self.status = np.append(self.status, -99)
-        self.message = np.append(self.message, "")
+        
+        # Weather parameters - delegate to weather object
+        self.weather.flip()
+        self.weather.append_dummy()
 
     def expand_axis_for_intermediate(self):
+        """Expand axis for intermediate waypoints."""
+        # Ship parameters
         self.speed = np.expand_dims(self.speed, axis=1)
         self.fuel_rate = np.expand_dims(self.fuel_rate, axis=1)
         self.power = np.expand_dims(self.power, axis=1)
@@ -426,19 +496,21 @@ class ShipParams():
         self.r_waves = np.expand_dims(self.r_waves, axis=1)
         self.r_shallow = np.expand_dims(self.r_shallow, axis=1)
         self.r_roughness = np.expand_dims(self.r_roughness, axis=1)
-        self.wave_height = np.expand_dims(self.wave_height, axis=1)
-        self.wave_direction = np.expand_dims(self.wave_direction, axis=1)
-        self.wave_period = np.expand_dims(self.wave_period, axis=1)
-        self.u_currents = np.expand_dims(self.u_currents, axis=1)
-        self.v_currents = np.expand_dims(self.v_currents, axis=1)
-        self.u_wind_speed = np.expand_dims(self.u_wind_speed, axis=1)
-        self.v_wind_speed = np.expand_dims(self.v_wind_speed, axis=1)
-        self.pressure = np.expand_dims(self.pressure, axis=1)
-        self.air_temperature = np.expand_dims(self.air_temperature, axis=1)
-        self.salinity = np.expand_dims(self.salinity, axis=1)
-        self.water_temperature = np.expand_dims(self.water_temperature, axis=1)
-        self.status = np.expand_dims(self.status, axis=1)
-        self.message = np.expand_dims(self.message, axis=1)
+        
+        # Weather parameters
+        self.weather.wave_height = np.expand_dims(self.weather.wave_height, axis=1)
+        self.weather.wave_direction = np.expand_dims(self.weather.wave_direction, axis=1)
+        self.weather.wave_period = np.expand_dims(self.weather.wave_period, axis=1)
+        self.weather.u_currents = np.expand_dims(self.weather.u_currents, axis=1)
+        self.weather.v_currents = np.expand_dims(self.weather.v_currents, axis=1)
+        self.weather.u_wind_speed = np.expand_dims(self.weather.u_wind_speed, axis=1)
+        self.weather.v_wind_speed = np.expand_dims(self.weather.v_wind_speed, axis=1)
+        self.weather.pressure = np.expand_dims(self.weather.pressure, axis=1)
+        self.weather.air_temperature = np.expand_dims(self.weather.air_temperature, axis=1)
+        self.weather.salinity = np.expand_dims(self.weather.salinity, axis=1)
+        self.weather.water_temperature = np.expand_dims(self.weather.water_temperature, axis=1)
+        self.weather.status = np.expand_dims(self.weather.status, axis=1)
+        self.weather.message = np.expand_dims(self.weather.message, axis=1)
 
     def get_element(self, idx):
         try:
