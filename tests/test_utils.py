@@ -155,12 +155,14 @@ def test_return_widened_map(input, output):
     assert widened_map.lat2 == output[2]
     assert widened_map.lon2 == output[3]
 
+
 def test_find_coord_index():
     arr = np.linspace(0., 5., num=50)
     start_ind, end_ind = unit.get_coord_index(0.15, 4.05, arr)
 
     assert start_ind == 1
     assert end_ind == 39
+
 
 def test_find_coord_index_equal():
     arr = np.linspace(0., 5., num=50)
@@ -169,6 +171,7 @@ def test_find_coord_index_equal():
         start_ind, end_ind = unit.get_coord_index(0.15, 0.15, arr)
 
     assert "Start index and end index are the same!" in str(excinfo.value)
+
 
 @pytest.mark.parametrize("start_coord,end_coord, not_in_array", [
     (0.15, 6, 6),

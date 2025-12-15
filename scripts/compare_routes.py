@@ -3,6 +3,7 @@
 ##
 
 import argparse
+import copy
 import datetime as dt
 
 from WeatherRoutingTool.config import set_up_logging
@@ -14,7 +15,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0, 5500)
+    ax.set_ylim(4500, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
@@ -47,16 +48,18 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
 
 def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.7, 1.3)
+    ax.set_ylim(0.9, 1.1)
     colour = 0
 
-    for irp in range(1, len(rp_list)):
+    rp_bruch = copy.deepcopy(rp_list[0])
+
+    for irp in range(0, len(rp_list)):
         if rp_str_list[irp] == '':
-            rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(colour),
+            rp_list[irp].plot_power_vs_dist_ratios(rp_bruch, graphics.get_colour(colour),
                                                    rp_str_list[irp], power_type)
             colour = colour + 1
         else:
-            rp_list[irp].plot_power_vs_dist_ratios(rp_list[0], graphics.get_colour(colour),
+            rp_list[irp].plot_power_vs_dist_ratios(rp_bruch, graphics.get_colour(colour),
                                                    rp_str_list[irp], power_type)
             colour = colour + 1
 

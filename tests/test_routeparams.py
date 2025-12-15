@@ -64,7 +64,7 @@ def test_get_acc_variables():
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, 'data/min_fuel_route_test.json')
 
-    rp.return_route_to_API(filename)
+    rp.write_to_geojson(filename)
     rp_test = RouteParams.from_file(filename)
 
     test_fuel = (1.12 + 1.13 + 1.15) * 3600 * u.kg

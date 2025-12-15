@@ -56,7 +56,7 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
     if geojsondir:
         filename = os.path.join(geojsondir, 'route_' + maripower_scenario + '.json')
         print('Writing file: ', filename)
-        rp.return_route_to_API(filename)
+        rp.write_to_geojson(filename)
 
 
 def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
@@ -89,7 +89,7 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
     if geojsondir:
         filename = os.path.join(geojsondir, 'route_' + maripower_scenario + '.json')
         print('Writing file: ', filename)
-        rp.return_route_to_API(filename)
+        rp.write_to_geojson(filename)
 
 
 def cut_indices(lat, lon, time, sog, fore_draught, aft_draught, cut_route):
@@ -231,4 +231,4 @@ if __name__ == "__main__":
         if routepath:
             filename = os.path.join(routepath, 'route_' + scenario_name + '.json')
             print('Writing file: ', filename)
-            rp.return_route_to_API(filename)
+            rp.write_to_geojson(filename)

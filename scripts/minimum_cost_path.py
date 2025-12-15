@@ -43,21 +43,21 @@ def indices_to_geojson(point_indices: list[tuple[int, int]], lon, lat, filename:
 
 
 if __name__ == "__main__":
-    # https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz
 
-    start_time=time.time()
-    input_filename = "/home/kdemmich/1_Projekte/TwinShip/5_Results/251201_MartechPaper/globe_combined_mask_compressed.npz"
+    start_time = time.time()
+    # https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz
+    input_filename = "globe_combined_mask_compressed.npz"
 
     # Expected order: [lat, lon]
     start = [52.286, 3.342]
-    end = [57.679 , 11.293]
+    end = [57.679, 11.293]
 
     # reach of the bounding box
-    start_lat, start_lon, end_lat, end_lon = (50, -2, 60 , 14.257)
+    start_lat, start_lon, end_lat, end_lon = (50, -2, 60, 14.257)
 
     debug = False
 
-    #------------------------------------
+    # ------------------------------------
 
     # Mask shape: 21600 * 43200 = 933,120,000
     # Water equals to True/1, land equals to False/0
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     # calculate correct coordinate indices for the slicing
     map_start_lat_orig, map_end_lat_orig = unit.get_coord_index(end_lat, start_lat, lat_mirror)
-    map_start_lat = len(lat) - map_end_lat_orig - 1 # consider ordering of lat values from 90° - -90°
+    map_start_lat = len(lat) - map_end_lat_orig - 1  # consider ordering of lat values from 90° - -90°
     map_end_lat = len(lat) - map_start_lat_orig - 1
     map_start_lon, map_end_lon = unit.get_coord_index(start_lon, end_lon, lon)
     if debug:
@@ -84,13 +84,12 @@ if __name__ == "__main__":
     assert lat_mirror[map_start_lat_orig] == lat[map_end_lat]
     assert lat_mirror[map_end_lat_orig] == lat[map_start_lat]
 
-
     # perform the slicing
-    lon = lon[map_start_lon : map_end_lon + 1]
-    lat = lat[map_end_lat : map_start_lat + 1]
+    lon = lon[map_start_lon:map_end_lon + 1]
+    lat = lat[map_end_lat:map_start_lat + 1]
     lat_mirror = np.flip(lat)
 
-    mask = mask[map_end_lat : map_start_lat + 1, map_start_lon : map_end_lon + 1]
+    mask = mask[map_end_lat:map_start_lat + 1, map_start_lon:map_end_lon + 1]
     if debug:
         print('mask.shape: ', mask.shape)
         print('lat.shape: ', lat.shape)
@@ -99,11 +98,10 @@ if __name__ == "__main__":
     assert mask.shape[0] == lat.shape[0]
     assert mask.shape[1] == lon.shape[0]
 
-
     # calculate correct coord indices for start and end point after the slicing
     route_start_lat_orig, route_end_lat_orig = unit.get_coord_index(end[0], start[0], lat_mirror)
-    route_start_lat = len(lat) - route_end_lat_orig -1
-    route_end_lat = len(lat) - route_start_lat_orig -1
+    route_start_lat = len(lat) - route_end_lat_orig - 1
+    route_end_lat = len(lat) - route_start_lat_orig - 1
     route_start_lon, route_end_lon = unit.get_coord_index(start[1], end[1], lon)
 
     assert lat_mirror[route_start_lat_orig] == lat[route_end_lat]
@@ -122,7 +120,4 @@ if __name__ == "__main__":
     indices, weight = route_through_array(mask, start_idx, end_idx, fully_connected=True, geometric=True)
     indices_to_geojson(indices, lon, lat, "minimum_cost_path.geojson")
 
-    end_time=time.time()
-
-
-
+    end_time = time.time()

@@ -132,7 +132,7 @@ class ConstraintViolationRepair(RepairBase):
         # check for correct input shape of rt
         assert len(rt.shape) == 2
         assert rt.shape[1] == 2
-        debug = True
+        debug = False
 
         prev_seg_end = 0
         on_constraint = False
@@ -159,7 +159,7 @@ class ConstraintViolationRepair(RepairBase):
                     # just passed constrained area -> call patcher
                     _r = patchfn.patch(rt[prev_seg_end], rt[seg_start], self.config.DEPARTURE_TIME)
                     if debug:
-                        print(' adding _r: ',_r)
+                        print(' adding _r: ', _r)
 
                     output_route_segs.append(_r)
                     output_route_segs.append([rt[seg_end]])
