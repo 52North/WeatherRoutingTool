@@ -690,16 +690,15 @@ class IsoBased(RoutingAlg):
         :type ship_params: ShipParams
         """
 
-        debug = False
         self.routing_step.courses = units.cut_angles(self.routing_step.get_courses())
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
         self.routing_step.update_delta_variables(delta_fuel, delta_time, dist)
-        # ToDo: remove debug variable and use logger settings instead
-        if debug:
-            logger.info('delta_time: ' + str(delta_time))
-            logger.info('delta_fuel: ' + str(delta_fuel))
-            logger.info('dist: ' + str(dist))
-            logger.info('state:' + str(self.status.state))
+        
+        logger.debug('delta_time: ' + str(delta_time))
+        logger.debug('delta_fuel: ' + str(delta_fuel))
+        logger.debug('dist: ' + str(dist))
+        logger.debug('state:' + str(self.status.state))
+
         self.check_bearing()
         self.check_land_ahoy(ship_params, bs)
 
@@ -737,19 +736,15 @@ class IsoBased(RoutingAlg):
         :type constraint_list: ConstraintsList
         """
 
-        debug = False
-
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
-        if (debug):
-            form.print_step('shape is_constraint before checking:' + str(len(is_constrained)), 1)
+        logger.debug('shape is_constraint before checking:' + str(len(is_constrained)))
 
         is_constrained = constraint_list.safe_crossing(self.routing_step.get_start_point('lat'),
                                                        self.routing_step.get_start_point('lon'),
                                                        self.routing_step.get_end_point('lat'),
                                                        self.routing_step.get_end_point('lon'), self.time,
                                                        is_constrained)
-        if (debug):
-            form.print_step('is_constrained after checking' + str(is_constrained), 1)
+        logger.debug('is_constrained after checking' + str(is_constrained))
         self.routing_step.update_constraints(is_constrained)
 
     def update(self, ship_params):
@@ -1234,15 +1229,12 @@ class IsoBased(RoutingAlg):
         :raises IndexError: if any array can not be sliced according to the indices that have been found
         """
 
-        debug = False
         valid_pruning_segments = -99
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('binning for pruning', bins)
-            print('current courses', self.routing_step.get_courses())
-            print('full_dist_traveled', self.full_dist_traveled)
-            print('courses per step ', self.course_per_step)
+        logger.debug('binning for pruning ' + str(bins))
+        logger.debug('current courses ' + str(self.routing_step.get_courses()))
+        logger.debug('full_dist_traveled ' + str(self.full_dist_traveled))
+        logger.debug('courses per step ' + str(self.course_per_step))
 
         is_pruned = False
         prune_concept = self.prune_groups
@@ -1267,10 +1259,8 @@ class IsoBased(RoutingAlg):
         if not is_pruned:
             raise ValueError('The selected pruning option is not available!')
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('full_dist_traveled', self.full_dist_traveled)
-            print('Indexes that passed', idxs)
+        logger.debug('full_dist_traveled ' + str(self.full_dist_traveled))
+        logger.debug('Indexes that passed ' + str(idxs))
 
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
@@ -1431,10 +1421,7 @@ class IsoBased(RoutingAlg):
         :type trim: bool, optional
         """
 
-        # ToDo: use logger.debug and args.debug
-        debug = False
-        if debug:
-            logger.info('Pruning... Pruning symmetry axis defined by gcr')
+        logger.debug('Pruning... Pruning symmetry axis defined by gcr')
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
@@ -1445,12 +1432,10 @@ class IsoBased(RoutingAlg):
         new_course = geod.inverse(gcr_point['lat2'], gcr_point['lon2'], [self.finish_temp[0]], [self.finish_temp[1]])
         new_course['azi1'] = new_course['azi1'] * u.degree
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
-            print('current temporary start: ', self.start)
-            print('current temporary destination: ', self.finish_temp)
-            print('mean course', new_course['azi1'])
+        logger.debug('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
+        logger.debug('current temporary start: ' + str(self.start))
+        logger.debug('current temporary destination: ' + str(self.finish_temp))
+        logger.debug('mean course ' + str(new_course['azi1']))
 
         # define pruning area
         azi0s = np.repeat(new_course['azi1'], self.prune_segments + 1)
@@ -1474,10 +1459,7 @@ class IsoBased(RoutingAlg):
         :type trim: bool, optional
         """
 
-        # ToDo: use logger.debug and args.debug
-        debug = False
-        if debug:
-            print('Pruning... Pruning symmetry axis defined by median of considered courses.')
+        logger.debug('Pruning... Pruning symmetry axis defined by median of considered courses.')
 
         # propagate current end points towards temporary destination
         non_zero_idxs = np.where(self.full_dist_traveled != 0)[0]
@@ -1507,9 +1489,7 @@ class IsoBased(RoutingAlg):
 
         bins = np.sort(bins)
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('bins: ', bins)
+        logger.debug('bins: ' + str(bins))
 
         self.pruning(trim, bins)
 
@@ -1539,13 +1519,10 @@ class IsoBased(RoutingAlg):
         return self.speed_per_step[0]
 
     def get_wind_functions(self, wt):
-        debug = False
         winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
-            print('time', self.time[0])
-            print('winds', winds)
+        logger.debug('obtaining wind function for position: ' + str(self.get_current_lats()) + ' ' + str(self.get_current_lons()))
+        logger.debug('time ' + str(self.time[0]))
+        logger.debug('winds ' + str(winds))
         return winds
 
     def check_settings(self):
@@ -1641,18 +1618,14 @@ class IsoBased(RoutingAlg):
         :return:
         """
 
-        debug = False
-
         dist = self.routing_step.delta_dist
         ncourses = self.get_current_lons().shape[0]
         dist_to_dest = geod.inverse(self.get_current_lats(), self.get_current_lons(),
                                     np.full(ncourses, self.finish_temp[0]), np.full(ncourses, self.finish_temp[1]))
         dist_to_dest["s12"] = dist_to_dest["s12"] * u.meter
         dist_to_dest["azi1"] = dist_to_dest["azi1"] * u.degree
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('dist_to_dest:', dist_to_dest['s12'])
-            # print('dist traveled:', dist)
+        
+        logger.debug('dist_to_dest:' + str(dist_to_dest['s12']))
 
         reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
@@ -1662,8 +1635,7 @@ class IsoBased(RoutingAlg):
         if reaching_dest:
             reached_final = (self.finish_temp[0] == self.finish[0]) & (self.finish_temp[1] == self.finish[1])
 
-            if debug:
-                print('reaching final:', reached_final)
+            logger.debug('reaching final:' + str(reached_final))
 
             new_lat = np.full(ncourses, self.finish_temp[0])
             new_lon = np.full(ncourses, self.finish_temp[1])
@@ -1693,7 +1665,6 @@ class IsoBased(RoutingAlg):
         Update the current position of the ship
         """
 
-        debug = False
         end_step_lon = self.routing_step.get_end_point('lon')
         end_step_lat = self.routing_step.get_end_point('lat')
         dist = self.routing_step.delta_dist
@@ -1708,12 +1679,10 @@ class IsoBased(RoutingAlg):
             lons=end_step_lon
         )
 
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('path of this step' +
-                  str(end_step_lat) + str(end_step_lon))
-            print('dist_per_step', self.dist_per_step)
-            print('dist', dist)
+        logger.debug('path of this step' +
+                     str(end_step_lat) + str(end_step_lon))
+        logger.debug('dist_per_step ' + str(self.dist_per_step))
+        logger.debug('dist ' + str(dist))
 
         start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
@@ -1738,9 +1707,8 @@ class IsoBased(RoutingAlg):
                 self.full_dist_traveled = travel_dist['s12']
         else:
             self.full_dist_traveled = travel_dist['s12']
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('full_dist_traveled:', self.full_dist_traveled)
+        
+        logger.debug('full_dist_traveled:' + str(self.full_dist_traveled))
 
     def update_fuel(self, fuel_rate):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
