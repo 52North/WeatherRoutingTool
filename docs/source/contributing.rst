@@ -2,9 +2,17 @@
 
 Contributing
 ============
+
 CLA guidelines
------------
+--------------
 Please be aware that we can only consider pull requests of authors who consider 52North's `CLA guidelines <https://52north.org/software/licensing/cla-guidelines/>`_ and, in particular, fill the 52North Contributor License Agreement.
+
+
+General remarks
+---------------
+
+- Please do not ask if you can work on an issue. Contributions are welcome. Remember to read the `CLA guidelines <https://52north.org/software/licensing/cla-guidelines/>`_.
+- Be aware that we do not assign issues to contributors we have not worked with yet. If this applies to you please do not ask to be assigned.
 
 Style guide
 -----------
@@ -20,14 +28,16 @@ Example:
 
 .. code-block:: python
 
-    This is a reStructuredText style.
-    """
-    :param param1: first param
-    :type param1: type of first param
-    :return: description of what is returned
-    :rtype: type of return value
-    :raises keyError: raises an exception
-    """
+    def my_function(param1):
+        """
+        This is a reStructuredText style.
+
+        :param param1: first param
+        :type param1: type of first param
+        :return: description of what is returned
+        :rtype: type of return value
+        :raises keyError: raises an exception
+        """
 
 Further reading:
 
