@@ -112,6 +112,14 @@ The following lists contain information on each variable which can be set. The c
 - ``DIJKSTRA_STEP``: step used to save final route to prevent very dense waypoints, defaults to 1
 - ``FACTOR_CALM_WATER``: multiplication factor for the calm water resistance model
 - ``FACTOR_WAVE_FORCES``: multiplication factor for the added resistance in waves model
+- ``GCR_SLIDER_ANGLE_STEP``: angle step in degrees, defaults to 30
+- ``GCR_SLIDER_DISTANCE_MOVE``: move distance in m, defaults to 10000
+- ``GCR_SLIDER_DYNAMIC_PARAMETERS``: update parameters (e.g. move distance) dynamically, defaults to True
+- ``GCR_SLIDER_LAND_BUFFER``: land buffer in m, defaults to 1000
+- ``GCR_SLIDER_INTERPOLATE``: interpolate final route, defaults to True
+- ``GCR_SLIDER_INTERP_DIST``: interpolation distance, defaults to 0.1
+- ``GCR_SLIDER_INTERP_NORMALIZED``: normalized interpolation, defaults to True
+- ``GCR_SLIDER_THRESHOLD``: segment length threshold in m below which segments are not split, defaults to 10000
 - ``FACTOR_WIND_FORCES``: multiplication factor for the added resistance in wind model
 - ``GENETIC_MUTATION_TYPE``: type for mutation (options: 'grid_based')
 - ``GENETIC_NUMBER_GENERATIONS``: number of generations for genetic algorithm (default: 20)

@@ -53,7 +53,8 @@ class Config(BaseModel):
     # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
-    ALGORITHM_TYPE: Literal['dijkstra', 'isofuel', 'genetic', 'speedy_isobased', 'genetic_shortest_route'] = 'isofuel'
+    ALGORITHM_TYPE: Literal['dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel',
+                            'speedy_isobased'] = 'isofuel'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'  # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method  # noqa: E501
     CONSTRAINTS_LIST: List[Literal[
@@ -71,11 +72,21 @@ class Config(BaseModel):
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
-    # options for Dijkstra
+    # options for Dijkstra algorithm
     DIJKSTRA_MASK_FILE: str = None  # can be found with "find ~ -type f -name globe_combined_mask_compressed.npz"
     # or downloaded via https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz  # noqa: E501
     DIJKSTRA_NOF_NEIGHBORS: int = 1  # number of neighbors to use when creating a graph from the grid
     DIJKSTRA_STEP: int = 1  # step used to save final route to prevent very dense waypoints
+
+    # options for GCR Slider algorithm
+    GCR_SLIDER_ANGLE_STEP: float = 30  # in degrees
+    GCR_SLIDER_DISTANCE_MOVE: float = 10000  # in m
+    GCR_SLIDER_DYNAMIC_PARAMETERS: bool = True
+    GCR_SLIDER_LAND_BUFFER: float = 1000  # in m
+    GCR_SLIDER_INTERPOLATE: bool = True
+    GCR_SLIDER_INTERP_DIST: float = 0.1
+    GCR_SLIDER_INTERP_NORMALIZED: bool = True
+    GCR_SLIDER_THRESHOLD: float = 10000  # in m
 
     # options for Genetic Algorithm
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
@@ -362,7 +373,7 @@ class Config(BaseModel):
         :rtype: WeatherRoutingTool.config.Config
         """
         # The Dijkstra algorithm does not consider weather data at the moment
-        if self.ALGORITHM_TYPE == 'dijkstra':
+        if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
             return self
         path = Path(self.WEATHER_DATA)
         if path.exists():
@@ -414,7 +425,7 @@ class Config(BaseModel):
         :rtype: WeatherRoutingTool.config.Config
         """
         # The Dijkstra algorithm does not consider depth data at the moment
-        if self.ALGORITHM_TYPE == 'dijkstra':
+        if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
             return self
         path = Path(self.DEPTH_DATA)
         if path.exists():

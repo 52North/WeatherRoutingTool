@@ -20,8 +20,8 @@ class RoutingAlg:
     Mother class of all routing algorithms defining basic attributes and methods
     """
 
-    start: tuple  # lat, lon at start
-    finish: tuple  # lat, lon at end
+    start: tuple[float, float]  # (lat, lon) at start
+    finish: tuple[float, float]  # (lat, lon) at end
     departure_time: datetime
     gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
     gcr_dist: float  # distance of great circle route

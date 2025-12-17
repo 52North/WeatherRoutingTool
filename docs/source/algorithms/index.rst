@@ -8,5 +8,6 @@ Algorithms
    :caption: Contents:
 
    dijkstra
+   gcrslider
    genetic
    isofuel
