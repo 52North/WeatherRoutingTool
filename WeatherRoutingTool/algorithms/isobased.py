@@ -748,6 +748,13 @@ class IsoBased(RoutingAlg):
                                                        self.routing_step.get_end_point('lat'),
                                                        self.routing_step.get_end_point('lon'), self.time,
                                                        is_constrained)
+        
+        # Log constraint violations for debugging
+        num_constrained = sum(is_constrained)
+        if num_constrained > 0:
+            constraint_pct = (num_constrained / len(is_constrained)) * 100
+            logger.debug(f'Step {self.count}: {num_constrained}/{len(is_constrained)} ({constraint_pct:.1f}%) segments constrained')
+        
         if (debug):
             form.print_step('is_constrained after checking' + str(is_constrained), 1)
         self.routing_step.update_constraints(is_constrained)
@@ -1263,6 +1270,38 @@ class IsoBased(RoutingAlg):
             logger.info('Executing branch-based pruning.')
             idxs = self.branch_based_pruning()
             is_pruned = True
+            
+            # Fallback: if branch-based pruning returns no valid segments, try larger-direction
+            if len(idxs) == 0:
+                logger.warning('Branch-based pruning returned no valid segments. Falling back to larger-direction-based pruning.')
+                bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
+                idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, trim)
+        
+        # Emergency fallback: if still no valid segments, try without trimming empty bins
+        if len(idxs) == 0 and trim:
+            logger.warning('Pruning with trim=True returned no valid segments. Retrying with trim=False.')
+            if prune_concept == 'branch':
+                # For branch pruning, we already keep constrained routes, so use larger_direction
+                bin_stat, bin_edges, bin_number = self.larger_direction_based_pruning(bins)
+                idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, False)
+            elif prune_concept == 'larger_direction':
+                idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, False)
+            elif prune_concept == 'courses':
+                idxs = self.get_pruned_indices_statistics(bin_stat, bin_edges, False)
+        
+        # Last resort: if ALL segments are constrained, keep a diverse subset anyway
+        if len(idxs) == 0:
+            logger.warning('All pruning attempts failed. Keeping a diverse subset of constrained segments to continue routing.')
+            # Keep evenly spaced indices to maintain diversity
+            total_segments = self.lats_per_step.shape[1]
+            if total_segments > self.prune_segments:
+                # Keep prune_segments evenly distributed segments
+                step = total_segments // self.prune_segments
+                idxs = list(range(0, total_segments, step))[:self.prune_segments]
+            else:
+                # Keep all segments if we have fewer than prune_segments
+                idxs = list(range(total_segments))
+            logger.warning(f'Emergency fallback: kept {len(idxs)} segments out of {total_segments} total segments.')
 
         if not is_pruned:
             raise ValueError('The selected pruning option is not available!')
@@ -1275,6 +1314,11 @@ class IsoBased(RoutingAlg):
         valid_pruning_segments = len(idxs)
         if (valid_pruning_segments == 0):
             logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
+            logger.error(f' Total segments before pruning: {self.lats_per_step.shape[1]}')
+            logger.error(f' Number of constrained segments: {np.sum(self.routing_step.is_constrained)}')
+            logger.error(f' Current position range: lat [{np.min(self.lats_per_step[0, :]):.4f}, {np.max(self.lats_per_step[0, :]):.4f}], '
+                        f'lon [{np.min(self.lons_per_step[0, :]):.4f}, {np.max(self.lons_per_step[0, :]):.4f}]')
+            logger.error(f' Distance traveled range: [{np.min(self.full_dist_traveled):.2f}, {np.max(self.full_dist_traveled):.2f}] meters')
             self.status.set_error_str('pruning_error')
             return
         elif (valid_pruning_segments < self.prune_segments * 0.1):
@@ -1392,19 +1436,29 @@ class IsoBased(RoutingAlg):
 
         unique_origins = df_grouped_by_routes_has_same_origin.groups.keys()
         idxs = []
+        branches_with_zero_dist = 0
 
         for unique_key in unique_origins:
             specific_route_group = df_grouped_by_routes_has_same_origin.get_group(unique_key)
 
             max_dist = specific_route_group['dist'].max()
             if max_dist == 0.:
-                continue
-
-            max_dist_indxs = specific_route_group[specific_route_group['dist'] == max_dist]['st_index']
+                # Keep at least one segment per branch even if constrained
+                # This allows the algorithm to potentially recover if constraints are temporary
+                branches_with_zero_dist += 1
+                # Select the first segment from this branch
+                max_dist_indxs = specific_route_group['st_index'].iloc[0:1]
+            else:
+                max_dist_indxs = specific_route_group[specific_route_group['dist'] == max_dist]['st_index']
+            
             max_dist_indxs = max_dist_indxs.values
             max_dist_indxs = max_dist_indxs.astype('int32')
 
             idxs.append(max_dist_indxs[0])
+        
+        if branches_with_zero_dist > 0:
+            logger.warning(f'Branch-based pruning: {branches_with_zero_dist} branches have zero distance (fully constrained)')
+        
         return idxs
 
     def pruning_per_step(self, trim: bool = True) -> None:
