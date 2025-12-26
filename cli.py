@@ -1,8 +1,6 @@
 import argparse
 import warnings
 from pathlib import Path
-import sys
-
 from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.config import Config, set_up_logging
 
@@ -34,9 +32,9 @@ if __name__ == "__main__":
     # initialise logging
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
+    # set warning filter action (https://docs.python.org/3/library/warnings.html)
+    warnings.filterwarnings(args.filter_warnings)
+
     # Validate config with pydantic and run route optimization
     config = Config.assign_config(Path(args.file))
     execute_routing(config)
-
-    # set warning filter action (https://docs.python.org/3/library/warnings.html)
-    warnings.filterwarnings(args.filter_warnings)
