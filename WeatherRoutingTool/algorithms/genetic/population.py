@@ -175,8 +175,9 @@ class IsoFuelPopulation(Population):
 
     Produces initial routes using the IsoFuel algorithm's
     ISOCHRONE_NUMBER_OF_STEPS configuration. If the number of generated routes
-    is lesser than the expected n_samples number of individuals, the last
-    produced route is repeated until the required number of individuals are met
+    is lesser than the expected n_samples number of individuals, produced routes are 
+    cloned and noise is added to the cloned routes until the required number of 
+    individuals are met.
     """
 
     def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
