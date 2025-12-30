@@ -79,11 +79,17 @@ class Genetic(RoutingAlg):
             logger.info('Fixing random seed for genetic algorithm.')
             np.random.seed(1)
 
+
+        fitness_function_type = 'fuel'
+        if self.config.ALGORITHM_TYPE == 'genetic_shortest_route':
+            fitness_function_type = 'shortest_route'
+
         # inputs
         problem = RoutingProblem(
             departure_time=self.departure_time,
             boat=boat,
-            constraint_list=constraints_list, )
+            constraint_list=constraints_list,
+            fitness_function_type=fitness_function_type)
 
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt, )
