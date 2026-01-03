@@ -1,10 +1,19 @@
 # Weather Routing Tool (WRT)
 
-A tool to perform optimization of ship routes based on fuel consumption in different weather conditions.
+A tool that helps optimize ship routes by analyzing fuel consumption
+under different weather conditions.
 
 Documentation: https://52north.github.io/WeatherRoutingTool/
+The documentation provides setup instructions, usage examples,
+and detailed explanations of the tool.
 
-Introduction: [WRT-sandbox](https://github.com/52North/WRT-sandbox) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/52North/WRT-sandbox.git/HEAD?urlpath=%2Fdoc%2Ftree%2FNotebooks/execute-WRT.ipynb)
+
+Introduction: WRT-sandbox (launch binder)
+
+The sandbox allows users to explore and test the Weather Routing Tool
+in an interactive environment without local installation.
+
+(https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/52North/WRT-sandbox.git/HEAD?urlpath=%2Fdoc%2Ftree%2FNotebooks/execute-WRT.ipynb)
 
 ## Funding
 
