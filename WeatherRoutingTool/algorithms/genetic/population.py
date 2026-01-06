@@ -175,8 +175,9 @@ class IsoFuelPopulation(Population):
 
     Produces initial routes using the IsoFuel algorithm's
     ISOCHRONE_NUMBER_OF_STEPS configuration. If the number of generated routes
-    is lesser than the expected n_samples number of individuals, the last
-    produced route is repeated until the required number of individuals are met
+    is lesser than the expected n_samples number of individuals, produced routes are 
+    cloned and noise is added to the cloned routes until the required number of 
+    individuals are met.
     """
 
     def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
@@ -190,17 +191,33 @@ class IsoFuelPopulation(Population):
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
 
+    def _perturb_route(self, route, sigma=0.01):
+        """Adds small Gaussian noise to internal waypoints."""
+        perturbed = np.copy(route)
+        # We only perturb internal waypoints (1 to -1) 
+        # to keep src and dst exactly the same
+        noise = np.random.normal(0, sigma, size=perturbed[1:-1].shape)
+        perturbed[1:-1] += noise
+        return perturbed
     def generate(self, problem, n_samples, **kw):
         routes = self.patcher.patch(self.src, self.dst, self.departure_time)
+        n_found = len(routes) # Count how many valid routes the patcher found
 
         X = np.full((n_samples, 1), None, dtype=object)
 
-        for i, rt in enumerate((routes)):
+        # Fill the first slots with actual routes found
+        for i, rt in enumerate(routes):
             X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
 
-        # fallback: fill all other individuals with the same population as the last one
-        for j in range(i + 1, n_samples):
-            X[j, 0] = np.copy(X[j - 1, 0])
+        # NEW FALLBACK STRATEGY: 
+        # Instead of copying X[j-1], we jitter routes from the available pool
+        if n_found < n_samples:
+            for j in range(n_found, n_samples):
+                source_idx = np.random.randint(0, n_found)
+                base_route = X[source_idx, 0]
+
+                X[j, 0] = self._perturb_route(base_route)
+                
         return X
 
 
