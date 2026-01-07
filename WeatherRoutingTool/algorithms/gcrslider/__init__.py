@@ -58,6 +58,7 @@ class GcrSliderAlgorithm(RoutingAlg):
         self.waypoints = config.INTERMEDIATE_WAYPOINTS
         self.sequence_id = 0
         self.found_id = 0
+        self.max_nof_points = config.GCR_SLIDER_MAX_POINTS
         self.points = {
             self.get_point_id(self.start): {
                 'seq_id': self.sequence_id,
@@ -89,12 +90,11 @@ class GcrSliderAlgorithm(RoutingAlg):
         points_copy = dict(sorted(points_copy.items(), key=lambda item: item[1]['seq_id']))
         clusters = []
         while len(points_copy) > 1:
-            cluster_points = {}
+            cluster_points = {list(points_copy.keys())[0]: list(points_copy.values())[0]}
             self.create_single_cluster(
                 list(points_copy.values())[0]['point'], dict(list(points_copy.items())[1:]), cluster_points)
-            # if len(cluster_points) > 1:
-            if len(cluster_points) > 0:
-                cluster_points[list(points_copy.keys())[0]] = points_copy[list(points_copy.keys())[0]]
+            # if len(cluster_points) > 2:
+            if len(cluster_points) > 1:
                 clusters.append(cluster_points)
                 for k in cluster_points.keys():
                     del points_copy[k]
@@ -102,8 +102,16 @@ class GcrSliderAlgorithm(RoutingAlg):
                 del points_copy[list(points_copy.keys())[0]]
         return clusters
 
-    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
-        # FIXME: refresh self.seq_id, self.found_id, self.points
+    def execute(self) -> tuple[RouteParams, int]:
+        self.sequence_id = 0
+        self.found_id = 0
+        self.points = {
+            self.get_point_id(self.start): {
+                'seq_id': self.sequence_id,
+                'found_id': self.found_id,
+                'point': self.start
+            }
+        }
         if len(self.waypoints) > 0:
             fixed_points = [self.start] + self.waypoints + [self.finish]
             for waypoint_idx in range(len(fixed_points)-1):
@@ -178,6 +186,10 @@ class GcrSliderAlgorithm(RoutingAlg):
             ship_params_per_step=ship_params,
         )
         return route, 0
+
+    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False
+                        ) -> tuple[RouteParams, int]:
+        return self.execute()
 
     def has_point_on_land(
             self,
@@ -270,8 +282,8 @@ class GcrSliderAlgorithm(RoutingAlg):
             new_point = geod.Direct(point['lat2'], point['lon2'], point['azi2'] - 90, distance)
             return new_point['lat2'], new_point['lon2']
 
-    def postprocess(self) ->  list[tuple[float, float]]:
-        clusters = self.create_clusters()
+    def postprocess(self) -> list[tuple[float, float]]:
+        # clusters = self.create_clusters()
         # FIXME: continue implementation...
         return []
 
@@ -330,6 +342,8 @@ class GcrSliderAlgorithm(RoutingAlg):
                 # Note: the order of the following lines is important to have the correct order of points in the route
                 point_id = self.get_point_id(new_point)
                 self.found_id += 1
+                if self.found_id > self.max_nof_points:
+                    raise RuntimeError(f"Reached maximum number of allowed points ({self.max_nof_points}).")
                 self.points[point_id] = {'point': new_point, 'found_id': self.found_id}
                 self.split_segments(start, new_point)
                 self.sequence_id += 1

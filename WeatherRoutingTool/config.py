@@ -86,13 +86,14 @@ class Config(BaseModel):
     GCR_SLIDER_INTERPOLATE: bool = True
     GCR_SLIDER_INTERP_DIST: float = 0.1
     GCR_SLIDER_INTERP_NORMALIZED: bool = True
+    GCR_SLIDER_MAX_POINTS: int = 300
     GCR_SLIDER_THRESHOLD: float = 10000  # in m
 
     # options for Genetic Algorithm
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # total number of offsprings for every generation
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
-    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial population  # noqa: E501
+    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel', 'gcrslider'] = 'grid_based'  # type for initial population  # noqa: E501
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
     GENETIC_REPAIR_TYPE: List[Literal[
         'waypoints_infill', 'constraint_violation', 'no_repair'
