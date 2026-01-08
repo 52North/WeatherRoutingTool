@@ -491,26 +491,26 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
-        :type point: tuple[float, float]
+        :type point: tuple[float, float, float]
         :param dist: distance in meters
         :type dist: float
         :param bearing: Azimuth in degrees (clockwise from North)
         :type bearing: float
         :return: (lat, lon) in degrees.
-        :rtype: tuple[float, float]
+        :rtype: tuple[float, float, float]
         """
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
