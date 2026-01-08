@@ -314,12 +314,21 @@ def test_constraint_violation_repair():
         show_depth=False,
         show_gcr=False
     )
+    old_route_lc = get_route_lc(old_route[0, 0])
+    new_route_lc = get_route_lc(new_route)
+    ax.add_collection(old_route_lc)
+    ax.add_collection(new_route_lc)
 
-    ax.plot(new_route[:, 1], new_route[:, 0], color="blue", transform=input_crs, marker='o')
-    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs, marker='o')
+    cbar = fig.colorbar(old_route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    plt.tight_layout()
+    plt.show()
+
     assert np.array_equal(new_route[0], old_route[0, 0][0])
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
     assert np.array_equal(new_route[-1], old_route[0, 0][-1])
+
 
 def test_single_point_crossover():
     dirname = os.path.dirname(__file__)

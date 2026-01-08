@@ -261,19 +261,20 @@ class IsofuelPatcher(PatcherBase):
         """
         Produce a set of waypoints between src and dst using the IsoFuel algorithm.
 
-        :param src: Source waypoint as (lat, lon) pair
-        :type src: tuple[float, float]
-        :param dst: Destination waypoint as (lat, lon) pair
-        :type dst: tuple[float, float]
+        :param src: Source waypoint as (lat, lon, speed) triple
+        :type src: tuple[float, float, float]
+        :param dst: Destination waypoint as (lat, lon, speed) triple
+        :type dst: tuple[float, float, float]
         :param departure_time: departure time from src
         :type departure_time: datetime
         :return: List of waypoints or list of multiple routes connecting src and dst
         :rtype: np.array[tuple[float, float]] or list[np.array[tuple[float, float]]]
         """
         self.patch_count += 1
+        speed = src[2]
 
         cfg = self.config.model_copy(update={
-            "DEFAULT_ROUTE": [*src, *dst],
+            "DEFAULT_ROUTE": [*src[:-1], *dst[:-1]],
             "DEPARTURE_TIME": departure_time
         })
 
@@ -315,7 +316,7 @@ class IsofuelPatcher(PatcherBase):
         routes = []
 
         for rt in alg.route_list:
-            routes.append(np.stack([rt.lats_per_step, rt.lons_per_step], axis=1))
+            routes.append(np.stack([rt.lats_per_step, rt.lons_per_step, speed], axis=1))
         return routes
 
 
