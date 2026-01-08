@@ -7,9 +7,12 @@ import cartopy.crs as ccrs
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
+from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
@@ -61,28 +64,28 @@ def test_isofuelpatcher_no_singleton():
 
 def get_dummy_route_input(length='long'):
     route1 = np.array([
-        [35.199, 15.490],
-        [34.804, 16.759],
-        [34.447, 18.381],
-        [34.142, 18.763],
-        [33.942, 21.080],
-        [33.542, 23.024],
-        [33.408, 24.389],
-        [33.166, 26.300],
-        [32.937, 27.859],
-        [32.737, 28.859],
+        [35.199, 15.490, 10],
+        [34.804, 16.759, 10],
+        [34.447, 18.381, 10],
+        [34.142, 18.763, 10],
+        [33.942, 21.080, 10],
+        [33.542, 23.024, 10],
+        [33.408, 24.389, 10],
+        [33.166, 26.300, 10],
+        [32.937, 27.859, 10],
+        [32.737, 28.859, 10],
     ])
     route2 = np.array([
-        [35.199, 16.490],
-        [34.804, 17.759],
-        [34.447, 19.381],
-        [34.142, 19.763],
-        [33.942, 22.080],
-        [33.542, 23.024],
-        [33.408, 24.389],
-        [33.166, 25.300],
-        [32.937, 26.859],
-        [32.737, 27.859],
+        [35.199, 16.490, 20],
+        [34.804, 17.759, 20],
+        [34.447, 19.381, 20],
+        [34.142, 19.763, 20],
+        [33.942, 22.080, 20],
+        [33.542, 23.024, 20],
+        [33.408, 24.389, 20],
+        [33.166, 25.300, 20],
+        [32.937, 26.859, 20],
+        [32.737, 27.859, 20],
     ])
     if length == "short":
         route1 = np.delete(route1, -1, 0)
@@ -100,6 +103,20 @@ def get_dummy_route_input(length='long'):
    - does the shape of the output route matrix resemble the shape of the input route matrix
    - do the starting and end points of all routes match with the input routes
 '''
+
+def get_route_lc(X):
+    lats = X[:, 0]
+    lons = X[:, 1]
+    speed = X[:, 2]
+
+    points = np.array([lons, lats]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+    norm = Normalize(vmin=10, vmax=20)
+    lc = LineCollection(segments, cmap='viridis', norm=norm, transform=ccrs.Geodetic())
+    lc.set_array(speed)
+    lc.set_linewidth(3)
+    return lc
 
 
 def test_random_plateau_mutation():
@@ -127,10 +144,21 @@ def test_random_plateau_mutation():
         show_depth=False,
         show_gcr=False
     )
-    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs)
-    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue", transform=input_crs)
-    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick", transform=input_crs)
-    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue", transform=input_crs)
+    old_route_one_lc = get_route_lc(old_route[0,0])
+    old_route_two_lc = get_route_lc(old_route[1,0])
+    new_route_one_lc = get_route_lc(new_route[0,0])
+    new_route_two_lc = get_route_lc(new_route[1,0])
+    ax.add_collection(old_route_one_lc)
+    ax.add_collection(old_route_two_lc)
+    ax.add_collection(new_route_one_lc)
+    ax.add_collection(new_route_two_lc)
+
+    cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    plt.tight_layout()
+    plt.show()
+
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -282,3 +310,47 @@ def test_constraint_violation_repair():
     assert np.array_equal(new_route[0], old_route[0, 0][0])
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
     assert np.array_equal(new_route[-1], old_route[0, 0][-1])
+
+def test_single_point_crossover():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    input_crs = ccrs.PlateCarree()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time =  datetime(2025, 4, 1, 11, 11)
+
+    np.random.seed(2)
+
+    X = get_dummy_route_input()
+    old_route = copy.deepcopy(X)
+
+    sp = SinglePointCrossover(
+        config=config,
+        constraints_list=constraint_list,
+        departure_time=departure_time
+    )
+    # r1, r2 = sp.crossover(X[0,0], X[1,0])
+    X = sp._do(problem=None, X=X)
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+
+    # ax.plot(r1[:, 1], r1[:, 0], color="blue", transform=input_crs, marker='o')
+    # ax.plot(r2[:, 1], r2[:, 0], color="blue", transform=input_crs, marker='o')
+    ax.plot(X[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
+    ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
+
+    plt.show()
+
+    assert 1==2
+

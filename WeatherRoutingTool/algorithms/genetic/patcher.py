@@ -86,7 +86,8 @@ class GreatCircleRoutePatcher(PatcherBase):
         """
 
         geod: Geodesic = Geodesic.WGS84
-        line = geod.InverseLine(*src, *dst)
+        line = geod.InverseLine(*src[:-1], *dst[:-1])
+        speed = src[2]
 
         if not npoints == None:
             self.dist = line.s13 / npoints
@@ -97,7 +98,7 @@ class GreatCircleRoutePatcher(PatcherBase):
         for i in range(npoints + 1):
             s = min(self.dist * i, line.s13)
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
-            route.append((g['lat2'], g['lon2']))
+            route.append((g['lat2'], g['lon2'], speed))
 
         return np.array([src, *route[1:-1], dst])
 

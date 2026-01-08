@@ -215,10 +215,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
@@ -231,11 +231,11 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :rtype: tuple[float, float]
         """
 
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         """
@@ -266,7 +266,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
         # test whether input route rt has the correct shape
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
