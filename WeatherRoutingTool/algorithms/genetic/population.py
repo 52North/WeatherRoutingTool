@@ -183,7 +183,7 @@ class IsoFuelPopulation(Population):
     is lesser than the expected n_samples number of individuals, the last
     produced route is repeated until the required number of individuals are met
     """
-
+    
     def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
         super().__init__(
             default_route=default_route,
@@ -194,7 +194,18 @@ class IsoFuelPopulation(Population):
 
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
-
+    def _perturb_route(self, route):
+        """
+        Apply small Gaussian noise to intermediate waypoints to ensure diversity.
+        Start (0) and End (-1) points are kept fixed.
+        """
+        new_route = np.copy(route)
+        sigma = 0.01 
+        if len(new_route) > 2:
+            noise = np.random.normal(0, sigma, new_route[1:-1].shape)
+            new_route[1:-1] += noise
+            
+        return new_route
     def generate(self, problem, n_samples, **kw):
         routes = self.patcher.patch(self.src, self.dst, self.departure_time)
 
@@ -203,10 +214,11 @@ class IsoFuelPopulation(Population):
         for i, rt in enumerate(routes):
             X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
 
-        # fallback: fill all other individuals with the same population as the last one
+        # fallback: fill all other individuals with perturbed versions of the last valid route
         for j in range(i + 1, n_samples):
-            X[j, 0] = np.copy(X[j - 1, 0])
-        return X
+            # Instead of exact copy: X[j, 0] = np.copy(X[j - 1, 0])
+            last_route = X[j - 1, 0]
+            X[j, 0] = self._perturb_route(last_route)
 
 
 class GcrSliderPopulation(Population):
