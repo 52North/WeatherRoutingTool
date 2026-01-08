@@ -421,7 +421,7 @@ class RouteBlendMutation(MutationConstraintRejection):
         control_points = np.array(control_points)
         n = len(control_points) - 1  # degree
         t = np.linspace(0, 1, n_points)
-        curve = np.zeros((n_points, 2))
+        curve = np.zeros((n_points, 3))
 
         for i in range(n + 1):
             bernstein = math.comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
@@ -432,7 +432,7 @@ class RouteBlendMutation(MutationConstraintRejection):
     def mutate(self, problem, rt, **kw):
         # test shape of input route
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
 
         # only mutate routes that are long enough

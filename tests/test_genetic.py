@@ -220,10 +220,20 @@ def test_bezier_curve_mutation():
         show_gcr=False
     )
 
-    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs)
-    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue", transform=input_crs)
-    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick", transform=input_crs)
-    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue", transform=input_crs)
+    old_route_one_lc = get_route_lc(old_route[0,0])
+    old_route_two_lc = get_route_lc(old_route[1,0])
+    new_route_one_lc = get_route_lc(new_route[0,0])
+    new_route_two_lc = get_route_lc(new_route[1,0])
+    ax.add_collection(old_route_one_lc)
+    ax.add_collection(old_route_two_lc)
+    ax.add_collection(new_route_one_lc)
+    ax.add_collection(new_route_two_lc)
+
+    cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    plt.tight_layout()
+    plt.show()
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
