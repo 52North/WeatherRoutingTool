@@ -12,11 +12,13 @@ logger = logging.getLogger('WRT.Genetic')
 class RoutingProblem(ElementwiseProblem):
     """GA definition of the Weather Routing Problem"""
 
-    def __init__(self, departure_time, boat, constraint_list):
+
+    def __init__(self, departure_time, boat, constraint_list, fitness_function_type='fuel'):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
+        self.fitness_function_type = fitness_function_type
 
     def _evaluate(self, x, out, *args, **kwargs):
         """Overridden function for population evaluation
@@ -32,10 +34,13 @@ class RoutingProblem(ElementwiseProblem):
         """
 
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
-        fuel, _ = self.get_power(x[0])
+        fuel, dist, _ = self.get_power(x[0])
         constraints = utils.get_constraints(x[0], self.constraint_list)
         # print(costs.shape)
-        out['F'] = np.column_stack([fuel])
+        if self.fitness_function_type == 'fuel':
+            out['F'] = np.column_stack([fuel])
+        else:
+            out['F'] = np.column_stack([dist])
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
@@ -53,4 +58,4 @@ class RoutingProblem(ElementwiseProblem):
 
         fuel = shipparams.get_fuel_rate()
         fuel = fuel * route_dict['travel_times']
-        return np.sum(fuel), shipparams
+        return np.sum(fuel), np.sum(route_dict['dist']), shipparams
