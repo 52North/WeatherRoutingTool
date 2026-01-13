@@ -159,7 +159,7 @@ class ConstraintViolationRepair(RepairBase):
                     # just passed constrained area -> call patcher
                     _r = patchfn.patch(rt[prev_seg_end], rt[seg_start], self.config.DEPARTURE_TIME)
                     if debug:
-                        print(' adding _r: ',_r)
+                        print(' adding _r: ', _r)
 
                     output_route_segs.append(_r)
                     output_route_segs.append([rt[seg_end]])

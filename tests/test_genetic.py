@@ -18,6 +18,14 @@ from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepa
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.utils.maps import Map
 
+# FIXME: the following test functions fail if LaTeX is not installed:
+#   - tests/test_genetic.py::test_random_plateau_mutation
+#   - tests/test_genetic.py::test_bezier_curve_mutation
+#   - tests/test_genetic.py::test_constraint_violation_repair
+#  In the GH Actions workflow, we install the packages texlive, texlive-latex-extra and cm-super to make sure the
+#  tests are passing. However, this leads to additional traffic when running the workflow. It would be better to
+#  exclude plotting in the tests or adapt it so that LaTeX doesn't need to be installed.
+
 
 def test_isofuelpatcher_singleton():
     dirname = os.path.dirname(__file__)
@@ -255,8 +263,8 @@ def test_constraint_violation_repair():
     repairfn = ConstraintViolationRepair(config, constraint_list)
     X = get_dummy_route_input()
     old_route = copy.deepcopy(X)
-    is_constrained=[False, True, True, True, False, True, True, False, False]
-    new_route = repairfn.repair_single_route(X[0,0], patchfn, is_constrained)
+    is_constrained = [False, True, True, True, False, True, True, False, False]
+    new_route = repairfn.repair_single_route(X[0, 0], patchfn, is_constrained)
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
@@ -270,8 +278,7 @@ def test_constraint_violation_repair():
     )
 
     ax.plot(new_route[:, 1], new_route[:, 0], color="blue", transform=input_crs, marker='o')
-    ax.plot(old_route[0,0][:, 1], old_route[0,0][:, 0], color="firebrick", transform=input_crs, marker='o')
-    assert np.array_equal(new_route[0],  old_route[0,0][0])
-    assert np.array_equal(new_route[-2], old_route[0,0][-2])
-    assert np.array_equal(new_route[-1], old_route[0,0][-1])
-
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs, marker='o')
+    assert np.array_equal(new_route[0], old_route[0, 0][0])
+    assert np.array_equal(new_route[-2], old_route[0, 0][-2])
+    assert np.array_equal(new_route[-1], old_route[0, 0][-1])

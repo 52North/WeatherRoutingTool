@@ -1,10 +1,12 @@
-from skimage.graph import route_through_array
-from pymoo.core.sampling import Sampling
+import logging
+import os
+import os.path
+from math import ceil
 
 import numpy as np
-import logging
-import os.path
-import os
+from geographiclib.geodesic import Geodesic
+from pymoo.core.sampling import Sampling
+from skimage.graph import route_through_array
 
 from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.ship.ship import Boat
@@ -13,8 +15,11 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
+from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
 
 logger = logging.getLogger("WRT.genetic.population")
+
+geod = Geodesic.WGS84
 
 
 class Population(Sampling):
@@ -41,7 +46,7 @@ class Population(Sampling):
         return self.X
 
     def generate(self, problem, n_samples, **kw):
-        pass
+        raise NotImplementedError("Has to be implemented by child class!")
 
     def check_validity(self, routes):
         """
@@ -195,13 +200,113 @@ class IsoFuelPopulation(Population):
 
         X = np.full((n_samples, 1), None, dtype=object)
 
-        for i, rt in enumerate((routes)):
+        for i, rt in enumerate(routes):
             X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X
+
+
+class GcrSliderPopulation(Population):
+
+    def __init__(self, config: Config, default_route, constraints_list, pop_size):
+        super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
+        self.algo = GcrSliderAlgorithm(config)
+
+    def generate(self, problem, n_samples, **kw):
+        """
+        Create an initial population with good variety of routes by calculating routes using the GCR Slider Algorithm
+        with different waypoints. Each route is created with only one waypoint.
+        Waypoints are created in two steps:
+        1) Find the point(s) which splits the segment(s) into two new segments of equal distance.
+           These points will be located at fractions of 0.5 (1st split), 0.25|0.75 (2nd split),
+           0.125|0.625|0.375|0.875 (3rd split) and so forth.
+        2) For each point move the point in orthogonal direction (clockwise and counter-clockwise). Increase the
+           distance used to move the point incrementally.
+        """
+        # FIXME: how to handle already existing waypoints specified for the genetic algorithm?
+        route = self.create_route()
+        routes = []
+        if route is not None:
+            routes.append(route)
+            logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
+        line = geod.InverseLine(self.algo.start[0], self.algo.start[1], self.algo.finish[0], self.algo.finish[1])
+        wpt_increment_max = 0.5 * line.s13
+        wpt_increment = 0.05 * line.s13
+        wpt_increment_steps_max = ceil(wpt_increment_max/wpt_increment)
+
+        element = 1
+        clockwise = True
+        wpt_increment_step = 1
+        while len(routes) < n_samples:
+            dist_fraction = self.van_der_corput_sequence(element)
+            g = line.Position(dist_fraction*line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            dist_orthogonal = wpt_increment_step * wpt_increment
+            lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
+            if not self.algo.is_land(lat, lon):
+                route = self.create_route(lat, lon)
+                if route is not None:
+                    routes.append(route)
+                    logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
+                else:
+                    logger.info(f"Could not find a new route (dist_fraction={dist_fraction}, "
+                                f"dist_orthogonal={dist_orthogonal}, clockwise={clockwise}).")
+            if not clockwise:
+                wpt_increment_step += 1
+            clockwise = not clockwise
+            if wpt_increment_step > wpt_increment_steps_max:
+                element += 1
+                wpt_increment_step = 1
+            if element > 7:
+                break
+
+        X = np.full((n_samples, 1), None, dtype=object)
+        for i, rt in enumerate(routes):
+            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+
+        # fallback: fill all other individuals with the same population as the last one
+        for j in range(i + 1, n_samples):
+            X[j, 0] = np.copy(X[j - 1, 0])
+        return X
+
+    def create_route(self, lat: float = None, lon: float = None):
+        """
+        :param lat: latitude of the waypoint
+        :type lat: float
+        :param lon: longitude of the waypoint
+        :type lon: float
+        """
+        route = None
+        if lat and lon:
+            self.algo.waypoints = [[lat, lon]]
+        try:
+            route, _ = self.algo.execute()
+            # import uuid
+            # filename = f"{str(uuid.uuid4())}.geojson"
+            # route.write_to_geojson(filename)
+            route = [[route.lats_per_step[i], route.lons_per_step[i]] for i in range(0, len(route.lats_per_step))]
+            route = np.array(route)
+        except Exception:
+            pass
+        return route
+
+    @staticmethod
+    def van_der_corput_sequence(n: int, base: int = 2):
+        """
+        Returns the n-th element of the van der Corput sequence in a given base.
+        Can be used to produce the sequence 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, ...
+        Based on https://en.wikipedia.org/wiki/Van_der_Corput_sequence.
+        """
+        result = 0.0
+        result_increment = 1 / base
+        while n > 0:
+            least_significant_digit = n % base
+            result += least_significant_digit * result_increment
+            n //= base
+            result_increment /= base
+        return result
 
 
 class PopulationFactory:
@@ -241,6 +346,13 @@ class PopulationFactory:
             case "from_geojson":
                 return FromGeojsonPopulation(
                     routes_dir=config.GENETIC_POPULATION_PATH,
+                    default_route=config.DEFAULT_ROUTE,
+                    constraints_list=constraints_list,
+                    pop_size=population_size, )
+
+            case "gcrslider":
+                return GcrSliderPopulation(
+                    config=config,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
                     pop_size=population_size, )

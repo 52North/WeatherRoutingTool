@@ -5,14 +5,40 @@ Installation
 
 Steps:
 
-- clone the repository: ``git clone https://github.com/52North/WeatherRoutingTool.git``
-- change to the folder: ``cd WeatherRoutingTool``
-- [recommended] create and activate a virtual environment, e.g.
-  - ``python3 -m venv "venv"``
-  - ``source venv/bin/activate``
-- install the WRT: ``pip install . && pip install --no-deps -r requirements-without-deps.txt`` or in editable mode (recommended for development) ``pip install -e . && pip install --no-deps -r requirements-without-deps.txt``
+1. Clone the repository:
 
-The part `pip install --no-deps -r requirements-without-deps.txt` is necessary because of a dependency issue (see https://github.com/52North/WeatherRoutingTool/issues/8). We might implement a different solution in the future making the installation easier/cleaner.
+.. code-block:: shell
+
+    git clone https://github.com/52North/WeatherRoutingTool.git
+
+2. Change to the folder:
+
+.. code-block:: shell
+
+    cd WeatherRoutingTool
+
+3. [recommended] Create and activate a virtual environment, e.g.
+
+.. code-block:: shell
+
+    python3 -m venv "venv"
+    source venv/bin/activate
+
+4. Install the WRT:
+
+    4.1. In normal mode
+
+    .. code-block:: shell
+
+        pip install . && pip install --no-deps -r requirements-without-deps.txt
+
+    4.2. In editable mode (recommended for development)
+
+    .. code-block:: shell
+
+        pip install -e . && pip install --no-deps -r requirements-without-deps.txt
+
+The part ``pip install --no-deps -r requirements-without-deps.txt`` is necessary because of a dependency issue (see `issue 8 <https://github.com/52North/WeatherRoutingTool/issues/8>`_). We might implement a different solution in the future making the installation easier/cleaner.
 
 **Power/fuel consumption framework**
 

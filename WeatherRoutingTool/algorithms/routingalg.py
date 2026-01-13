@@ -6,6 +6,7 @@ from geovectorslib import geod
 from matplotlib.figure import Figure
 
 from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
@@ -19,8 +20,8 @@ class RoutingAlg:
     Mother class of all routing algorithms defining basic attributes and methods
     """
 
-    start: tuple  # lat, lon at start
-    finish: tuple  # lat, lon at end
+    start: tuple[float, float]  # (lat, lon) at start
+    finish: tuple[float, float]  # (lat, lon) at end
     departure_time: datetime
     arrival_time: datetime
     gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
@@ -82,7 +83,13 @@ class RoutingAlg:
             finish[1]])
         return gcr['azi1'], gcr['s12']
 
-    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
+    def execute_routing(
+            self,
+            boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose=False
+    ) -> RouteParams:
         pass
 
     def check_for_positive_constraints(self, constraint_list):

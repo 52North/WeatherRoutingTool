@@ -7,5 +7,7 @@ Algorithms
    :maxdepth: 2
    :caption: Contents:
 
+   dijkstra
+   gcrslider
    genetic
    isofuel

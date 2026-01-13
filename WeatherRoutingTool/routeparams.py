@@ -119,7 +119,7 @@ class RouteParams:
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
-    def return_route_to_API(self, filename):
+    def write_to_geojson(self, filename):
         rp_dict = {}
         rp_dict['type'] = 'FeatureCollection'
         feature_list = []
@@ -342,7 +342,7 @@ class RouteParams:
 
         for i in range(0, nsteps - 1):
             dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
-            dist[i] = dist_step['s12']
+            dist[i] = dist_step['s12'][0]
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
@@ -468,13 +468,13 @@ class RouteParams:
             )
 
         hist_values_ratios = hist_values_nom["bin_contents"] / hist_values_denom["bin_contents"]
-        mean_dev = hist_values_ratios.mean()
+        # mean_dev = hist_values_ratios.mean()
 
         plt.plot(hist_values_nom["bin_centres"].to(u.km).value, hist_values_ratios,
                  marker='o', color=color, linewidth=0, label=label)
         plt.errorbar(x=hist_values_nom["bin_centres"].to(u.km).value, y=hist_values_ratios, yerr=None,
                      xerr=hist_values_nom["bin_widths"].to(u.km).value / 2, fmt=' ', color=color, linestyle=None)
-        #plt.axhline(y=mean_dev, color=color, linestyle='dashed')
+        # plt.axhline(y=mean_dev, color=color, linestyle='dashed')
 
         plt.xlabel('travel distance (km)')
         plt.ylabel(power_nom["label"] + ' scipy shortest/model')

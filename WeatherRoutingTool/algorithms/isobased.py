@@ -928,8 +928,8 @@ class IsoBased(RoutingAlg):
             self.check_status(route_object.ship_params_per_step.get_status(), str(self.current_number_of_routes))
             self.route_list.append(route_object)
             if self.path_to_route_folder is not None:
-                route_object.return_route_to_API(self.path_to_route_folder + '/' +
-                                                 'route_' + str(self.current_number_of_routes) + ".json")
+                route_object.write_to_geojson(self.path_to_route_folder + '/' +
+                                              'route_' + str(self.current_number_of_routes) + ".json")
             if self.figure_path is not None:
                 self.plot_routes(idxs)
 
@@ -1105,7 +1105,7 @@ class IsoBased(RoutingAlg):
             route_object = self.make_route_object(idx)
             self.route_list.append(route_object)
             if self.path_to_route_folder is not None:
-                route_object.return_route_to_API(self.path_to_route_folder + '/' + 'route_' + str(idx) + ".json")
+                route_object.write_to_geojson(self.path_to_route_folder + '/' + 'route_' + str(idx) + ".json")
             if self.figure_path is not None:
                 self.plot_routes(idx)
 
