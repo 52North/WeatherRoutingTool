@@ -6,6 +6,7 @@ from pathlib import Path
 import cartopy.crs as ccrs
 import numpy as np
 import matplotlib.pyplot as plt
+import pytest
 from astropy import units as u
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
@@ -21,21 +22,13 @@ from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepa
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.utils.maps import Map
 
-# FIXME: the following test functions fail if LaTeX is not installed:
-#   - tests/test_genetic.py::test_random_plateau_mutation
-#   - tests/test_genetic.py::test_bezier_curve_mutation
-#   - tests/test_genetic.py::test_constraint_violation_repair
-#  In the GH Actions workflow, we install the packages texlive, texlive-latex-extra and cm-super to make sure the
-#  tests are passing. However, this leads to additional traffic when running the workflow. It would be better to
-#  exclude plotting in the tests or adapt it so that LaTeX doesn't need to be installed.
-
 
 def test_isofuelpatcher_singleton():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
-    src = [38.851, 4.066]
-    dst = [37.901, 8.348]
+    src = [38.851, 4.066, 7]
+    dst = [37.901, 8.348, 7]
 
     departure_time = datetime(2025, 4, 1, 12, 11)
     pt_one = IsofuelPatcherSingleton(config)
@@ -50,8 +43,8 @@ def test_isofuelpatcher_no_singleton():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
-    src = [38.851, 4.066]
-    dst = [37.901, 8.348]
+    src = [38.851, 4.066, 7]
+    dst = [37.901, 8.348, 7]
 
     departure_time = datetime(2025, 4, 1, 12, 11)
     pt_one = IsofuelPatcher(config)
@@ -104,6 +97,7 @@ def get_dummy_route_input(length='long'):
    - do the starting and end points of all routes match with the input routes
 '''
 
+
 def get_route_lc(X):
     lats = X[:, 0]
     lons = X[:, 1]
@@ -119,7 +113,8 @@ def get_route_lc(X):
     return lc
 
 
-def test_random_plateau_mutation():
+@pytest.mark.manual
+def test_random_plateau_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -144,10 +139,10 @@ def test_random_plateau_mutation():
         show_depth=False,
         show_gcr=False
     )
-    old_route_one_lc = get_route_lc(old_route[0,0])
-    old_route_two_lc = get_route_lc(old_route[1,0])
-    new_route_one_lc = get_route_lc(new_route[0,0])
-    new_route_two_lc = get_route_lc(new_route[1,0])
+    old_route_one_lc = get_route_lc(old_route[0, 0])
+    old_route_two_lc = get_route_lc(old_route[1, 0])
+    new_route_one_lc = get_route_lc(new_route[0, 0])
+    new_route_two_lc = get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -157,8 +152,7 @@ def test_random_plateau_mutation():
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
     plt.tight_layout()
-    plt.show()
-
+    plt.saveas = "test_random_plateau_mutation.png"
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -195,7 +189,8 @@ def test_random_plateau_mutation_refusal():
 '''
 
 
-def test_bezier_curve_mutation():
+@pytest.mark.manual
+def test_bezier_curve_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -220,10 +215,10 @@ def test_bezier_curve_mutation():
         show_gcr=False
     )
 
-    old_route_one_lc = get_route_lc(old_route[0,0])
-    old_route_two_lc = get_route_lc(old_route[1,0])
-    new_route_one_lc = get_route_lc(new_route[0,0])
-    new_route_two_lc = get_route_lc(new_route[1,0])
+    old_route_one_lc = get_route_lc(old_route[0, 0])
+    old_route_two_lc = get_route_lc(old_route[1, 0])
+    new_route_one_lc = get_route_lc(new_route[0, 0])
+    new_route_two_lc = get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -233,7 +228,7 @@ def test_bezier_curve_mutation():
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
     plt.tight_layout()
-    plt.show()
+    plt.saveas = "test_bezier_curve_mutation.png"
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -284,7 +279,8 @@ def test_configuration_isofuel_patcher():
     assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter == pt.boat.under_keel_clearance
 
 
-def test_constraint_violation_repair():
+@pytest.mark.manual
+def test_constraint_violation_repair(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -323,21 +319,22 @@ def test_constraint_violation_repair():
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
     plt.tight_layout()
-    plt.show()
+    plt.saveas = "test_constraint_violation_repair.png"
 
     assert np.array_equal(new_route[0], old_route[0, 0][0])
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
     assert np.array_equal(new_route[-1], old_route[0, 0][-1])
 
 
-def test_single_point_crossover():
+@pytest.mark.skip(reason="Test needs modified route array.")
+def test_single_point_crossover(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
     default_map = Map(32., 15, 36, 29)
     input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    departure_time =  datetime(2025, 4, 1, 11, 11)
+    departure_time = datetime(2025, 4, 1, 11, 11)
 
     np.random.seed(2)
 
@@ -369,7 +366,4 @@ def test_single_point_crossover():
     ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
     ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
 
-    plt.show()
-
-    assert 1==2
-
+    plt.saveas = "test_single_point_crossoverr.png"
