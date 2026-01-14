@@ -411,7 +411,7 @@ class RouteParams:
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne / u.kilometer).value,
                 hist_values["bin_widths"].to(u.km).value,
-                fill=False, color=color,edgecolor=color, label=label
+                fill=False, color=color, edgecolor=color, label=label
             )
             ax.set_ylim(0, 0.05)
         plt.xlabel('travel distance (km)')

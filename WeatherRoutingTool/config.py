@@ -53,9 +53,10 @@ class Config(BaseModel):
     # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
-    ALGORITHM_TYPE: Literal['dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel',
-                            'speedy_isobased'] = 'isofuel'
-    ARRIVAL_TIME:  datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
+    ALGORITHM_TYPE: Literal[
+        'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
+    ] = 'isofuel'
+    ARRIVAL_TIME: datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     BOAT_SPEED: float = -99.  # boat speed [m/s]
@@ -97,7 +98,8 @@ class Config(BaseModel):
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # total number of offsprings for every generation
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
-    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel', 'gcrslider'] = 'grid_based'  # type for initial population  # noqa: E501
+    GENETIC_POPULATION_TYPE: Literal[
+        'grid_based', 'from_geojson', 'isofuel', 'gcrslider'] = 'grid_based'  # type for initial population  # noqa: E501
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
     GENETIC_REPAIR_TYPE: List[Literal[
         'waypoints_infill', 'constraint_violation', 'no_repair'
@@ -466,11 +468,13 @@ class Config(BaseModel):
 
     @model_validator(mode='after')
     def check_speed_determination(self) -> Self:
-        if self.ARRIVAL_TIME=='9999-99-99T99:99Z' and self.BOAT_SPEED==-99.:
+        print('arrival time: ', self.ARRIVAL_TIME)
+        print('speed: ', self.BOAT_SPEED)
+        if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
             raise ValueError('Please specify either the boat speed or the arrival time')
-        if not self.ARRIVAL_TIME=='9999-99-99T99:99Z' and not self.BOAT_SPEED==-99.:
+        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
             raise ValueError('Please specify either the boat speed or the arrival time and not both.')
-        if not self.ARRIVAL_TIME=='9999-99-99T99:99Z' and self.ALGORITHM_TYPE!='genetic':
+        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
             raise ValueError('The determination of the speed from the arrival time is only possible for the'
                              ' genetic algorithm')
         return self

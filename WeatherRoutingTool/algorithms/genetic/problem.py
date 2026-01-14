@@ -48,19 +48,19 @@ class RoutingProblem(ElementwiseProblem):
         bs = self.boat_speed
 
         if self.boat_speed_from_arrival_time:
-            dummy_speed = 6 *u.meter/u.second
+            dummy_speed = 6 * u.meter / u.second
             route_dict = RouteParams.get_per_waypoint_coords(
                 route[:, 1],
                 route[:, 0],
                 self.departure_time,
                 dummy_speed, )
 
-            full_travel_distance= np.sum(route_dict['dist'])
+            full_travel_distance = np.sum(route_dict['dist'])
             print('self.arrival_time: ', self.arrival_time)
             print('self.departure_time: ', self.departure_time)
 
             time_diff = self.arrival_time - self.departure_time
-            bs = full_travel_distance/(time_diff.total_seconds() * u.second)
+            bs = full_travel_distance / (time_diff.total_seconds() * u.second)
 
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],
@@ -69,11 +69,11 @@ class RoutingProblem(ElementwiseProblem):
             bs, )
 
         shipparams = self.boat.get_ship_parameters(
-            courses = route_dict['courses'],
-            lats = route_dict['start_lats'],
-            lons = route_dict['start_lons'],
-            time = route_dict['start_times'],
-            speed = bs,
+            courses=route_dict['courses'],
+            lats=route_dict['start_lats'],
+            lons=route_dict['start_lons'],
+            time=route_dict['start_times'],
+            speed=bs,
         )
 
         fuel = shipparams.get_fuel_rate()

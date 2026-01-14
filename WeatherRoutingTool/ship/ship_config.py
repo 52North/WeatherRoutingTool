@@ -7,7 +7,6 @@ logger = logging.getLogger('WRT.ShipConfig')
 
 
 class ShipConfig(BaseModel):
-
     # Filepaths
     WEATHER_DATA: Path  # path to weather data
     DEPTH_DATA: Path = None  # path to depth data
@@ -88,5 +87,3 @@ class ShipConfig(BaseModel):
     def check_boat_propulsion_efficiency_range(cls, v):
         if not (0 <= v <= 1):
             raise ValueError(f"'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1, but got {v}.")
-
-
