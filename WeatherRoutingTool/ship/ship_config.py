@@ -7,7 +7,6 @@ logger = logging.getLogger('WRT.ShipConfig')
 
 
 class ShipConfig(BaseModel):
-
     # Filepaths
     WEATHER_DATA: Path  # path to weather data
     DEPTH_DATA: Path = None  # path to depth data
@@ -20,7 +19,6 @@ class ShipConfig(BaseModel):
     BOAT_LENGTH: float  # overall length [m]
     BOAT_SMCR_POWER: float  # Specific Maximum Continuous Rating power [kWh]
     BOAT_SMCR_SPEED: float
-    BOAT_SPEED: float  # boat speed [m/s]
 
     # Recommended configuration
     BOAT_ROUGHNESS_DISTRIBUTION_LEVEL: float = 1  # numeric value
@@ -78,7 +76,7 @@ class ShipConfig(BaseModel):
             logger.error(msg)
             raise ValueError(msg)
 
-    @field_validator('BOAT_BREADTH', 'BOAT_LENGTH', 'BOAT_SMCR_POWER', 'BOAT_SPEED', mode='after')
+    @field_validator('BOAT_BREADTH', 'BOAT_LENGTH', 'BOAT_SMCR_POWER', mode='after')
     @classmethod
     def check_numeric_values_positivity(cls, v, info):
         if v <= 0:
@@ -89,12 +87,3 @@ class ShipConfig(BaseModel):
     def check_boat_propulsion_efficiency_range(cls, v):
         if not (0 <= v <= 1):
             raise ValueError(f"'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1, but got {v}.")
-
-    @field_validator('BOAT_SPEED', mode='after')
-    @classmethod
-    def check_boat_speed(cls, v):
-        if v > 10:
-            logger.warning(
-                "Your 'BOAT_SPEED' is higher than 10 m/s."
-                " Have you considered that this program works with m/s?")
-        return v

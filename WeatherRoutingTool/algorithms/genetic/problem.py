@@ -1,5 +1,6 @@
 import logging
 
+import astropy.units as u
 import numpy as np
 from pymoo.core.problem import ElementwiseProblem
 
@@ -12,11 +13,16 @@ logger = logging.getLogger('WRT.Genetic')
 class RoutingProblem(ElementwiseProblem):
     """GA definition of the Weather Routing Problem"""
 
-    def __init__(self, departure_time, boat, constraint_list):
+    def __init__(self, departure_time, arrival_time, boat, boat_speed, constraint_list):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
+        self.arrival_time = arrival_time
+        self.boat_speed = boat_speed
+        self.boat_speed_from_arrival_time = False
+        if boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
 
     def _evaluate(self, x, out, *args, **kwargs):
         """Overridden function for population evaluation
@@ -39,17 +45,36 @@ class RoutingProblem(ElementwiseProblem):
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
+        bs = self.boat_speed
+
+        if self.boat_speed_from_arrival_time:
+            dummy_speed = 6 * u.meter / u.second
+            route_dict = RouteParams.get_per_waypoint_coords(
+                route[:, 1],
+                route[:, 0],
+                self.departure_time,
+                dummy_speed, )
+
+            full_travel_distance = np.sum(route_dict['dist'])
+            print('self.arrival_time: ', self.arrival_time)
+            print('self.departure_time: ', self.departure_time)
+
+            time_diff = self.arrival_time - self.departure_time
+            bs = full_travel_distance / (time_diff.total_seconds() * u.second)
+
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],
             route[:, 0],
             self.departure_time,
-            self.boat.get_boat_speed(), )
+            bs, )
 
         shipparams = self.boat.get_ship_parameters(
-            route_dict['courses'],
-            route_dict['start_lats'],
-            route_dict['start_lons'],
-            route_dict['start_times'], )
+            courses=route_dict['courses'],
+            lats=route_dict['start_lats'],
+            lons=route_dict['start_lons'],
+            time=route_dict['start_times'],
+            speed=bs,
+        )
 
         fuel = shipparams.get_fuel_rate()
         fuel = fuel * route_dict['travel_times']

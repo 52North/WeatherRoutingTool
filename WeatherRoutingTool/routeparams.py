@@ -342,7 +342,7 @@ class RouteParams:
 
         for i in range(0, nsteps - 1):
             dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
-            dist[i] = dist_step['s12']
+            dist[i] = dist_step['s12'][0]
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
@@ -351,7 +351,7 @@ class RouteParams:
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot', transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle=linestyle, transform=input_crs)
         else:
             ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
 

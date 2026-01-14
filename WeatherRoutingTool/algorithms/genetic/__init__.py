@@ -82,6 +82,8 @@ class Genetic(RoutingAlg):
         # inputs
         problem = RoutingProblem(
             departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+            boat_speed=self.boat_speed,
             boat=boat,
             constraint_list=constraints_list, )
 
