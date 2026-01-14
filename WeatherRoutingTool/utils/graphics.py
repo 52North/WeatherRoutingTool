@@ -130,7 +130,7 @@ def plot_legend(fig):
 
 def get_colour(i):
     # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
-    colours = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
+    colours = ['#0072B2', '#D55E00', '#009E73',  # ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
     if i > 18:
         print('Are you sure that you want to have so many curves in one plot?!')
@@ -149,6 +149,17 @@ def get_marker(i):
         print('Currently only 5 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))
     return markers[i]
+
+
+def get_linestyle(i):
+    linestyles = ['solid', 'dotted', 'dashed', 'dashdot']
+
+    if i > 3:
+        i = i - 4
+        print('Currently only 4 different linestyles are available. Will use one that has already been used before: '
+              'Linestyle=' + str(i))
+    print('using linestyle: ', linestyles[i])
+    return linestyles[i]
 
 
 def rebin(a, rebinx, rebiny):

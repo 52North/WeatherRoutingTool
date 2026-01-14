@@ -351,7 +351,7 @@ class RouteParams:
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot', transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle=linestyle, transform=input_crs)
         else:
             ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
 

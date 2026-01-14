@@ -15,7 +15,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(4500, 5500)
+    ax.set_ylim(4000, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):
-            ax = rp_list[irp].plot_route(ax, graphics.get_colour(irp), rp_str_list[irp])
+            ax = rp_list[irp].plot_route(ax, graphics.get_colour(irp), rp_str_list[irp], graphics.get_linestyle(irp))
         ax.legend()
         plt.savefig(figurefile + '/route_waterdepth.png')
 
