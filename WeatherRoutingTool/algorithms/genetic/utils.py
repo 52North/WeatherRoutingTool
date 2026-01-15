@@ -9,7 +9,6 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
 from WeatherRoutingTool.routeparams import RouteParams
 
-
 logger = logging.getLogger("WRT.genetic")
 
 
@@ -147,6 +146,7 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
         dt = json.load(fp)
 
     return route_from_geojson(dt)
+
 
 def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time):
     """

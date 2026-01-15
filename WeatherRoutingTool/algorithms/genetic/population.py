@@ -193,7 +193,7 @@ class IsoFuelPopulation(Population):
 
         self.departure_time = config.DEPARTURE_TIME
         self.arrival_time = config.ARRIVAL_TIME
-        self.boat_speed = config.BOAT_SPEED * u.meter/u.second
+        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
 
         self.boat_speed_from_arrival_time = False
         if self.boat_speed.value == -99.:
@@ -215,7 +215,7 @@ class IsoFuelPopulation(Population):
     def generate(self, problem, n_samples, **kw):
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
-            boat_speed = 6 * u.meter/u.second
+            boat_speed = 6 * u.meter / u.second
         routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
@@ -224,9 +224,9 @@ class IsoFuelPopulation(Population):
             if self.boat_speed_from_arrival_time:
                 rt = self.recalculate_speed_for_route(rt)
 
-            X[i, 0] = rt 
+            X[i, 0] = rt
 
-        # fallback: fill all other individuals with the same population as the last one
+            # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X
@@ -258,14 +258,14 @@ class GcrSliderPopulation(Population):
         line = geod.InverseLine(self.algo.start[0], self.algo.start[1], self.algo.finish[0], self.algo.finish[1])
         wpt_increment_max = 0.5 * line.s13
         wpt_increment = 0.05 * line.s13
-        wpt_increment_steps_max = ceil(wpt_increment_max/wpt_increment)
+        wpt_increment_steps_max = ceil(wpt_increment_max / wpt_increment)
 
         element = 1
         clockwise = True
         wpt_increment_step = 1
         while len(routes) < n_samples:
             dist_fraction = self.van_der_corput_sequence(element)
-            g = line.Position(dist_fraction*line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            g = line.Position(dist_fraction * line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             dist_orthogonal = wpt_increment_step * wpt_increment
             lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
             if not self.algo.is_land(lat, lon):

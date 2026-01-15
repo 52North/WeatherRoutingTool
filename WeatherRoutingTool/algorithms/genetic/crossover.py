@@ -215,6 +215,8 @@ class TwoPointCrossover(OffspringRejectionCrossover):
             p2[p2x2:], ])
 
         return r1, r2
+
+
 #
 # ----------
 class RandomizedCrossoversOrchestrator(CrossoverBase):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import cartopy.crs as ccrs
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pyplot
 import pytest
 from astropy import units as u
 from matplotlib.collections import LineCollection
@@ -120,7 +120,6 @@ def test_random_plateau_mutation(plt):
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
     default_map = Map(32., 15, 36, 29)
-    input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     np.random.seed(1)
 
@@ -152,7 +151,7 @@ def test_random_plateau_mutation(plt):
     cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
-    plt.tight_layout()
+    pyplot.tight_layout()
     plt.saveas = "test_random_plateau_mutation.png"
 
     assert old_route.shape == new_route.shape
@@ -196,7 +195,6 @@ def test_bezier_curve_mutation(plt):
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
     default_map = Map(32., 15, 36, 29)
-    input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     np.random.seed(2)
 
@@ -228,7 +226,7 @@ def test_bezier_curve_mutation(plt):
     cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
-    plt.tight_layout()
+    pyplot.tight_layout()
     plt.saveas = "test_bezier_curve_mutation.png"
 
     assert old_route.shape == new_route.shape
@@ -286,7 +284,6 @@ def test_constraint_violation_repair(plt):
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
     default_map = Map(32., 15, 36, 29)
-    input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     np.random.seed(2)
 
@@ -319,12 +316,13 @@ def test_constraint_violation_repair(plt):
     cbar = fig.colorbar(old_route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
-    plt.tight_layout()
+    pyplot.tight_layout()
     plt.saveas = "test_constraint_violation_repair.png"
 
     assert np.array_equal(new_route[0], old_route[0, 0][0])
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
     assert np.array_equal(new_route[-1], old_route[0, 0][-1])
+
 
 def test_recalculate_speed_for_route():
     dirname = os.path.dirname(__file__)
@@ -336,7 +334,7 @@ def test_recalculate_speed_for_route():
 
     pop = IsoFuelPopulation(
         config=config,
-        default_route= [35.199, 15.490, 32.737, 28.859],
+        default_route=[35.199, 15.490, 32.737, 28.859],
         constraints_list=constraint_list,
         pop_size=1
     )
@@ -346,10 +344,11 @@ def test_recalculate_speed_for_route():
     new_route = pop.recalculate_speed_for_route(new_route)
 
     dist_to_dest = 1262000 * u.meter
-    time_difference = config.ARRIVAL_TIME-config.DEPARTURE_TIME
-    bs_approx = dist_to_dest/(time_difference.total_seconds() * u.second)
+    time_difference = config.ARRIVAL_TIME - config.DEPARTURE_TIME
+    bs_approx = dist_to_dest / (time_difference.total_seconds() * u.second)
 
     assert np.all((new_route[:, 2] - bs_approx.value) < 0.3)
+
 
 @pytest.mark.skip(reason="Test needs modified route array.")
 def test_single_point_crossover(plt):
@@ -385,8 +384,6 @@ def test_single_point_crossover(plt):
         show_gcr=False
     )
 
-    # ax.plot(r1[:, 1], r1[:, 0], color="blue", transform=input_crs, marker='o')
-    # ax.plot(r2[:, 1], r2[:, 0], color="blue", transform=input_crs, marker='o')
     ax.plot(X[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
     ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
     ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
