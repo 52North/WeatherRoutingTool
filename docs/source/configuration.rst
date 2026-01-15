@@ -125,7 +125,7 @@ The following lists contain information on each variable which can be set. The c
 - ``GENETIC_NUMBER_GENERATIONS``: number of generations for genetic algorithm (default: 20)
 - ``GENETIC_NUMBER_OFFSPRINGS``: number of offsprings for genetic algorithm (default: 2)
 - ``GENETIC_POPULATION_SIZE``: population size for genetic algorithm (default: 20)
-- ``GENETIC_POPULATION_TYPE``: type for initial population (options: 'grid_based', 'from_geojson'; default: 'grid_based')
+- ``GENETIC_POPULATION_TYPE``: type for initial population (options: 'grid_based', 'from_geojson', 'isofuel', 'gcrslider'; default: 'isofuel')
 - ``GENETIC_REPAIR_TYPE``: repair strategy for genetic algorithm (options: 'waypoints_infill', 'constraint_violation', 'no_repair', default: 'waypoints_infill' and 'constraint_violation')
 - ``GENETIC_MUTATION_TYPE``: options: 'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'no_mutation' (default: 'random')
 - ``GENETIC_CROSSOVER_PATCHER``: patching strategy for crossover (options: 'gcr', 'isofuel', default: 'isofuel')
