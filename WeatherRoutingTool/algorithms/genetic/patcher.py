@@ -271,7 +271,6 @@ class IsofuelPatcher(PatcherBase):
         :rtype: np.array[tuple[float, float]] or list[np.array[tuple[float, float]]]
         """
         self.patch_count += 1
-        speed = src[2]
 
         cfg = self.config.model_copy(update={
             "DEFAULT_ROUTE": [*src[:-1], *dst[:-1]],
@@ -305,9 +304,11 @@ class IsofuelPatcher(PatcherBase):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
+        speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
+
         # single route
         if self.n_routes == "single":
-            return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step], axis=1)
+            return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step, speed], axis=1)
 
         # list of routes
         if not alg.route_list:

@@ -1,14 +1,14 @@
+import json
 import logging
+from typing import Optional
 
+import astropy.units as u
+import numpy as np
+from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
-from geographiclib.geodesic import Geodesic
-import numpy as np
+from WeatherRoutingTool.routeparams import RouteParams
 
-from typing import Optional
-import functools
-import json
-import math
 
 logger = logging.getLogger("WRT.genetic")
 
@@ -26,7 +26,7 @@ def gcr_distance(src, dst) -> float:
 
     geod = Geodesic.WGS84
 
-    rs = geod.Inverse(*src, *dst)
+    rs = geod.Inverse(*src[:-1], *dst[:-1])
     return rs["s12"]
 
 
@@ -147,6 +147,35 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
         dt = json.load(fp)
 
     return route_from_geojson(dt)
+
+def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time):
+    """
+    Calculate boat speed based on coordinates, departure and arrival time for a route array.
+
+    :param lons: longitudes
+    :type lons: np.array
+    :param lats: latitudes
+    :type lats: np.array
+    :param departure_time: departure time
+    :type departure_time: np.array of datetime objects
+    :param arrival_time: arrival time
+    :type arrival_time: datetime object
+    :return: array of boat speeds
+    :rtype: np.array
+
+    """
+    dummy_speed = 6 * u.meter / u.second
+    route_dict = RouteParams.get_per_waypoint_coords(
+        lons,
+        lats,
+        departure_time,
+        dummy_speed, )
+
+    full_travel_distance = np.sum(route_dict['dist'])
+
+    time_diff = arrival_time - departure_time
+    bs = full_travel_distance / (time_diff.total_seconds() * u.second)
+    return bs
 
 
 # ----------

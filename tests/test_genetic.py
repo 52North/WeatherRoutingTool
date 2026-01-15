@@ -16,6 +16,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
+from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
@@ -325,6 +326,30 @@ def test_constraint_violation_repair(plt):
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
     assert np.array_equal(new_route[-1], old_route[0, 0][-1])
 
+def test_recalculate_speed_for_route():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    config.ARRIVAL_TIME = datetime(2025, 4, 2, 11, 11)
+    config.DEPARTURE_TIME = datetime(2025, 4, 1, 11, 11)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
+    pop = IsoFuelPopulation(
+        config=config,
+        default_route= [35.199, 15.490, 32.737, 28.859],
+        constraints_list=constraint_list,
+        pop_size=1
+    )
+    rt = get_dummy_route_input()
+    rt = rt[0, 0]
+    new_route = copy.deepcopy(rt)
+    new_route = pop.recalculate_speed_for_route(new_route)
+
+    dist_to_dest = 1262000 * u.meter
+    time_difference = config.ARRIVAL_TIME-config.DEPARTURE_TIME
+    bs_approx = dist_to_dest/(time_difference.total_seconds() * u.second)
+
+    assert np.all((new_route[:, 2] - bs_approx.value) < 0.3)
 
 @pytest.mark.skip(reason="Test needs modified route array.")
 def test_single_point_crossover(plt):

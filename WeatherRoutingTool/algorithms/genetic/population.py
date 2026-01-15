@@ -3,6 +3,7 @@ import os
 import os.path
 from math import ceil
 
+import astropy.units as u
 import numpy as np
 from geographiclib.geodesic import Geodesic
 from pymoo.core.sampling import Sampling
@@ -39,8 +40,8 @@ class Population(Sampling):
         X = self.generate(problem, n_samples, **kw)
 
         for rt, in X:
-            assert tuple(rt[0]) == self.src, "Source waypoint not matching"
-            assert tuple(rt[-1]) == self.dst, "Destination waypoint not matching"
+            assert tuple(rt[0, :-1]) == self.src, "Source waypoint not matching"
+            assert tuple(rt[-1, :-1]) == self.dst, "Destination waypoint not matching"
 
         self.X = X
         return self.X
@@ -184,24 +185,46 @@ class IsoFuelPopulation(Population):
     produced route is repeated until the required number of individuals are met
     """
 
-    def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
+    def __init__(self, config: Config, default_route, constraints_list, pop_size):
         super().__init__(
             default_route=default_route,
             constraints_list=constraints_list,
             pop_size=pop_size, )
 
         self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
+        self.boat_speed = config.BOAT_SPEED * u.meter/u.second
+
+        self.boat_speed_from_arrival_time = False
+        if self.boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
 
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
 
+    def recalculate_speed_for_route(self, rt):
+        bs = utils.get_speed_from_arrival_time(
+            lons=rt[:, 1],
+            lats=rt[:, 0],
+            departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+        )
+        rt[:, 2] = np.full(rt[:, 1].shape, bs)
+        return rt
+
     def generate(self, problem, n_samples, **kw):
-        routes = self.patcher.patch(self.src, self.dst, self.departure_time)
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter/u.second
+        routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
 
         for i, rt in enumerate(routes):
-            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+            if self.boat_speed_from_arrival_time:
+                rt = self.recalculate_speed_for_route(rt)
+
+            X[i, 0] = rt 
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
@@ -338,7 +361,6 @@ class PopulationFactory:
             case "isofuel":
                 return IsoFuelPopulation(
                     config=config,
-                    boat=boat,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
                     pop_size=population_size, )
