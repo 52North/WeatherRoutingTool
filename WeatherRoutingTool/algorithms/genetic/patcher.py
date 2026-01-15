@@ -4,6 +4,7 @@ import math
 import os
 from datetime import datetime
 from pathlib import Path
+from wrt_singleton import SingletonBase
 
 import numpy as np
 from astropy import units as u
@@ -39,22 +40,7 @@ class PatcherBase:
         raise NotImplementedError("This patching method is not implemented.")
 
 
-class SingletonBase(type):
-    """
-    TODO: make this thread-safe
-    Base class for Singleton implementation of patcher methods.
 
-    This is the implementation of a metaclass for those classes for which only a single instance shall be available
-    during runtime.
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-
-        return cls._instances[cls]
 
 
 # patcher variants
