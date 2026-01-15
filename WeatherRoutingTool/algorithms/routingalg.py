@@ -53,6 +53,8 @@ class RoutingAlg:
         self.boat_speed = config.BOAT_SPEED * u.meter/u.second
 
     def get_boat_speed(self, dists=None):
+        if self.boat_speed == -99:
+            return None
         return self.boat_speed
 
     def init_fig(self, **kwargs):

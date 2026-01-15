@@ -217,66 +217,6 @@ class TwoPointCrossover(OffspringRejectionCrossover):
         return r1, r2
 
 
-# FIXME: Adapt to continuous routing or eliminate.
-class PMX(OffspringRejectionCrossover):
-    """Partially Mapped Crossover."""
-
-    def crossover(self, p1, p2):
-        if p1.shape != p2.shape:
-            logging.info("PMX — Not of equal length")
-            return p1, p2
-
-        N = min(p1.shape[0], p2.shape[0])
-
-        # Convert to lists of tuples
-        parent1 = [tuple(row) for row in p1]
-        parent2 = [tuple(row) for row in p2]
-
-        # Choose crossover points
-        cx1, cx2 = sorted(np.random.choice(range(N), 2, replace=False))
-
-        # Initialize offspring placeholders
-        child1 = [None] * N
-        child2 = [None] * N
-
-        # Copy the segment
-        for i in range(cx1, cx2):
-            child1[i] = parent2[i]
-            child2[i] = parent1[i]
-
-        # Build mapping for the swapped segments
-        mapping12 = {parent2[i]: parent1[i] for i in range(cx1, cx2)}
-        mapping21 = {parent1[i]: parent2[i] for i in range(cx1, cx2)}
-
-        def resolve(gene, segment, mapping):
-            # Keep resolving until gene is not in the given segment
-            while gene in segment:
-                gene = mapping[gene]
-            return gene
-
-        # Fill remaining positions
-        for i in range(N):
-            if not (cx1 <= i < cx2):
-                g1 = parent1[i]
-                g2 = parent2[i]
-
-                # If g1 is already in the swapped segment of child1, resolve via mapping12
-                if g1 in child1[cx1:cx2]:
-                    g1 = resolve(g1, child1[cx1:cx2], mapping12)
-                child1[i] = g1
-
-                # Likewise for child2
-                if g2 in child2[cx1:cx2]:
-                    g2 = resolve(g2, child2[cx1:cx2], mapping21)
-                child2[i] = g2
-
-        # Convert back to numpy arrays
-        c1 = np.array(child1, dtype=p1.dtype)
-        c2 = np.array(child2, dtype=p1.dtype)
-
-        return c1, c2
-
-
 #
 # ----------
 class RandomizedCrossoversOrchestrator(CrossoverBase):

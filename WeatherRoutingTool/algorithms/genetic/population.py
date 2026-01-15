@@ -3,6 +3,7 @@ import os
 import os.path
 from math import ceil
 
+import astropy.units as u
 import numpy as np
 from geographiclib.geodesic import Geodesic
 from pymoo.core.sampling import Sampling
@@ -39,8 +40,8 @@ class Population(Sampling):
         X = self.generate(problem, n_samples, **kw)
 
         for rt, in X:
-            assert tuple(rt[0]) == self.src, "Source waypoint not matching"
-            assert tuple(rt[-1]) == self.dst, "Destination waypoint not matching"
+            assert tuple(rt[0, :-1]) == self.src, "Source waypoint not matching"
+            assert tuple(rt[-1, :-1]) == self.dst, "Destination waypoint not matching"
 
         self.X = X
         return self.X
@@ -184,24 +185,68 @@ class IsoFuelPopulation(Population):
     produced route is repeated until the required number of individuals are met
     """
 
-    def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
+    def __init__(self, config: Config, default_route, constraints_list, pop_size):
         super().__init__(
             default_route=default_route,
             constraints_list=constraints_list,
             pop_size=pop_size, )
 
         self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
+        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
+
+        self.boat_speed_from_arrival_time = False
+        if self.boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
 
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
 
+    def recalculate_speed_for_route(self, rt):
+        """
+        Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
+        """
+        bs = utils.get_speed_from_arrival_time(
+            lons=rt[:, 1],
+            lats=rt[:, 0],
+            departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+        )
+        rt[:, 2] = np.full(rt[:, 1].shape, bs)
+        return rt
+
     def generate(self, problem, n_samples, **kw):
-        routes = self.patcher.patch(self.src, self.dst, self.departure_time)
+        """Generate the initial population.
+
+        Calls the :py:class:`IsofuelPatcher<WeatherRoutingTool.algorithms.genetic.patcher.IsofuelPatcher>` to patch
+        routes from the start coordinates to the destination. In case an `ARRIVAL_TIME` is specified, a dummy boat speed
+        is passed that is later on recalculated by `recalculate_speed_for_route`. If  the number `n_samples` of routes
+        can not be provided by the patcher, the last route that can be provided is copied until the requested number of
+        routes has been achieved.
+
+        :params problem: routing problem
+        :type problem: Problem
+        :params n_samples: number of routes for the initial population
+        :type n_samples: int
+        :return: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
+            Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
+        :rtype: np.array
+        """
+
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second     # add dummy speed, will be recalculated
+        routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
 
         for i, rt in enumerate(routes):
-            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+            if self.boat_speed_from_arrival_time:
+                rt = self.recalculate_speed_for_route(rt)
+
+            X[i, 0] = rt
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
@@ -235,14 +280,14 @@ class GcrSliderPopulation(Population):
         line = geod.InverseLine(self.algo.start[0], self.algo.start[1], self.algo.finish[0], self.algo.finish[1])
         wpt_increment_max = 0.5 * line.s13
         wpt_increment = 0.05 * line.s13
-        wpt_increment_steps_max = ceil(wpt_increment_max/wpt_increment)
+        wpt_increment_steps_max = ceil(wpt_increment_max / wpt_increment)
 
         element = 1
         clockwise = True
         wpt_increment_step = 1
         while len(routes) < n_samples:
             dist_fraction = self.van_der_corput_sequence(element)
-            g = line.Position(dist_fraction*line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            g = line.Position(dist_fraction * line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             dist_orthogonal = wpt_increment_step * wpt_increment
             lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
             if not self.algo.is_land(lat, lon):
@@ -338,7 +383,6 @@ class PopulationFactory:
             case "isofuel":
                 return IsoFuelPopulation(
                     config=config,
-                    boat=boat,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
                     pop_size=population_size, )

@@ -115,7 +115,8 @@ class MutationConstraintRejection(Mutation):
         :param problem: Routing problem.
         :type: RoutingProblem
         :param X: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
-            ``route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...])``. X.shape = (n_routes, 1, n_waypoints, 2).
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
             Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
         :type X: np.array
         :return: Mutated route matrix. Same structure as for ``X``.
@@ -215,10 +216,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
@@ -231,11 +232,11 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :rtype: tuple[float, float]
         """
 
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         """
@@ -258,15 +259,15 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :param problem: routing problem
         :type: RoutingProblem
         :params rt: route to be mutated
-        :type rt: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :type rt: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         :return: mutated route
-        :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :rtype: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         """
         debug = False
 
         # test whether input route rt has the correct shape
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
@@ -421,7 +422,7 @@ class RouteBlendMutation(MutationConstraintRejection):
         control_points = np.array(control_points)
         n = len(control_points) - 1  # degree
         t = np.linspace(0, 1, n_points)
-        curve = np.zeros((n_points, 2))
+        curve = np.zeros((n_points, 3))
 
         for i in range(n + 1):
             bernstein = math.comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
@@ -432,7 +433,7 @@ class RouteBlendMutation(MutationConstraintRejection):
     def mutate(self, problem, rt, **kw):
         # test shape of input route
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
 
         # only mutate routes that are long enough
@@ -491,26 +492,26 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
-        :type point: tuple[float, float]
+        :type point: tuple[float, float, float]
         :param dist: distance in meters
         :type dist: float
         :param bearing: Azimuth in degrees (clockwise from North)
         :type bearing: float
         :return: (lat, lon) in degrees.
-        :rtype: tuple[float, float]
+        :rtype: tuple[float, float, float]
         """
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
