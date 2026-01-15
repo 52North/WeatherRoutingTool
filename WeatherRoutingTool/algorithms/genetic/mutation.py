@@ -115,7 +115,8 @@ class MutationConstraintRejection(Mutation):
         :param problem: Routing problem.
         :type: RoutingProblem
         :param X: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
-            ``route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...])``. X.shape = (n_routes, 1, n_waypoints, 2).
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
             Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
         :type X: np.array
         :return: Mutated route matrix. Same structure as for ``X``.
@@ -258,9 +259,9 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :param problem: routing problem
         :type: RoutingProblem
         :params rt: route to be mutated
-        :type rt: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :type rt: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         :return: mutated route
-        :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :rtype: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         """
         debug = False
 

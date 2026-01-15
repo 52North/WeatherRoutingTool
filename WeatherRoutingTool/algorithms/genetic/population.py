@@ -203,6 +203,9 @@ class IsoFuelPopulation(Population):
                                                 application="initial population")
 
     def recalculate_speed_for_route(self, rt):
+        """
+        Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
+        """
         bs = utils.get_speed_from_arrival_time(
             lons=rt[:, 1],
             lats=rt[:, 0],
@@ -213,9 +216,27 @@ class IsoFuelPopulation(Population):
         return rt
 
     def generate(self, problem, n_samples, **kw):
+        """Generate the initial population.
+
+        Calls the `IsofuelPatcher` to patch routes from the start coordinates to the destination. In case an
+        `ARRIVAL_TIME` is specified, a dummy boat speed is passed that is later on recalculated by
+        `recalculate_speed_for_route`. If  the number `n_samples` of routes can not be provided by the patcher, the
+        last route that can be provided is copied until the requested number of routes has been achieved.
+
+        :params problem: routing problem
+        :type problem: Problem
+        :params n_samples: number of routes for the initial population
+        :type n_samples: int
+        :return: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
+            Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
+        :rtype: np.array
+        """
+
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
-            boat_speed = 6 * u.meter / u.second
+            boat_speed = 6 * u.meter / u.second     # add dummy speed, will be recalculated
         routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
@@ -226,7 +247,7 @@ class IsoFuelPopulation(Population):
 
             X[i, 0] = rt
 
-            # fallback: fill all other individuals with the same population as the last one
+        # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X

@@ -77,6 +77,11 @@ def test_get_acc_variables():
     assert test_time == rp_test.get_full_travel_time()
 
 
+'''
+    Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly.
+'''
+
+
 def test_get_waypoint_coords():
     bs = 6 * u.meter / u.second
     start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')

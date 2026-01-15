@@ -62,6 +62,8 @@ class SingletonBase(type):
 class GreatCircleRoutePatcher(PatcherBase):
     """Produce a set of waypoints along the Great Circle Route between src and dst.
 
+    The same speed as the speed at `src` is added to every waypoint.
+
     :param dist: Dist between each waypoint in the Great Circle Route
     :type dist: float
     """
@@ -77,12 +79,12 @@ class GreatCircleRoutePatcher(PatcherBase):
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
-        :param src: Source waypoint as (lat, lon) pair
-        :type src: tuple[float, float]
-        :param dst: Destination waypoint as (lat, lon) pair
-        :type dst: tuple[float, float]
-        :return: List of waypoints along the great circle (lat, lon)
-        :rtype: np.array[tuple[float, float]]
+        :param src: Source waypoint as (lat, lon, v) triple
+        :type src: tuple[float, float, float]
+        :param dst: Destination waypoint as (lat, lon, v) triple
+        :type dst: tuple[float, float, float]
+        :return: List of waypoints along the great circle (lat, lon, v)
+        :rtype: np.array[tuple[float, float, float]]
         """
 
         geod: Geodesic = Geodesic.WGS84
@@ -260,6 +262,8 @@ class IsofuelPatcher(PatcherBase):
     def patch(self, src, dst, departure_time: datetime = None):
         """
         Produce a set of waypoints between src and dst using the IsoFuel algorithm.
+
+        The same speed as the speed at `src` is added to every waypoint.
 
         :param src: Source waypoint as (lat, lon, speed) triple
         :type src: tuple[float, float, float]
