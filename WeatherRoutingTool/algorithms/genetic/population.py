@@ -218,10 +218,11 @@ class IsoFuelPopulation(Population):
     def generate(self, problem, n_samples, **kw):
         """Generate the initial population.
 
-        Calls the `IsofuelPatcher` to patch routes from the start coordinates to the destination. In case an
-        `ARRIVAL_TIME` is specified, a dummy boat speed is passed that is later on recalculated by
-        `recalculate_speed_for_route`. If  the number `n_samples` of routes can not be provided by the patcher, the
-        last route that can be provided is copied until the requested number of routes has been achieved.
+        Calls the :py:class:`IsofuelPatcher<WeatherRoutingTool.algorithms.genetic.patcher.IsofuelPatcher>` to patch
+        routes from the start coordinates to the destination. In case an `ARRIVAL_TIME` is specified, a dummy boat speed
+        is passed that is later on recalculated by `recalculate_speed_for_route`. If  the number `n_samples` of routes
+        can not be provided by the patcher, the last route that can be provided is copied until the requested number of
+        routes has been achieved.
 
         :params problem: routing problem
         :type problem: Problem
