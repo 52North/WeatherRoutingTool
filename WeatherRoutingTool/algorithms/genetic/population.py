@@ -72,6 +72,19 @@ class Population(Sampling):
             f"{self.n_constrained_routes} / {self.pop_size} constrained — "
             "More than 50% of the initial routes are constrained")
 
+    def recalculate_speed_for_route(self, rt):
+        """
+        Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
+        """
+        bs = utils.get_speed_from_arrival_time(
+            lons=rt[:, 1],
+            lats=rt[:, 0],
+            departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+        )
+        rt[:, 2] = np.full(rt[:, 1].shape, bs)
+        return rt
+
 
 class GridBasedPopulation(GridMixin, Population):
     """Make initial population for genetic algorithm based on a grid and associated cost values
@@ -202,19 +215,6 @@ class IsoFuelPopulation(Population):
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
 
-    def recalculate_speed_for_route(self, rt):
-        """
-        Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
-        """
-        bs = utils.get_speed_from_arrival_time(
-            lons=rt[:, 1],
-            lats=rt[:, 0],
-            departure_time=self.departure_time,
-            arrival_time=self.arrival_time,
-        )
-        rt[:, 2] = np.full(rt[:, 1].shape, bs)
-        return rt
-
     def generate(self, problem, n_samples, **kw):
         """Generate the initial population.
 
@@ -258,6 +258,15 @@ class GcrSliderPopulation(Population):
 
     def __init__(self, config: Config, default_route, constraints_list, pop_size):
         super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
+
+        self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
+        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
+
+        self.boat_speed_from_arrival_time = False
+        if self.boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
+
         self.algo = GcrSliderAlgorithm(config)
 
     def generate(self, problem, n_samples, **kw):
@@ -272,7 +281,11 @@ class GcrSliderPopulation(Population):
            distance used to move the point incrementally.
         """
         # FIXME: how to handle already existing waypoints specified for the genetic algorithm?
-        route = self.create_route()
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second     # dummy boat speed
+
+        route = self.create_route(speed= boat_speed.value)
         routes = []
         if route is not None:
             routes.append(route)
@@ -291,7 +304,7 @@ class GcrSliderPopulation(Population):
             dist_orthogonal = wpt_increment_step * wpt_increment
             lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
             if not self.algo.is_land(lat, lon):
-                route = self.create_route(lat, lon)
+                route = self.create_route(lat, lon, boat_speed.value)
                 if route is not None:
                     routes.append(route)
                     logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
@@ -309,14 +322,16 @@ class GcrSliderPopulation(Population):
 
         X = np.full((n_samples, 1), None, dtype=object)
         for i, rt in enumerate(routes):
-            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+            if self.boat_speed_from_arrival_time:
+                rt = self.recalculate_speed_for_route(rt)
+            X[i, 0] = rt
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X
 
-    def create_route(self, lat: float = None, lon: float = None):
+    def create_route(self, lat: float = None, lon: float = None, speed: float = None):
         """
         :param lat: latitude of the waypoint
         :type lat: float
@@ -331,7 +346,7 @@ class GcrSliderPopulation(Population):
             # import uuid
             # filename = f"{str(uuid.uuid4())}.geojson"
             # route.write_to_geojson(filename)
-            route = [[route.lats_per_step[i], route.lons_per_step[i]] for i in range(0, len(route.lats_per_step))]
+            route = [[route.lats_per_step[i], route.lons_per_step[i], speed] for i in range(0, len(route.lats_per_step))]
             route = np.array(route)
         except Exception:
             pass
