@@ -125,10 +125,13 @@ def route_from_geojson(dt: dict) -> list[tuple[float, float]]:
     :rtype: list[tuple[float, float]]
     """
 
-    route = [
-        ft["geometry"]["coordinates"][::-1]
-        for ft in dt["features"]
+    waypoints = [
+        ft["geometry"]["coordinates"][::-1] for ft in dt["features"]
     ]
+    speed_info = [
+        [ft["properties"]["speed"]["value"]] for ft in dt["features"]
+    ]
+    route= np.hstack((waypoints, speed_info))
 
     return route
 

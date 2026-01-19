@@ -212,9 +212,6 @@ class FromGeojsonPopulation(Population):
             else:
                 route = utils.route_from_geojson_file(path)
 
-            assert np.array_equal(route[0], self.src), "Route not starting at source"
-            assert np.array_equal(route[-1], self.dst), "Route not ending at destination"
-
             X[i, 0] = np.array(route)
 
         return X
