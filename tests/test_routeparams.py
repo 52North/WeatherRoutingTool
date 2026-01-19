@@ -101,7 +101,12 @@ def test_get_waypoint_coords():
         end_lat = route_lats[ipoint + 1]
         end_lon = route_lons[ipoint + 1]
 
-        dists_test[ipoint] = geod.inverse([start_lat], [start_lon], [end_lat], [end_lon])['s12']
+        dists_test[ipoint] = geod.inverse(
+            [start_lat],
+            [start_lon],
+            [end_lat],
+            [end_lon]
+        )['s12'][0]
         travel_times_test[ipoint] = (dists_test[ipoint] * u.meter / bs).value
         if ipoint < 2:
             start_times_test[ipoint + 1] = start_times_test[ipoint] + timedelta(seconds=travel_times_test[ipoint])
