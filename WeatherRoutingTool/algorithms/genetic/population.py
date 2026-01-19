@@ -26,7 +26,7 @@ geod = Geodesic.WGS84
 class Population(Sampling):
     """Base Class for generating the initial population."""
 
-    def __init__(self, default_route: list, constraints_list: list, pop_size: int):
+    def __init__(self, config: Config, default_route: list, constraints_list: ConstraintsList, pop_size: int):
         super().__init__()
 
         self.constraints_list = constraints_list
@@ -35,6 +35,14 @@ class Population(Sampling):
 
         self.src: tuple[float, float] = tuple(default_route[:-2])
         self.dst: tuple[float, float] = tuple(default_route[-2:])
+
+        self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
+        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
+
+        self.boat_speed_from_arrival_time = False
+        if self.boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
 
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
@@ -95,8 +103,14 @@ class GridBasedPopulation(GridMixin, Population):
      - call `print(GridBasedPopulation.mro())` to see the method resolution order
     """
 
-    def __init__(self, default_route, grid, constraints_list, pop_size):
-        super().__init__(default_route=default_route, grid=grid, constraints_list=constraints_list, pop_size=pop_size)
+    def __init__(self, config: Config, default_route, grid, constraints_list, pop_size):
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            grid=grid,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
 
         # update nan_mask with constraints_list
         # ----------
@@ -124,6 +138,10 @@ class GridBasedPopulation(GridMixin, Population):
         _, _, start_indices = self.coords_to_index([self.src])
         _, _, end_indices = self.coords_to_index([self.dst])
 
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second  # dummy boat speed
+
         for i in range(n_samples):
             shuffled_cost = self.get_shuffled_cost()
 
@@ -136,10 +154,18 @@ class GridBasedPopulation(GridMixin, Population):
 
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
+            route= np.array(route)
+            speed_arr= np.full((route.shape[0],1), boat_speed.value)
+            route = np.hstack((route, speed_arr))
 
             # match first and last points to src and dst
+            src_speed= np.array(self.src + (boat_speed.value,))
+            dst_speed=np.array(self.dst + (boat_speed.value,))
+            if self.boat_speed_from_arrival_time:
+                route=self.recalculate_speed_for_route(route)
+
             X[i, 0] = np.array([
-                self.src, *route[1:-1], self.dst])
+                src_speed, *route[1:-1], dst_speed])
 
         return X
 
@@ -156,8 +182,13 @@ class FromGeojsonPopulation(Population):
     :type routes_dir: str
     """
 
-    def __init__(self, routes_dir: str, default_route, constraints_list, pop_size):
-        super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
+    def __init__(self, config: Config, routes_dir: str, default_route, constraints_list, pop_size):
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
 
         if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
             raise FileNotFoundError("Routes directory not found")
@@ -200,17 +231,11 @@ class IsoFuelPopulation(Population):
 
     def __init__(self, config: Config, default_route, constraints_list, pop_size):
         super().__init__(
+            config=config,
             default_route=default_route,
             constraints_list=constraints_list,
-            pop_size=pop_size, )
-
-        self.departure_time = config.DEPARTURE_TIME
-        self.arrival_time = config.ARRIVAL_TIME
-        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
-
-        self.boat_speed_from_arrival_time = False
-        if self.boat_speed.value == -99.:
-            self.boat_speed_from_arrival_time = True
+            pop_size=pop_size,
+        )
 
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
@@ -257,15 +282,12 @@ class IsoFuelPopulation(Population):
 class GcrSliderPopulation(Population):
 
     def __init__(self, config: Config, default_route, constraints_list, pop_size):
-        super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
-
-        self.departure_time = config.DEPARTURE_TIME
-        self.arrival_time = config.ARRIVAL_TIME
-        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
-
-        self.boat_speed_from_arrival_time = False
-        if self.boat_speed.value == -99.:
-            self.boat_speed_from_arrival_time = True
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
 
         self.algo = GcrSliderAlgorithm(config)
 
@@ -390,6 +412,7 @@ class PopulationFactory:
         match population_type:
             case "grid_based":
                 return GridBasedPopulation(
+                    config=config,
                     grid=wave_height,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
@@ -404,6 +427,7 @@ class PopulationFactory:
 
             case "from_geojson":
                 return FromGeojsonPopulation(
+                    config=config,
                     routes_dir=config.GENETIC_POPULATION_PATH,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
