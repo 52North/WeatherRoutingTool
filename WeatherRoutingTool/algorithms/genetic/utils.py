@@ -131,7 +131,7 @@ def route_from_geojson(dt: dict) -> list[tuple[float, float]]:
     speed_info = [
         [ft["properties"]["speed"]["value"]] for ft in dt["features"]
     ]
-    route= np.hstack((waypoints, speed_info))
+    route = np.hstack((waypoints, speed_info))
 
     return route
 

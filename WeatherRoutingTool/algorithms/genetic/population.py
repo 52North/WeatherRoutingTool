@@ -154,15 +154,15 @@ class GridBasedPopulation(GridMixin, Population):
 
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
-            route= np.array(route)
-            speed_arr= np.full((route.shape[0],1), boat_speed.value)
+            route = np.array(route)
+            speed_arr = np.full((route.shape[0], 1), boat_speed.value)
             route = np.hstack((route, speed_arr))
 
             # match first and last points to src and dst
-            src_speed= np.array(self.src + (boat_speed.value,))
-            dst_speed=np.array(self.dst + (boat_speed.value,))
+            src_speed = np.array(self.src + (boat_speed.value,))
+            dst_speed = np.array(self.dst + (boat_speed.value,))
             if self.boat_speed_from_arrival_time:
-                route=self.recalculate_speed_for_route(route)
+                route = self.recalculate_speed_for_route(route)
 
             X[i, 0] = np.array([
                 src_speed, *route[1:-1], dst_speed])
@@ -259,7 +259,7 @@ class IsoFuelPopulation(Population):
 
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
-            boat_speed = 6 * u.meter / u.second     # add dummy speed, will be recalculated
+            boat_speed = 6 * u.meter / u.second  # add dummy speed, will be recalculated
         routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
@@ -302,9 +302,9 @@ class GcrSliderPopulation(Population):
         # FIXME: how to handle already existing waypoints specified for the genetic algorithm?
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
-            boat_speed = 6 * u.meter / u.second     # dummy boat speed
+            boat_speed = 6 * u.meter / u.second  # dummy boat speed
 
-        route = self.create_route(speed= boat_speed.value)
+        route = self.create_route(speed=boat_speed.value)
         routes = []
         if route is not None:
             routes.append(route)
@@ -365,7 +365,8 @@ class GcrSliderPopulation(Population):
             # import uuid
             # filename = f"{str(uuid.uuid4())}.geojson"
             # route.write_to_geojson(filename)
-            route = [[route.lats_per_step[i], route.lons_per_step[i], speed] for i in range(0, len(route.lats_per_step))]
+            route = [[route.lats_per_step[i], route.lons_per_step[i], speed] for i in
+                     range(0, len(route.lats_per_step))]
             route = np.array(route)
         except Exception:
             pass
