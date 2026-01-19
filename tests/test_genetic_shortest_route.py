@@ -1,8 +1,10 @@
 import sys
 import os
 from unittest.mock import MagicMock
+import numpy as np
+import pytest
 
-# Mock cartopy and geovectorslib before importing WeatherRoutingTool
+# Mock dependencies before imports to avoid MissingModule and Metaclass errors
 sys.modules['cartopy'] = MagicMock()
 sys.modules['cartopy.crs'] = MagicMock()
 sys.modules['cartopy.feature'] = MagicMock()
@@ -18,13 +20,26 @@ sys.modules['geographiclib.geodesic'] = MagicMock()
 sys.modules['skimage'] = MagicMock()
 sys.modules['skimage.draw'] = MagicMock()
 sys.modules['skimage.graph'] = MagicMock()
-# Mock pymoo
+
+# Mock pymoo hierarchy
 sys.modules['pymoo'] = MagicMock()
 sys.modules['pymoo.algorithms'] = MagicMock()
 sys.modules['pymoo.algorithms.moo'] = MagicMock()
 sys.modules['pymoo.algorithms.moo.nsga2'] = MagicMock()
 sys.modules['pymoo.core'] = MagicMock()
-sys.modules['pymoo.core.problem'] = MagicMock()
+
+# Define a real class for ElementwiseProblem to avoid MagicMock inheritance issues
+class MockElementwiseProblem:
+    def __init__(self, n_var=1, n_obj=1, n_constr=1, **kwargs):
+        self.n_var = n_var
+        self.n_obj = n_obj
+        self.n_constr = n_constr
+
+# logic to mock ElementwiseProblem correctly
+problem_module = MagicMock()
+problem_module.ElementwiseProblem = MockElementwiseProblem
+sys.modules['pymoo.core.problem'] = problem_module
+
 sys.modules['pymoo.core.result'] = MagicMock()
 sys.modules['pymoo.core.sampling'] = MagicMock()
 sys.modules['pymoo.core.crossover'] = MagicMock()
@@ -43,33 +58,46 @@ class MockGridMixin:
 data_utils_mock.GridMixin = MockGridMixin
 sys.modules['WeatherRoutingTool.algorithms.data_utils'] = data_utils_mock
 
+# Mock population module entirely to avoid massive dependency chain and metaclass issues
+sys.modules['WeatherRoutingTool.algorithms.genetic.population'] = MagicMock()
+sys.modules['WeatherRoutingTool.algorithms.genetic.crossover'] = MagicMock()
+sys.modules['WeatherRoutingTool.algorithms.genetic.mutation'] = MagicMock()
+sys.modules['WeatherRoutingTool.algorithms.genetic.repair'] = MagicMock()
+
 geovectorslib_mock = MagicMock()
 sys.modules['geovectorslib'] = geovectorslib_mock
 
 # Setup geod.inverse return value
 def mock_inverse(lats1, lons1, lats2, lons2):
+    lats1 = np.array(lats1)
+    lons1 = np.array(lons1)
+    lats2 = np.array(lats2)
+    lons2 = np.array(lons2)
     # simple euclidean distance for checking
     dists = np.sqrt((lats1 - lats2)**2 + (lons1 - lons2)**2) * 111000 # very rough degrees to meters
     return {'s12': dists, 'azi1': np.zeros_like(dists)}
 
 geovectorslib_mock.geod.inverse.side_effect = mock_inverse
 
-import numpy as np
-import pytest
-from pathlib import Path
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic import Genetic
 import tests.basic_test_func as basic_test_func
+from astropy import units as u
 
 class MockBoat:
     def get_boat_speed(self):
-        return 10  # m/s
-
+        class MockSpeed:
+             value = 10
+        return MockSpeed() 
+        
     def get_ship_parameters(self, courses, lats, lons, times):
         class MockParams:
             def get_fuel_rate(self):
                 return np.ones(len(courses)) * 100 # Dummy fuel rate
+            def get_speed(self):
+                # For Genetic.terminate
+                return [MagicMock(value=10)]
         return MockParams()
 
 def test_routing_problem_shortest_route_evaluation():
@@ -93,21 +121,21 @@ def test_routing_problem_shortest_route_evaluation():
     out = {}
     problem._evaluate(x, out)
     
-    # Distance from (0,0) to (0,1) is roughly 111km (1 degree lat/lon is ~111km at equator)
-    # The MockBoat logic for distance calculation relies on RouteParams
-    # Let's check if the returned value is distance, not fuel.
-    # Fuel would be roughly time * fuel_rate.
-    # Time = dist / speed.
-    # Fuel = (dist/speed) * rate = (dist/10) * 100 = dist * 10.
+    # Distance from (0,0) to (0,1) is roughly 111000m
+    # The output should be distance
     
-    # If it returns distance, it should be X.
-    # If it returns fuel, it should be 10*X.
+    print(f"DEBUG: out['F'] = {out['F']}")
     
-    # Wait, RoutingProblem.get_power returns (fuel, dist, params).
-    # And _evaluate puts either fuel or dist into F.
+    # Verify it's capturing distance logic
+    # We can check if it's NOT fuel.
+    # Fuel = distance/speed * rate = 111000/10 * 100 = 1110000
+    # Distance = 111000
+    # Values are distinct enough (factor of 10)
     
-    # Let's check if we can verify which one it picked.
-    # We can rely on the implementation details we just wrote.
+    val = out['F'][0][0]
+    if hasattr(val, 'value'):
+        val = val.value
+    assert np.isclose(val, 111000, rtol=0.1)
     
     assert problem.fitness_function_type == 'shortest_route'
     
@@ -119,29 +147,28 @@ def test_routing_problem_shortest_route_evaluation():
         fitness_function_type='fuel'
     )
     assert problem_fuel.fitness_function_type == 'fuel'
+    
+    out_fuel = {}
+    problem_fuel._evaluate(x, out_fuel)
+    val_fuel = out_fuel['F'][0][0]
+    if hasattr(val_fuel, 'value'):
+        val_fuel = val_fuel.value
+    assert np.isclose(val_fuel, 1110000, rtol=0.1)
 
 def test_genetic_factory_initialization():
-    dirname = os.path.dirname(__file__)
-    # We need a config file that sets ALGORITHM_TYPE to genetic_shortest_route
-    # We can mock the config object.
-    
     class MockConfig:
         ALGORITHM_TYPE = 'genetic_shortest_route'
-        # Add other necessary config attrs to satisfy Genetic.__init__
         GENETIC_NUMBER_GENERATIONS = 1
         GENETIC_NUMBER_OFFSPRINGS = 1
         GENETIC_POPULATION_SIZE = 1
         GENETIC_POPULATION_TYPE = 'grid_based'
         DEFAULT_MAP = [0, 0, 10, 10]
         GENETIC_FIX_RANDOM_SEED = False
-        # Add checking compatible boat/algo
         BOAT_TYPE = 'speedy_isobased' 
+        DEFAULT_ROUTE = [0,0, 10,10]
+        DEPARTURE_TIME = '2023-01-01'
 
     config = MockConfig()
+    # verify Genetic init doesn't crash
     genetic_alg = Genetic(config)
-    
-    # We can't easily check internal local variables of execute_routing without running it.
-    # But we can assume if the previous test passed, and we verify the factory/init doesn't crash, it's good.
-    # Ideally, we'd mock RoutingProblem and check what it's initialized with.
-    
-    pass 
+    pass

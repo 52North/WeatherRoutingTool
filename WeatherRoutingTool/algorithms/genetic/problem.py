@@ -13,11 +13,16 @@ class RoutingProblem(ElementwiseProblem):
     """GA definition of the Weather Routing Problem"""
 
 
-    def __init__(self, departure_time, boat, constraint_list, fitness_function_type='fuel'):
+    def __init__(self, departure_time, boat, constraint_list, fitness_function_type='fuel', arrival_time=None, boat_speed=None):
         super().__init__(n_var=1, n_obj=1, n_constr=1)
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
+        self.arrival_time = arrival_time
+        self.boat_speed = boat_speed
+        self.boat_speed_from_arrival_time = False
+        if boat_speed is not None and hasattr(boat_speed, 'value') and boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
         self.fitness_function_type = fitness_function_type
 
     def _evaluate(self, x, out, *args, **kwargs):
