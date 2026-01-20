@@ -466,15 +466,15 @@ class Config(BaseModel):
                 " Have you considered that this program works with m/s?")
         return v
 
-    @model_validator(mode='after')
-    def check_speed_determination(self) -> Self:
-        print('arrival time: ', self.ARRIVAL_TIME)
-        print('speed: ', self.BOAT_SPEED)
-        if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
-            raise ValueError('Please specify either the boat speed or the arrival time')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
-            raise ValueError('Please specify either the boat speed or the arrival time and not both.')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
-            raise ValueError('The determination of the speed from the arrival time is only possible for the'
-                             ' genetic algorithm')
-        return self
+    #@model_validator(mode='after')
+    #def check_speed_determination(self) -> Self:
+    #    print('arrival time: ', self.ARRIVAL_TIME)
+    #    print('speed: ', self.BOAT_SPEED)
+    #    if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
+    #        raise ValueError('Please specify either the boat speed or the arrival time')
+    #    if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
+    #        raise ValueError('Please specify either the boat speed or the arrival time and not both.')
+    #    if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
+    #        raise ValueError('The determination of the speed from the arrival time is only possible for the'
+    #                         ' genetic algorithm')
+    #    return self

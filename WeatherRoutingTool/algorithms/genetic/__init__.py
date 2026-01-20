@@ -163,7 +163,9 @@ class Genetic(RoutingAlg):
         # ensure res.X is of shape (n_sol, n_var)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
-        fuel, ship_params = problem.get_power(best_route)
+        fuel_dict = problem.get_power(best_route)
+        fuel = fuel_dict["fuel_sum"]
+        ship_params=fuel_dict["shipparams"]
         logger.info(f"Best fuel: {fuel}")
 
         if self.figure_path is not None:
