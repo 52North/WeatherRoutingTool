@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from astropy import units as u
+from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -50,6 +51,7 @@ class Genetic(RoutingAlg):
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
+        self.objectives = config.GENETIC_OBJECTIVES
 
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
@@ -85,7 +87,9 @@ class Genetic(RoutingAlg):
             arrival_time=self.arrival_time,
             boat_speed=self.boat_speed,
             boat=boat,
-            constraint_list=constraints_list, )
+            constraint_list=constraints_list,
+            objectives=self.objectives
+        )
 
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt, )
@@ -159,8 +163,8 @@ class Genetic(RoutingAlg):
 
         super().terminate()
 
-        best_index = res.F.argmin()
-        # ensure res.X is of shape (n_sol, n_var)
+        summed = np.sum(res.F, axis=1)
+        best_index = summed.argmin()
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel_dict = problem.get_power(best_route)
@@ -175,6 +179,7 @@ class Genetic(RoutingAlg):
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
+            self.plot_objective_space(res)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -215,6 +220,26 @@ class Genetic(RoutingAlg):
         self.check_destination()
         self.check_positive_power()
         return route
+
+    def plot_objective_space(self, res):
+        F = res.F
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        ax.set_xlabel('f1', labelpad=10)
+        ax.set_ylabel('f2', labelpad=10)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        plt.title("Objective Space")
+
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1, 1))  # Force scientific notation
+
+        ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatter)
+
+        plt.savefig(os.path.join(self.figure_path, 'genetic_objective_space.png'))
+        plt.cla()
+        plt.close()
 
     def print_init(self):
         """Log messages to print on algorithm initialization"""

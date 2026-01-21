@@ -109,6 +109,9 @@ class Config(BaseModel):
     ] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
+    GENETIC_OBJECTIVES: List[Literal[
+        'arrival_time', 'fuel_consumption'
+    ]] = ["fuel_consumption"]
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],

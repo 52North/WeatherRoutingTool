@@ -1,11 +1,14 @@
 import datetime
 import logging
+from hashlib import algorithms_available
 
 import astropy.units as u
 import numpy as np
 from pymoo.core.problem import ElementwiseProblem
 
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.ship import Boat
 import WeatherRoutingTool.algorithms.genetic.utils as utils
 
 logger = logging.getLogger('WRT.Genetic')
@@ -14,16 +17,45 @@ logger = logging.getLogger('WRT.Genetic')
 class RoutingProblem(ElementwiseProblem):
     """GA definition of the Weather Routing Problem"""
 
-    def __init__(self, departure_time, arrival_time, boat, boat_speed, constraint_list):
-        super().__init__(n_var=1, n_obj=2, n_constr=1)
+    def __init__(self,
+                 departure_time: datetime.datetime,
+                 arrival_time: datetime.datetime,
+                 boat: Boat,
+                 boat_speed: float,
+                 constraint_list: ConstraintsList,
+                 objectives: list
+                 ):
+        super().__init__(
+            n_var=1,
+            n_obj=len(objectives),
+            n_constr=1
+
+        )
         self.boat = boat
         self.constraint_list = constraint_list
         self.departure_time = departure_time
         self.arrival_time = arrival_time
         self.boat_speed = boat_speed
         self.boat_speed_from_arrival_time = False
+        self.objectives = objectives
+
         if boat_speed.value == -99.:
             self.boat_speed_from_arrival_time = True
+
+    def get_objectives(self, obj_dict: dict):
+        objs = []
+        if "arrival_time" in self.objectives:
+            objs = [np.column_stack([obj_dict["time_obj"]])]
+        if "fuel_consumption" in self.objectives:
+            if objs == []:
+                objs = [np.column_stack([obj_dict["fuel_sum"]])]
+            else:
+                objs.append(np.column_stack([obj_dict["fuel_sum"]]))
+
+        if objs == []:
+            raise ValueError('Please specify an objective for the genetic algorithm.')
+
+        return objs
 
     def _evaluate(self, x, out, *args, **kwargs):
         """Overridden function for population evaluation
@@ -42,7 +74,7 @@ class RoutingProblem(ElementwiseProblem):
         obj_dict = self.get_power(x[0])
         constraints = utils.get_constraints(x[0], self.constraint_list)
         # print(costs.shape)
-        out['F'] = [np.column_stack([obj_dict["fuel_sum"]]),np.column_stack([obj_dict["time_obj"]])]
+        out['F'] = self.get_objectives(obj_dict)
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
@@ -50,7 +82,7 @@ class RoutingProblem(ElementwiseProblem):
 
         bs = self.boat_speed
 
-        #if self.boat_speed_from_arrival_time:
+        # if self.boat_speed_from_arrival_time:
         #    bs = utils.get_speed_from_arrival_time(
         #        lons=route[:, 1],
         #        lats=route[:, 0],
@@ -74,7 +106,7 @@ class RoutingProblem(ElementwiseProblem):
 
         fuel = shipparams.get_fuel_rate()
         fuel = fuel * route_dict['travel_times']
-        fuel_spread = np.max(fuel)-np.min(fuel)
+        fuel_spread = np.max(fuel) - np.min(fuel)
         if debug:
             print('max fuel: ', np.max(fuel))
             print('min fuel: ', np.min(fuel))
@@ -83,9 +115,10 @@ class RoutingProblem(ElementwiseProblem):
             print('last start_time: ', route_dict['start_times'][-1])
             print('last travel time: ', route_dict['travel_times'][-1].value)
 
-        real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(seconds=route_dict['travel_times'][-1].value)
+        real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
+            seconds=route_dict['travel_times'][-1].value)
         time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds()
-        beta = fuel_spread.value/(1800 * 1800 * 1800 * 1800)
+        beta = fuel_spread.value / (1800 * 1800 * 1800 * 1800)
         time_obj = beta * time_diff * time_diff * time_diff * time_diff
         if debug:
             print('departure time: ', self.departure_time)
@@ -97,5 +130,3 @@ class RoutingProblem(ElementwiseProblem):
             print('time obj.: ', time_obj)
 
         return {"fuel_sum": np.sum(fuel), "shipparams": shipparams, "time_obj": time_obj}
-
-
