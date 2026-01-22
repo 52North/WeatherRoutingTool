@@ -6,6 +6,7 @@ from datetime import timedelta
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from astropy import units as u
 from matplotlib.ticker import ScalarFormatter
@@ -52,10 +53,29 @@ class Genetic(RoutingAlg):
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
         self.objectives = config.GENETIC_OBJECTIVES
+        self.n_objs = len(config.GENETIC_OBJECTIVES)
+        self.get_objective_weights()
 
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
+
+    def get_objective_weights(self):
+        self.objective_weights={
+            "arrival_time": -99.,
+            "fuel_consumption": -99.
+        }
+
+        self.objective_weights["arrival_time"] = utils.get_weigths_from_rankarr(
+            np.array([self.objectives["arrival_time"]]),
+            self.n_objs
+        )
+        self.objective_weights["fuel_consumption"] = utils.get_weigths_from_rankarr(
+            np.array([self.objectives["fuel_consumption"]]),
+            self.n_objs
+        )
+
+
 
     def execute_routing(
             self,
@@ -158,13 +178,63 @@ class Genetic(RoutingAlg):
 
         return res
 
+    def rank_solutions(self, obj, dec = False):
+        rank_ind = np.argsort(obj)
+        if dec:
+            rank_ind = rank_ind[::-1]
+        rank = np.argsort(rank_ind)
+        rank = rank + 1
+        return rank
+
+    def get_composite_weight(self, pd_table):
+        sol_weight_time = pd_table['time_weight'].to_numpy()
+        sol_weight_fuel = pd_table['fuel_weight'].to_numpy()
+        obj_weight_time = self.objective_weights["arrival_time"]
+        obj_weight_fuel = self.objective_weights["fuel_consumption"]
+
+        denominator = np.abs(1./obj_weight_time * sol_weight_time - 1./obj_weight_fuel * sol_weight_fuel) + 0.2
+        summand_time = sol_weight_time/denominator * obj_weight_time*obj_weight_time
+        summand_fuel = sol_weight_fuel/denominator * obj_weight_fuel*obj_weight_fuel
+
+        composite_weight = sol_weight_time*sol_weight_fuel + summand_time + summand_fuel
+
+        return composite_weight
+
+
+    def get_best_compromise(self, solutions):
+        debug = True
+
+        if debug:
+            print('solutions: ', solutions)
+            print('solutions shape: ', solutions.shape)
+
+        rmethod_table = pd.DataFrame()
+
+        if debug:
+            print('rmethod table: ', rmethod_table)
+        rmethod_table['time_obj'] = solutions[:, 0]
+        rmethod_table['fuel_obj'] = solutions[:, 1]
+        rmethod_table['time_rank'] = self.rank_solutions(solutions[:, 0])
+        rmethod_table['fuel_rank'] = self.rank_solutions(solutions[:, 1])
+        rmethod_table['time_weight'] = utils.get_weigths_from_rankarr(rmethod_table['time_rank'].to_numpy(), len(solutions))
+        rmethod_table['fuel_weight'] = utils.get_weigths_from_rankarr(rmethod_table['fuel_rank'].to_numpy(), len(solutions))
+        rmethod_table['composite_weight'] = self.get_composite_weight(rmethod_table)
+        rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
+        best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
+
+        with pd.option_context('display.max_rows', None,
+                               'display.max_columns', None,
+                               'display.precision', 3,
+                               ):
+            print(rmethod_table)
+        return best_ind
+
+
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
-
-        summed = np.sum(res.F, axis=1)
-        best_index = summed.argmin()
+        best_index = self.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel_dict = problem.get_power(best_route)
@@ -179,7 +249,7 @@ class Genetic(RoutingAlg):
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
-            self.plot_objective_space(res)
+            self.plot_objective_space(res, best_index)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -221,10 +291,11 @@ class Genetic(RoutingAlg):
         self.check_positive_power()
         return route
 
-    def plot_objective_space(self, res):
+    def plot_objective_space(self, res, best_index):
         F = res.F
         fig, ax = plt.subplots(figsize=(7, 5))
         ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
         ax.set_xlabel('f1', labelpad=10)
         ax.set_ylabel('f2', labelpad=10)
         ax.grid(True, linestyle='--', alpha=0.7)

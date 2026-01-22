@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path, PosixPath
-from typing import Annotated, List, Literal, Optional, Self, Union
+from typing import Annotated, List, Literal, Optional, Self, Union, Dict
 
 import pandas as pd
 import xarray as xr
@@ -109,9 +109,7 @@ class Config(BaseModel):
     ] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
-    GENETIC_OBJECTIVES: List[Literal[
-        'arrival_time', 'fuel_consumption'
-    ]] = ["fuel_consumption"]
+    GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5}
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],

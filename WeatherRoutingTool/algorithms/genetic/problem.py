@@ -43,10 +43,11 @@ class RoutingProblem(ElementwiseProblem):
             self.boat_speed_from_arrival_time = True
 
     def get_objectives(self, obj_dict: dict):
+        objective_keys = list(self.objectives.keys())
         objs = []
-        if "arrival_time" in self.objectives:
+        if "arrival_time" in objective_keys:
             objs = [np.column_stack([obj_dict["time_obj"]])]
-        if "fuel_consumption" in self.objectives:
+        if "fuel_consumption" in objective_keys:
             if objs == []:
                 objs = [np.column_stack([obj_dict["fuel_sum"]])]
             else:

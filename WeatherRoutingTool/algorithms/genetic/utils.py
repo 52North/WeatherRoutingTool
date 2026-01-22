@@ -180,6 +180,36 @@ def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time):
     bs = full_travel_distance / (time_diff.total_seconds() * u.second)
     return bs
 
+def get_rank_sum(rank_max):
+    rank_sum = 0
+    for rk in range(1, rank_max + 1):
+        rank_sum += 1 / rk
+    return 1/rank_sum
+
+def get_weight_from_rank(rank, n_parts):
+    numerator = get_rank_sum(rank)
+    denominator_sum = 0.
+
+    for j in range(1, n_parts + 1):
+        temp = get_rank_sum(j)
+        denominator_sum += temp
+    return numerator / denominator_sum
+
+def get_weigths_from_rankarr(rank_arr, n_parts):
+    weight_array = np.full(rank_arr.shape, -99.)
+
+    for irank in range(0, rank_arr.shape[0]):
+        if rank_arr[irank]%1. is not 0.:
+            smaller = int(np.floor(rank_arr[irank]))
+            larger = int(np.ceil(rank_arr[irank]))
+            smaller_weight = get_weight_from_rank(smaller, n_parts)
+            larger_weight = get_weight_from_rank(larger, n_parts)
+            weight_array[irank] = (smaller_weight + larger_weight)/2
+        else:
+            weight_array[irank] = get_weight_from_rank(rank_arr[irank], n_parts)
+
+
+    return weight_array
 
 # ----------
 class RouteDuplicateElimination(ElementwiseDuplicateElimination):
