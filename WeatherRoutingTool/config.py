@@ -53,11 +53,14 @@ class Config(BaseModel):
     # (via the ValidationInfo object) which have been declared earlier.
 
     # Other configuration
-    ALGORITHM_TYPE: Literal['isofuel', 'genetic', 'speedy_isobased'] = 'isofuel'
-    # options: 'isofuel', 'genetic', 'speedy_isobased'
+    ALGORITHM_TYPE: Literal[
+        'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
+    ] = 'isofuel'
+    ARRIVAL_TIME: datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method', 'nnmodel'] = 'direct_power_method'
     # options: 'CBT', 'SAL','speedy_isobased', 'direct_power_method
+    BOAT_SPEED: float = -99.  # boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -75,12 +78,29 @@ class Config(BaseModel):
     DELTA_TIME_FORECAST: float = 3  # time resolution of weather forecast (hours)
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
-    # options for GA
+    # options for Dijkstra algorithm
+    DIJKSTRA_MASK_FILE: str = None  # can be found with "find ~ -type f -name globe_combined_mask_compressed.npz"
+    # or downloaded via https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz  # noqa: E501
+    DIJKSTRA_NOF_NEIGHBORS: int = 1  # number of neighbors to use when creating a graph from the grid
+    DIJKSTRA_STEP: int = 1  # step used to save final route to prevent very dense waypoints
+
+    # options for GCR Slider algorithm
+    GCR_SLIDER_ANGLE_STEP: float = 30  # in degrees
+    GCR_SLIDER_DISTANCE_MOVE: float = 10000  # in m
+    GCR_SLIDER_DYNAMIC_PARAMETERS: bool = True
+    GCR_SLIDER_LAND_BUFFER: float = 1000  # in m
+    GCR_SLIDER_INTERPOLATE: bool = True
+    GCR_SLIDER_INTERP_DIST: float = 0.1
+    GCR_SLIDER_INTERP_NORMALIZED: bool = True
+    GCR_SLIDER_MAX_POINTS: int = 300
+    GCR_SLIDER_THRESHOLD: float = 10000  # in m
+
+    # options for Genetic Algorithm
     GENETIC_NUMBER_GENERATIONS: int = 20  # number of generations
     GENETIC_NUMBER_OFFSPRINGS: int = 2  # total number of offsprings for every generation
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
-    GENETIC_POPULATION_TYPE: Literal['grid_based', 'from_geojson', 'isofuel'] = 'grid_based'  # type for initial
-    # population (options: 'grid_based', 'from_geojson', 'isofuel')
+    GENETIC_POPULATION_TYPE: Literal[
+        'grid_based', 'from_geojson', 'isofuel', 'gcrslider'] = 'grid_based'  # type for initial population  # noqa: E501
     GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
     GENETIC_REPAIR_TYPE: List[Literal[
         'waypoints_infill', 'constraint_violation', 'no_repair'
@@ -94,13 +114,14 @@ class Config(BaseModel):
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
         Field(default_factory=list)]  # [[lat_one,lon_one], [lat_two,lon_two] ... ]
+
+    # options for isobased algorithms
     ISOCHRONE_MAX_ROUTING_STEPS: int = 100  # maximum number of routing steps
     ISOCHRONE_MINIMISATION_CRITERION: Literal['dist', 'squareddist_over_disttodest'] = 'squareddist_over_disttodest'
     # options: 'dist', 'squareddist_over_disttodest'
     ISOCHRONE_NUMBER_OF_ROUTES: int = 1  # integer specifying how many routes should be searched
     ISOCHRONE_PRUNE_GROUPS: Literal[
-        'courses', 'larger_direction', 'branch', 'multiple_routes'] = 'larger_direction'  # can be 'courses',
-    # 'larger_direction', 'branch', 'multiple_routes'
+        'courses', 'larger_direction', 'branch', 'multiple_routes'] = 'larger_direction'
     ISOCHRONE_PRUNE_SECTOR_DEG_HALF: int = 91  # half of the angular range of azimuth angle considered for pruning;
     # not used for branch-based pruning  # noqa: E501
     ISOCHRONE_PRUNE_SEGMENTS: int = 20  # total number of azimuth bins used for pruning in prune sector;
@@ -185,7 +206,7 @@ class Config(BaseModel):
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
             raise ValueError(msg)
 
-    @field_validator('DEPARTURE_TIME', mode='before')
+    @field_validator('DEPARTURE_TIME', 'ARRIVAL_TIME', mode='before')
     @classmethod
     def parse_and_validate_datetime(cls, v):
         if isinstance(v, datetime):
@@ -197,7 +218,7 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'ROUTE_PATH', mode='after')
+    @field_validator('COURSES_FILE', 'ROUTE_PATH', 'DIJKSTRA_MASK_FILE', mode='after')
     @classmethod
     def validate_path_exists(cls, v, info: ValidationInfo):
         if info.field_name == 'COURSES_FILE':
@@ -205,6 +226,11 @@ class Config(BaseModel):
                 return v
             else:
                 path = Path(os.path.dirname(v))
+        elif info.field_name == 'DIJKSTRA_MASK_FILE':
+            if info.data.get('ALGORITHM_TYPE') != 'dijkstra':
+                return v
+            else:
+                path = Path(v)
         else:
             path = Path(v)
         if not path.exists():
@@ -328,11 +354,19 @@ class Config(BaseModel):
         :return: Config object with validated BOAT_TYPE-ALGORITHM_TYPE-compatibility
         :rtype: WeatherRoutingTool.config.Config
         """
-        if (
-                (self.BOAT_TYPE == 'speedy_isobased' or self.ALGORITHM_TYPE == 'speedy_isobased')
-                and self.BOAT_TYPE != self.ALGORITHM_TYPE
-        ):
-            raise ValueError("If 'BOAT_TYPE' or 'ALGORITHM_TYPE' is 'speedy_isobased', so must be the other one.")
+
+        if self.ALGORITHM_TYPE == 'speedy_isobased' and self.BOAT_TYPE != 'speedy_isobased':
+            raise ValueError("If 'ALGORITHM_TYPE' is 'speedy_isobased', 'BOAT_TYPE' has to be 'speedy_isobased'.")
+
+        if self.ALGORITHM_TYPE == 'genetic_shortest_route' and self.BOAT_TYPE != 'speedy_isobased':
+            raise ValueError(
+                "If 'ALGORITHM_TYPE' is 'genetic_shortest_route', 'BOAT_TYPE' has to be 'speedy_isobased'.")
+
+        if self.BOAT_TYPE == 'speedy_isobased' and self.ALGORITHM_TYPE != 'genetic_shortest_route' and \
+                self.ALGORITHM_TYPE != 'speedy_isobased':
+            raise ValueError("'BOAT_TYPE'='speedy_isobased' can only be used together with "
+                             "'ALGORITHM_TYPE'='genetic_shortest_route' and 'ALGORITHM_TYPE'='speedy_isobased'.")
+
         return self
 
     @model_validator(mode='after')
@@ -346,6 +380,9 @@ class Config(BaseModel):
         :return: Config object with validated WEATHER_DATA regarding place and time
         :rtype: WeatherRoutingTool.config.Config
         """
+        # The Dijkstra algorithm does not consider weather data at the moment
+        if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
+            return self
         path = Path(self.WEATHER_DATA)
         if path.exists():
             try:
@@ -395,6 +432,9 @@ class Config(BaseModel):
         :return: Config object with validated DEPTH_DATA regarding place
         :rtype: WeatherRoutingTool.config.Config
         """
+        # The Dijkstra algorithm does not consider depth data at the moment
+        if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
+            return self
         path = Path(self.DEPTH_DATA)
         if path.exists():
             try:
@@ -416,4 +456,26 @@ class Config(BaseModel):
                 raise ValueError(f"Failed to validate depth data: {e}")
         else:
             self._DATA_MODE_DEPTH = 'automatic'
+        return self
+
+    @field_validator('BOAT_SPEED', mode='after')
+    @classmethod
+    def check_boat_speed(cls, v):
+        if v > 10:
+            logger.warning(
+                "Your 'BOAT_SPEED' is higher than 10 m/s."
+                " Have you considered that this program works with m/s?")
+        return v
+
+    @model_validator(mode='after')
+    def check_speed_determination(self) -> Self:
+        print('arrival time: ', self.ARRIVAL_TIME)
+        print('speed: ', self.BOAT_SPEED)
+        if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
+            raise ValueError('Please specify either the boat speed or the arrival time')
+        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
+            raise ValueError('Please specify either the boat speed or the arrival time and not both.')
+        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
+            raise ValueError('The determination of the speed from the arrival time is only possible for the'
+                             ' genetic algorithm')
         return self

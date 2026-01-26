@@ -11,6 +11,8 @@ The input parameters
 
 .. figure:: /_static/constraint_arguments.png
    :alt: constraint_arguments
+   :width: 400
+   :align: center
 
    Fig.4: Figure for illustrating the concept of passing the information on the routing segments that are to be checked by the constraint module to the respective function. Variable names printed in orange correspond to the naming scheme for the first routing step while variables printed in blue correspond to the naming scheme for the second routing step.
 
@@ -50,11 +52,15 @@ The primary TSS rules have been addressed in the current development phase are:
 
 .. figure:: /_static/follow_separation_lane.png
    :alt: follow_separation_lane
+   :width: 400
+   :align: center
 
 2. If the current route is intersecting the Traffic Separation Lanes and the angle between the route nodes before the intersection and after the intersection is between 60° to 120°, the new route segment is introduced as it is perpendicular to the separation lane and extends towards the last route segment, perpendicularly.
 
 .. figure:: /_static/right_angle_crossing.png
    :alt: right_angle_crossing
+   :width: 400
+   :align: center
 
 Furthermore, if the starting node or the ending node is located inside a traffic separation zone, route postprocessing is not further executed.
 

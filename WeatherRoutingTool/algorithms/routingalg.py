@@ -6,8 +6,10 @@ from geovectorslib import geod
 from matplotlib.figure import Figure
 
 from WeatherRoutingTool.constraints.constraints import *
+from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
+from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
@@ -18,27 +20,40 @@ class RoutingAlg:
     Mother class of all routing algorithms defining basic attributes and methods
     """
 
-    start: tuple  # lat, lon at start
-    finish: tuple  # lat, lon at end
+    start: tuple[float, float]  # (lat, lon) at start
+    finish: tuple[float, float]  # (lat, lon) at end
     departure_time: datetime
+    arrival_time: datetime
     gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
     gcr_dist: float  # distance of great circle route
 
     fig: matplotlib.figure
     route_ensemble: list
     figure_path: str
+    map_ext: Map
+
+    boat_speed: float
 
     def __init__(self, config):
         lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE
+
+        lat_1, lon1, lat2, lon2 = config.DEFAULT_MAP
+        self.map_ext = Map(lat_1, lon1, lat2, lon2)
         self.start = (lat_start, lon_start)
         self.finish = (lat_end, lon_end)
         self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
 
         self.gcr_course, self.gcr_dist = self.calculate_gcr(self.start, self.finish)
         self.gcr_course = self.gcr_course * u.degree
 
         self.figure_path = get_figure_path()
         plt.switch_backend("Agg")
+
+        self.boat_speed = config.BOAT_SPEED * u.meter/u.second
+
+    def get_boat_speed(self, dists=None):
+        return self.boat_speed
 
     def init_fig(self, **kwargs):
         pass
@@ -68,7 +83,13 @@ class RoutingAlg:
             finish[1]])
         return gcr['azi1'], gcr['s12']
 
-    def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False):
+    def execute_routing(
+            self,
+            boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose=False
+    ) -> RouteParams:
         pass
 
     def check_for_positive_constraints(self, constraint_list):

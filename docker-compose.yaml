@@ -1,0 +1,12 @@
+services:
+  wrt:
+    image: 52north/weather-routing-tool:latest
+    build:
+      context: .
+    pull_policy: missing
+    volumes:
+      - wrt_work_dir:/app/wrt_work_dir
+    environment:
+      - WRT_FIGURE_PATH=/app/wrt_work_dir/figures
+#      - CMEMS_USERNAME=<user>
+#      - CMEMS_PASSWORD=<password>

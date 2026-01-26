@@ -30,8 +30,8 @@ class RoutePostprocessing:
     ship_speed: list
     boat: Boat
 
-    def __init__(self, min_fuel_route, boat, db_engine=None):
-        self.set_data(min_fuel_route, boat)
+    def __init__(self, min_fuel_route, boat, boat_speed, db_engine=None):
+        self.set_data(min_fuel_route, boat, boat_speed)
 
         if db_engine is not None:
             self.engine = db_engine
@@ -44,14 +44,14 @@ class RoutePostprocessing:
             self.port = os.getenv("WRT_DB_PORT")
             self.engine = self.connect_database()
 
-    def set_data(self, route, boat):
+    def set_data(self, route, boat, boat_speed):
         self.route = route
         self.lats_per_step = route.lats_per_step
         self.lons_per_step = route.lons_per_step
 
         self.starttime_per_step = route.starttime_per_step
         self.boat = boat
-        self.ship_speed = self.boat.get_boat_speed()
+        self.ship_speed = boat_speed
 
     def post_process_route(self):
         """TODO: add class description

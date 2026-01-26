@@ -17,12 +17,9 @@ class ShipFactory:
         form.print_line()
         logger.info("Initialising of ship type")
 
-        if config.ALGORITHM_TYPE == 'speedy_isobased':
+        if config.BOAT_TYPE == 'speedy_isobased':
             logger.info('Use speedy isobased model for modeling fuel consumption.')
             ship = ConstantFuelBoat(file_name=config.CONFIG_PATH)
-            if not config.BOAT_TYPE == 'speedy_isobased':
-                raise ValueError('The algorithm type "speedy_isobased" can only be applied if the respective is boat '
-                                 'type is set correctly, meaning BOAT_TYPE="speedy_isobased".')
         if config.BOAT_TYPE == 'direct_power_method':
             logger.info('Use direct power method for modeling fuel consumption.')
             ship = DirectPowerBoat(file_name=config.CONFIG_PATH)

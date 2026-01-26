@@ -9,7 +9,6 @@ mandatory_fields = [
     'BOAT_HBR',
     'BOAT_LENGTH',
     'BOAT_SMCR_POWER',
-    'BOAT_SPEED',
     'WEATHER_DATA'
 ]
 
@@ -32,15 +31,6 @@ def test_assign_config_from_json():
     config = ShipConfig.assign_config(path=config_path, init_mode="from_json")
 
     assert isinstance(config, ShipConfig)
-
-
-def test_negative_boat_speed_raises_error():
-    config_data, _ = load_example_config()
-    config_data["BOAT_SPEED"] = -5
-    with pytest.raises(ValueError) as excinfo:
-        ShipConfig.assign_config(init_mode="from_dict", config_dict=config_data)
-
-    assert "'BOAT_SPEED' must be greater than zero" in str(excinfo.value)
 
 
 def test_invalid_propulsion_efficiency_raises_error():

@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+import cartopy.crs as ccrs
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u
@@ -10,11 +11,20 @@ from astropy import units as u
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
-    GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton
-from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation
+    GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
+from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.maps import Map
 
+# FIXME: the following test functions fail if LaTeX is not installed:
+#   - tests/test_genetic.py::test_random_plateau_mutation
+#   - tests/test_genetic.py::test_bezier_curve_mutation
+#   - tests/test_genetic.py::test_constraint_violation_repair
+#  In the GH Actions workflow, we install the packages texlive, texlive-latex-extra and cm-super to make sure the
+#  tests are passing. However, this leads to additional traffic when running the workflow. It would be better to
+#  exclude plotting in the tests or adapt it so that LaTeX doesn't need to be installed.
 
 
 def test_isofuelpatcher_singleton():
@@ -49,22 +59,7 @@ def test_isofuelpatcher_no_singleton():
     assert id(pt_two) != id(pt_one)
 
 
-'''
-   sanity test for output for genetic.mutation.RandomPlateauMutation.mutate():
-   - does the shape of the output route matrix resemble the shape of the input route matrix
-   - do the starting and end points of all routes match with the input routes
-'''
-
-
-def test_random_plateau_mutation():
-    dirname = os.path.dirname(__file__)
-    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
-    config = Config.assign_config(Path(configpath))
-    constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(1)
-
-    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
-
+def get_dummy_route_input(length='long'):
     route1 = np.array([
         [35.199, 15.490],
         [34.804, 16.759],
@@ -89,15 +84,42 @@ def test_random_plateau_mutation():
         [32.937, 26.859],
         [32.737, 27.859],
     ])
+    if length == "short":
+        route1 = np.delete(route1, -1, 0)
+        route2 = np.delete(route2, -1, 0)
+        route1 = np.delete(route1, -1, 0)
+        route2 = np.delete(route2, -1, 0)
+
     X = np.array([[route1], [route2]])
 
+    return X
+
+
+'''
+   sanity test for output for genetic.mutation.RandomPlateauMutation.mutate():
+   - does the shape of the output route matrix resemble the shape of the input route matrix
+   - do the starting and end points of all routes match with the input routes
+'''
+
+
+def test_random_plateau_mutation():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    input_crs = ccrs.PlateCarree()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    np.random.seed(1)
+
+    mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
+    mt.dist = 1e5
+    X = get_dummy_route_input()
     old_route = copy.deepcopy(X)
-    new_route = mt.mutate(None, X, )
+    new_route = mt._do(None, X, )
 
     # plot figure with original and mutated routes
-    fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
     fig, ax = graphics.generate_basemap(
-        fig=fig,
+        map=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.937, 27.859),
@@ -105,10 +127,10 @@ def test_random_plateau_mutation():
         show_depth=False,
         show_gcr=False
     )
-    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick")
-    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue")
-    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick")
-    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue")
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs)
+    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue", transform=input_crs)
+    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick", transform=input_crs)
+    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue", transform=input_crs)
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -131,38 +153,84 @@ def test_random_plateau_mutation_refusal():
     np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
-
-    route1 = np.array([
-        [35.199, 15.490],
-        [34.804, 16.759],
-        [34.447, 18.381],
-        [34.142, 18.763],
-        [33.942, 21.080],
-        [33.542, 23.024],
-        [33.408, 24.389],
-        [33.166, 26.300],
-    ])
-    route2 = np.array([
-        [35.199, 16.490],
-        [34.804, 17.759],
-        [34.447, 19.381],
-        [34.142, 19.763],
-        [33.942, 22.080],
-        [33.542, 23.024],
-        [33.408, 24.389],
-        [33.166, 25.300],
-    ])
-    X = np.array([[route1], [route2]])
-
+    X = get_dummy_route_input(length="short")
     old_route = copy.deepcopy(X)
-    new_route = mt.mutate(None, X, )
+    new_route = mt._do(None, X, )
 
     assert np.array_equal(old_route, new_route)
 
+
 '''
-    test whether configuration parameters relevant for the constraint module are not overwritten by config files for 
+   sanity test for output for genetic.mutation.RouteBlendMutation.mutate():
+   - does the shape of the output route matrix resemble the shape of the input route matrix
+   - do the starting and end points of all routes match with the input routes
+'''
+
+
+def test_bezier_curve_mutation():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    input_crs = ccrs.PlateCarree()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    np.random.seed(2)
+
+    mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
+    X = get_dummy_route_input()
+    old_route = copy.deepcopy(X)
+    new_route = mt._do(None, X, )
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs)
+    ax.plot(new_route[0, 0][:, 1], new_route[0, 0][:, 0], color="blue", transform=input_crs)
+    ax.plot(old_route[1, 0][:, 1], old_route[1, 0][:, 0], color="firebrick", transform=input_crs)
+    ax.plot(new_route[1, 0][:, 1], new_route[1, 0][:, 0], color="blue", transform=input_crs)
+
+    assert old_route.shape == new_route.shape
+    for i_route in range(old_route.shape[0]):
+        assert np.array_equal(old_route[i_route, 0][-1, :], new_route[i_route, 0][-1, :])
+        assert np.array_equal(old_route[i_route, 0][0, :], new_route[i_route, 0][0, :])
+
+
+'''
+    test whether routes are returned as they are by genetic.mutation.RouteBlendMutation.mutate() if they are too
+    short for route-blend mutation
+'''
+
+
+def test_bezier_mutation_refusal():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
+    np.random.seed(1)
+
+    mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
+    mt.min_length = 9
+    X = get_dummy_route_input(length="short")
+    old_route = copy.deepcopy(X)
+    new_route = mt._do(None, X, )
+
+    assert np.array_equal(old_route, new_route)
+
+
+'''
+    test whether configuration parameters relevant for the constraint module are not overwritten by config files for
     IsofuelPatcher
 '''
+
 
 def test_configuration_isofuel_patcher():
     dirname = os.path.dirname(__file__)
@@ -173,6 +241,44 @@ def test_configuration_isofuel_patcher():
     pt = IsofuelPatcher(base_config=config)
 
     # check correct configuration of ship parameters
-    assert config_ship.BOAT_DRAUGHT_AFT * u.meter== pt.boat.draught_aft
-    assert config_ship.BOAT_DRAUGHT_FORE * u.meter== pt.boat.draught_fore
-    assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter== pt.boat.under_keel_clearance
+    assert config_ship.BOAT_DRAUGHT_AFT * u.meter == pt.boat.draught_aft
+    assert config_ship.BOAT_DRAUGHT_FORE * u.meter == pt.boat.draught_fore
+    assert config_ship.BOAT_UNDER_KEEL_CLEARANCE * u.meter == pt.boat.under_keel_clearance
+
+
+def test_constraint_violation_repair():
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    input_crs = ccrs.PlateCarree()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    np.random.seed(2)
+
+    patchfn = PatchFactory.get_patcher(
+        patch_type="isofuel_singleton",
+        config=config,
+        application="ConstraintViolationRepair"
+    )
+    repairfn = ConstraintViolationRepair(config, constraint_list)
+    X = get_dummy_route_input()
+    old_route = copy.deepcopy(X)
+    is_constrained = [False, True, True, True, False, True, True, False, False]
+    new_route = repairfn.repair_single_route(X[0, 0], patchfn, is_constrained)
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+
+    ax.plot(new_route[:, 1], new_route[:, 0], color="blue", transform=input_crs, marker='o')
+    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="firebrick", transform=input_crs, marker='o')
+    assert np.array_equal(new_route[0], old_route[0, 0][0])
+    assert np.array_equal(new_route[-2], old_route[0, 0][-2])
+    assert np.array_equal(new_route[-1], old_route[0, 0][-1])

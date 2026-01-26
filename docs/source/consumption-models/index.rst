@@ -45,11 +45,15 @@ The coordinates ``it_pos`` and ``it_course`` are iterators for the coordinate pa
 
 .. figure:: /_static/fuel_request_isobased.png
    :alt: fuel_request_isobased
+   :width: 400
+   :align: center
 
    Fig.2 Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the isofuel algorithm. All coordinate pairs marked by orange filled circles are send for the second routing step. Coordinate pairs marked with blue filled circles are endpoints after the first routing step that survived the pruning.
 
 .. figure:: /_static/fuel_request_GA.png
    :alt: fuel_request_GA
+   :height: 500
+   :align: center
 
    Fig.3 Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the genetic algorithm. All coordinate pairs marked by the same colour are send in one request.
 
@@ -67,7 +71,9 @@ In case users would like to quickly test the WRT functionality, they can activat
 - ``'BOAT_BREADTH'``: boat breadth (m)
 - ``'BOAT_HBR'``: boat height (m)
 
-This will estimate the power consumption based on several assumptions and a simple model. It is assumed, that the ship travels at a fixed working point of propeller power and ship speed. The value pair that is considered corresponds to 75 % of the SMCR power and the ship speed. Both, the SMCR power and the ship speed need to be provided by the user in the config file and it is left to the user to select sensible values for this working point. The power consumption is then calculated as the sum of 75 % SMCR power and the power consumption caused by the added resistance due to environmental conditions. The power consumption due to added resistance is estimated using the Direct Power Method  as described in the `ITTC - Recommended Procedures and Guidelines <https://www.ittc.info/media/9874/75-04-01-011.pdf>`_. The power consumption that has been calculated for the fixed working point is then extrapolated towards the true ship speed using the dependency $P$ ~ $v^3$. 
+This will estimate the power consumption based on several assumptions and a simple model. It is assumed, that the ship travels at a fixed working point of propeller power and ship speed. The value pair that is considered corresponds to 75 % of the SMCR power and the ship speed. Both, the SMCR power and the ship speed need to be provided by the user in the config file and it is left to the user to select sensible values for this working point. The power consumption is then calculated as the sum of 75 % SMCR power and the power consumption caused by the added resistance due to environmental conditions. The power consumption due to added resistance is estimated using the Direct Power Method  as described in the `ITTC - Recommended Procedures and Guidelines <https://www.ittc.info/media/9874/75-04-01-011.pdf>`_. The power consumption that has been calculated for the fixed working point is then extrapolated towards the true ship speed using the dependency
+
+:math:`P ~ v^3.`
 
 Currently, only the added resistance due to wind is considered using the regression formula by `Fujiwara et al <https://www.nmri.go.jp/archives/institutes/marine_renewable_energy/marine_energy_research/staff/fujiwara/fujiwarapdf/2009-TPC-553.pdf>`_; the consideration of waves is planned for the future. Of course, results will only be rough estimates, but this simple model enables the user to quickly test functionality and performance of the code and get some first ideas of possible routes.
 

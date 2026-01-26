@@ -1,14 +1,20 @@
+import copy
 import logging
 import math
+import os
 
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 import numpy as np
 from geographiclib.geodesic import Geodesic
 from pymoo.core.mutation import Mutation
 
+import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory, PatcherBase
+from WeatherRoutingTool.utils.maps import Map
 
 logger = logging.getLogger("WRT.genetic.mutation")
 
@@ -29,34 +35,34 @@ class MutationBase(Mutation):
 
 class MutationConstraintRejection(Mutation):
     """
-    Base class for Mutation with candidate rejection if mutated routes validate constraints.
+    Base class for Mutation with candidate rejection if mutated routes violate constraints.
 
-    - generate offsprings using sub-class' implementation of ``crossover`` function,
+    - generate offsprings using sub-class' implementation of ``mutation`` function,
     - rejects offspring that violates constraints based on the config variable ``GENETIC_REPAIR_TYPE``
 
         - if ``GENETIC_REPAIR_TYPE="no_repair"``, ``constraints_rejection`` is set to ``True`` and offspring that
         violates constraints is rejected such that the parents are returned,
         - if ``GENETIC_REPAIR_TYPE`` is set to any valid repair strategy, ``constraints_rejection`` is set to ``False``
-          and all crossover candidates are accepted,
+          and all mutated candidates are accepted,
     - counts the number of tried and successful mutations (ignoring mutation probability handled by base class Mutation)
 
 
-    :param Nof_mutation_tries: Number of initiated mutations.
-    :type Nof_mutation_tries: int
-    :param Nof_mutation_success: Number of mutations that do not violate constraints.
-    :type Nof_mutation_success: int
+    :param nof_mutation_tries: Number of initiated mutations.
+    :type nof_mutation_tries: int
+    :param nof_mutation_success: Number of mutations that do not violate constraints.
+    :type nof_mutation_success: int
     :param mutation_type: Name of the mutation type (optional).
     :type mutation_type: str
     :param constraints_list: List of constraints to be validated.
     :type constraints_list: ConstraintsList
-    :param constraints_rejection: If ``True``, crossover candidates that violate constraints are rejected. If ``False``,
-        all crossover candidates are accepted. The variable is set based on config variable ``GENETIC_REPAIR_TYPE``.
+    :param constraints_rejection: If ``True``, mutated candidates that violate constraints are rejected. If ``False``,
+        all mutated candidates are accepted. The variable is set based on config variable ``GENETIC_REPAIR_TYPE``.
         Defaults to ``True``.
     :type constraints_rejection: bool
     """
 
-    Nof_mutation_tries: int
-    Nof_mutation_success: int
+    nof_mutation_tries: int
+    nof_mutation_success: int
 
     mutation_type: str
 
@@ -89,8 +95,8 @@ class MutationConstraintRejection(Mutation):
 
         self.constraints_list = constraints_list
         self.mutation_type = mutation_type
-        self.Nof_mutation_tries = 0
-        self.Nof_mutation_success = 0
+        self.nof_mutation_tries = 0
+        self.nof_mutation_success = 0
         self.constraints_rejection = True
         self.config = config
 
@@ -99,8 +105,8 @@ class MutationConstraintRejection(Mutation):
 
     def print_mutation_statistics(self):
         logger.info(f'{self.mutation_type} statistics:')
-        logger.info('Nof_mutation_tries: ' + str(self.Nof_mutation_tries))
-        logger.info('Nof_mutation_success: ' + str(self.Nof_mutation_success))
+        logger.info('nof_mutation_tries: ' + str(self.nof_mutation_tries))
+        logger.info('nof_mutation_success: ' + str(self.nof_mutation_success))
 
     def _do(self, problem, X, **kw):
         """
@@ -117,11 +123,11 @@ class MutationConstraintRejection(Mutation):
         """
 
         for i, (rt,) in enumerate(X):
-            self.Nof_mutation_tries += 1
+            self.nof_mutation_tries += 1
             mut_temp = self.mutate(problem, rt, **kw)
 
             if (not utils.get_constraints(mut_temp, self.constraints_list)) or (not self.constraints_rejection):
-                self.Nof_mutation_success += 1
+                self.nof_mutation_success += 1
                 X[i, 0] = mut_temp
 
         return X
@@ -166,13 +172,14 @@ class RandomPlateauMutation(MutationConstraintRejection):
     plateau_size: int
     plateau_slope: int
     patchnf: PatcherBase
+    route_count: int
 
     def __init__(
             self,
-            gcr_dist: float = 1e5,
+            gcr_dist: float = 1e4,
             n_updates: int = 1,
             plateau_size: int = 3,
-            plateau_slope: int = 2,
+            plateau_slope: int = 3,
             **kw
     ):
         """
@@ -204,6 +211,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
         self.dist = gcr_dist
         self.patchfn = PatchFactory.get_patcher(patch_type="gcr", config=self.config,
                                                 application="Route plateau mutation")
+        self.route_count = 0
 
     def random_walk(
             self,
@@ -254,65 +262,121 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :return: mutated route
         :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
         """
+        debug = False
+
+        # test whether input route rt has the correct shape
+        assert len(rt.shape) == 2
+        assert rt.shape[1] == 2
+        route_length = rt.shape[0]
+        plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
+        rt_new = np.full(rt.shape, -99.)
+
+        if route_length <= plateau_length + 1:  # only mutate routes that are long enough
+            return rt
+
+        if debug:
+            print('################################')
+            print('original rt: ', rt)
 
         for _ in range(0, self.n_updates):
-            plateau_length = 2 * self.plateau_slope + self.plateau_size
-            if len(rt[0]) < plateau_length + 1:  # only mutate routes that are long enough
-                continue
-
             # obtain indices for plateau generation
-            rindex = np.random.randint(np.ceil(plateau_length / 2), rt.shape[0] - np.ceil(plateau_length / 2))
+            rindex = np.random.randint(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
-            i_slope_start = int(i_plateau_start - self.plateau_slope)
-            i_slope_end = int(i_plateau_end + self.plateau_slope)
+            i_slope_start = int(i_plateau_start - self.plateau_slope) + 1
+            i_slope_end = int(i_plateau_end + self.plateau_slope) - 1
+
+            if debug:
+                print('Indices: ')
+                print('     plateau mid: ', rindex)
+                print('     i_slope_start: ', i_slope_start)
+                print('     i_plateau_start: ', i_plateau_start)
+                print('     i_plateau_end: ', i_plateau_end)
+                print('     i_slope_end: ', i_slope_end)
 
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
             p2_orig = rt[i_plateau_end]
-            bearing = np.random.choice([45, 135, 225, 315])
-            rt[i_plateau_start] = self.random_walk(
+            bearing = np.random.randint(0, 360)
+            rt_new[i_plateau_start] = self.random_walk(
                 point=p1_orig,
                 dist=self.dist,
                 bearing=bearing
             )
-            rt[i_plateau_end] = self.random_walk(
+            rt_new[i_plateau_end] = self.random_walk(
                 point=p2_orig,
                 dist=self.dist,
                 bearing=bearing
             )
+            if debug:
+                print('Mutated plateau edges:')
+                print('     point 1: ', rt_new[i_plateau_start])
+                print('     point 2: ', rt_new[i_plateau_end])
 
             # obtain subsections, slope & plateau via gcr patching
             dist_one_orig = rt[:i_slope_start]
-
             if i_slope_start == 0:
                 dist_one_orig = [rt[0]]
-            dist_one_patched = self.patchfn.patch(
+            dist_one_patched_full = self.patchfn.patch(
                 src=tuple(rt[i_slope_start]),
-                dst=tuple(rt[i_plateau_start]),
-                npoints=self.plateau_slope,
+                dst=tuple(rt_new[i_plateau_start]),
+                npoints=self.plateau_slope - 1,
             )
+            dist_one_patched = dist_one_patched_full[:-1]
             dist_plateau_patched = self.patchfn.patch(
-                src=tuple(rt[i_plateau_start]),
-                dst=tuple(rt[i_plateau_end]),
-                npoints=self.plateau_size,
+                src=tuple(rt_new[i_plateau_start]),
+                dst=tuple(rt_new[i_plateau_end]),
+                npoints=self.plateau_size - 1,
             )
-            dist_two_patched = self.patchfn.patch(
-                src=tuple(rt[i_plateau_end]),
+            dist_two_patched_full = self.patchfn.patch(
+                src=tuple(rt_new[i_plateau_end]),
                 dst=tuple(rt[i_slope_end]),
-                npoints=self.plateau_slope,
+                npoints=self.plateau_slope - 1,
             )
-            dist_two_orig = rt[i_slope_end:]
+            dist_two_patched = dist_two_patched_full[1:]
+            dist_two_orig = rt[i_slope_end + 1:]
+
+            if debug:
+                print('Full segments: ')
+                print('     dist_on_orig: ', dist_one_orig)
+                print('     dist_one_patched (full): ', dist_one_patched_full)
+                print('     dist_plateau_patched: ', dist_plateau_patched)
+                print('     dist_two_patched: (full)', dist_two_patched_full)
+                print('     dist_two_orig: ', dist_two_orig)
+
+                print('Cut segments: ')
+                print('     dist_one_patched: ', dist_one_patched)
+                print('     dist_two_patched: ', dist_two_patched)
 
             # combine subsections
-            rt = np.concatenate([
+            rt_new = np.concatenate([
                 dist_one_orig,
-                dist_one_patched[1:],
-                dist_plateau_patched[1:],
-                dist_two_patched[1:],
-                dist_two_orig[1:]
+                dist_one_patched,
+                dist_plateau_patched,
+                dist_two_patched,
+                dist_two_orig
             ])
-        return rt
+
+        if debug:
+            print('mutated rt: ', rt_new)
+            map = Map(rt[0][0], rt[0][1], rt[-1][0], rt[-1][1])
+            input_crs = ccrs.PlateCarree()
+
+            fig, ax = graphics.generate_basemap(
+                map=map.get_var_tuple(),
+                depth=None,
+                start=rt[0],
+                finish=rt[-1],
+                show_depth=False
+            )
+            ax.plot(rt[:, 1], rt[:, 0], color="firebrick", transform=input_crs, marker="o")
+            ax.plot(rt_new[:, 1], rt_new[:, 0], color="blue", transform=input_crs, marker="o")
+            figname = 'mutated_route' + str(self.route_count)
+            figurepath = graphics.get_figure_path()
+            plt.savefig(os.path.join(figurepath, figname))
+            self.route_count += 1
+
+        return rt_new
 
 
 class RouteBlendMutation(MutationConstraintRejection):
@@ -320,8 +384,11 @@ class RouteBlendMutation(MutationConstraintRejection):
     Mutates routes by smoothening with a bezier curve.
 
     Generates a bezier curve between two randomly selected indices and infills
-    it with 2x the number of waypoints previously present in the selected range.
+    it with the number of waypoints previously present in the selected range.
     """
+
+    max_lengh: int
+    min_length: int
 
     def __init__(
             self,
@@ -332,6 +399,9 @@ class RouteBlendMutation(MutationConstraintRejection):
 
             For definition of kw see description on MutationConstraintRejection.
         """
+
+        self.min_length = 3
+        self.max_length = 10
         super().__init__(
             mutation_type="RouteBlendMutation",
             **kw
@@ -360,19 +430,22 @@ class RouteBlendMutation(MutationConstraintRejection):
         return curve
 
     def mutate(self, problem, rt, **kw):
+        # test shape of input route
+        assert len(rt.shape) == 2
+        assert rt.shape[1] == 2
+        route_length = rt.shape[0]
 
-        for _ in range(3):
-            p1 = np.random.randint(0, rt.shape[0])
-            if rt.shape[0] - p1 <= 3:  # retry
-                continue
+        # only mutate routes that are long enough
+        if route_length < self.min_length:
+            return rt
 
-            p2 = p1 + np.random.randint(3, min(10, rt.shape[0] - p1))
-            break
+        start = np.random.randint(0, route_length - self.min_length)
+        length = np.random.randint(self.min_length, min(self.max_length, route_length - start))
+        end = start + length
+        n_points = length
 
-        n_points = (p2 - p1) * 2
+        rt = np.concatenate([rt[:start], self.bezier_curve(rt[start:end], n_points), rt[end:]], axis=0)
 
-        rt = np.concatenate(
-            [rt[:p1], self.bezier_curve(rt[p1:p2], n_points), rt[p2:]], axis=0)
         return rt
 
 

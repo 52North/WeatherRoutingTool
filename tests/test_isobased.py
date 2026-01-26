@@ -220,7 +220,7 @@ def test_get_delta_variables_last_step():
     tk.use_depth_data = False
 
     ship_params = ShipParams.set_default_array()
-    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.get_boat_speed())
+    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, boat_speed)
 
     assert np.allclose(dist, dist_test, 0.1)
     assert np.allclose(delta_time, time_test, 0.1)

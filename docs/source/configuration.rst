@@ -42,19 +42,35 @@ The following lists contain information on each variable which can be set. The c
 
 **Required variables** (no default values provided):
 
-- ``DEFAULT_MAP``: bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max)
-- ``DEFAULT_ROUTE``: start and end point of the route (lat_start, lon_start, lat_end, lon_end)
-- ``DEPARTURE_TIME``: start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
-- ``DEPTH_DATA``: path to depth data (Attention: if ``DATA_MODE`` is ``automatic`` or ``odc``, this file will be overwritten!)
-- ``ROUTE_PATH``: path to json file to which the route will be written
-- ``WEATHER_DATA``: path to weather data (Attention: if ``DATA_MODE`` is ``automatic`` or ``odc``, this file will be overwritten!)
-- ``BOAT_BREADTH``: ship breadth (m)
-- ``BOAT_FUEL_RATE``: fuel rate at service propulsion point (g/kWh)
-- ``BOAT_HBR``: height of top superstructure (bridge etc.) (m)
-- ``BOAT_LENGTH``: overall length (m)
-- ``BOAT_SMCR_POWER``: Specific Maximum Continuous Rating power (kWh)
-- ``BOAT_SMCR_SPEED``: average speed at SMCR power (m/s)
-- ``BOAT_SPEED``: boat speed (m/s)
++-----------------+------------------------------------------------------------------------------------+
+| Name            | Description                                                                        |
++=================+====================================================================================+
+| DEFAULT_MAP     | bbox in which route optimization is performed (lat_min, lon_min, lat_max, lon_max) |
++-----------------+------------------------------------------------------------------------------------+
+| DEFAULT_ROUTE   | start and end point of the route (lat_start, lon_start, lat_end, lon_end)          |
++-----------------+------------------------------------------------------------------------------------+
+| DEPARTURE_TIME  | start time of travelling, format: 'yyyy-mm-ddThh:mmZ'                              |
++-----------------+------------------------------------------------------------------------------------+
+| DEPTH_DATA      | path to depth data e.g. /user/path-to-data/depth.nc                                |
++-----------------+------------------------------------------------------------------------------------+
+| ROUTE_PATH      | path to json file to which the route will be written                               |
++-----------------+------------------------------------------------------------------------------------+
+| WEATHER_DATA    | path to weather data e.g. /user/path-to-data/weather.nc                            |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_BREADTH    | ship breadth (m)                                                                   |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_FUEL_RATE  | fuel rate at service propulsion point (g/kWh)                                      |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_HBR        | height of top superstructure (bridge etc.) (m)                                     |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_LENGTH     | overall length (m)                                                                 |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_SMCR_POWER | Specific Maximum Continuous Rating power (kWh)                                     |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_SMCR_SPEED | average speed at SMCR power (m/s)                                                  |
++-----------------+------------------------------------------------------------------------------------+
+| BOAT_SPEED      | boat speed (m/s)                                                                   |
++-----------------+------------------------------------------------------------------------------------+
 
 **Required variables in specific cases** (no default values provided):
 
@@ -89,16 +105,27 @@ The following lists contain information on each variable which can be set. The c
 - ``BOAT_UNDER_KEEL_CLEARANCE``: vertical distance between keel and ground (default: 20m)
 - ``ALGORITHM_TYPE``: options: 'isofuel', 'genetic', 'speedy_isobased' (The latter shall only for testing; default: 'direct_power_method'; default: 'isofuel')
 - ``CONSTRAINTS_LIST``: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints', 'status_error' (default: ['land_crossing_global_land_mask', 'water_depth', 'on_map'])
-- ``DELTA_FUEL``: amount of fuel per routing step (default: 3000kg)
+- ``DELTA_FUEL``: amount of fuel per routing step (default: 3000 kg)
 - ``DELTA_TIME_FORECAST``: time resolution of weather forecast (default: 3h)
+- ``DIJKSTRA_MASK_FILE``: path to the global land mask file; if the Python package is installed the file should already be available. It can be found with ``find ~ -type f -name globe_combined_mask_compressed.npz``. Alternatively, it can be downloaded via `GitHub <https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz>`_
+- ``DIJKSTRA_NOF_NEIGHBORS``: number of neighbors to use when creating a graph from the grid, defaults to 1
+- ``DIJKSTRA_STEP``: step used to save final route to prevent very dense waypoints, defaults to 1
 - ``FACTOR_CALM_WATER``: multiplication factor for the calm water resistance model
 - ``FACTOR_WAVE_FORCES``: multiplication factor for the added resistance in waves model
+- ``GCR_SLIDER_ANGLE_STEP``: angle step in degrees, defaults to 30
+- ``GCR_SLIDER_DISTANCE_MOVE``: move distance in m, defaults to 10000
+- ``GCR_SLIDER_DYNAMIC_PARAMETERS``: update parameters (e.g. move distance) dynamically, defaults to True
+- ``GCR_SLIDER_LAND_BUFFER``: land buffer in m, defaults to 1000
+- ``GCR_SLIDER_INTERPOLATE``: interpolate final route, defaults to True
+- ``GCR_SLIDER_INTERP_DIST``: interpolation distance, defaults to 0.1
+- ``GCR_SLIDER_INTERP_NORMALIZED``: normalized interpolation, defaults to True
+- ``GCR_SLIDER_THRESHOLD``: segment length threshold in m below which segments are not split, defaults to 10000
 - ``FACTOR_WIND_FORCES``: multiplication factor for the added resistance in wind model
 - ``GENETIC_MUTATION_TYPE``: type for mutation (options: 'grid_based')
 - ``GENETIC_NUMBER_GENERATIONS``: number of generations for genetic algorithm (default: 20)
 - ``GENETIC_NUMBER_OFFSPRINGS``: number of offsprings for genetic algorithm (default: 2)
 - ``GENETIC_POPULATION_SIZE``: population size for genetic algorithm (default: 20)
-- ``GENETIC_POPULATION_TYPE``: type for initial population (options: 'grid_based', 'from_geojson'; default: 'grid_based')
+- ``GENETIC_POPULATION_TYPE``: type for initial population (options: 'grid_based', 'from_geojson', 'isofuel', 'gcrslider'; default: 'isofuel')
 - ``GENETIC_REPAIR_TYPE``: repair strategy for genetic algorithm (options: 'waypoints_infill', 'constraint_violation', 'no_repair', default: 'waypoints_infill' and 'constraint_violation')
 - ``GENETIC_MUTATION_TYPE``: options: 'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'no_mutation' (default: 'random')
 - ``GENETIC_CROSSOVER_PATCHER``: patching strategy for crossover (options: 'gcr', 'isofuel', default: 'isofuel')
@@ -160,19 +187,7 @@ They inherit the top-level loggers' logging level.
 Input data
 ----------
 
-Depending on the power/fuel consumption model used, different sets of environmental data are needed. The data described below are needed for the usage of **mariPower**.
-
-There are three general options on how to provide the necessary input data:
-
-1. The easiest option is to set the config parameter ``DATA_MODE='automatic'``. To use it, valid CMEMS credentials have to be configured using system environment variables (see above). In this case, the WRT will automatically download the necessary weather and ocean data for the chosen temporal and spatial extent and store it in the file specified by the config variable ``WEATHER_DATA``. Moreover, water depth data from [NOAA](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc) is downloaded and stored in the file specified by the config variable ``DEPTH_DATA``.
-
-2. It is also possible to prepare two NetCDF files containing the weather and ocean data and the water depth data and pointing the WRT to these files using the same config variables as before. To do so set ``DATA_MODE='from_file'``. Be sure the temporal and spatial extent is consistent with the other config variables. The `maridatadownloader <https://github.com/52North/maridatadownloader>`_ - which is used by the WRT - can facilitate the preparation.
-
-3. A third option is to set up an `Open Data Cube (ODC) <https://www.opendatacube.org/>`_ instance. To use it set ``DATA_MODE='odc'``. In this case, the data will be extracted from ODC and also stored in the two files as described before.
-
-Be sure that the water depth data is available and configured correctly in order to use the ``water_depth`` option of ``CONSTRAINTS_LIST``.
-
-The following parameters are downloaded automatically or need to be prepared:
+The WRT currently requires data for the water depth as well as the following environmental parameters:
 
 - u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground)
 - v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground)
@@ -185,6 +200,19 @@ The following parameters are downloaded automatically or need to be prepared:
 - Pressure_reduced_to_MSL_msl (pressure reduced to mean sea level)
 - Temperature_surface (temperature at the water surface)
 - so (salinity)
+
+Thereby, the depth data and the weather data need to be wrapped in separate `netCDF <https://www.unidata.ucar.edu/software/netcdf>`_ files.
+If no input data is provided but the config parameters ``DEPTH_DATA`` and ``WEATHER_DATA`` are set to valid paths,
+the data is downloaded automatically from
+
+- depth data: `NOAA <https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc>`_
+- atmospheric weather data: `Global Forecast System <https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php>`_
+- oceanic weather data: `Copernicus Marine Data Store <https://data.marine.copernicus.eu/products>`_
+
+In principle, the WRT can also be used without providing depth data but to it is highly recommended to provide depth information
+to obtain realistic routes. If no depth data is provided, the ``water_depth`` option of ``CONSTRAINTS_LIST``
+can not be used.
+
 
 .. figure:: /_static/sequence_diagram_installation_workflow.png
    :alt: sequence_diagram_installation_workflow
