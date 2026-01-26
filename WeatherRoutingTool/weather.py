@@ -146,8 +146,8 @@ class WeatherCond:
         plt.show()
 
     def get_theta_from_uv(self, u, v):
-        theta = 180 + 180 / np.pi * np.arctan2(u, v)
-        theta = theta % 360
+        theta = 270 + 180/np.pi*np.arctan2(u,v)
+        theta = theta%360
         return theta
 
     def get_u(self, theta, windspeed):

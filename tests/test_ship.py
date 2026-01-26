@@ -282,11 +282,11 @@ def test_nnmodel_result_polar_plot():
 
     print('rel_wind_dir: ', rel_wind_direction)
 
-    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/blackboxgreyboxwhiteboxmodelle_251127/blackBox_gp_model_trial_17_rank_1.pth"
+    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/251216/blackBox_ME_LOAD_gp_model.pth"
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
-    windspeed = 10
+    windspeed = 5
 
     for ipoint in range(0,37):
         theta_rad = rel_wind_direction[ipoint] * np.pi / 180
@@ -294,18 +294,18 @@ def test_nnmodel_result_polar_plot():
         v_wind = -np.abs(windspeed) * np.cos(theta_rad)
 
         input_data = np.array([[
-            7,  # STW
-            10, # draft_fp_interpolated_between_low_speeds
-            10, # draft_fp_interpolated_between_low_speeds
+            6.32,  # STW
+            9.79, # draft_fp_interpolated_between_low_speeds
+            9.79, # draft_fp_interpolated_between_low_speeds
             rel_wind_direction[ipoint], # rel_wind_direction: 0-360°
-            27, # thetao in C
-            27 + 273, # Temperature_surface in K
+            21.23, # thetao in C
+            293.88, # Temperature_surface in K
             rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
-            -221,  # z
-            100000, # Pressure_reduced_to_MSL_msl
-            2, # VHM0
-            6.24, # VTPK
-            39.6, # so 5.63 - 39.8  # *1000 -> g/kg
+            -2000,  # z
+            101339, # Pressure_reduced_to_MSL_msl
+            0.98, # VHM0
+            6.87, # VTPK
+            39.71, # so 5.63 - 39.8  # *1000 -> g/kg
             u_wind, # u-component wind
             v_wind # v-component wind
         ]])
@@ -333,4 +333,6 @@ def test_nnmodel_result_polar_plot():
     axes[0].set_title("Power in % of nominal power", va='bottom')
 
     plt.show()
+    plt.savefig("/home/kdemmich/1_Projekte/TwinShip/5_Results/260122_Biskays_Model_Comparison/Summary/polar_plot.png")
+
     assert 1==2
