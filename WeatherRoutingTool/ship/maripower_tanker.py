@@ -167,7 +167,6 @@ class MariPowerTanker(Boat):
         setattr(self.hydro_model, variable, value)
 
     def print_init(self):
-        logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('path to weather data' + str(self.weather_path), 1))
         logger.info(form.get_log_step('path to courses data' + str(self.courses_path), 1))
         logger.info(form.get_log_step('path to depth data' + str(self.depth_path), 1))
@@ -330,11 +329,11 @@ class MariPowerTanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, speed=None, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
+        print('speed: ', speed)
 
-        if speed is None:
-            speed = np.repeat(self.speed, courses.shape, axis=0)
+        speed_arr = np.repeat(speed, courses.shape, axis=0)
 
         courses = units.degree_to_pmpi(courses)
 
@@ -345,7 +344,7 @@ class MariPowerTanker(Boat):
             lats_str = 'Latitude:' + str(lats.shape)
             lons_str = 'Longitude:' + str(lons.shape)
             course_str = 'Courses:' + str(courses.shape)
-            speed_str = 'Boat speed:' + str(speed.shape)
+            speed_str = 'Boat speed:' + str(speed_arr.shape)
             form.print_step(time_str, 1)
             form.print_step(lats_str, 1)
             form.print_step(lons_str, 1)
@@ -375,10 +374,10 @@ class MariPowerTanker(Boat):
 
         assert courses.shape == it_pos.shape
         assert courses.shape == it_course.shape
-        assert courses.shape == speed.shape
+        assert courses.shape == speed_arr.shape
 
         # generate pandas DataFrame
-        df = pd.DataFrame({'it_pos': it_pos, 'it_course': it_course, 'courses': courses, 'speed': speed, })
+        df = pd.DataFrame({'it_pos': it_pos, 'it_course': it_course, 'courses': courses, 'speed': speed_arr, })
 
         df = df.set_index(['it_pos', 'it_course'])
         # ToDo: use logger.debug and args.debug
@@ -426,7 +425,7 @@ class MariPowerTanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         status = ds['Status'].to_numpy().flatten()
         message = ds['Message'].to_numpy().flatten()
-        speed = np.repeat(self.speed, power.shape)
+        speed = ds['speed'].to_numpy().flatten() * u.meter/u.second
 
         ship_params = ShipParams(
             fuel_rate=fuel,
@@ -573,7 +572,7 @@ class MariPowerTanker(Boat):
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
 
         if self.correct_by_nnmodel:
-            ship_params_corr = self.nnmodel.get_ship_parameters(courses, lats, lons, time)
+            ship_params_corr = self.nnmodel.get_ship_parameters(courses, lats, lons, time, speed)
             print(f'Setting power from ' + str(ship_params.power) + ' to ' +
                   str(ship_params.power + ship_params_corr.power) + ' by adding ' + str(ship_params_corr.power))
             #ship_params.power = ship_params.power + ship_params_corr.power

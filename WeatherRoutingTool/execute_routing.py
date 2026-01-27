@@ -41,6 +41,7 @@ def execute_routing(config):
     # initialise weather
     wt = WeatherFactory.get_weather(config._DATA_MODE_WEATHER, windfile, departure_time, time_forecast, time_resolution,
                                     default_map)
+    wt.plot_wind_weather(departure_time)
 
     # *******************************************
     # initialise boat

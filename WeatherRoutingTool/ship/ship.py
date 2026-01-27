@@ -271,15 +271,15 @@ class NNBoat(Boat):
         )
 
         fuel_rate = fuel_model.predict_values(np.vstack((n/60, power / 1000)).T).squeeze()  # fuelConsumptionCBT.FuelConsumptionCBT(n,P)
-        return fuel_rate/1000
+        return fuel_rate/1000 *u.kg/u.second
 
-    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
         n_requests = len(courses)
 
         # initialise clean ship params object
         dummy_array = np.full(n_requests, -99)
-        speed_array = np.full(n_requests, self.speed)
+        speed_array = np.full(n_requests, speed)
 
         ship_params = ShipParams(
             fuel_rate=dummy_array * u.kg / u.s,
@@ -324,7 +324,7 @@ class NNBoat(Boat):
         depth = rounded_ds.to_numpy()
 
         array_shape = ship_params.water_temperature.shape
-        speed = np.full(array_shape[0], self.speed) * 1.994
+        speed = np.full(array_shape[0], speed) * 1.994
         draught = np.full(array_shape[0], self.draught)
         P_perc = np.full(array_shape[0], -99)
 

@@ -73,7 +73,7 @@ class RoutingProblem(ElementwiseProblem):
             lats=route_dict['start_lats'],
             lons=route_dict['start_lons'],
             time=route_dict['start_times'],
-            speed=bs,
+            speed=bs
         )
 
         fuel = shipparams.get_fuel_rate()
