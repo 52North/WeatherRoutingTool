@@ -270,10 +270,54 @@ class IsoFuelPopulation(Population):
 
             X[i, 0] = rt
 
-        # fallback: fill all other individuals with the same population as the last one
+        # fallback: fill remaining individuals with perturbed copies to maintain diversity
         for j in range(i + 1, n_samples):
-            X[j, 0] = np.copy(X[j - 1, 0])
+            X[j, 0] = self._perturb_route(np.copy(X[j - 1, 0]), j - i)
         return X
+
+    def _perturb_route(self, route: np.ndarray, perturbation_factor: int) -> np.ndarray:
+        """Apply controlled perturbation to a route to maintain population diversity.
+        
+        Creates small random variations in intermediate waypoints while preserving
+        start and destination points. Perturbation magnitude increases with perturbation_factor
+        to ensure diversity across multiple copied routes.
+        
+        :param route: Original route to perturb as array of [lat, lon, speed] waypoints
+        :type route: np.ndarray
+        :param perturbation_factor: Factor to control perturbation magnitude (higher = more variation)
+        :type perturbation_factor: int
+        :return: Perturbed route with same structure as input
+        :rtype: np.ndarray
+        """
+        if len(route) <= 2:
+            # Route has only start and end points, cannot perturb
+            return route
+            
+        # Create perturbed copy
+        perturbed_route = np.copy(route)
+        
+        # Calculate perturbation magnitude (0.1 to 1.0 degrees based on factor)
+        # Cap at reasonable maximum to maintain route coherence
+        max_perturbation = min(0.1 + (perturbation_factor * 0.1), 1.0)
+        
+        # Perturb intermediate waypoints (exclude start [0] and end [-1])
+        for i in range(1, len(route) - 1):
+            # Apply random perturbation to latitude and longitude
+            lat_perturbation = np.random.uniform(-max_perturbation, max_perturbation)
+            lon_perturbation = np.random.uniform(-max_perturbation, max_perturbation)
+            
+            # Apply perturbations
+            perturbed_route[i, 0] += lat_perturbation  # latitude
+            perturbed_route[i, 1] += lon_perturbation  # longitude
+            
+            # Ensure coordinates remain within valid ranges
+            perturbed_route[i, 0] = np.clip(perturbed_route[i, 0], -90, 90)    # latitude bounds
+            perturbed_route[i, 1] = np.clip(perturbed_route[i, 1], -180, 180)  # longitude bounds
+        
+        # Log perturbation for debugging
+        logger.debug(f"Applied perturbation factor {perturbation_factor} with max magnitude {max_perturbation:.3f} degrees")
+        
+        return perturbed_route
 
 
 class GcrSliderPopulation(Population):
@@ -345,10 +389,54 @@ class GcrSliderPopulation(Population):
                 rt = self.recalculate_speed_for_route(rt)
             X[i, 0] = rt
 
-        # fallback: fill all other individuals with the same population as the last one
+        # fallback: fill remaining individuals with perturbed copies to maintain diversity
         for j in range(i + 1, n_samples):
-            X[j, 0] = np.copy(X[j - 1, 0])
+            X[j, 0] = self._perturb_route(np.copy(X[j - 1, 0]), j - i)
         return X
+
+    def _perturb_route(self, route: np.ndarray, perturbation_factor: int) -> np.ndarray:
+        """Apply controlled perturbation to a route to maintain population diversity.
+        
+        Creates small random variations in intermediate waypoints while preserving
+        start and destination points. Perturbation magnitude increases with perturbation_factor
+        to ensure diversity across multiple copied routes.
+        
+        :param route: Original route to perturb as array of [lat, lon, speed] waypoints
+        :type route: np.ndarray
+        :param perturbation_factor: Factor to control perturbation magnitude (higher = more variation)
+        :type perturbation_factor: int
+        :return: Perturbed route with same structure as input
+        :rtype: np.ndarray
+        """
+        if len(route) <= 2:
+            # Route has only start and end points, cannot perturb
+            return route
+            
+        # Create perturbed copy
+        perturbed_route = np.copy(route)
+        
+        # Calculate perturbation magnitude (0.1 to 1.0 degrees based on factor)
+        # Cap at reasonable maximum to maintain route coherence
+        max_perturbation = min(0.1 + (perturbation_factor * 0.1), 1.0)
+        
+        # Perturb intermediate waypoints (exclude start [0] and end [-1])
+        for i in range(1, len(route) - 1):
+            # Apply random perturbation to latitude and longitude
+            lat_perturbation = np.random.uniform(-max_perturbation, max_perturbation)
+            lon_perturbation = np.random.uniform(-max_perturbation, max_perturbation)
+            
+            # Apply perturbations
+            perturbed_route[i, 0] += lat_perturbation  # latitude
+            perturbed_route[i, 1] += lon_perturbation  # longitude
+            
+            # Ensure coordinates remain within valid ranges
+            perturbed_route[i, 0] = np.clip(perturbed_route[i, 0], -90, 90)    # latitude bounds
+            perturbed_route[i, 1] = np.clip(perturbed_route[i, 1], -180, 180)  # longitude bounds
+        
+        # Log perturbation for debugging
+        logger.debug(f"Applied perturbation factor {perturbation_factor} with max magnitude {max_perturbation:.3f} degrees")
+        
+        return perturbed_route
 
     def create_route(self, lat: float = None, lon: float = None, speed: float = None):
         """
