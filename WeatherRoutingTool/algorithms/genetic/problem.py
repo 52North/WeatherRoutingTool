@@ -45,7 +45,8 @@ class RoutingProblem(ElementwiseProblem):
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
-        bs = self.boat_speed
+        bs = route[:, 2]
+        bs = bs[:-1] * u.meter/u.second
 
         if self.boat_speed_from_arrival_time:
             bs = utils.get_speed_from_arrival_time(
