@@ -1,7 +1,8 @@
-import copy
 import logging
 import math
 import os
+import random
+from operator import add, sub
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -548,6 +549,42 @@ class RandomMutationsOrchestrator(MutationBase):
             opt.print_mutation_statistics()
 
 
+class RandomSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="RandomSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        self.change_percent_max = 0.2
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        ops = (add, sub)
+        for i in indices:
+            op = random.choice(ops)
+            change_percent = random.uniform(0.0, self.change_percent_max)
+            new = op(rt[i][2], change_percent * rt[i][2])
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
+
+
+# FIXME: Gauss variation
+
+
 # factory
 # ----------
 class MutationFactory:
@@ -557,11 +594,11 @@ class MutationFactory:
             constraints_list: None
     ) -> Mutation:
 
-        if "no_mutation" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "no_mutation":
             logger.debug('Setting mutation type of genetic algorithm to "no_mutation".')
             return NoMutation()
 
-        if "random" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
                 opts=[
@@ -569,16 +606,20 @@ class MutationFactory:
                     RouteBlendMutation(config=config, constraints_list=constraints_list)
                 ], )
 
-        if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_walk":
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
             return RandomWalkMutation(config=config, constraints_list=constraints_list)
 
-        if "rndm_plateau" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_plateau":
             logger.debug('Setting mutation type of genetic algorithm to "random_plateau".')
             return RandomPlateauMutation(config=config, constraints_list=constraints_list)
 
-        if "route_blend" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "route_blend":
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
             return RouteBlendMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "rndm_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
+            return RandomSpeedMutation(config=config, constraints_list=constraints_list)
 
         raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

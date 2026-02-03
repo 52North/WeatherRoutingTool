@@ -1,16 +1,14 @@
-from pymoo.core.crossover import Crossover
-
-import numpy as np
-
-from datetime import datetime
 import logging
 import random
+from copy import deepcopy
+from datetime import datetime
+
+import numpy as np
+from pymoo.core.crossover import Crossover
 
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.algorithms.genetic import patcher
-
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.crossover")
@@ -125,8 +123,7 @@ class OffspringRejectionCrossover(CrossoverBase):
             p1: np.ndarray,
             p2: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Sub-class' implementation of the crossover function."""
-
+        """Subclass' implementation of the crossover function."""
         return p1, p2
 
     def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
@@ -240,28 +237,61 @@ class RandomizedCrossoversOrchestrator(CrossoverBase):
             opt.print_crossover_statistics()
 
 
+class SpeedCrossover(OffspringRejectionCrossover):
+    """
+    Crossover class for ship speed
+    """
+    def __init__(self, **kw):
+        # for now, we don't want to allow repairing routes for speed crossover
+        config = deepcopy(kw['config'])
+        config.GENETIC_REPAIR_TYPE = ["no_repair"]
+        kw['config'] = config
+        super().__init__(**kw)
+
+
+class NoCrossover(CrossoverBase):
+    """
+    Crossover class for ship speed
+    """
+    def __init__(self, **kw):
+        super().__init__()
+
+    def _do(self, problem, X, **kw):
+        return X
+
+    def print_crossover_statistics(self):
+        pass
+
+
 # factory
 # ----------
 class CrossoverFactory:
     @staticmethod
     def get_crossover(config: Config, constraints_list: ConstraintsList):
-        # inputs
         departure_time = config.DEPARTURE_TIME
 
-        return RandomizedCrossoversOrchestrator(
-            opts=[
-                TwoPointCrossover(
-                    config=config,
-                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
-                    departure_time=departure_time,
-                    constraints_list=constraints_list,
-                    prob=.5,
-                    crossover_type="TP crossover", ),
-                SinglePointCrossover(
-                    config=config,
-                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
-                    departure_time=departure_time,
-                    constraints_list=constraints_list,
-                    prob=.5,
-                    crossover_type="SP crossover", ),
-            ], )
+        # FIXME: add new config variable + exception for bad combinations
+
+        if config.GENETIC_CROSSOVER_TYPE == "no_crossover":
+            logger.debug('Setting crossover type of genetic algorithm to "no_crossover".')
+            return NoCrossover()
+
+        if config.GENETIC_CROSSOVER_TYPE == "random":
+            logger.debug('Setting crossover type of genetic algorithm to "random".')
+            return RandomizedCrossoversOrchestrator(
+                opts=[
+                    TwoPointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="TP crossover", ),
+                    SinglePointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="SP crossover", ),
+                ], )
