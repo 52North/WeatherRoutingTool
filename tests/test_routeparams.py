@@ -118,3 +118,46 @@ def test_get_waypoint_coords():
     assert np.all(dists_test == waypoint_dict['dist'].value)
     assert np.all(start_times_test == waypoint_dict['start_times'])
     assert np.all(travel_times_test == waypoint_dict['travel_times'].value)
+
+
+'''
+    Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly for boat speed array.
+'''
+
+
+def test_get_waypoint_coords_bsarray():
+    bs = np.array([6, 7, 8]) * u.meter / u.second
+    start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
+    route_lats = np.array([54.9, 54.7, 54.5, 54.2])
+    route_lons = np.array([13.2, 13.4, 13.7, 13.9])
+
+    start_lats_test = np.array([54.9, 54.7, 54.5])
+    start_lons_test = np.array([13.2, 13.4, 13.7])
+    dists_test = np.full(route_lats.shape[0] - 1, -99.)
+    start_times_test = np.full(route_lats.shape[0] - 1, start_time)
+    start_times_test[0] = start_time
+    travel_times_test = np.full(route_lats.shape[0] - 1, timedelta(seconds=0.))
+
+    for ipoint in range(3):
+        start_lat = route_lats[ipoint]
+        start_lon = route_lons[ipoint]
+        end_lat = route_lats[ipoint + 1]
+        end_lon = route_lons[ipoint + 1]
+
+        dists_test[ipoint] = geod.inverse(
+            [start_lat],
+            [start_lon],
+            [end_lat],
+            [end_lon]
+        )['s12'][0]
+        travel_times_test[ipoint] = (dists_test[ipoint] * u.meter / bs[ipoint]).value
+        if ipoint < 2:
+            start_times_test[ipoint + 1] = start_times_test[ipoint] + timedelta(seconds=travel_times_test[ipoint])
+
+    waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
+
+    assert np.all(start_lats_test == waypoint_dict['start_lats'])
+    assert np.all(start_lons_test == waypoint_dict['start_lons'])
+    assert np.all(dists_test == waypoint_dict['dist'].value)
+    assert np.all(start_times_test == waypoint_dict['start_times'])
+    assert np.all(travel_times_test == waypoint_dict['travel_times'].value)

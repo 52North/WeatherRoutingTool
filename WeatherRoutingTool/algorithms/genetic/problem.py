@@ -1,6 +1,5 @@
 import datetime
 import logging
-from hashlib import algorithms_available
 
 import astropy.units as u
 import numpy as np
@@ -79,17 +78,18 @@ class RoutingProblem(ElementwiseProblem):
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
-        debug = True
+	debug = True
+        
+	bs = route[:, 2]
+        bs = bs[:-1] * u.meter/u.second
 
-        bs = self.boat_speed
-
-        # if self.boat_speed_from_arrival_time:
-        #    bs = utils.get_speed_from_arrival_time(
-        #        lons=route[:, 1],
-        #        lats=route[:, 0],
-        #        departure_time=self.departure_time,
-        #        arrival_time=self.arrival_time,
-        #    )
+        if self.boat_speed_from_arrival_time:
+            bs = utils.get_speed_from_arrival_time(
+                lons=route[:, 1],
+                lats=route[:, 0],
+                departure_time=self.departure_time,
+                arrival_time=self.arrival_time,
+            )
 
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],

@@ -270,12 +270,6 @@ class ConstraintsList:
         else:
             return False
 
-    def have_negative(self):
-        if self.neg_size > 0:
-            return True
-        else:
-            return False
-
     def init_positive_lists(self, start, finish):
         lat = []
         lon = []

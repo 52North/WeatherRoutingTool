@@ -12,13 +12,14 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 
 have_maripower = False
-# try:
-#    import mariPower
-#    from tests.test_maripower_tanker import TestMariPowerTanker
 
-#    have_maripower = True
-# except ModuleNotFoundError:
-#    pass  # maripower installation is optional
+try:
+    import mariPower
+    from tests.test_maripower_tanker import TestMariPowerTanker
+
+    have_maripower = True
+except ModuleNotFoundError:
+    pass  # maripower installation is optional
 
 
 class TestDPM:
@@ -225,8 +226,7 @@ class TestDPM:
         - relative difference of wind direction and boat course is changing in steps of 10 degrees
         - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
     '''
-    @pytest.mark.skip(reason="maripower needs adjustments for Python 3.11")
-    # @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+    @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
     @pytest.mark.manual
     def test_compare_wind_resistance_to_maripower(self):
         lats = np.full(10, 54.9)  # 37
@@ -235,20 +235,18 @@ class TestDPM:
         courses_rad = utils.degree_to_pmpi(courses)
 
         time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
-        bs = 7.7 * u.meter / u.second
+        bs = np.full(10, 7.7) * u.meter / u.second
 
         pol_maripower = basic_test_func.create_dummy_Tanker_object()
         pol_maripower.set_ship_property('WaveForcesFactor', 0)
 
         pol_maripower.use_depth_data = False
-        pol_maripower.set_boat_speed(bs)
-        ship_params_maripower = pol_maripower.get_ship_parameters(courses, lats, lons, time, None, True)
+        ship_params_maripower = pol_maripower.get_ship_parameters(courses, lats, lons, time, bs, True)
         rwind_maripower = ship_params_maripower.get_rwind()
         P_maripower = ship_params_maripower.get_power()
 
         pol_simple = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
-        pol_simple.set_boat_speed(bs)
-        ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time)
+        ship_params_simple = pol_simple.get_ship_parameters(courses, lats, lons, time, bs)
         r_wind_simple = ship_params_simple.get_rwind()
         P_simple = ship_params_simple.get_power()
 

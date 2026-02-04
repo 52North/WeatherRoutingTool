@@ -75,7 +75,12 @@ class GreatCircleRoutePatcher(PatcherBase):
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None, npoints=None, ) -> np.ndarray:
+    def patch(self,
+              src: tuple[float, float, float],
+              dst: tuple[float, float, float],
+              departure_time: datetime = None,
+              npoints=None,
+              ) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
@@ -259,7 +264,11 @@ class IsofuelPatcher(PatcherBase):
 
         return wt, boat, water_depth, constraints_list
 
-    def patch(self, src, dst, departure_time: datetime = None):
+    def patch(self,
+              src: tuple[float, float, float],
+              dst: tuple[float, float, float],
+              departure_time: datetime = None
+              ):
         """
         Produce a set of waypoints between src and dst using the IsoFuel algorithm.
 

@@ -528,7 +528,7 @@ class RoutePostprocessing:
         start_times = route_dict['start_times']
         start_times_datetime64 = np.array(start_times, dtype='datetime64[ns]')
         ship_params = self.boat.get_ship_parameters(route_dict['courses'], route_dict['start_lats'],
-                                                    route_dict['start_lons'], start_times_datetime64)
+                                                    route_dict['start_lons'], start_times_datetime64, boat_speed)
         npoints = len(self.lats_per_step) - 1
 
         start = (self.lats_per_step[0], self.lons_per_step[0])

@@ -383,9 +383,9 @@ class RouteParams:
                 bin_center_mean = max(hist_values["bin_centres"]) + 2 * bin_width_mean
 
             # append mean bin
-            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
-            hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
-            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
+            # hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
+            # hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
+            # hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
 
             # plt.ylabel(power["label"] + ' (kW)')
             plt.ylabel(power["label"])
@@ -397,11 +397,11 @@ class RouteParams:
             # ax.set_ylim(0, 6000)
 
             # customise labels
-            labels = ax.get_xticks().tolist()
-            for i in range(0, len(labels)):
-                labels[i] = int(labels[i])
-            labels[-2] = 'weighted mean'
-            ax.set_xticklabels(labels)
+            # labels = ax.get_xticks().tolist()
+            # for i in range(0, len(labels)):
+            #    labels[i] = int(labels[i])
+            # labels[-2] = 'weighted mean'
+            # ax.set_xticklabels(labels)
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
         else:

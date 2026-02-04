@@ -721,7 +721,7 @@ class IsoBased(RoutingAlg):
             lats=self.routing_step.get_start_point('lat'),
             lons=self.routing_step.get_start_point('lon'),
             time=self.routing_step.get_time(),
-            speed=bs,
+            speed=bs_array,
             unique_coords=True
         )
         return bs_array, ship_params
