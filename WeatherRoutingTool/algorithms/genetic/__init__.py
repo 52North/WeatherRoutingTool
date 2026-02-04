@@ -61,7 +61,7 @@ class Genetic(RoutingAlg):
         self.pop_size = config.GENETIC_POPULATION_SIZE
 
     def get_objective_weights(self):
-        self.objective_weights={
+        self.objective_weights = {
             "arrival_time": -99.,
             "fuel_consumption": -99.
         }
@@ -74,8 +74,6 @@ class Genetic(RoutingAlg):
             np.array([self.objectives["fuel_consumption"]]),
             self.n_objs
         )
-
-
 
     def execute_routing(
             self,
@@ -178,7 +176,7 @@ class Genetic(RoutingAlg):
 
         return res
 
-    def rank_solutions(self, obj, dec = False):
+    def rank_solutions(self, obj, dec=False):
         rank_ind = np.argsort(obj)
         if dec:
             rank_ind = rank_ind[::-1]
@@ -192,14 +190,13 @@ class Genetic(RoutingAlg):
         obj_weight_time = self.objective_weights["arrival_time"]
         obj_weight_fuel = self.objective_weights["fuel_consumption"]
 
-        denominator = np.abs(1./obj_weight_time * sol_weight_time - 1./obj_weight_fuel * sol_weight_fuel) + 0.2
-        summand_time = sol_weight_time/denominator * obj_weight_time*obj_weight_time
-        summand_fuel = sol_weight_fuel/denominator * obj_weight_fuel*obj_weight_fuel
+        denominator = np.abs(1. / obj_weight_time * sol_weight_time - 1. / obj_weight_fuel * sol_weight_fuel) + 0.2
+        summand_time = sol_weight_time / denominator * obj_weight_time * obj_weight_time
+        summand_fuel = sol_weight_fuel / denominator * obj_weight_fuel * obj_weight_fuel
 
-        composite_weight = sol_weight_time*sol_weight_fuel + summand_time + summand_fuel
+        composite_weight = sol_weight_time * sol_weight_fuel + summand_time + summand_fuel
 
         return composite_weight
-
 
     def get_best_compromise(self, solutions):
         debug = True
@@ -216,8 +213,10 @@ class Genetic(RoutingAlg):
         rmethod_table['fuel_obj'] = solutions[:, 1]
         rmethod_table['time_rank'] = self.rank_solutions(solutions[:, 0])
         rmethod_table['fuel_rank'] = self.rank_solutions(solutions[:, 1])
-        rmethod_table['time_weight'] = utils.get_weigths_from_rankarr(rmethod_table['time_rank'].to_numpy(), len(solutions))
-        rmethod_table['fuel_weight'] = utils.get_weigths_from_rankarr(rmethod_table['fuel_rank'].to_numpy(), len(solutions))
+        rmethod_table['time_weight'] = utils.get_weigths_from_rankarr(rmethod_table['time_rank'].to_numpy(),
+                                                                      len(solutions))
+        rmethod_table['fuel_weight'] = utils.get_weigths_from_rankarr(rmethod_table['fuel_rank'].to_numpy(),
+                                                                      len(solutions))
         rmethod_table['composite_weight'] = self.get_composite_weight(rmethod_table)
         rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
         best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
@@ -229,7 +228,6 @@ class Genetic(RoutingAlg):
             print(rmethod_table)
         return best_ind
 
-
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
@@ -239,7 +237,7 @@ class Genetic(RoutingAlg):
 
         fuel_dict = problem.get_power(best_route)
         fuel = fuel_dict["fuel_sum"]
-        ship_params=fuel_dict["shipparams"]
+        ship_params = fuel_dict["shipparams"]
         logger.info(f"Best fuel: {fuel}")
 
         if self.figure_path is not None:

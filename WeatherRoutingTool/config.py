@@ -467,8 +467,8 @@ class Config(BaseModel):
                 " Have you considered that this program works with m/s?")
         return v
 
-    #@model_validator(mode='after')
-    #def check_speed_determination(self) -> Self:
+    # @model_validator(mode='after')
+    # def check_speed_determination(self) -> Self:
     #    print('arrival time: ', self.ARRIVAL_TIME)
     #    print('speed: ', self.BOAT_SPEED)
     #    if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:

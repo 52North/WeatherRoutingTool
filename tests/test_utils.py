@@ -188,19 +188,21 @@ def test_find_coord_index_out_of_range(start_coord, end_coord, not_in_array):
     error_message = 'Coordinate not in array: '
     assert error_message in str(excinfo.value)
 
+
 @pytest.mark.parametrize("rank,out", [
-    (1,1.),
+    (1, 1.),
     (2, 0.666666),
     (3, 0.545454),
-    (4,0.48),
+    (4, 0.48),
 ])
 def test_get_rank_sum(rank, out):
     res = gen_utils.get_rank_sum(rank)
     assert np.isclose(res, out)
 
+
 @pytest.mark.parametrize("rank,n_parts,out", [
-    (4,4,0.48/2.69212),
-    (50, 50, 0.2222614/15.287014),
+    (4, 4, 0.48 / 2.69212),
+    (50, 50, 0.2222614 / 15.287014),
     (1.5, 4, 0.309545),
 ])
 def test_get_weigth_from_rank(rank, out, n_parts):
