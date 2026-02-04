@@ -177,7 +177,7 @@ class Genetic(RoutingAlg):
         lats = best_route[:, 0]
         lons = best_route[:, 1]
         npoints = lats.size - 1
-        speed, *_ = ship_params.get_speed()
+        speed = ship_params.get_speed()
 
         waypoint_coords = RouteParams.get_per_waypoint_coords(
             route_lons=lons,
@@ -189,7 +189,7 @@ class Genetic(RoutingAlg):
         courses = waypoint_coords['courses']
         start_times = waypoint_coords['start_times']
         travel_times = waypoint_coords['travel_times']
-        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / speed.value)
+        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / speed[-1].value)
 
         dists = np.append(dists, -99 * u.meter)
         courses = np.append(courses, -99 * u.degree)
