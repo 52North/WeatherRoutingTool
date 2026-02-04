@@ -323,12 +323,8 @@ class MariPowerTanker(Boat):
     #   lats = {lat1, lat1, lat1}
     #   lons = {lon1, lon1, lon1}
 
-    def write_netCDF_courses(self, courses, lats, lons, time, speed=None, unique_coords=False):
+    def write_netCDF_courses(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
-
-        if speed is None:
-            speed = np.repeat(self.speed, courses.shape, axis=0)
-
         courses = units.degree_to_pmpi(courses)
 
         # ToDo: use logger.debug and args.debug
@@ -419,7 +415,7 @@ class MariPowerTanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         status = ds['Status'].to_numpy().flatten()
         message = ds['Message'].to_numpy().flatten()
-        speed = np.repeat(self.speed, power.shape)
+        speed = ds['speed'].to_numpy().flatten() * u.meter/u.second
 
         ship_params = ShipParams(
             fuel_rate=fuel,
@@ -556,7 +552,8 @@ class MariPowerTanker(Boat):
 
     ##
     # main function for communication with mariPower package (see documentation above)
-    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
+        assert speed.shape == time.shape
         self.write_netCDF_courses(courses, lats, lons, time, speed, unique_coords)
 
         # ds = self.get_fuel_netCDF_loop()
