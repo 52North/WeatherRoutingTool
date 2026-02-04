@@ -61,19 +61,13 @@ class Genetic(RoutingAlg):
         self.pop_size = config.GENETIC_POPULATION_SIZE
 
     def get_objective_weights(self):
-        self.objective_weights = {
-            "arrival_time": -99.,
-            "fuel_consumption": -99.
-        }
+        self.objective_weights = {}
 
-        self.objective_weights["arrival_time"] = utils.get_weigths_from_rankarr(
-            np.array([self.objectives["arrival_time"]]),
-            self.n_objs
-        )
-        self.objective_weights["fuel_consumption"] = utils.get_weigths_from_rankarr(
-            np.array([self.objectives["fuel_consumption"]]),
-            self.n_objs
-        )
+        for obj_str in self.objectives:
+            self.objective_weights[obj_str] = utils.get_weigths_from_rankarr(
+                np.array([self.objectives[obj_str]]),
+                self.n_objs
+            )
 
     def execute_routing(
             self,
@@ -184,50 +178,66 @@ class Genetic(RoutingAlg):
         rank = rank + 1
         return rank
 
-    def get_composite_weight(self, sol_weight_time, obj_weight_time, sol_weight_fuel, obj_weight_fuel):
+    def get_composite_weight(self, sol_weight_list, obj_weight_list):
+        sign = [1, -1]
+        denominator = 0
+        summands = 0
+        product = 1
 
+        if len(sol_weight_list) > 2:
+            raise NotImplementedError('Calculation of the composite weight of the R-method is not implemented for'
+                                      'more than two objectives.')
 
-        denominator = np.abs(1. / obj_weight_time * sol_weight_time - 1. / obj_weight_fuel * sol_weight_fuel) + 0.2
-        summand_time = sol_weight_time / denominator * obj_weight_time * obj_weight_time
-        summand_fuel = sol_weight_fuel / denominator * obj_weight_fuel * obj_weight_fuel
+        for i in range(len(sol_weight_list)):
+            denominator = denominator + sign[i] * 1. / obj_weight_list[i] * sol_weight_list[i]
+            product = product * sol_weight_list[i]
+        denominator = np.abs(denominator) + 0.2
 
-        composite_weight = sol_weight_time * sol_weight_fuel + summand_time + summand_fuel
+        for i in range(len(sol_weight_list)):
+            summands = summands + sol_weight_list[i] / denominator * obj_weight_list[i] * obj_weight_list[i]
 
+        composite_weight = product + summands
         return composite_weight
 
     def get_best_compromise(self, solutions):
         debug = True
+        sol_weight_list = []
+        obj_weight_list = []
+
+        if self.n_objs == 1:
+            return solutions.argmin()
 
         if debug:
             print('solutions: ', solutions)
             print('solutions shape: ', solutions.shape)
 
         rmethod_table = pd.DataFrame()
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+
+        i_obj = 0
+        for obj_str in self.objectives:
+            rmethod_table[obj_str + '_obj'] = solutions[:, i_obj]
+            rmethod_table[obj_str + '_rank'] = self.rank_solutions(solutions[:, i_obj])
+            rmethod_table[obj_str + '_weight'] = utils.get_weigths_from_rankarr(
+                rmethod_table[obj_str + '_rank'].to_numpy(),
+                len(solutions))
+            i_obj += 1
+            sol_weight_list.append(rmethod_table[obj_str + '_weight'].to_numpy())
+            obj_weight_list.append(self.objective_weights[obj_str])
 
         if debug:
-            print('rmethod table: ', rmethod_table)
-        rmethod_table['time_obj'] = solutions[:, 0]
-        rmethod_table['fuel_obj'] = solutions[:, 1]
-        rmethod_table['time_rank'] = self.rank_solutions(solutions[:, 0])
-        rmethod_table['fuel_rank'] = self.rank_solutions(solutions[:, 1])
-        rmethod_table['time_weight'] = utils.get_weigths_from_rankarr(rmethod_table['time_rank'].to_numpy(),
-                                                                      len(solutions))
-        rmethod_table['fuel_weight'] = utils.get_weigths_from_rankarr(rmethod_table['fuel_rank'].to_numpy(),
-                                                                      len(solutions))
+            print('rmethod table:', rmethod_table)
+
         rmethod_table['composite_weight'] = self.get_composite_weight(
-            sol_weight_time=rmethod_table['time_weight'].to_numpy(),
-            obj_weight_time=self.objective_weights["arrival_time"],
-            sol_weight_fuel=rmethod_table['fuel_weight'].to_numpy(),
-            obj_weight_fuel=self.objective_weights["fuel_consumption"],
+            sol_weight_list=sol_weight_list,
+            obj_weight_list=obj_weight_list,
         )
         rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
         best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
 
-        with pd.option_context('display.max_rows', None,
-                               'display.max_columns', None,
-                               'display.precision', 3,
-                               ):
-            print(rmethod_table)
+        if debug:
+            print('rmethod table:', rmethod_table)
         return best_ind
 
     def terminate(self, res: Result, problem: RoutingProblem):
@@ -294,7 +304,12 @@ class Genetic(RoutingAlg):
     def plot_objective_space(self, res, best_index):
         F = res.F
         fig, ax = plt.subplots(figsize=(7, 5))
-        ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+
+        if self.n_objs == 2:
+            ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        else:
+            return
+
         ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
         ax.set_xlabel('f1', labelpad=10)
         ax.set_ylabel('f2', labelpad=10)

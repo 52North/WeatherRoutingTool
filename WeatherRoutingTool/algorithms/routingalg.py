@@ -44,9 +44,6 @@ class RoutingAlg:
         self.departure_time = config.DEPARTURE_TIME
         self.arrival_time = config.ARRIVAL_TIME
 
-        print('departure_time: ', type(self.departure_time))
-        print('arrival_time: ', type(self.arrival_time))
-
         self.gcr_course, self.gcr_dist = self.calculate_gcr(self.start, self.finish)
         self.gcr_course = self.gcr_course * u.degree
 

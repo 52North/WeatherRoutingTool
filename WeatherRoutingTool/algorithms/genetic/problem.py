@@ -78,7 +78,7 @@ class RoutingProblem(ElementwiseProblem):
         out['G'] = np.column_stack([constraints])
 
     def get_power(self, route):
-        debug = True
+        debug = False
 
         bs = route[:, 2]
         bs = bs[:-1] * u.meter / u.second

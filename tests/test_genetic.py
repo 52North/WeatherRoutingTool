@@ -391,21 +391,20 @@ def test_single_point_crossover(plt):
 
     plt.saveas = "test_single_point_crossoverr.png"
 
-@pytest.mark.parametrize("obj_fuel,obj_time", [(1,1), (1,2), (2,1)])
+
+@pytest.mark.parametrize("obj_fuel,obj_time", [(1, 1), (1, 2), (2, 1)])
 def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
 
-    fuel_weight=np.random.rand(1,10000) * 0.1
-    time_weight=np.random.rand(1,10000) * 0.1
+    fuel_weight = np.random.rand(1, 10000) * 0.1
+    time_weight = np.random.rand(1, 10000) * 0.1
 
-    gen_alg=Genetic(config)
-    composite_weight=gen_alg.get_composite_weight(
-        sol_weight_fuel=fuel_weight,
-        sol_weight_time=time_weight,
-        obj_weight_fuel=obj_fuel,
-        obj_weight_time=obj_time,
+    gen_alg = Genetic(config)
+    composite_weight = gen_alg.get_composite_weight(
+        sol_weight_list=[time_weight, fuel_weight],
+        obj_weight_list=[obj_time, obj_fuel]
     )
 
     fig = plt.figure(figsize=(10, 7))
@@ -413,7 +412,8 @@ def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
 
     # Plot the scatter points
     ax.set_xlim(fuel_weight.max(), fuel_weight.min())
-    ax.scatter(fuel_weight, time_weight, composite_weight, c=composite_weight, cmap='viridis', marker='o', s=40, alpha=0.6, edgecolors='w')
+    ax.scatter(fuel_weight, time_weight, composite_weight, c=composite_weight, cmap='viridis', marker='o', s=40,
+               alpha=0.6, edgecolors='w')
 
     # Set labels and title
     ax.set_title('3D Scatter Plot of Point Selections')
@@ -423,4 +423,4 @@ def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
 
     plt.saveas = f"test_composite_weight_fuel{obj_fuel}_time{obj_time}.png"
 
-
+    assert 1 == 2
