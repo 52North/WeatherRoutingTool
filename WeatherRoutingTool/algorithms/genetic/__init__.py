@@ -184,11 +184,8 @@ class Genetic(RoutingAlg):
         rank = rank + 1
         return rank
 
-    def get_composite_weight(self, pd_table):
-        sol_weight_time = pd_table['time_weight'].to_numpy()
-        sol_weight_fuel = pd_table['fuel_weight'].to_numpy()
-        obj_weight_time = self.objective_weights["arrival_time"]
-        obj_weight_fuel = self.objective_weights["fuel_consumption"]
+    def get_composite_weight(self, sol_weight_time, obj_weight_time, sol_weight_fuel, obj_weight_fuel):
+
 
         denominator = np.abs(1. / obj_weight_time * sol_weight_time - 1. / obj_weight_fuel * sol_weight_fuel) + 0.2
         summand_time = sol_weight_time / denominator * obj_weight_time * obj_weight_time
@@ -217,7 +214,12 @@ class Genetic(RoutingAlg):
                                                                       len(solutions))
         rmethod_table['fuel_weight'] = utils.get_weigths_from_rankarr(rmethod_table['fuel_rank'].to_numpy(),
                                                                       len(solutions))
-        rmethod_table['composite_weight'] = self.get_composite_weight(rmethod_table)
+        rmethod_table['composite_weight'] = self.get_composite_weight(
+            sol_weight_time=rmethod_table['time_weight'].to_numpy(),
+            obj_weight_time=self.objective_weights["arrival_time"],
+            sol_weight_fuel=rmethod_table['fuel_weight'].to_numpy(),
+            obj_weight_fuel=self.objective_weights["fuel_consumption"],
+        )
         rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
         best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
 
