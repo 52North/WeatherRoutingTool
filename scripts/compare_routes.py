@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # plotting routes in depth profile
     if hist_dict['route']:
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        depth = xr.open_dataset(depth_path)
+        # depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
