@@ -7,26 +7,26 @@ logger = logging.getLogger('WRT.ship')
 
 
 class ShipParams():
-    fuel_rate: np.ndarray  # (kg/s)
-    power: np.ndarray  # (W)
-    rpm: np.ndarray  # (rpm)
-    speed: np.ndarray  # (m/s)
-    r_calm: np.ndarray  # (N)
-    r_wind: np.ndarray  # (N)
-    r_waves: np.ndarray  # (N)
-    r_shallow: np.ndarray  # (N)
-    r_roughness: np.ndarray  # (N)
-    wave_height: np.ndarray  # (m)
-    wave_direction: np.ndarray  # (radian)
-    wave_period: np.ndarray  # (s)
-    u_currents: np.ndarray  # (m/s)
-    v_currents: np.ndarray  # (m/s)
-    u_wind_speed: np.ndarray  # (m/s)
-    v_wind_speed: np.ndarray  # (m/s)
-    pressure: np.ndarray  # Pa
-    air_temperature: np.ndarray  # °C
-    salinity: np.ndarray  # dimensionless (kg/kg)
-    water_temperature: np.ndarray  # °C
+    fuel_rate: u.Quantity  # (kg/s)
+    power: u.Quantity  # (W)
+    rpm: u.Quantity  # (rpm)
+    speed: u.Quantity  # (m/s)
+    r_calm: u.Quantity  # (N)
+    r_wind: u.Quantity  # (N)
+    r_waves: u.Quantity  # (N)
+    r_shallow: u.Quantity  # (N)
+    r_roughness: u.Quantity  # (N)
+    wave_height: u.Quantity  # (m)
+    wave_direction: u.Quantity  # (radian)
+    wave_period: u.Quantity  # (s)
+    u_currents: u.Quantity  # (m/s)
+    v_currents: u.Quantity  # (m/s)
+    u_wind_speed: u.Quantity  # (m/s)
+    v_wind_speed: u.Quantity  # (m/s)
+    pressure: u.Quantity  # Pa
+    air_temperature: u.Quantity  # °C
+    salinity: u.Quantity  # dimensionless (kg/kg)
+    water_temperature: u.Quantity  # °C
     status: np.array
     message: np.ndarray
 
