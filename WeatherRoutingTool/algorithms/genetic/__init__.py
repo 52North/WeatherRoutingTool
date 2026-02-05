@@ -175,7 +175,7 @@ class Genetic(RoutingAlg):
         lats = best_route[:, 0]
         lons = best_route[:, 1]
         npoints = lats.size - 1
-        speed = best_route[:-1, 2] * u.meter / u.second
+        speed = ship_params.get_speed()
 
         waypoint_coords = RouteParams.get_per_waypoint_coords(
             route_lons=lons,

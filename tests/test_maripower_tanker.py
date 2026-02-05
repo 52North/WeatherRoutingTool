@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from astropy import units as u
+from pathlib import Path
 
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.unit_conversion as utils
@@ -21,8 +22,7 @@ except ModuleNotFoundError:
     pass  # maripower installation is optional
 
 
-@pytest.mark.skip(reason="maripower needs adjustments for Python 3.11.")
-# @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+@pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
 @pytest.mark.maripower
 class TestMariPowerTanker:
     def compare_times(self, time64, time):
@@ -59,6 +59,7 @@ class TestMariPowerTanker:
         salinity = np.array([[6.4, 6.5], [6.41, 6.42], [6.51, 6.52], [6.61, 6.62]])
         water_temperature = np.array([[6.7, 6.8], [6.71, 6.72], [6.81, 6.82], [6.91, 6.92]])
         status = np.array([[1, 2], [2, 3], [3, 2], [1, 3]])
+        speed = np.array([[6.02, 6.03], [6.04, 6.05], [6.06, 6.07], [6.08, 6.09]])
         message = np.array([['OK', 'OK'], ['OK', 'ERROR'],
                             ['ERROR', 'OK'], ['ERROR', 'ERROR']])
 
@@ -82,7 +83,8 @@ class TestMariPowerTanker:
                      'so': (["lat", "it"], salinity),
                      'thetao': (["lat", "it"], water_temperature),
                      'Status': (["lat", "it"], status),
-                     'Message': (["lat", "it"], message)}
+                     'Message': (["lat", "it"], message),
+                     'speed': (["lat", "it"], speed)}
 
         coords = dict(lat=(["lat"], lat), it=(["it"], it), )
         attrs = dict(description="Necessary descriptions added here.")
@@ -113,6 +115,7 @@ class TestMariPowerTanker:
         water_temperature_test = ship_params.get_water_temperature()
         status_test = ship_params.get_status()
         message_test = ship_params.get_message()
+        speed_test = ship_params.get_speed()
 
         power_ref = np.array([1, 4, 3.4, 5.3, 2.1, 6, 1., 5.1]) * u.Watt
         rpm_ref = np.array([10, 14, 11, 15, 20, 60, 15, 5]) * 1 / u.minute
@@ -122,6 +125,7 @@ class TestMariPowerTanker:
         rshallow_ref = np.array([4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9]) * u.newton
         rwaves_ref = np.array([5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9]) * u.newton
         rroughness_ref = np.array([6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9]) * u.newton
+        speed_ref = np.array([6.02, 6.03, 6.04, 6.05, 6.06, 6.07, 6.08, 6.09]) * u.meter / u.second
         wave_height_ref = -99
         wave_direction_ref = -99
         wave_period_ref = -99
@@ -160,6 +164,7 @@ class TestMariPowerTanker:
         assert np.array_equal(water_temperature_test, water_temperature_ref)
         assert np.array_equal(status_test, status_ref)
         assert np.array_equal(message_test, message_ref)
+        assert np.array_equal(speed_test, speed_ref)
         ds.close()
 
     '''
@@ -175,14 +180,20 @@ class TestMariPowerTanker:
         courses_test = np.array([0, 180, 0, 180, 180, 0]) * u.degree
         lat_test = np.array([54.3, 54.3, 54.6, 54.6, 54.9, 54.9])
         lon_test = np.array([13.3, 13.3, 13.6, 13.6, 13.9, 13.9])
+        boat_speed = np.full(6, 8) * u.meter / u.second
 
         # dummy course netCDF
         pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
-        pol.set_boat_speed(np.array([8]) * u.meter / u.second)
 
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
-        pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
+        pol.write_netCDF_courses(
+            courses=courses_test,
+            lats=lat_test,
+            lons=lon_test,
+            time=time_test,
+            speed=boat_speed
+        )
         ds = pol.get_fuel_netCDF()
 
         power = ds['Power_brake'].to_numpy() * u.Watt
@@ -206,7 +217,7 @@ class TestMariPowerTanker:
         lat = np.array([1., 1., 1, 2, 2, 2])
         lon = np.array([4., 4., 4, 3, 3, 3])
         courses = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]) * u.degree
-        # speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
+        speed = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06]) * u.meter / u.second
 
         pol = basic_test_func.create_dummy_Tanker_object()
         time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19), datetime(2022, 12, 19),
@@ -214,13 +225,14 @@ class TestMariPowerTanker:
                          datetime(2022, 12, 19) + timedelta(days=360),
                          datetime(2022, 12, 19) + timedelta(days=360)])
 
-        pol.write_netCDF_courses(courses, lat, lon, time, None, True)
+        pol.write_netCDF_courses(courses, lat, lon, time, speed, True)
         ds = xr.open_dataset(pol.courses_path)
 
         lat_read = ds['lat'].to_numpy()
         lon_read = ds['lon'].to_numpy()
         courses_read = ds['courses'].to_numpy()
         time_read = ds['time'].to_numpy()
+        speed_read = ds['speed'].to_numpy()
 
         lat_ind = np.unique(lat, return_index=True)[1]
         lon_ind = np.unique(lon, return_index=True)[1]
@@ -239,6 +251,7 @@ class TestMariPowerTanker:
             for iit in range(0, courses_read.shape[1]):
                 iprev = ilat * courses_read.shape[1] + iit
                 assert courses[iprev] == np.rad2deg(courses_read[ilat][iit]) * u.degree
+                assert speed[iprev] == speed_read[ilat][iit] * u.meter / u.second
 
         ds.close()
 
@@ -251,18 +264,20 @@ class TestMariPowerTanker:
         lat_short = np.array([1, 2, 1])
         lon_short = np.array([4, 4, 1.5])
         courses = np.array([0.1, 0.2, 0.3]) * u.degree
+        speed = np.array([0.01, 0.02, 0.03]) * u.meter / u.second
 
         pol = basic_test_func.create_dummy_Tanker_object()
         time = np.array([datetime(2022, 12, 19), datetime(2022, 12, 19) + timedelta(days=180),
                          datetime(2022, 12, 19) + timedelta(days=360)])
 
-        pol.write_netCDF_courses(courses, lat_short, lon_short, time)
+        pol.write_netCDF_courses(courses, lat_short, lon_short, time, speed)
         ds = xr.open_dataset(pol.courses_path)
 
         lat_read = ds['lat'].to_numpy()
         lon_read = ds['lon'].to_numpy()
         courses_read = ds['courses'].to_numpy()
         time_read = ds['time'].to_numpy()
+        speed_read = ds['speed'].to_numpy()
 
         assert np.array_equal(lat_short, lat_read)
         assert np.array_equal(lon_short, lon_read)
@@ -273,6 +288,7 @@ class TestMariPowerTanker:
             for iit in range(0, courses_read.shape[1]):
                 iprev = ilat * courses_read.shape[1] + iit
                 assert np.radians(courses[iprev]) == courses_read[ilat][iit] * u.radian
+                assert speed[iprev] == speed_read[ilat][iit] * u.meter / u.second
 
         ds.close()
 
@@ -283,19 +299,18 @@ class TestMariPowerTanker:
     '''
 
     def test_get_fuel_for_fixed_waypoints(self):
-        bs = 6 * u.meter / u.second
+        bs = np.full(3, 6) * u.meter / u.second
         start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
         route_lats = np.array([54.9, 54.7, 54.5, 54.2])
         route_lons = np.array([13.2, 13.4, 13.7, 13.9])
 
         pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
-        pol.set_boat_speed(bs)
 
         waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
 
         ship_params = pol.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                              waypoint_dict['start_lons'], waypoint_dict['start_times'], None)
+                                              waypoint_dict['start_lons'], waypoint_dict['start_times'], bs)
         ship_params.print()
 
         ds = xr.open_dataset(pol.courses_path)
@@ -312,9 +327,12 @@ class TestMariPowerTanker:
         ref_lon_start = np.array([13.2, 13.4, 13.7])
         ref_courses = np.array([149.958, 138.89, 158.685])
         ref_dist = np.array([25712., 29522., 35836.]) * u.meter
-        ref_time = np.array([start_time, start_time + timedelta(seconds=ref_dist[0].value / bs.value),
-                             start_time + timedelta(seconds=ref_dist[0].value / bs.value) + timedelta(
-                                 seconds=ref_dist[1].value / bs.value)])
+        ref_time = np.full(3, datetime(1970, 1, 1, 0, 0))
+
+        ref_time[0] = start_time
+        ref_time[1] = start_time + timedelta(seconds=ref_dist[0].value / bs[0].value)
+        ref_time[2] = (start_time + timedelta(seconds=ref_dist[0].value / bs[0].value)
+                       + timedelta(seconds=ref_dist[1].value / bs[1].value))
 
         assert test_lon_start.any() == ref_lon_start.any()
         assert test_lat_start.any() == ref_lat_start.any()
@@ -334,13 +352,12 @@ class TestMariPowerTanker:
         courses_rad = utils.degree_to_pmpi(courses)
 
         time = np.full(10, datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ'))
-        bs = 6
+        bs = np.full(10, 6) * u.meter / u.second
 
         pol = basic_test_func.create_dummy_Tanker_object()
         pol.use_depth_data = False
-        pol.set_boat_speed(bs)
 
-        ship_params = pol.get_ship_parameters(courses, lats, lons, time, None, True)
+        ship_params = pol.get_ship_parameters(courses, lats, lons, time, bs, True)
         power = ship_params.get_power()
         rwind = ship_params.get_rwind()
 
@@ -361,11 +378,10 @@ class TestMariPowerTanker:
     def test_maripower_via_dict_config(self):
         dirname = os.path.dirname(__file__)
 
-        weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
-        courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-        depth_path = os.path.join(dirname, 'data/reduced_testdata_depth.nc')
+        weather_path = Path(os.path.join(dirname, 'data/reduced_testdata_weather.nc'))
+        courses_path = Path(os.path.join(dirname, 'data/CoursesRoute.nc'))
+        depth_path = Path(os.path.join(dirname, 'data/reduced_testdata_depth.nc'))
 
-        speed = 6 * u.meter / u.second
         drought_aft = 10 * u.meter
         drought_fore = 10 * u.meter
         roughness_distr = 5
@@ -390,7 +406,6 @@ class TestMariPowerTanker:
 
         pol = MariPowerTanker(init_mode="from_dict", config_dict=config)
 
-        assert pol.speed == speed
         assert pol.depth_path == depth_path
         assert pol.weather_path == weather_path
         assert pol.courses_path == courses_path

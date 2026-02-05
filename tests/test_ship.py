@@ -50,9 +50,9 @@ class TestShip:
         idx = 2
 
         (fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test,
-            rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
-            u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
-            air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
+         rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
+         u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
+         air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
             = sp.get_element(idx)
 
         assert fuel[idx] == fuel_test
@@ -162,7 +162,7 @@ class TestShip:
         lat_test = np.array([54.3, 54.3, 54.6, 55.6, 55.9, 55.9])
         lon_test = np.array([13.3, 13.3, 13.6, 16., 16.9, 13.9])
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
-        speed = 6 * u.meter/u.second
+        speed = np.full(6, 6) * u.meter / u.second
 
         # dummy course netCDF
         pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
