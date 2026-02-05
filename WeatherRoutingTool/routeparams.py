@@ -561,7 +561,12 @@ class RouteParams:
         plt.xticks()
 
     @staticmethod
-    def get_per_waypoint_coords(route_lons, route_lats, start_time, bs):
+    def get_per_waypoint_coords(
+            route_lons: np.ndarray,
+            route_lats: np.ndarray,
+            start_time: datetime,
+            bs: u.Quantity
+    ):
         debug = False
         npoints = route_lons.shape[0]
         start_lats = np.zeros(npoints - 1)
