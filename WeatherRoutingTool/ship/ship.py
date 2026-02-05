@@ -256,13 +256,13 @@ class NNBoat(Boat):
     def get_input_data(self, input_dict):
         input_data = np.array([[]])
         for feature in input_dict:
-            input_data = np.append(input_data,input_dict[feature])
+            input_data = np.append(input_data, input_dict[feature])
         return input_data
 
     def get_fuel_rate_from_power(self, n, P):
         filepath = "/home/kdemmich/1_Projekte/MariData/3_Code/maripower/mariPower"
         n = np.full(P.shape, n)
-        power = P.value/1000
+        power = P.value / 1000
 
         fuel_model = dill.load(
             open(
@@ -270,8 +270,9 @@ class NNBoat(Boat):
             )
         )
 
-        fuel_rate = fuel_model.predict_values(np.vstack((n/60, power / 1000)).T).squeeze()  # fuelConsumptionCBT.FuelConsumptionCBT(n,P)
-        return fuel_rate/1000 *u.kg/u.second
+        fuel_rate = fuel_model.predict_values(
+            np.vstack((n / 60, power / 1000)).T).squeeze()  # fuelConsumptionCBT.FuelConsumptionCBT(n,P)
+        return fuel_rate / 1000 * u.kg / u.second
 
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
@@ -356,7 +357,7 @@ class NNBoat(Boat):
             input_dict = self.coordinate_transformation(input_dict)
             if debug:
                 print('after conversion: ', input_dict)
-            input_data= self.get_input_data(input_dict)
+            input_data = self.get_input_data(input_dict)
             if debug:
                 print('input_data: ', input_data)
             P_perc[ipoint] = self.evaluator.evaluate(model_path=self.model_path, input_data=input_data)

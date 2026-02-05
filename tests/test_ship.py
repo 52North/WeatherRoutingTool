@@ -16,7 +16,6 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.evaluateSavedModels import SavedModelEvaluator
 
 
-
 class TestShip:
     '''
         test whether single elements of fuel, power, rpm and speed are correctly returned by ShipParams.get_element(idx)
@@ -55,9 +54,9 @@ class TestShip:
         idx = 2
 
         (fuel_test, power_test, rpm_test, speed_test, rwind_test, rcalm_test, rwaves_test,
-            rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
-            u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
-            air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
+         rshallow_test, rroughness_test, wave_height_test, wave_direction_test, wave_period_test,
+         u_currents_test, v_currents_test, u_wind_speed_test, v_wind_speed_test, pressure_test,
+         air_temperature_test, salinity_test, water_temperature_test, status_test, message_test) \
             = sp.get_element(idx)
 
         assert fuel[idx] == fuel_test
@@ -167,7 +166,7 @@ class TestShip:
         lat_test = np.array([54.3, 54.3, 54.6, 55.6, 55.9, 55.9])
         lon_test = np.array([13.3, 13.3, 13.6, 16., 16.9, 13.9])
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
-        speed = 6 * u.meter/u.second
+        speed = 6 * u.meter / u.second
 
         # dummy course netCDF
         pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
@@ -259,65 +258,54 @@ def test_invalid_propulsion_efficiency_raises_error():
 
 
 def test_nnmodel_result_polar_plot_wind():
-    rel_wind_direction = np.linspace(0,180, 19)
-    rel_seaway_direction = np.full(19, 0.)
+    rel_wind_direction = np.linspace(0, 180, 19)
     P_perc = np.full(19, -99)
 
     feature_names = [
         'STW',
-    #    'draft_fp_interpolated_between_low_speeds',
-    #    'draft_ap_interpolated_between_low_speeds',
         'rel_wind_direction',
-    #    'thetao',
-    #    'Temperature_surface',
-        'rel_seaway_direction',
-    #    'z',
-    #    'Pressure_reduced_to_MSL_msl',
-    #    'VHM0',
-    #    'VTPK',
-    #    'so',
-    #    'ucomponent_of_wind_height_above_ground',
-    #    'vcomponent_of_wind_height_above_ground'
+        'rel_wind_speed'
     ]
 
-    model_path="/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/260202/nn_model_trial_26_rank_1.pth"
+    model_path\
+        = "/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/260202/nn_model_trial_26_rank_1.pth"
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
-    windspeed = 5
+    windspeed = 6
 
     print('model info: ', info)
 
-    for ipoint in range(0,19):
-            #input_data = np.array([[
-            #    6.32,  # STW
-            #    9.79, # draft_fp_interpolated_between_low_speeds
-            #    9.79, # draft_fp_interpolated_between_low_speeds
-            #    rel_wind_direction[ipoint], # rel_wind_direction: 0-360°
-            #    21.23, # thetao in C
-            #    293.88, # Temperature_surface in K
-            #    rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
-            #    -2000,  # z
-            #    101339, # Pressure_reduced_to_MSL_msl
-            #    0.98, # VHM0
-            #    6.87, # VTPK
-            #    39.71, # so 5.63 - 39.8  # *1000 -> g/kg
-            #    u_wind, # u-component wind
-            #    v_wind # v-component wind
-            #]])
+    for ipoint in range(0, 19):
+        # input_data = np.array([[
+        #    6.32,  # STW
+        #    9.79, # draft_fp_interpolated_between_low_speeds
+        #    9.79, # draft_fp_interpolated_between_low_speeds
+        #    rel_wind_direction[ipoint], # rel_wind_direction: 0-360°
+        #    21.23, # thetao in C
+        #    293.88, # Temperature_surface in K
+        #    rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
+        #    -2000,  # z
+        #    101339, # Pressure_reduced_to_MSL_msl
+        #    0.98, # VHM0
+        #    6.87, # VTPK
+        #    39.71, # so 5.63 - 39.8  # *1000 -> g/kg
+        #    u_wind, # u-component wind
+        #    v_wind # v-component wind
+        # ]])
         input_data = np.array([[
-                6.32,  # STW
-                rel_wind_direction[ipoint], # rel_wind_direction: 0-360°
-                rel_seaway_direction[ipoint], # rel_seaway_direction (relative Wellenrichtung): 0-360°
-            ]])
+            6.32,  # STW
+            windspeed,  # rel_wind_speed (relative Wellenrichtung): 0-360°
+            rel_wind_direction[ipoint],  # rel_wind_direction: 0-360°
+        ]])
 
         print('input_data: ')
-        i=0
+        i = 0
         for feature in feature_names:
-            print(f'    ' + feature + ': ' + str(input_data[0][i]))
-            i+=1
+            print('    ' + feature + ': ' + str(input_data[0][i]))
+            i += 1
 
-        P_perc[ipoint] =evaluator.evaluate(model_path=model_path, input_data=input_data)
+        P_perc[ipoint] = evaluator.evaluate(model_path=model_path, input_data=input_data)
         print('     P_perc: ', P_perc[ipoint])
 
     fig, axes = plt.subplots(1, 1, subplot_kw={'projection': 'polar'})
@@ -331,9 +319,11 @@ def test_nnmodel_result_polar_plot_wind():
     axes.set_title("Power in % of nominal power", va='bottom')
 
     plt.show()
-    plt.savefig("/home/kdemmich/1_Projekte/TwinShip/5_Results/260202_Biskays_Model_Comparison/Summary/polar_plot_wind.png")
+    plt.savefig(
+        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260202_Biskays_Model_Comparison/Summary/polar_plot_wind.png")
 
-    assert 1==2
+    assert 1 == 2
+
 
 def test_nnmodel_result_polar_plot_wave():
     rel_wind_direction = np.full(19, 0.)
@@ -357,7 +347,8 @@ def test_nnmodel_result_polar_plot_wave():
         #    'vcomponent_of_wind_height_above_ground'
     ]
 
-    model_path = "/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/260202/nn_model_trial_26_rank_1.pth"
+    model_path \
+        = "/home/kdemmich/1_Projekte/MariData/3_Code/blackgreywhiteboxmodelle/260202/nn_model_trial_26_rank_1.pth"
 
     evaluator = SavedModelEvaluator()
     info = evaluator.get_model_info(model_path)
@@ -374,7 +365,7 @@ def test_nnmodel_result_polar_plot_wave():
         print('input_data: ')
         i = 0
         for feature in feature_names:
-            print(f'    ' + feature + ': ' + str(input_data[0][i]))
+            print('    ' + feature + ': ' + str(input_data[0][i]))
             i += 1
 
         P_perc[ipoint] = evaluator.evaluate(model_path=model_path, input_data=input_data)

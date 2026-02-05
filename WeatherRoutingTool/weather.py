@@ -144,16 +144,18 @@ class WeatherCond:
         ax.barbs(x, y, u.values, v.values, clim=[0, 20], transform=input_crs)
 
         plt.show()
+
     @staticmethod
     def get_theta_from_uv(u, v):
-        theta = 180 + 180/np.pi*np.arctan2(u,v)
-        theta = theta%360
+        theta = 180 + 180 / np.pi * np.arctan2(u, v)
+        theta = theta % 360
         return theta
 
     @staticmethod
     def get_u(theta, windspeed):
         theta = theta * np.pi / 180
         return -np.abs(windspeed) * np.sin(theta)
+
     @staticmethod
     def get_v(theta, windspeed):
         theta = theta * np.pi / 180

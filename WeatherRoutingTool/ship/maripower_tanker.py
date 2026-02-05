@@ -16,7 +16,6 @@ from WeatherRoutingTool.ship.ship import Boat, NNBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
-
 have_maripower = False
 try:
     import mariPower
@@ -89,7 +88,7 @@ class MariPowerTanker(Boat):
         self.weather_path = config_obj.WEATHER_DATA
 
         self.correct_by_nnmodel = False
-        if config_obj.BOAT_CORRECT_BY_NNMODEL == True:
+        if config_obj.BOAT_CORRECT_BY_NNMODEL is True:
             logger.info('Correct maripower by grey-box model.')
             self.nnmodel = NNBoat(file_name=file_name)
             self.correct_by_nnmodel = True
@@ -425,7 +424,7 @@ class MariPowerTanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         status = ds['Status'].to_numpy().flatten()
         message = ds['Message'].to_numpy().flatten()
-        speed = ds['speed'].to_numpy().flatten() * u.meter/u.second
+        speed = ds['speed'].to_numpy().flatten() * u.meter / u.second
 
         ship_params = ShipParams(
             fuel_rate=fuel,
@@ -573,9 +572,9 @@ class MariPowerTanker(Boat):
 
         if self.correct_by_nnmodel:
             ship_params_corr = self.nnmodel.get_ship_parameters(courses, lats, lons, time, speed)
-            print(f'Setting power from ' + str(ship_params.power) + ' to ' +
+            print('Setting power from ' + str(ship_params.power) + ' to ' +
                   str(ship_params.power + ship_params_corr.power) + ' by adding ' + str(ship_params_corr.power))
-            #ship_params.power = ship_params.power + ship_params_corr.power
+            # ship_params.power = ship_params.power + ship_params_corr.power
             print('old fuel rate: ', ship_params.fuel_rate)
 
             ship_params.fuel_rate = self.nnmodel.get_fuel_rate_from_power(ship_params.rpm, ship_params.power)
