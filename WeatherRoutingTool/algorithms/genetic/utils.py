@@ -209,7 +209,7 @@ def get_weigths_from_rankarr(rank_arr, n_parts):
             larger_weight = get_weight_from_rank(larger, n_parts)
             weight_array[irank] = (smaller_weight + larger_weight) / 2
         else:
-            weight_array[irank] = get_weight_from_rank(rank_arr[irank], n_parts)
+            weight_array[irank] = get_weight_from_rank(int(rank_arr[irank]), n_parts)
 
     return weight_array
 
