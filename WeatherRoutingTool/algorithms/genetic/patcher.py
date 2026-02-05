@@ -28,13 +28,15 @@ class PatcherBase:
     def __init__(self, *args, **kwargs):
         pass
 
-    def patch(self, src: tuple, dst: tuple):
+    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None):
         """Obtain waypoints between `src` and `dst`.
 
         :param src: Source coords as (lat, lon)
         :type src: tuple[float, float]
         :param dst: Destination coords as (lat, lon)
         :type dst: tuple[float, float]
+        :param departure_time: Departure time
+        :type departure_time: datetime
         """
         raise NotImplementedError("This patching method is not implemented.")
 

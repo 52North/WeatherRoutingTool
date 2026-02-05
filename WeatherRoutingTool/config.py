@@ -108,7 +108,7 @@ class Config(BaseModel):
     GENETIC_MUTATION_TYPE: Literal[
         'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'rndm_speed', 'no_mutation'
     ] = 'random'
-    GENETIC_CROSSOVER_TYPE: Literal['random', 'no_crossover'] = 'random'
+    GENETIC_CROSSOVER_TYPE: Literal['random', 'speed', 'no_crossover'] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
 
