@@ -264,7 +264,7 @@ class SpeedCrossover(OffspringRejectionCrossover):
         # There should always be one candidate (source). The destination has to be ignored.
         crossover_candidates = []
         for m in range(0, len(p1)-1):
-            coord1 =  p1[m, 0:2]
+            coord1 = p1[m, 0:2]
             for n in range(0, len(p2)-1):
                 coord2 = p2[n, 0:2]
                 d = geod.Inverse(coord1[0], coord1[1], coord2[0], coord2[1])["s12"]

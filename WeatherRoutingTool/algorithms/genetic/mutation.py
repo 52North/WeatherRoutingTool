@@ -549,16 +549,18 @@ class RandomMutationsOrchestrator(MutationBase):
             opt.print_mutation_statistics()
 
 
-class RandomSpeedMutation(MutationConstraintRejection):
+class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
     """
     Ship speed mutation class.
+    Speed values are mutated by randomly adding or subtracting a percentage. The percentage is randomly chosen
+    between 0 and a fixed maximum percentage (20 %).
     """
     n_updates: int
     config: Config
 
     def __init__(self, n_updates: int = 10, **kw):
         super().__init__(
-            mutation_type="RandomSpeedMutation",
+            mutation_type="RandomPercentageChangeSpeedMutation",
             **kw
         )
         self.n_updates = n_updates
@@ -582,7 +584,39 @@ class RandomSpeedMutation(MutationConstraintRejection):
         return rt
 
 
-# FIXME: Gauss variation
+class GaussianSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    Speed values are updated by drawing random samples from a Gaussian distribution. The mean value of the distribution
+    is half of the maximum boat speed. The standard deviation is 1/6 of the maximum boat speed.
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="GaussianSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        # FIXME: these numbers should be carefully evaluated
+        # ~99.7 % in interval (0, BOAT_SPEED_MAX)
+        self.mu = 0.5 * self.config.BOAT_SPEED_MAX
+        self.sigma = self.config.BOAT_SPEED_MAX / 6
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        for i in indices:
+            new = random.normalvariate(self.mu, self.sigma)
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
 
 
 # factory
@@ -618,8 +652,12 @@ class MutationFactory:
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
             return RouteBlendMutation(config=config, constraints_list=constraints_list)
 
-        if config.GENETIC_MUTATION_TYPE == "rndm_speed":
-            logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
-            return RandomSpeedMutation(config=config, constraints_list=constraints_list)
+        if config.GENETIC_MUTATION_TYPE == "percentage_change_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "percentage_change_speed".')
+            return RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "gaussian_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "gaussian_speed".')
+            return GaussianSpeedMutation(config=config, constraints_list=constraints_list)
 
         raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

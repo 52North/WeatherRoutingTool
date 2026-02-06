@@ -106,7 +106,7 @@ class Config(BaseModel):
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
     GENETIC_MUTATION_TYPE: Literal[
-        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'rndm_speed', 'no_mutation'
+        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'percentage_change_speed', 'gaussian_speed', 'no_mutation'
     ] = 'random'
     GENETIC_CROSSOVER_TYPE: Literal['random', 'speed', 'no_crossover'] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
