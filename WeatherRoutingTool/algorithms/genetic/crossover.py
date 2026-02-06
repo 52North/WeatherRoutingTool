@@ -243,7 +243,9 @@ class RandomizedCrossoversOrchestrator(CrossoverBase):
 
 class SpeedCrossover(OffspringRejectionCrossover):
     """
-    Crossover class for ship speed
+    Ship speed crossover class.
+    Crossover candidates are identified by finding points between the parents with a distance below a specified
+    threshold. For a specified percentage of these candidates speed values are swapped.
     """
 
     def __init__(self, **kw):
@@ -280,21 +282,6 @@ class SpeedCrossover(OffspringRejectionCrossover):
         return p1, p2
 
 
-class NoCrossover(CrossoverBase):
-    """
-    Crossover class for ship speed
-    """
-
-    def __init__(self, **kw):
-        super().__init__()
-
-    def _do(self, problem, X, **kw):
-        return X
-
-    def print_crossover_statistics(self):
-        pass
-
-
 # factory
 # ----------
 class CrossoverFactory:
@@ -303,10 +290,6 @@ class CrossoverFactory:
         departure_time = config.DEPARTURE_TIME
 
         # FIXME: add exception for bad combinations (better do this on the Config)
-
-        if config.GENETIC_CROSSOVER_TYPE == "no_crossover":
-            logger.debug('Setting crossover type of genetic algorithm to "no_crossover".')
-            return NoCrossover()
 
         if config.GENETIC_CROSSOVER_TYPE == "speed":
             logger.debug('Setting crossover type of genetic algorithm to "speed".')
