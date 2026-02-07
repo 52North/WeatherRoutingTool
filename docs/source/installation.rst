@@ -5,7 +5,7 @@ Installation
 Requirements : 
 Virtual Environment(venv): A virtual environment is an isolated directory on a computer that contains a specific Python installation, along with its own libraries, scripts, and dependencies. It acts as a sandbox, allowing developers to manage project-specificdependencies without conflicting with global system packages or other projects. 
 
-1.A virtual environment is required in Python to isolate project dependencies, preventing version conflicts between libraries.
+1. A virtual environment is required in Python to isolate project dependencies, preventing version conflicts between libraries.
 
 2. It creates an independent directory containing its own Python executable and packages, allowing different projects to use different versions of the same library. It is essential for maintaining clean, reproducible development environments. 
 
@@ -61,7 +61,7 @@ The tool needs specific weather data (GRIB files) and boat polar files to work, 
 
 Steps:
 
-1.Get the Sample Data (The Sandbox):
+1. Get the Sample Data (The Sandbox):
 
    Clone the sandbox :
 
@@ -79,7 +79,7 @@ Steps:
 **Configure the tool** 
   Open "Configuration/config.template.json" and ensure the paths are correct for your Operating System
 
-3.Run Your first "Weather Route"(make sure (venv )is still active)
+3. Run Your first "Weather Route"(make sure (venv )is still active)
  Set your ``PYTHONPATH`` to the root of the ``WeatherRoutingTool`` directory and execute the run script:
 
 .. code-block::  shell/terminal
