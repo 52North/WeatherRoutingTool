@@ -1,19 +1,21 @@
-from pymoo.core.crossover import Crossover
-
-import numpy as np
-
-from datetime import datetime
 import logging
 import random
+from copy import deepcopy
+from datetime import datetime
+from math import ceil
+
+import numpy as np
+from geographiclib.geodesic import Geodesic
+from pymoo.core.crossover import Crossover
 
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.config import Config
-from WeatherRoutingTool.algorithms.genetic import patcher
-
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.crossover")
+
+geod = Geodesic.WGS84
 
 
 # base classes
@@ -125,8 +127,7 @@ class OffspringRejectionCrossover(CrossoverBase):
             p1: np.ndarray,
             p2: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Sub-class' implementation of the crossover function."""
-
+        """Subclass' implementation of the crossover function."""
         return p1, p2
 
     def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
@@ -240,28 +241,81 @@ class RandomizedCrossoversOrchestrator(CrossoverBase):
             opt.print_crossover_statistics()
 
 
+class SpeedCrossover(OffspringRejectionCrossover):
+    """
+    Ship speed crossover class.
+    Crossover candidates are identified by finding points between the parents with a distance below a specified
+    threshold. For a specified percentage of these candidates speed values are swapped.
+    """
+
+    def __init__(self, **kw):
+        # for now, we don't want to allow repairing routes for speed crossover
+        config = deepcopy(kw['config'])
+        config.GENETIC_REPAIR_TYPE = ["no_repair"]
+        kw['config'] = config
+        super().__init__(**kw)
+        self.threshold = 50000  # in m
+        self.percentage = 0.5
+
+    def crossover(
+            self,
+            p1: np.ndarray,
+            p2: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        # Find points between parents with a distance below the specified threshold.
+        # There should always be one candidate (source). The destination has to be ignored.
+        crossover_candidates = []
+        for m in range(0, len(p1)-1):
+            coord1 = p1[m, 0:2]
+            for n in range(0, len(p2)-1):
+                coord2 = p2[n, 0:2]
+                d = geod.Inverse(coord1[0], coord1[1], coord2[0], coord2[1])["s12"]
+                if d < self.threshold:
+                    crossover_candidates.append((m, n))
+        # Swap speed values for a subset of candidate points
+        indices = random.sample(range(0, len(crossover_candidates)), ceil(self.percentage*len(crossover_candidates)))
+        for idx in indices:
+            c = crossover_candidates[idx]
+            speed1 = p1[c[0], -1]
+            p1[c[0], -1] = p2[c[1], -1]
+            p2[c[1], -1] = speed1
+        return p1, p2
+
+
 # factory
 # ----------
 class CrossoverFactory:
     @staticmethod
     def get_crossover(config: Config, constraints_list: ConstraintsList):
-        # inputs
         departure_time = config.DEPARTURE_TIME
 
-        return RandomizedCrossoversOrchestrator(
-            opts=[
-                TwoPointCrossover(
-                    config=config,
-                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
-                    departure_time=departure_time,
-                    constraints_list=constraints_list,
-                    prob=.5,
-                    crossover_type="TP crossover", ),
-                SinglePointCrossover(
-                    config=config,
-                    patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
-                    departure_time=departure_time,
-                    constraints_list=constraints_list,
-                    prob=.5,
-                    crossover_type="SP crossover", ),
-            ], )
+        # FIXME: add exception for bad combinations (better do this on the Config)
+
+        if config.GENETIC_CROSSOVER_TYPE == "speed":
+            logger.debug('Setting crossover type of genetic algorithm to "speed".')
+            return SpeedCrossover(
+                config=config,
+                departure_time=departure_time,
+                constraints_list=constraints_list,
+                prob=.5,
+                crossover_type="Speed crossover")
+
+        if config.GENETIC_CROSSOVER_TYPE == "random":
+            logger.debug('Setting crossover type of genetic algorithm to "random".')
+            return RandomizedCrossoversOrchestrator(
+                opts=[
+                    TwoPointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="TP crossover"),
+                    SinglePointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="SP crossover")
+                ])

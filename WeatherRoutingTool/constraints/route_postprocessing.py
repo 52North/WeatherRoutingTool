@@ -551,7 +551,6 @@ class RoutePostprocessing:
         courses = route_dict['courses']
         dists = route_dict['dist']
         start_times = route_dict['start_times']
-        # FIXME: boat_speed is a list or array
         arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / boat_speed[-1].value)
 
         travel_times = np.append(travel_times, -99 * u.second)
