@@ -1,7 +1,8 @@
-import copy
 import logging
 import math
 import os
+import random
+from operator import add, sub
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -548,6 +549,76 @@ class RandomMutationsOrchestrator(MutationBase):
             opt.print_mutation_statistics()
 
 
+class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    Speed values are mutated by randomly adding or subtracting a percentage. The percentage is randomly chosen
+    between 0 and a fixed maximum percentage (20 %).
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="RandomPercentageChangeSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        self.change_percent_max = 0.2
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        ops = (add, sub)
+        for i in indices:
+            op = random.choice(ops)
+            change_percent = random.uniform(0.0, self.change_percent_max)
+            new = op(rt[i][2], change_percent * rt[i][2])
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
+
+
+class GaussianSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    Speed values are updated by drawing random samples from a Gaussian distribution. The mean value of the distribution
+    is half of the maximum boat speed. The standard deviation is 1/6 of the maximum boat speed.
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="GaussianSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        # FIXME: these numbers should be carefully evaluated
+        # ~99.7 % in interval (0, BOAT_SPEED_MAX)
+        self.mu = 0.5 * self.config.BOAT_SPEED_MAX
+        self.sigma = self.config.BOAT_SPEED_MAX / 6
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        for i in indices:
+            new = random.normalvariate(self.mu, self.sigma)
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
+
+
 # factory
 # ----------
 class MutationFactory:
@@ -557,11 +628,11 @@ class MutationFactory:
             constraints_list: None
     ) -> Mutation:
 
-        if "no_mutation" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "no_mutation":
             logger.debug('Setting mutation type of genetic algorithm to "no_mutation".')
             return NoMutation()
 
-        if "random" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
                 opts=[
@@ -569,16 +640,24 @@ class MutationFactory:
                     RouteBlendMutation(config=config, constraints_list=constraints_list)
                 ], )
 
-        if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_walk":
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
             return RandomWalkMutation(config=config, constraints_list=constraints_list)
 
-        if "rndm_plateau" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_plateau":
             logger.debug('Setting mutation type of genetic algorithm to "random_plateau".')
             return RandomPlateauMutation(config=config, constraints_list=constraints_list)
 
-        if "route_blend" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "route_blend":
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
             return RouteBlendMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "percentage_change_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "percentage_change_speed".')
+            return RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "gaussian_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "gaussian_speed".')
+            return GaussianSpeedMutation(config=config, constraints_list=constraints_list)
 
         raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

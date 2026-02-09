@@ -60,6 +60,7 @@ class Config(BaseModel):
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     BOAT_SPEED: float = -99.  # boat speed [m/s]
+    BOAT_SPEED_MAX: float = 10  # maximum possible boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -105,8 +106,9 @@ class Config(BaseModel):
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
     GENETIC_MUTATION_TYPE: Literal[
-        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'no_mutation'
+        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'percentage_change_speed', 'gaussian_speed', 'no_mutation'
     ] = 'random'
+    GENETIC_CROSSOVER_TYPE: Literal['random', 'speed'] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
     GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5}
@@ -218,7 +220,8 @@ class Config(BaseModel):
         except ValueError:
             raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
-    @field_validator('COURSES_FILE', 'ROUTE_PATH', 'DIJKSTRA_MASK_FILE', mode='after')
+    @field_validator('COURSES_FILE', 'ROUTE_PATH', 'DIJKSTRA_MASK_FILE', 'GENETIC_POPULATION_PATH',
+                     mode='after')
     @classmethod
     def validate_path_exists(cls, v, info: ValidationInfo):
         if info.field_name == 'COURSES_FILE':
@@ -228,6 +231,11 @@ class Config(BaseModel):
                 path = Path(os.path.dirname(v))
         elif info.field_name == 'DIJKSTRA_MASK_FILE':
             if info.data.get('ALGORITHM_TYPE') != 'dijkstra':
+                return v
+            else:
+                path = Path(v)
+        elif info.field_name == 'GENETIC_POPULATION_PATH':
+            if info.data.get('GENETIC_POPULATION_TYPE') != 'from_geojson':
                 return v
             else:
                 path = Path(v)

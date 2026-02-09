@@ -24,14 +24,14 @@ class RoutePostprocessing:
     In the future, it should be integrated into a more general approach.
     """
     route: RouteParams
-    lats_per_step: list
-    lons_per_step: list
-    starttime_per_step: list
-    ship_speed: list
+    lats_per_step: np.ndarray[float]
+    lons_per_step: np.ndarray[float]
+    starttime_per_step: np.ndarray[datetime]
+    ship_speed: u.Quantity
     boat: Boat
 
-    def __init__(self, min_fuel_route, boat, boat_speed, db_engine=None):
-        self.set_data(min_fuel_route, boat, boat_speed)
+    def __init__(self, min_fuel_route: RouteParams, boat: Boat, db_engine=None):
+        self.set_data(min_fuel_route, boat)
 
         if db_engine is not None:
             self.engine = db_engine
@@ -44,14 +44,13 @@ class RoutePostprocessing:
             self.port = os.getenv("WRT_DB_PORT")
             self.engine = self.connect_database()
 
-    def set_data(self, route, boat, boat_speed):
+    def set_data(self, route: RouteParams, boat: Boat):
         self.route = route
         self.lats_per_step = route.lats_per_step
         self.lons_per_step = route.lons_per_step
-
         self.starttime_per_step = route.starttime_per_step
         self.boat = boat
-        self.ship_speed = boat_speed
+        self.ship_speed = route.ship_params_per_step.speed
 
     def post_process_route(self):
         """TODO: add class description
@@ -475,7 +474,14 @@ class RoutePostprocessing:
 
         return start_times_list
 
-    def calculate_timsestamp(self, lat, lon, start_times, node_index, speed):
+    def calculate_timsestamp(
+            self,
+            lat: np.ndarray[float],
+            lon: np.ndarray[float],
+            start_times: list[datetime],
+            node_index: int,
+            speed: u.Quantity
+    ):
         """
         Calculate the time taken using time = distance / ship speed of the previous
         route segment and then added the new time taken into previous timestamp to
@@ -490,7 +496,7 @@ class RoutePostprocessing:
         :param node_index:
         :type node_index: int
         :param speed:
-        :type speed: float
+        :type speed: astropy.units.Quantity
         :return: time stamps
         :rtype: datetime.datetime
         """
@@ -499,11 +505,17 @@ class RoutePostprocessing:
         gcd = geod.inverse([lat[previous_step_index]], [lon[previous_step_index]],
                            [lat[node_index]], [lon[node_index]])
         dist = gcd['s12']
-        time_taken_for_current_step = dist[0] / speed.value
+        time_taken_for_current_step = dist[0] / speed[previous_step_index].value
         current_timestamp = previous_timestamp + timedelta(seconds=int(time_taken_for_current_step))
         return current_timestamp
 
-    def terminate(self, route_lons, route_lats, starttime_list, boat_speed):
+    def terminate(
+            self,
+            route_lons: np.ndarray[float],
+            route_lats: np.ndarray[float],
+            starttime_list: list[datetime],
+            boat_speed: u.Quantity
+    ):
         """
         Find the courses from route_dict to calculate the ship_parameters
 
@@ -514,7 +526,7 @@ class RoutePostprocessing:
         :param starttime_list:
         :type starttime_list: list[datetime.datetime]
         :param boat_speed:
-        :type boat_speed: float
+        :type boat_speed: astropy.units.Quantity
         :return: final route
         :rtype: RouteParams
         """
@@ -539,7 +551,7 @@ class RoutePostprocessing:
         courses = route_dict['courses']
         dists = route_dict['dist']
         start_times = route_dict['start_times']
-        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / boat_speed.value)
+        arrival_time = start_times[-1] + timedelta(seconds=dists[-1].value / boat_speed[-1].value)
 
         travel_times = np.append(travel_times, -99 * u.second)
         courses = np.append(courses, -99 * u.degree)

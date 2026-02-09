@@ -1,7 +1,7 @@
 import logging
 import os
-import os.path
 from math import ceil
+from re import match
 
 import astropy.units as u
 import numpy as np
@@ -198,21 +198,33 @@ class FromGeojsonPopulation(Population):
         logger.debug(f"Population from geojson routes: {self.routes_dir}")
 
         # routes are expected to be named in the following format:
-        # route_{1..N}.json
+        # route_{1..N}.json (geojson extension is also possible)
         # example: route_1.json, route_2.json, route_3.json, ...
+
+        # FIXME: add test in config.py and raise exception depending on configuration (not only speed optimization...)
 
         X = np.full((n_samples, 1), None, dtype=object)
 
-        for i in range(n_samples):
-            path = os.path.join(self.routes_dir, f"route_{i + 1}.json")
+        files = []
+        for file in os.listdir(self.routes_dir):
+            if match(r"route_[0-9]+\.(json|geojson)$", file.lower()):
+                files.append(file)
 
+        if len(files) == 0:
+            raise ValueError(f"Couldn't find any route in {self.routes_dir} for the initial population.")
+
+        for i, file in enumerate(files):
+            path = os.path.join(self.routes_dir, file)
             if not os.path.exists(path):
-                raise ValueError("The number of available routes for the initial population does not match the "
-                                 "population size.")
+                raise ValueError(f"Couldn't read route {path} for the initial population.")
             else:
                 route = utils.route_from_geojson_file(path)
+                X[i, 0] = np.array(route)
 
-            X[i, 0] = np.array(route)
+        added_routes = len(files)
+        while added_routes < n_samples:
+            X[added_routes, 0] = np.copy(X[0, 0])
+            added_routes += 1
 
         return X
 

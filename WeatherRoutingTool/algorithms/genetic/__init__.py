@@ -7,7 +7,6 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from astropy import units as u
 from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
