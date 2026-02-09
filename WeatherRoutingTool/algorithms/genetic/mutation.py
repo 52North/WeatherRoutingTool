@@ -637,7 +637,9 @@ class MutationFactory:
             return RandomMutationsOrchestrator(
                 opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
-                    RouteBlendMutation(config=config, constraints_list=constraints_list)
+                    RouteBlendMutation(config=config, constraints_list=constraints_list),
+                    RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
+                    GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
 
         if config.GENETIC_MUTATION_TYPE == "rndm_walk":

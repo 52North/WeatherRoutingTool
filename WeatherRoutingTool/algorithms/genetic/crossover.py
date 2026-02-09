@@ -300,7 +300,7 @@ class CrossoverFactory:
                 prob=.5,
                 crossover_type="Speed crossover")
 
-        if config.GENETIC_CROSSOVER_TYPE == "random":
+        if config.GENETIC_CROSSOVER_TYPE == "waypoints":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
             return RandomizedCrossoversOrchestrator(
                 opts=[
@@ -318,4 +318,30 @@ class CrossoverFactory:
                         constraints_list=constraints_list,
                         prob=.5,
                         crossover_type="SP crossover")
+                ])
+
+        if config.GENETIC_CROSSOVER_TYPE == "random":
+            logger.debug('Setting crossover type of genetic algorithm to "random".')
+            return RandomizedCrossoversOrchestrator(
+                opts=[
+                    TwoPointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="TP crossover"),
+                    SinglePointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="SP crossover"),
+                    SpeedCrossover(
+                        config=config,
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="Speed crossover")
                 ])
