@@ -576,10 +576,10 @@ class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
             op = random.choice(ops)
             change_percent = random.uniform(0.0, self.change_percent_max)
             new = op(rt[i][2], change_percent * rt[i][2])
-            if new < 0:
-                new = 0
-            elif new > self.config.BOAT_SPEED_MAX:
-                new = self.config.BOAT_SPEED_MAX
+            if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[0]
+            elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[1]
             rt[i][2] = new
         return rt
 
@@ -601,8 +601,8 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.n_updates = n_updates
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
-        self.mu = 0.5 * self.config.BOAT_SPEED_MAX
-        self.sigma = self.config.BOAT_SPEED_MAX / 6
+        self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
+        self.sigma = self.config.BOAT_SPEED_BOUNDARIES[1] / 6
 
     def mutate(self, problem, rt, **kw):
         try:
@@ -610,11 +610,12 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         except ValueError:
             indices = range(0, rt.shape[0] - 1)
         for i in indices:
-            new = random.normalvariate(self.mu, self.sigma)
-            if new < 0:
-                new = 0
-            elif new > self.config.BOAT_SPEED_MAX:
-                new = self.config.BOAT_SPEED_MAX
+            old_speed = rt[i][2]
+            new = random.normalvariate(old_speed, self.sigma)
+            if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[0]
+            elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[1]
             rt[i][2] = new
         return rt
 
@@ -638,7 +639,7 @@ class MutationFactory:
                 opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
                     RouteBlendMutation(config=config, constraints_list=constraints_list),
-                    RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
+                    # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
                     GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
 

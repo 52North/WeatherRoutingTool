@@ -60,7 +60,8 @@ class Config(BaseModel):
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     BOAT_SPEED: float = -99.  # boat speed [m/s]
-    BOAT_SPEED_MAX: float = 10  # maximum possible boat speed [m/s]
+    BOAT_SPEED_BOUNDARIES: Annotated[list[Union[float, float]], Field(min_length=2, max_length=2)] = [1., 10.]
+    # minimum and maximum possible boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
