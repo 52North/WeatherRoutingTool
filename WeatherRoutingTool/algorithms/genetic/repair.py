@@ -103,7 +103,14 @@ class ConstraintViolationRepair(RepairBase):
         for i, (rt,) in enumerate(X):
             constrained = utils.get_constraints_array(rt, self.constraints_list)
             X[i, 0] = self.repair_single_route(rt, patchfn, constrained)
+
         return X
+
+    def check_validity(self, rt):
+        src = tuple(self.config.DEFAULT_ROUTE[:-2])
+        dst = tuple(self.config.DEFAULT_ROUTE[-2:])
+        assert tuple(rt[0]) == src, "Source waypoint not matching"
+        assert tuple(rt[-1]) == dst, "Destination waypoint not matching"
 
     def repair_single_route(self, rt, patchfn, constrained):
         """
@@ -131,7 +138,7 @@ class ConstraintViolationRepair(RepairBase):
         """
         # check for correct input shape of rt
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         debug = False
 
         prev_seg_end = 0
@@ -174,10 +181,13 @@ class ConstraintViolationRepair(RepairBase):
             else:
                 # currently passing constrained area
                 on_constraint = True
+                if seg_i == len(constrained)-1:
+                    output_route_segs.append([rt[seg_end]])
 
         output_route = np.concatenate(output_route_segs, axis=0)
         if debug:
             print('output_route shape: ', output_route)
+            self.check_validity(output_route)
         return output_route
 
 

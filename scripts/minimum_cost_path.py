@@ -1,6 +1,10 @@
+# Warning:
+# The minimum cost path provided by this script does not correspond to the shortest-distance path!
+# The cost grid is equally-spaced (0,008333 degrees), thus longitudes are not equidistant but their distance is reduced
+# towards the poles. Other problems might be caused by staircase effects.
 import json
-
 import time
+
 import numpy as np
 from global_land_mask import lat_to_index, lon_to_index
 from shapely import Point, to_geojson

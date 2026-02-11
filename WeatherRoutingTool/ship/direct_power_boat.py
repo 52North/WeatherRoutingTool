@@ -93,9 +93,9 @@ class DirectPowerBoat(Boat):
         logger.info(form.get_log_step('fuel rate: ' + str(self.fuel_rate.to(u.kg/(u.kiloWatt * u.hour))), 1))
         form.print_line()
 
-    def interpolate_to_true_speed(self, power):
+    def interpolate_to_true_speed(self, power, speed):
         const = power / (self.speed_at_sp ** (3))
-        power_interpolated = const * self.speed ** (3)
+        power_interpolated = const * speed ** (3)
         return power_interpolated
 
     def load_data(self):
@@ -396,7 +396,15 @@ class DirectPowerBoat(Boat):
         P = self.power_at_sp * (Plin + self.power_at_sp) / (Plin * self.overload_factor + self.power_at_sp)
         return P
 
-    def get_ship_parameters(self, courses, lats, lons, time, speed=None, unique_coords=False):
+    def get_ship_parameters(
+            self,
+            courses: u.Quantity,
+            lats: np.ndarray,
+            lons: np.ndarray,
+            time: np.ndarray,
+            speed: u.Quantity,
+            unique_coords=False
+    ):
         """
         :return: ShipParams object containing ship parameters like power consumption and fuel rate
         :rtype: WeatherRoutingTool.ship.shipparams.ShipParams
@@ -406,13 +414,12 @@ class DirectPowerBoat(Boat):
 
         # initialise clean ship params object
         dummy_array = np.full(n_requests, -99)
-        speed_array = np.full(n_requests, self.speed_at_sp)
 
         ship_params = ShipParams(
             fuel_rate=dummy_array * u.kg / u.s,
             power=dummy_array * u.Watt,
             rpm=dummy_array * u.Hz,
-            speed=speed_array * u.meter / u.second,
+            speed=speed,
             r_wind=dummy_array * u.N,
             r_calm=dummy_array * u.N,
             r_waves=dummy_array * u.N,
@@ -438,7 +445,7 @@ class DirectPowerBoat(Boat):
         added_resistance = ship_params.r_wind + ship_params.r_waves
 
         P = self.get_power(added_resistance)
-        P = self.interpolate_to_true_speed(P)
+        P = self.interpolate_to_true_speed(P, speed)
 
         ship_params.power = P
         ship_params.fuel_rate = self.fuel_rate * P

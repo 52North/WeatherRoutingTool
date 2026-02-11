@@ -1,10 +1,13 @@
-from skimage.graph import route_through_array
-from pymoo.core.sampling import Sampling
-
-import numpy as np
 import logging
-import os.path
 import os
+from math import ceil
+from re import match
+
+import astropy.units as u
+import numpy as np
+from geographiclib.geodesic import Geodesic
+from pymoo.core.sampling import Sampling
+from skimage.graph import route_through_array
 
 from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.ship.ship import Boat
@@ -13,14 +16,17 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import GridMixin
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
+from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
 
 logger = logging.getLogger("WRT.genetic.population")
+
+geod = Geodesic.WGS84
 
 
 class Population(Sampling):
     """Base Class for generating the initial population."""
 
-    def __init__(self, default_route: list, constraints_list: list, pop_size: int):
+    def __init__(self, config: Config, default_route: list, constraints_list: ConstraintsList, pop_size: int):
         super().__init__()
 
         self.constraints_list = constraints_list
@@ -30,18 +36,26 @@ class Population(Sampling):
         self.src: tuple[float, float] = tuple(default_route[:-2])
         self.dst: tuple[float, float] = tuple(default_route[-2:])
 
+        self.departure_time = config.DEPARTURE_TIME
+        self.arrival_time = config.ARRIVAL_TIME
+        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
+
+        self.boat_speed_from_arrival_time = False
+        if self.boat_speed.value == -99.:
+            self.boat_speed_from_arrival_time = True
+
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
 
         for rt, in X:
-            assert tuple(rt[0]) == self.src, "Source waypoint not matching"
-            assert tuple(rt[-1]) == self.dst, "Destination waypoint not matching"
+            assert tuple(rt[0, :-1]) == self.src, "Source waypoint not matching"
+            assert tuple(rt[-1, :-1]) == self.dst, "Destination waypoint not matching"
 
         self.X = X
         return self.X
 
     def generate(self, problem, n_samples, **kw):
-        pass
+        raise NotImplementedError("Has to be implemented by child class!")
 
     def check_validity(self, routes):
         """
@@ -66,6 +80,19 @@ class Population(Sampling):
             f"{self.n_constrained_routes} / {self.pop_size} constrained — "
             "More than 50% of the initial routes are constrained")
 
+    def recalculate_speed_for_route(self, rt):
+        """
+        Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
+        """
+        bs = utils.get_speed_from_arrival_time(
+            lons=rt[:, 1],
+            lats=rt[:, 0],
+            departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+        )
+        rt[:, 2] = np.full(rt[:, 1].shape, bs)
+        return rt
+
 
 class GridBasedPopulation(GridMixin, Population):
     """Make initial population for genetic algorithm based on a grid and associated cost values
@@ -76,8 +103,14 @@ class GridBasedPopulation(GridMixin, Population):
      - call `print(GridBasedPopulation.mro())` to see the method resolution order
     """
 
-    def __init__(self, default_route, grid, constraints_list, pop_size):
-        super().__init__(default_route=default_route, grid=grid, constraints_list=constraints_list, pop_size=pop_size)
+    def __init__(self, config: Config, default_route, grid, constraints_list, pop_size):
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            grid=grid,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
 
         # update nan_mask with constraints_list
         # ----------
@@ -105,6 +138,10 @@ class GridBasedPopulation(GridMixin, Population):
         _, _, start_indices = self.coords_to_index([self.src])
         _, _, end_indices = self.coords_to_index([self.dst])
 
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second  # dummy boat speed
+
         for i in range(n_samples):
             shuffled_cost = self.get_shuffled_cost()
 
@@ -117,10 +154,18 @@ class GridBasedPopulation(GridMixin, Population):
 
             # logger.debug(f"GridBasedPopulation._do: type(route)={type(route)}, route={route}")
             _, _, route = self.index_to_coords(route)
+            route = np.array(route)
+            speed_arr = np.full((route.shape[0], 1), boat_speed.value)
+            route = np.hstack((route, speed_arr))
 
             # match first and last points to src and dst
+            src_speed = np.array(self.src + (boat_speed.value,))
+            dst_speed = np.array(self.dst + (boat_speed.value,))
+            if self.boat_speed_from_arrival_time:
+                route = self.recalculate_speed_for_route(route)
+
             X[i, 0] = np.array([
-                self.src, *route[1:-1], self.dst])
+                src_speed, *route[1:-1], dst_speed])
 
         return X
 
@@ -137,8 +182,13 @@ class FromGeojsonPopulation(Population):
     :type routes_dir: str
     """
 
-    def __init__(self, routes_dir: str, default_route, constraints_list, pop_size):
-        super().__init__(default_route=default_route, constraints_list=constraints_list, pop_size=pop_size)
+    def __init__(self, config: Config, routes_dir: str, default_route, constraints_list, pop_size):
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
 
         if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
             raise FileNotFoundError("Routes directory not found")
@@ -148,24 +198,33 @@ class FromGeojsonPopulation(Population):
         logger.debug(f"Population from geojson routes: {self.routes_dir}")
 
         # routes are expected to be named in the following format:
-        # route_{1..N}.json
+        # route_{1..N}.json (geojson extension is also possible)
         # example: route_1.json, route_2.json, route_3.json, ...
+
+        # FIXME: add test in config.py and raise exception depending on configuration (not only speed optimization...)
 
         X = np.full((n_samples, 1), None, dtype=object)
 
-        for i in range(n_samples):
-            path = os.path.join(self.routes_dir, f"route_{i + 1}.json")
+        files = []
+        for file in os.listdir(self.routes_dir):
+            if match(r"route_[0-9]+\.(json|geojson)$", file.lower()):
+                files.append(file)
 
+        if len(files) == 0:
+            raise ValueError(f"Couldn't find any route in {self.routes_dir} for the initial population.")
+
+        for i, file in enumerate(files):
+            path = os.path.join(self.routes_dir, file)
             if not os.path.exists(path):
-                raise ValueError("The number of available routes for the initial population does not match the "
-                                 "population size.")
+                raise ValueError(f"Couldn't read route {path} for the initial population.")
             else:
                 route = utils.route_from_geojson_file(path)
+                X[i, 0] = np.array(route)
 
-            assert np.array_equal(route[0], self.src), "Route not starting at source"
-            assert np.array_equal(route[-1], self.dst), "Route not ending at destination"
-
-            X[i, 0] = np.array(route)
+        added_routes = len(files)
+        while added_routes < n_samples:
+            X[added_routes, 0] = np.copy(X[0, 0])
+            added_routes += 1
 
         return X
 
@@ -179,29 +238,167 @@ class IsoFuelPopulation(Population):
     produced route is repeated until the required number of individuals are met
     """
 
-    def __init__(self, config: Config, boat: Boat, default_route, constraints_list, pop_size):
+    def __init__(self, config: Config, default_route, constraints_list, pop_size):
         super().__init__(
+            config=config,
             default_route=default_route,
             constraints_list=constraints_list,
-            pop_size=pop_size, )
-
-        self.departure_time = config.DEPARTURE_TIME
+            pop_size=pop_size,
+        )
 
         self.patcher = PatchFactory.get_patcher(config=config, patch_type="isofuel_multiple_routes",
                                                 application="initial population")
 
     def generate(self, problem, n_samples, **kw):
-        routes = self.patcher.patch(self.src, self.dst, self.departure_time)
+        """Generate the initial population.
+
+        Calls the :py:class:`IsofuelPatcher<WeatherRoutingTool.algorithms.genetic.patcher.IsofuelPatcher>` to patch
+        routes from the start coordinates to the destination. In case an `ARRIVAL_TIME` is specified, a dummy boat speed
+        is passed that is later on recalculated by `recalculate_speed_for_route`. If  the number `n_samples` of routes
+        can not be provided by the patcher, the last route that can be provided is copied until the requested number of
+        routes has been achieved.
+
+        :params problem: routing problem
+        :type problem: Problem
+        :params n_samples: number of routes for the initial population
+        :type n_samples: int
+        :return: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
+            Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
+        :rtype: np.array
+        """
+
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second  # add dummy speed, will be recalculated
+        routes = self.patcher.patch(self.src + (boat_speed.value,), self.dst + (boat_speed.value,), self.departure_time)
 
         X = np.full((n_samples, 1), None, dtype=object)
 
-        for i, rt in enumerate((routes)):
-            X[i, 0] = np.array([self.src, *rt[1:-1], self.dst])
+        for i, rt in enumerate(routes):
+            if self.boat_speed_from_arrival_time:
+                rt = self.recalculate_speed_for_route(rt)
+
+            X[i, 0] = rt
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X
+
+
+class GcrSliderPopulation(Population):
+
+    def __init__(self, config: Config, default_route, constraints_list, pop_size):
+        super().__init__(
+            config=config,
+            default_route=default_route,
+            constraints_list=constraints_list,
+            pop_size=pop_size
+        )
+
+        self.algo = GcrSliderAlgorithm(config)
+
+    def generate(self, problem, n_samples, **kw):
+        """
+        Create an initial population with good variety of routes by calculating routes using the GCR Slider Algorithm
+        with different waypoints. Each route is created with only one waypoint.
+        Waypoints are created in two steps:
+        1) Find the point(s) which splits the segment(s) into two new segments of equal distance.
+           These points will be located at fractions of 0.5 (1st split), 0.25|0.75 (2nd split),
+           0.125|0.625|0.375|0.875 (3rd split) and so forth.
+        2) For each point move the point in orthogonal direction (clockwise and counter-clockwise). Increase the
+           distance used to move the point incrementally.
+        """
+        # FIXME: how to handle already existing waypoints specified for the genetic algorithm?
+        boat_speed = self.boat_speed
+        if self.boat_speed_from_arrival_time:
+            boat_speed = 6 * u.meter / u.second  # dummy boat speed
+
+        route = self.create_route(speed=boat_speed.value)
+        routes = []
+        if route is not None:
+            routes.append(route)
+            logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
+        line = geod.InverseLine(self.algo.start[0], self.algo.start[1], self.algo.finish[0], self.algo.finish[1])
+        wpt_increment_max = 0.5 * line.s13
+        wpt_increment = 0.05 * line.s13
+        wpt_increment_steps_max = ceil(wpt_increment_max / wpt_increment)
+
+        element = 1
+        clockwise = True
+        wpt_increment_step = 1
+        while len(routes) < n_samples:
+            dist_fraction = self.van_der_corput_sequence(element)
+            g = line.Position(dist_fraction * line.s13, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
+            dist_orthogonal = wpt_increment_step * wpt_increment
+            lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
+            if not self.algo.is_land(lat, lon):
+                route = self.create_route(lat, lon, boat_speed.value)
+                if route is not None:
+                    routes.append(route)
+                    logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
+                else:
+                    logger.info(f"Could not find a new route (dist_fraction={dist_fraction}, "
+                                f"dist_orthogonal={dist_orthogonal}, clockwise={clockwise}).")
+            if not clockwise:
+                wpt_increment_step += 1
+            clockwise = not clockwise
+            if wpt_increment_step > wpt_increment_steps_max:
+                element += 1
+                wpt_increment_step = 1
+            if element > 7:
+                break
+
+        X = np.full((n_samples, 1), None, dtype=object)
+        for i, rt in enumerate(routes):
+            if self.boat_speed_from_arrival_time:
+                rt = self.recalculate_speed_for_route(rt)
+            X[i, 0] = rt
+
+        # fallback: fill all other individuals with the same population as the last one
+        for j in range(i + 1, n_samples):
+            X[j, 0] = np.copy(X[j - 1, 0])
+        return X
+
+    def create_route(self, lat: float = None, lon: float = None, speed: float = None):
+        """
+        :param lat: latitude of the waypoint
+        :type lat: float
+        :param lon: longitude of the waypoint
+        :type lon: float
+        """
+        route = None
+        if lat and lon:
+            self.algo.waypoints = [[lat, lon]]
+        try:
+            route, _ = self.algo.execute()
+            # import uuid
+            # filename = f"{str(uuid.uuid4())}.geojson"
+            # route.write_to_geojson(filename)
+            route = [[route.lats_per_step[i], route.lons_per_step[i], speed] for i in
+                     range(0, len(route.lats_per_step))]
+            route = np.array(route)
+        except Exception:
+            pass
+        return route
+
+    @staticmethod
+    def van_der_corput_sequence(n: int, base: int = 2):
+        """
+        Returns the n-th element of the van der Corput sequence in a given base.
+        Can be used to produce the sequence 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, ...
+        Based on https://en.wikipedia.org/wiki/Van_der_Corput_sequence.
+        """
+        result = 0.0
+        result_increment = 1 / base
+        while n > 0:
+            least_significant_digit = n % base
+            result += least_significant_digit * result_increment
+            n //= base
+            result_increment /= base
+        return result
 
 
 class PopulationFactory:
@@ -225,6 +422,7 @@ class PopulationFactory:
         match population_type:
             case "grid_based":
                 return GridBasedPopulation(
+                    config=config,
                     grid=wave_height,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
@@ -233,14 +431,21 @@ class PopulationFactory:
             case "isofuel":
                 return IsoFuelPopulation(
                     config=config,
-                    boat=boat,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
                     pop_size=population_size, )
 
             case "from_geojson":
                 return FromGeojsonPopulation(
+                    config=config,
                     routes_dir=config.GENETIC_POPULATION_PATH,
+                    default_route=config.DEFAULT_ROUTE,
+                    constraints_list=constraints_list,
+                    pop_size=population_size, )
+
+            case "gcrslider":
+                return GcrSliderPopulation(
+                    config=config,
                     default_route=config.DEFAULT_ROUTE,
                     constraints_list=constraints_list,
                     pop_size=population_size, )

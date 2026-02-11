@@ -712,8 +712,8 @@ class IsoBased(RoutingAlg):
         :return: boat speed, calculated ship parameters
         :rtype: float, ShipParams
         """
-        bs = boat.get_boat_speed()
-        bs = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
+        bs = self.get_boat_speed()
+        bs_array = np.repeat(bs, (self.routing_step.get_courses().shape[0]), axis=0)
 
         # TODO: check whether changes on IntegrateGeneticAlgorithm should be applied here
         ship_params = boat.get_ship_parameters(
@@ -721,10 +721,10 @@ class IsoBased(RoutingAlg):
             lats=self.routing_step.get_start_point('lat'),
             lons=self.routing_step.get_start_point('lon'),
             time=self.routing_step.get_time(),
-            speed=None,
+            speed=bs_array,
             unique_coords=True
         )
-        return bs, ship_params
+        return bs_array, ship_params
 
     def check_constraints(self, constraint_list):
         """

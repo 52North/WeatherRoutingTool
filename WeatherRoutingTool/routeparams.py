@@ -342,7 +342,7 @@ class RouteParams:
 
         for i in range(0, nsteps - 1):
             dist_step = geod.inverse([lats[i]], [lons[i]], [lats[i + 1]], [lons[i + 1]])
-            dist[i] = dist_step['s12']
+            dist[i] = dist_step['s12'][0]
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
@@ -351,7 +351,7 @@ class RouteParams:
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle='dashdot', transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle=linestyle, transform=input_crs)
         else:
             ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
 
@@ -383,9 +383,9 @@ class RouteParams:
                 bin_center_mean = max(hist_values["bin_centres"]) + 2 * bin_width_mean
 
             # append mean bin
-            hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
-            hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
-            hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
+            # hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
+            # hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
+            # hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
 
             # plt.ylabel(power["label"] + ' (kW)')
             plt.ylabel(power["label"])
@@ -397,11 +397,11 @@ class RouteParams:
             # ax.set_ylim(0, 6000)
 
             # customise labels
-            labels = ax.get_xticks().tolist()
-            for i in range(0, len(labels)):
-                labels[i] = int(labels[i])
-            labels[-2] = 'weighted mean'
-            ax.set_xticklabels(labels)
+            # labels = ax.get_xticks().tolist()
+            # for i in range(0, len(labels)):
+            #    labels[i] = int(labels[i])
+            # labels[-2] = 'weighted mean'
+            # ax.set_xticklabels(labels)
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
         else:
@@ -561,7 +561,12 @@ class RouteParams:
         plt.xticks()
 
     @staticmethod
-    def get_per_waypoint_coords(route_lons, route_lats, start_time, bs):
+    def get_per_waypoint_coords(
+            route_lons: np.ndarray,
+            route_lats: np.ndarray,
+            start_time: datetime,
+            bs: u.Quantity
+    ):
         debug = False
         npoints = route_lons.shape[0]
         start_lats = np.zeros(npoints - 1)
