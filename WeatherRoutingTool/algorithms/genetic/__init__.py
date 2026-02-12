@@ -215,9 +215,16 @@ class Genetic(RoutingAlg):
         pd.set_option('display.max_columns', None)
 
         i_obj = 0
+        norm = 1.
         for obj_str in self.objectives:
-            rmethod_table[obj_str + '_obj'] = solutions[:, i_obj]
-            rmethod_table[obj_str + '_rank'] = self.rank_solutions(solutions[:, i_obj])
+            objective_values = solutions[:, i_obj]
+            max_value = np.max(objective_values)
+            if i_obj == 0:
+                norm = max_value
+            else:
+                objective_values = objective_values * norm * 1. / max_value
+            rmethod_table[obj_str + '_obj'] = objective_values
+            rmethod_table[obj_str + '_rank'] = self.rank_solutions(objective_values)
             rmethod_table[obj_str + '_weight'] = utils.get_weigths_from_rankarr(
                 rmethod_table[obj_str + '_rank'].to_numpy(),
                 len(solutions))
@@ -237,6 +244,7 @@ class Genetic(RoutingAlg):
 
         if debug:
             print('rmethod table:', rmethod_table)
+            print('best index: ', rmethod_table.iloc[best_ind])
         return best_ind
 
     def terminate(self, res: Result, problem: RoutingProblem):
