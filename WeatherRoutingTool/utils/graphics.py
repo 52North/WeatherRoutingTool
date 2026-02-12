@@ -230,6 +230,8 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
     contents = np.array([])
     if power_type == 'fuel':
         contents = contents * u.kg / u.meter
+    elif power_type == 'speed':
+        contents = contents * u.meter/u.second
     else:
         contents = contents * u.Watt
     cent_temp = 0 * u.meter
