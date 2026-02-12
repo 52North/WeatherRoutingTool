@@ -119,15 +119,13 @@ class RoutingProblem(ElementwiseProblem):
         real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
             seconds=route_dict['travel_times'][-1].value)
         time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds()
-        beta = fuel_spread.value / (1800 * 1800 * 1800 * 1800)
-        time_obj = beta * time_diff * time_diff * time_diff * time_diff
+        time_obj = time_diff * time_diff * time_diff * time_diff
         if debug:
             print('departure time: ', self.departure_time)
             print('planned arrival time:', self.arrival_time)
 
             print('real arrival time: ', real_arrival_time)
             print('time_diff: ', time_diff)
-            print('beta: ', beta)
             print('time obj.: ', time_obj)
 
         return {"fuel_sum": np.sum(fuel), "shipparams": shipparams, "time_obj": time_obj}
