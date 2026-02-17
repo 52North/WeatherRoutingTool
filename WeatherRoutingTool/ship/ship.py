@@ -274,6 +274,63 @@ class NNBoat(Boat):
             np.vstack((n / 60, power / 1000)).T).squeeze()  # fuelConsumptionCBT.FuelConsumptionCBT(n,P)
         return fuel_rate / 1000 * u.kg / u.second
 
+    def get_apparent_wind(self, speed, true_wind_speed, true_wind_angle):
+        """
+            calculate apparent wind speed from true wind and ship course
+        """
+        apparent_wind_speed = (speed * speed + true_wind_speed * true_wind_speed
+                               + 2.0 * speed * true_wind_speed * np.cos(np.radians(true_wind_angle)))
+        apparent_wind_speed = np.sqrt(apparent_wind_speed)
+
+        angle_rad = np.radians(true_wind_angle.value)
+        apparent_wind_angle = np.full(true_wind_angle.shape, - 99) * u.radian
+
+        for iang in range(0, true_wind_speed.shape[0]):
+            arg_arcsin = true_wind_speed[iang] * np.sin(np.radians(true_wind_angle[iang])) / apparent_wind_speed[
+                iang] * u.radian
+
+            # catch it if argument of arcsin is > 1 due to rounding issues but make sure to apply this only for
+            # rounding issues
+
+            abs_arcsin = np.abs(arg_arcsin)
+            diff_to_one = abs_arcsin - 1 * u.radian
+            if diff_to_one > 0:
+                assert diff_to_one < 0.000001 * u.radian
+                if arg_arcsin > 0:
+                    arg_arcsin = 1 * u.radian
+                else:
+                    arg_arcsin = -1 * u.radian
+
+            if apparent_wind_speed[iang] > 0:
+                apparent_wind_angle[iang] = np.arcsin(arg_arcsin.value) * u.radian
+            else:
+                apparent_wind_angle[iang] = 0 * u.radian
+
+            # catch it if psi > 90° as arcsin is only defined for 0 < psi < 90°
+            # - calculate true wind angle 'true_ang_perp' for which apparent wind angle is 90°
+            # - if true wind angle is larger than 'true_ang_perp', subtract pi from apparent wind angle
+            # - apparent wind angle is always < 90° if boat speed > true wind speed; skip correction here
+            arg_arccos = speed / true_wind_speed[iang]
+            if arg_arccos > 1:
+                continue
+            true_ang_perp = np.pi * u.radian - np.arccos(speed / true_wind_speed[iang])
+            if angle_rad[iang] * u.radian > true_ang_perp:
+                apparent_wind_angle[iang] = np.pi * u.radian - apparent_wind_angle[iang]
+
+            if np.isnan(apparent_wind_angle[iang]):
+                print('true_wind_speed: ', true_wind_speed[iang])
+                print('apparent_wind_speed: ', apparent_wind_speed[iang])
+                print('true_wind_angle: ', true_wind_angle[iang])
+                print('true_ang_perp: ', true_ang_perp)
+                print('angle_rad: ', angle_rad[iang])
+                print('arg_arcsin: ', arg_arcsin)
+                print('arg_arccos: ', arg_arccos)
+                raise ValueError('Apparent wind angle is nan!')
+
+        apparent_wind_angle = apparent_wind_angle.to(u.degree)
+
+        return {'app_wind_speed': apparent_wind_speed, 'app_wind_angle': apparent_wind_angle}
+
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
         n_requests = len(courses)
@@ -312,17 +369,31 @@ class NNBoat(Boat):
         absolute_wind_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_wind_speed.value,
                                                                  ship_params.v_wind_speed.value)
         absolute_wind_direction = (absolute_wind_direction % 360) * u.degree
-        rel_wind_direction = self.get_relative_wind_dir(courses, absolute_wind_direction)
+        absolute_wind_speed = (np.sqrt((ship_params.u_wind_speed.value * ship_params.u_wind_speed.value
+                                       + ship_params.v_wind_speed.value * ship_params.v_wind_speed.value))
+                               * u.meter / u.second)
+        wind_res = self.get_apparent_wind(speed, absolute_wind_speed, absolute_wind_direction)
+
+        relative_wind_direction = self.get_relative_wind_dir(courses, wind_res['app_wind_angle'])
+
+        if debug:
+            print('absolute wind direction: ', absolute_wind_direction)
+            print('relative wind direction: ', wind_res['app_wind_angle'])
+            print('relative wind direction converted:', relative_wind_direction)
+            print('true wind speed: ', absolute_wind_speed)
+            print('apparent wind speed', wind_res['app_wind_speed'])
+            print('u: ', ship_params.u_wind_speed.value)
+            print('v: ', ship_params.v_wind_speed.value)
 
         absolute_seaway_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_currents.value,
                                                                    ship_params.v_currents.value)
         absolute_seaway_direction = (absolute_seaway_direction % 360) * u.degree
-        rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
+        # rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
 
-        lat_da = xr.DataArray(lats, dims="dummy")
-        lon_da = xr.DataArray(lons, dims="dummy")
-        rounded_ds = self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear")
-        depth = rounded_ds.to_numpy()
+        # lat_da = xr.DataArray(lats, dims="dummy")
+        # lon_da = xr.DataArray(lons, dims="dummy")
+        # rounded_ds = self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear")
+        # depth = rounded_ds.to_numpy()
 
         array_shape = ship_params.water_temperature.shape
         speed = np.full(array_shape[0], speed) * 1.994
@@ -338,25 +409,28 @@ class NNBoat(Boat):
         for ipoint in range(len(lats)):
             input_dict = {
                 'STW': speed[ipoint],  # STW
-                'draft_fp_interpolated_between_low_speeds': draught[ipoint],  # draft_fp_interpolated_between_low_speeds
-                'draft_ap_interpolated_between_low_speeds': draught[ipoint],  # draft_ap_interpolated_between_low_speeds
-                'rel_wind_direction': rel_wind_direction[ipoint].value,  # rel_wind_direction
-                'thetao': ship_params.water_temperature[ipoint].value,  # thetao
-                'Temperature_surface': ship_params.air_temperature[ipoint].value,  # Temperature_surface
-                'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
-                'z': depth[ipoint],  # z
-                'Pressure_reduced_to_MSL_msl': ship_params.pressure[ipoint].value,  # Pressure_reduced_to_MSL_msl
-                'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
-                'VTPK': ship_params.wave_period[ipoint].value,  # VTPK
-                'so': ship_params.salinity[ipoint].value,  # so
-                'ucomponent_of_wind_height_above_ground': ship_params.u_wind_speed[ipoint].value,  # u_wind
-                'vcomponent_of_wind_height_above_ground': ship_params.v_wind_speed[ipoint].value  # v_wind
+                # 'draft_fp_interpolated_between_low_speeds': draught[ipoint],
+                # draft_fp_interpolated_between_low_speeds
+                # 'draft_ap_interpolated_between_low_speeds': draught[ipoint],
+                # draft_ap_interpolated_between_low_speeds,
+                'rel_wind_speed': wind_res['app_wind_speed'][ipoint].value,
+                'rel_wind_direction': relative_wind_direction[ipoint].value,  # rel_wind_direction
+                # 'thetao': ship_params.water_temperature[ipoint].value,  # thetao
+                # 'Temperature_surface': ship_params.air_temperature[ipoint].value,  # Temperature_surface
+                # 'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
+                # 'z': depth[ipoint],  # z
+                # 'Pressure_reduced_to_MSL_msl': ship_params.pressure[ipoint].value,  # Pressure_reduced_to_MSL_msl
+                # 'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
+                # 'VTPK': ship_params.wave_period[ipoint].value,  # VTPK
+                # 'so': ship_params.salinity[ipoint].value,  # so
+                # 'ucomponent_of_wind_height_above_ground': ship_params.u_wind_speed[ipoint].value,  # u_wind
+                # 'vcomponent_of_wind_height_above_ground': ship_params.v_wind_speed[ipoint].value  # v_wind
             }
-            if debug:
-                print('before conversion: ', input_dict)
-            input_dict = self.coordinate_transformation(input_dict)
-            if debug:
-                print('after conversion: ', input_dict)
+            # if debug:
+            #    print('before conversion: ', input_dict)
+            # input_dict = self.coordinate_transformation(input_dict)
+            # if debug:
+            #    print('after conversion: ', input_dict)
             input_data = self.get_input_data(input_dict)
             if debug:
                 print('input_data: ', input_data)
