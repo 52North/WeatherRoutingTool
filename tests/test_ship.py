@@ -320,7 +320,7 @@ def test_nnmodel_result_polar_plot_wind():
 
     plt.show()
     plt.savefig(
-        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260202_Biskays_Model_Comparison/Summary/polar_plot_wind.png")
+        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260212_Biskaya_Model_Comparison/Summary/polar_plot_wind.png")
 
     assert 1 == 2
 
@@ -383,6 +383,6 @@ def test_nnmodel_result_polar_plot_wave():
 
     plt.show()
     plt.savefig(
-        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260202_Biskays_Model_Comparison/Summary/polar_plot_wave.png")
+        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260212_Biskaya_Model_Comparison/Summary/polar_plot_wave.png")
 
     assert 1 == 2
