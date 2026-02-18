@@ -18,10 +18,14 @@ from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCirc
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
+from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.ship.ship_factory import ShipFactory
+from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory
 from WeatherRoutingTool.utils.maps import Map
+from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def test_isofuelpatcher_singleton():
@@ -389,3 +393,103 @@ def test_single_point_crossover(plt):
     ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
 
     plt.saveas = "test_single_point_crossoverr.png"
+
+
+@pytest.mark.genetic
+def test_routing_problem_get_power():
+    """
+    Unit test for RoutingProblem.get_power function.
+
+    Verifies fuel consumption calculation and ship parameters for a given route
+    using genetic algorithm with direct power method.
+    """
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.genetic_test.json')
+    config = Config.assign_config(Path(configpath))
+
+    lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
+    default_map = Map(lat1, lon1, lat2, lon2)
+
+    wt = WeatherFactory.get_weather(
+        config._DATA_MODE_WEATHER,
+        config.WEATHER_DATA,
+        config.DEPARTURE_TIME,
+        config.TIME_FORECAST,
+        config.DELTA_TIME_FORECAST,
+        default_map
+    )
+
+    boat = ShipFactory.get_ship(config)
+
+    constraint_list = ConstraintsListFactory.get_constraints_list(
+        constraints_string_list=config.CONSTRAINTS_LIST,
+        data_mode=config._DATA_MODE_DEPTH,
+        min_depth=boat.get_required_water_depth(),
+        map_size=default_map,
+        depthfile=config.DEPTH_DATA,
+        waypoints=None,
+        courses_path=None
+    )
+
+    boat_speed = config.BOAT_SPEED * u.meter / u.second
+    routing_problem = RoutingProblem(
+        departure_time=config.DEPARTURE_TIME,
+        arrival_time=config.ARRIVAL_TIME,
+        boat=boat,
+        boat_speed=boat_speed,
+        constraint_list=constraint_list
+    )
+
+    # Test route: Mediterranean from Sicily to Barcelona
+    test_route = np.array([
+        [38.192, 13.392, 6.0],
+        [39.0, 10.0, 6.0],
+        [40.0, 7.0, 6.0],
+        [40.5, 5.0, 6.0],
+        [41.349, 2.188, 6.0]
+    ])
+
+    total_fuel, ship_params = routing_problem.get_power(test_route)
+
+    # Validate return types and values
+    assert isinstance(total_fuel, (float, np.floating, u.Quantity)), \
+        f"Total fuel should be numeric, got {type(total_fuel)}"
+
+    if isinstance(total_fuel, u.Quantity):
+        total_fuel_value = total_fuel.value
+    else:
+        total_fuel_value = float(total_fuel)
+
+    assert total_fuel_value > 0, \
+        f"Total fuel consumption should be positive, got {total_fuel_value}"
+    assert np.isfinite(total_fuel_value), \
+        f"Total fuel consumption should be finite, got {total_fuel_value}"
+
+    from WeatherRoutingTool.ship.shipparams import ShipParams
+    assert isinstance(ship_params, ShipParams), \
+        f"ship_params should be ShipParams instance, got {type(ship_params)}"
+
+    # Validate array dimensions (waypoints - 1 = route segments)
+    expected_steps = len(test_route) - 1
+    fuel_rate_array = ship_params.get_fuel_rate()
+
+    if isinstance(fuel_rate_array, u.Quantity):
+        fuel_rate_values = fuel_rate_array.value
+    else:
+        fuel_rate_values = np.array(fuel_rate_array)
+
+    assert len(fuel_rate_values) == expected_steps, \
+        f"fuel_rate should have {expected_steps} elements, got {len(fuel_rate_values)}"
+    assert np.all(fuel_rate_values > 0), \
+        "All per-step fuel rate values should be positive"
+
+    power_array = ship_params.get_power()
+    if isinstance(power_array, u.Quantity):
+        power_values = power_array.value
+    else:
+        power_values = np.array(power_array)
+
+    assert len(power_values) == expected_steps, \
+        f"power should have {expected_steps} elements"
+    assert np.all(power_values > 0), \
+        "All per-step power values should be positive"
