@@ -1,0 +1,42 @@
+{
+  "ALGORITHM_TYPE": "genetic",
+
+  "DEFAULT_ROUTE": [38.192, 13.392, 41.349, 2.188],
+  "DEPARTURE_TIME": "2025-04-01T11:11Z",
+  "DEFAULT_MAP": [37.1, 1.1, 41.9, 14.9],
+
+  "//": "boat",
+  "BOAT_TYPE": "direct_power_method",
+  "BOAT_BREADTH": 32,
+  "BOAT_FUEL_RATE": 167,
+  "BOAT_HBR": 30,
+  "BOAT_LENGTH": 180,
+  "BOAT_SMCR_POWER": 6502,
+  "BOAT_SMCR_SPEED": 1000,
+  "BOAT_SPEED": 6,
+  "BOAT_DRAUGHT_AFT": 10,
+  "BOAT_DRAUGHT_FORE": 10,
+
+  "//": "route",
+  "CONSTRAINTS_LIST": [
+    "land_crossing_global_land_mask",
+    "water_depth",
+    "on_map"],
+
+  "//": "data",
+  "DATA_MODE": "from_file",
+
+  "COURSES_FILE": "tests",
+  "DEPTH_DATA": "tests/data/tests_depth_data.nc",
+  "WEATHER_DATA": "tests/data/tests_weather_data.nc",
+  "ROUTE_PATH": "tests",
+
+  "TIME_FORECAST": 90,
+  "DELTA_TIME_FORECAST": 3,
+
+  "//": "genetic algorithm parameters",
+  "GENETIC_NUMBER_GENERATIONS": 5,
+  "GENETIC_NUMBER_OFFSPRINGS": 2,
+  "GENETIC_POPULATION_SIZE": 10,
+  "GENETIC_POPULATION_TYPE": "grid_based"
+}
