@@ -183,12 +183,12 @@ class TestDPM:
         pol = basic_test_func.create_dummy_Direct_Power_Ship('manualship')
         r_wind = pol.get_wind_resistance(u_wind_speed, v_wind_speed, courses)
 
-        plt.rcParams['text.usetex'] = True
-        fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-        ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
-        ax.set_xlabel('angle of attack (degrees)')
-        ax.set_ylabel(r'$C_{AA}$')
-        plt.show()
+        with plt.rc_context({'text.usetex': True}):
+            fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+            ax.plot(courses, r_wind["wind_coeff"], color=graphics.get_colour(0), label='CAA')
+            ax.set_xlabel('angle of attack (degrees)')
+            ax.set_ylabel(r'$C_{AA}$')
+            plt.show()
 
     '''
         DIRECT POWER METHOD: check for reasonable behaviour of wind resistance on polar plot
