@@ -65,10 +65,20 @@ class ShipConfig(BaseModel):
 
     @classmethod
     def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json' and Path(path).exists:
-            with path.open("r") as f:
-                config_data = json.load(f)
-            return cls.validate_config(config_data)
+        if init_mode == 'from_json':
+            if path is None:
+                raise ValueError("You chose init_mode = 'from_json' but path has no value")
+
+            path = Path(path)
+
+            if path.exists():
+                with path.open("r") as f:
+                    config_data = json.load(f)
+                return cls.validate_config(config_data)
+            else:
+                msg = f"Path to ship config doesn't exist: {path}"
+                logger.error(msg)
+                raise ValueError(msg)
         elif init_mode == 'from_dict':
             return cls.validate_config(config_dict)
         else:
