@@ -127,9 +127,8 @@ class TestRoutePostprocessing:
             ship_params_per_step=sp
         )
         boat = basic_test_func.create_dummy_Direct_Power_Ship("simpleship")
-        boat_speed = 6 * u.meter/u.second
         with engine.connect() as conn:
-            postprocessed_route = RoutePostprocessing(rp, boat, boat_speed, db_engine=conn.connection)
+            postprocessed_route = RoutePostprocessing(rp, boat, db_engine=conn.connection)
         return postprocessed_route
 
     def test_create_route_segments(self):
