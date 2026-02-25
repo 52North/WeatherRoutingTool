@@ -226,7 +226,9 @@ class TestDPM:
         - relative difference of wind direction and boat course is changing in steps of 10 degrees
         - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
     '''
-    @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+
+    @pytest.mark.skip(reason="maripower needs update of requirements.")
+    # @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
     @pytest.mark.manual
     def test_compare_wind_resistance_to_maripower(self):
         lats = np.full(10, 54.9)  # 37

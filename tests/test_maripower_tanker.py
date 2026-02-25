@@ -22,7 +22,8 @@ except ModuleNotFoundError:
     pass  # maripower installation is optional
 
 
-@pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+@pytest.mark.skip(reason="maripower needs update of requirements.")
+# @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
 @pytest.mark.maripower
 class TestMariPowerTanker:
     def compare_times(self, time64, time):
