@@ -43,16 +43,16 @@ class RoutingProblem(ElementwiseProblem):
 
     def get_objectives(self, obj_dict: dict):
         objective_keys = list(self.objectives.keys())
-        objs = []
+        objs = None
         if "arrival_time" in objective_keys:
-            objs = [np.column_stack([obj_dict["time_obj"]])]
+            objs = np.column_stack([obj_dict["time_obj"]])
         if "fuel_consumption" in objective_keys:
-            if objs == []:
-                objs = [np.column_stack([obj_dict["fuel_sum"]])]
+            if objs is None:
+                objs = np.column_stack([obj_dict["fuel_sum"].value])
             else:
-                objs.append(np.column_stack([obj_dict["fuel_sum"]]))
+                objs = np.column_stack((objs, [obj_dict["fuel_sum"].value]))
 
-        if objs == []:
+        if objs is None:
             raise ValueError('Please specify an objective for the genetic algorithm.')
 
         return objs
@@ -118,7 +118,12 @@ class RoutingProblem(ElementwiseProblem):
 
         real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
             seconds=route_dict['travel_times'][-1].value)
-        time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds()
+        time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds()/60
+
+        # set minimal time difference to 1 minute
+        if time_diff < 1:
+            time_diff = 1
+
         time_obj = time_diff * time_diff * time_diff * time_diff
         if debug:
             print('departure time: ', self.departure_time)
