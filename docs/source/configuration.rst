@@ -84,6 +84,7 @@ The following lists contain information on each variable which can be set. The c
 
 **Optional variables** (default values provided and don't need to be changed normally):
 
+- ``ARRIVAL_TIME``: arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 - ``AIR_MASS_DENSITY``: mass density of air used for direct power method (default: 1.2225 kg/m^3) 
 - ``BOAT_AOD``: lateral projected area of superstructures etc. on deck (m)
 - ``BOAT_AXV``: area of maximum transverse section exposed to the winds (m)
@@ -102,6 +103,7 @@ The following lists contain information on each variable which can be set. The c
 - ``BOAT_FACTOR_CALM_WATER``: multiplication factor for the calm water resistance model of maripower (default: 1)
 - ``BOAT_FACTOR_WAVE_FORCES``: multiplication factor for added resistance in waves model of maripower (default: 1)
 - ``BOAT_FACTOR_WIND_FORCES``: multiplication factor for the added resistance in wind model of maripower (default: 1)
+- ``BOAT_SPEED_MAX``: maximum possible boat speed (m/s)
 - ``BOAT_UNDER_KEEL_CLEARANCE``: vertical distance between keel and ground (default: 20m)
 - ``ALGORITHM_TYPE``: options: 'isofuel', 'genetic', 'speedy_isobased' (The latter shall only for testing; default: 'direct_power_method'; default: 'isofuel')
 - ``CONSTRAINTS_LIST``: options: 'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks', 'water_depth', 'on_map', 'via_waypoints', 'status_error' (default: ['land_crossing_global_land_mask', 'water_depth', 'on_map'])
@@ -126,8 +128,10 @@ The following lists contain information on each variable which can be set. The c
 - ``GENETIC_NUMBER_OFFSPRINGS``: number of offsprings for genetic algorithm (default: 2)
 - ``GENETIC_POPULATION_SIZE``: population size for genetic algorithm (default: 20)
 - ``GENETIC_POPULATION_TYPE``: type for initial population (options: 'grid_based', 'from_geojson', 'isofuel', 'gcrslider'; default: 'isofuel')
+- ``GENETIC_POPULATION_PATH``: path to initial population
 - ``GENETIC_REPAIR_TYPE``: repair strategy for genetic algorithm (options: 'waypoints_infill', 'constraint_violation', 'no_repair', default: 'waypoints_infill' and 'constraint_violation')
 - ``GENETIC_MUTATION_TYPE``: options: 'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'no_mutation' (default: 'random')
+- ``GENETIC_CROSSOVER_TYPE``: options: 'random', 'speed' (default: 'random')
 - ``GENETIC_CROSSOVER_PATCHER``: patching strategy for crossover (options: 'gcr', 'isofuel', default: 'isofuel')
 - ``GENETIC_FIX_RANDOM_SEED`` options: True, False (default: False)
 - ``INTERMEDIATE_WAYPOINTS``: coordinates for intermediate waypoints [[lat_one,lon_one], [lat_two,lon_two] ... ] (default: [])
