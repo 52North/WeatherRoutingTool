@@ -1,3 +1,4 @@
+import copy
 import logging
 import math
 import os
@@ -446,9 +447,9 @@ class RouteBlendMutation(MutationConstraintRejection):
         end = start + length
         n_points = length
 
-        rt = np.concatenate([rt[:start], self.bezier_curve(rt[start:end], n_points), rt[end:]], axis=0)
+        rt_new = np.concatenate([rt[:start], self.bezier_curve(rt[start:end], n_points), rt[end:]], axis=0)
 
-        return rt
+        return rt_new
 
 
 class RandomWalkMutation(MutationConstraintRejection):
@@ -605,6 +606,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.sigma = self.config.BOAT_SPEED_BOUNDARIES[1] / 6
 
     def mutate(self, problem, rt, **kw):
+        rt_new = copy.deepcopy(rt)
         try:
             indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
         except ValueError:
@@ -613,11 +615,12 @@ class GaussianSpeedMutation(MutationConstraintRejection):
             old_speed = rt[i][2]
             new = random.normalvariate(old_speed, self.sigma)
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
-                new = self.config.BOAT_SPEED_BOUNDARIES[0]
+                new = old_speed
             elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
-                new = self.config.BOAT_SPEED_BOUNDARIES[1]
-            rt[i][2] = new
-        return rt
+                new = old_speed
+            rt_new[i][2] = new
+
+        return rt_new
 
 
 # factory
