@@ -186,3 +186,12 @@ def test_find_coord_index_out_of_range(start_coord, end_coord, not_in_array):
 
     error_message = 'Coordinate not in array: '
     assert error_message in str(excinfo.value)
+
+def test_speed_conversion_roundtrip():
+    speeds_knots = [0, 5, 10, 25, 100]
+
+    for speed in speeds_knots:
+        mps = unit.knots_to_mps(speed)
+        knots_back = unit.mps_to_knots(mps)
+
+        assert np.isclose(knots_back, speed, atol=1e-5)
