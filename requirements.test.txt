@@ -1,4 +1,4 @@
--r requirements.txt
+.[all]
 flake8
 psycopg2
 pytest

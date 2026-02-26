@@ -5,7 +5,7 @@ from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
-    SeamarkCrossing, LandPolygonsCrossing
+    SeamarkCrossing, LandPolygonsCrossing, LandPolygonsDBCrossing
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 
 try:
@@ -47,7 +47,7 @@ def create_dummy_SeamarkCrossing_object(db_engine):
 
 
 def create_dummy_landpolygonsCrossing_object(db_engine):
-    landpolygoncrossing_obj = LandPolygonsCrossing(db_engine=db_engine)
+    landpolygoncrossing_obj = LandPolygonsDBCrossing(db_engine=db_engine)
     return landpolygoncrossing_obj
 
 

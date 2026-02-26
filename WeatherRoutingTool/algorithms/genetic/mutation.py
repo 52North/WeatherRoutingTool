@@ -4,8 +4,6 @@ import os
 import random
 from operator import add, sub
 
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
 import numpy as np
 from geographiclib.geodesic import Geodesic
 from pymoo.core.mutation import Mutation
@@ -360,6 +358,8 @@ class RandomPlateauMutation(MutationConstraintRejection):
             ])
 
         if debug:
+            import cartopy.crs as ccrs
+            import matplotlib.pyplot as plt
             print('mutated rt: ', rt_new)
             map = Map(rt[0][0], rt[0][1], rt[-1][0], rt[-1][1])
             input_crs = ccrs.PlateCarree()

@@ -1,22 +1,12 @@
 import os
 import logging
 
-import cartopy.crs as ccrs
-import cartopy.feature as cf
-import datacube
-import geopandas as gpd
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sqlalchemy
-import xarray as xr
-from global_land_mask import globe
-from shapely.geometry import Point, LineString, box
-from shapely.strtree import STRtree
 
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
-from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
@@ -241,6 +231,11 @@ class ConstraintsList:
         self.neg_dis_size = 0
         self.neg_cont_size = 0
         self.pos_size = 0
+
+    def set_STRTree(self, map_size):
+        from shapely.strtree import STRtree
+        if not self.polygons_latlon.empty:
+            self.concat_tree = STRtree(self.polygons_latlon["geometry"])
 
     def print_constraints_crossed(self):
         logger.info("Discarding point as:")
@@ -482,11 +477,85 @@ class LandCrossing(NegativeContraint):
         self.message += "crossing land!"  # self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
-        # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
+        from global_land_mask import globe
         return globe.is_land(lat, lon)
 
     def print_info(self):
         logger.info(form.get_log_step("no land crossing", 1))
+
+
+class LandPolygonsCrossing(NegativeContraint):
+    """
+    Constraint such that the boat cannot cross land (using polygons)
+    """
+
+    map_size: Map
+    points_buffer: dict
+
+    def __init__(self, map_size):
+        NegativeContraint.__init__(self, "LandPolygonsCrossing")
+        self.message += "crossing land!"
+        self.map_size = map_size
+        self.polygons = self.read_land_polygons()
+        self.points_buffer = {}
+
+    def construct_polygons_from_buffer(self, seamarks):
+        import geopandas as gpd
+        if not hasattr(self, "map_size"):
+            raise ValueError("Map size not set!")
+
+        boundary_box = type(self).get_map_box(self.map_size)
+        path = os.getenv("WRT_LAND_PORYYGON_DATA",
+                         "tests/data/osm_land_polygons/simplified-land-polygons-complete-3857/simplified_land_polygons.shp")
+
+        logger.info('Reading land polygons from ' + path)
+
+        if not os.path.exists(path):
+            raise ValueError("Land polygon data not found at: " + path)
+
+        polygons = gpd.read_file(path, bbox=boundary_box)
+        polygons = polygons.to_crs(epsg=4326)
+        return polygons
+
+    @staticmethod
+    def get_map_box(map_size):
+        from shapely.geometry import box
+        box_str = box(map_size.lon1, map_size.lat1, map_size.lon2, map_size.lat2)
+        return box_str
+
+    def check_crossing(self, lat_start=None, lon_start=None, lat_end=None, lon_end=None, current_time=None):
+        from shapely.geometry import LineString, Point
+        """
+        Check whether the section between two points intersects with a land polygon
+        """
+        is_constrained = np.zeros(len(lat_start), dtype=bool)
+
+        for i in range(len(lat_start)):
+            start_point = Point(lon_start[i], lat_start[i])
+            end_point = Point(lon_end[i], lat_end[i])
+            line = LineString([start_point, end_point])
+
+            # Check if start or end point is in land
+            if start_point.wkt in self.points_buffer:
+                is_constrained[i] = self.points_buffer[start_point.wkt]
+            else:
+                is_constrained[i] = self.polygons.contains(start_point).any()
+                self.points_buffer[start_point.wkt] = is_constrained[i]
+
+            if not is_constrained[i]:  # Only check crossing if start point is not already constrained
+                if end_point.wkt in self.points_buffer:
+                    is_constrained[i] = self.points_buffer[end_point.wkt]
+                else:
+                    is_constrained[i] = self.polygons.contains(end_point).any()
+                    self.points_buffer[end_point.wkt] = is_constrained[i]
+
+            if not is_constrained[i]:  # Only check crossing if neither start nor end point is constrained
+                is_constrained[i] = self.polygons.intersects(line).any()
+
+        return is_constrained
+
+    def print_info(self):
+        logger.info(form.get_log_step("no land crossing (polygons)", 1))
 
 
 class StatusCodeError(NegativeContraint):
@@ -504,6 +573,8 @@ class StatusCodeError(NegativeContraint):
         self.courses_path = courses_path
 
     def load_data_from_file(self, courses_path):
+        import xarray as xr
+        import numpy as np
         routeData = xr.open_dataset(courses_path)
         status = routeData['Status'].to_numpy().flatten()
         lats = np.repeat(routeData.lat.values, len(routeData.it_course))
@@ -552,7 +623,7 @@ class WaterDepth(NegativeContraint):
     """
 
     map_size: Map
-    depth_data: xr  # the xarray.Dataset is expected to have a variable called "z" (as in the original ETOPO dataset)
+    depth_data: object  # xarray.Dataset expected to have variable 'z' (as in the ETOPO dataset)
     current_depth: np.ndarray
     min_depth: float
 
@@ -589,6 +660,7 @@ class WaterDepth(NegativeContraint):
         :return: Depth data loaded from ODC
         :rtype: xarray.Dataset
         """
+        import datacube
         logger.info(form.get_log_step('Obtaining depth data from ODC', 0))
 
         dc = datacube.Datacube()
@@ -629,7 +701,7 @@ class WaterDepth(NegativeContraint):
         :return: Depth data loaded from NCEI
         :rtype: xarray.Dataset
         """
-
+        from maridatadownloader import DownloaderFactory
         logger.info(form.get_log_step('Automatic download of depth data', 0))
 
         downloader = DownloaderFactory.get_downloader(downloader_type='xarray', platform='etoponcei')
@@ -642,6 +714,17 @@ class WaterDepth(NegativeContraint):
         self._to_netcdf(depth_data_chunked, depth_path)
         return depth_data_chunked
 
+    def read_seamarks_from_file(self, map_size):
+        """
+        Read seamarks from file
+
+        :param depth_path: Path to the depth data
+        :type depth_path: str
+        :return: Depth data loaded from file
+        :rtype: xarray.Dataset
+        """
+        pass
+
     def load_data_from_file(self, depth_path):
         """
         Load depth data from given file
@@ -651,7 +734,7 @@ class WaterDepth(NegativeContraint):
         :return: Depth data loaded from file
         :rtype: xarray.Dataset
         """
-
+        import xarray as xr
         # FIXME: if this loads the whole file into memory, apply subsetting already here
         # FIXME: can we delete the chunks for figure generation completely?
         logger.info(form.get_log_step('Downloading depth data from file: ' + depth_path, 0))
@@ -672,6 +755,7 @@ class WaterDepth(NegativeContraint):
         return return_value
 
     def check_depth(self, lat, lon, time):
+        import xarray as xr
         lat_da = xr.DataArray(lat, dims="dummy")
         lon_da = xr.DataArray(lon, dims="dummy")
         rounded_ds = self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear")
@@ -685,6 +769,11 @@ class WaterDepth(NegativeContraint):
         return self.current_depth
 
     def plot_depth_map_from_file(self, path):
+        import matplotlib.pyplot as plt
+        import cartopy.crs as ccrs
+        import cartopy.feature as cf
+        import xarray as xr
+
         level_diff = 10
 
         ds_depth = xr.open_dataset(path)
@@ -710,6 +799,10 @@ class WaterDepth(NegativeContraint):
         plt.show()
 
     def plot_constraint(self, fig, ax):
+        import matplotlib.pyplot as plt
+        import cartopy.crs as ccrs
+        import cartopy.feature as cf
+
         level_diff = 10
         plt.rcParams["font.size"] = 20
         ax.axis("off")
@@ -752,6 +845,7 @@ class WaterDepth(NegativeContraint):
         return False
 
     def _scale(self, dataset):
+        import xarray as xr
         # FIXME: decode_cf also scales the nodata values, e.g. -32767 -> -327.67
         return xr.decode_cf(dataset)
 
@@ -816,7 +910,8 @@ class ContinuousCheck(NegativeContraint):
     engine: sqlalchemy.engine
 
     def __init__(self, db_engine=None):
-        NegativeContraint.__init__(self, "ContinuousChecks")
+        import os
+        super().__init__("ContinuousChecks")
         if db_engine is not None:
             self.engine = db_engine
         else:
@@ -857,6 +952,7 @@ class ContinuousCheck(NegativeContraint):
             min_lat = map_size.lat2
             max_lat = map_size.lat1
 
+        from shapely.geometry import box
         bbox = box(min_lon, min_lat, max_lon, max_lat)
         bbox_wkt = bbox.wkt
         logger.debug('BBox in WKT: ', bbox_wkt)
@@ -898,9 +994,7 @@ class SeamarkCrossing(ContinuousCheck):
 
     predicates: list  # Possible spatial relations to be tested when considering the constraints
 
-    tags: list  # Values of the seamark tags that need to be considered
-
-    concat_tree: STRtree
+    concat_tree = None
 
     def __init__(self, is_stay_on_map=None, map_size=None, db_engine=None):
         super().__init__(db_engine=db_engine)
@@ -954,13 +1048,26 @@ class SeamarkCrossing(ContinuousCheck):
         return query
 
     def set_STRTree(self, db_engine=None, query=None):
+        from shapely.strtree import STRtree
         concat_gdf = self.concat_nodes_ways(db_engine, query)
         concat_tree = STRtree(concat_gdf["geom"])
 
         logger.debug(f'PRINT CONCAT DF {concat_gdf}')
         return concat_tree
 
+    def plot_route(self, ax, colour, label, linestyle=False):
+        """
+        Plot route on basemapw GeoDataFrame using public.nodes table in the query
+
+        :param db_engine: sqlalchemy engine
+        :type db_engine: sqlalchemy.engine.Engine
+        :param query: sql query for table nodes, defaults to None
+        :type query: str, optional
+        """
+        pass
+
     def query_nodes(self, db_engine, query=None):
+        import geopandas as gpd
         """
         Create new GeoDataFrame using public.nodes table in the query
 
@@ -979,6 +1086,7 @@ class SeamarkCrossing(ContinuousCheck):
         return gdf
 
     def query_ways(self, db_engine, query):
+        import geopandas as gpd
         """
         Create new GeoDataFrame using public.nodes table in the query
 
@@ -1041,6 +1149,8 @@ class SeamarkCrossing(ContinuousCheck):
         query_tree = []
         if self.concat_tree is not None:
             for i in range(len(lat_start)):
+                from shapely.geometry import LineString, Point
+                import geopandas as gpd
                 start_point = Point(lon_start[i], lat_start[i])
                 end_point = Point(lon_end[i], lat_end[i])
                 line = LineString([start_point, end_point])
@@ -1061,9 +1171,9 @@ class SeamarkCrossing(ContinuousCheck):
             return query_tree
 
 
-class LandPolygonsCrossing(ContinuousCheck):
+class LandPolygonsDBCrossing(ContinuousCheck):
     """
-    Use the 'LandPolygonsCrossing' constraint cautiously.
+    Use the 'LandPolygonsDBCrossing' constraint to check land crossing using database-backed polygons.
     This class is yet to be tested.
     """
     land_polygon_STRTree = None
@@ -1084,11 +1194,13 @@ class LandPolygonsCrossing(ContinuousCheck):
         return query
 
     def set_landpolygon_STRTree(self, db_engine=None, query=None):
+        from shapely.strtree import STRtree
         land_polygon_gdf = self.query_land_polygons(db_engine, query)
         land_STRTree = STRtree(land_polygon_gdf["geom"])
         return land_STRTree
 
     def query_land_polygons(self, db_engine, query):
+        import geopandas as gpd
         """
         Create new GeoDataFrame using public.ways table in the query
 
@@ -1124,6 +1236,8 @@ class LandPolygonsCrossing(ContinuousCheck):
         if self.land_polygon_STRTree is not None:
             # generating the LineString geometry from start and end point
             for i in range(len(lat_start)):
+                from shapely.geometry import LineString, Point
+                import geopandas as gpd
                 start_point = Point(lon_start[i], lat_start[i])
                 end_point = Point(lon_end[i], lat_end[i])
                 line = LineString([start_point, end_point])

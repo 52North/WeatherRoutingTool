@@ -1,16 +1,12 @@
 import json
 from datetime import datetime, timedelta
 
-import cartopy.crs as ccrs
 import logging
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas
 from geovectorslib import geod
-from matplotlib import gridspec
 from astropy import units as u
 
-import WeatherRoutingTool.utils.unit_conversion as units
 import WeatherRoutingTool.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
@@ -346,6 +342,8 @@ class RouteParams:
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
+        import cartopy.crs as ccrs
+        
         input_crs = ccrs.PlateCarree()
         lats = self.lats_per_step
         lons = self.lons_per_step
@@ -367,6 +365,8 @@ class RouteParams:
             return {"value": self.get_fuel_per_dist(), "label": "fuel consumption", "unit": u.kg}
 
     def plot_power_vs_dist(self, color, label, power_type, ax, bin_center_mean=None, bin_width_mean=None):
+        import matplotlib.pyplot as plt
+        
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
@@ -419,6 +419,8 @@ class RouteParams:
 
     # TODO check whether correct: Why do we see steps and no smooth curve?
     def plot_acc_power_vs_dist(self, color, label, power_type):
+        import matplotlib.pyplot as plt
+        
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
@@ -450,6 +452,8 @@ class RouteParams:
         plt.xticks()
 
     def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
+        import matplotlib.pyplot as plt
+        
         power_nom = self.get_power_type(power_type)
         dist_nom = self.dists_per_step
         hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom["value"], power_type)
@@ -481,6 +485,8 @@ class RouteParams:
         plt.xticks()
 
     def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
+        import matplotlib.pyplot as plt
+        
         power = self.get_power_type(power_type)
         if coordstring == 'lat':
             coord = self.lats_per_step[:-1]
@@ -515,6 +521,9 @@ class RouteParams:
         self.ship_params_per_step = ship_params
 
     def plot_power_vs_dist_with_weather(self, data_array, label_array, n_datasets):
+        import matplotlib.pyplot as plt
+        from matplotlib import gridspec
+        
         if n_datasets < 1:
             raise ValueError('You should at least provide 1 dataset!')
 

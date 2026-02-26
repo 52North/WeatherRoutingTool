@@ -1,13 +1,9 @@
 import logging
-import sys
 import os
 import time
 from datetime import datetime, timedelta
 from math import ceil
 
-import cartopy.crs as ccrs
-import datacube
-import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
@@ -111,6 +107,9 @@ class WeatherCond:
         pass
 
     def plot_wind_weather(self, time, rebinx=5, rebiny=5):
+        import cartopy.crs as ccrs
+        import matplotlib.pyplot as plt
+        
         input_crs = ccrs.PlateCarree()
         fig, ax = graphics.generate_basemap(
             map=self.map_size.get_var_tuple(),
@@ -397,6 +396,8 @@ class WeatherCondFromFile(WeatherCond):
         return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
 
     def plot_weather_map(self, fig, ax, time, varname, rebinx=5, rebiny=5, **kwargs):
+        import matplotlib.pyplot as plt
+
 
         if varname == 'wind':
             u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
@@ -618,6 +619,7 @@ class WeatherCondFromFile(WeatherCond):
 
 class WeatherCondODC(WeatherCond):
     def __init__(self, time, hours, time_res):
+        import datacube
         super().__init__(time, hours, time_res)
         self.dc = datacube.Datacube()
 

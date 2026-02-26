@@ -2,9 +2,7 @@ import logging
 import math
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
-import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form

@@ -1,4 +1,4 @@
-from pymoo.core.repair import Repair, NoRepair
+from pymoo.core.repair import Repair
 
 import numpy as np
 import logging
