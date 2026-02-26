@@ -436,18 +436,20 @@ class RouteBlendMutation(MutationConstraintRejection):
         # test shape of input route
         assert len(rt.shape) == 2
         assert rt.shape[1] == 3
-        route_length = rt.shape[0]
+        rt_new = copy.deepcopy(rt)
+
+        route_length = rt_new.shape[0]
 
         # only mutate routes that are long enough
         if route_length < self.min_length:
-            return rt
+            return rt_new
 
         start = np.random.randint(0, route_length - self.min_length)
         length = np.random.randint(self.min_length, min(self.max_length, route_length - start))
         end = start + length
         n_points = length
 
-        rt_new = np.concatenate([rt[:start], self.bezier_curve(rt[start:end], n_points), rt[end:]], axis=0)
+        rt_new = np.concatenate([rt_new[:start], self.bezier_curve(rt_new[start:end], n_points), rt_new[end:]], axis=0)
 
         return rt_new
 
