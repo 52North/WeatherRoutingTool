@@ -422,6 +422,7 @@ class Genetic(RoutingAlg):
         input_crs = ccrs.PlateCarree()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        route_lc = None
 
         for igen in range(len(history)):
             plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -453,6 +454,7 @@ class Genetic(RoutingAlg):
                         **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         label=f"full population [{last_pop.shape[0]}]",
+                        linewidth=0,
                         transform=input_crs)
 
                 else:
@@ -461,7 +463,11 @@ class Genetic(RoutingAlg):
                         last_pop[iroute, 0][:, 0],
                         **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
+                        linewidth=0,
                         transform=input_crs)
+
+                route_lc = graphics.get_route_lc(last_pop[iroute, 0])
+                ax.add_collection(route_lc)
 
             if igen == (self.n_generations - 1):
                 ax.plot(
@@ -472,6 +478,9 @@ class Genetic(RoutingAlg):
                     label="best route",
                     transform=input_crs
                 )
+            cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+            cbar.set_label('Geschwindigkeit ($m/s$)')
+            plt.tight_layout()
 
             ax.legend()
 
@@ -509,27 +518,32 @@ class Genetic(RoutingAlg):
         """Plot the convergence curve (best objective value per generation)."""
 
         best_f = []
+        is_initialised = False
 
         for algorithm in res.history:
-            # For single-objective, take min of F; for multi-objective, take min of first objective
             F = algorithm.pop.get('F')
-            if F.ndim == 2:
-                best_f.append(np.min(F[:, 0]))
-            else:
-                best_f.append(np.min(F))
+            for iobj in range(F.ndim - 1):
+                if not is_initialised:
+                    best_f.append([])
+                best_f[iobj].append(np.min(F[:, iobj]))
+            is_initialised = True
 
-        n_gen = np.arange(1, len(best_f) + 1)
+        n_gen = np.arange(1, len(best_f[0]) + 1)
 
         # plot png
-        plt.figure(figsize=graphics.get_standard('fig_size'))
-        plt.plot(n_gen, best_f, marker='o')
-        plt.xlabel('Generation')
-        plt.ylabel('Best Objective Value')
-        plt.title('Convergence Plot')
-        plt.grid(True)
-        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
-        plt.cla()
-        plt.close()
+        i_obj = 0
+        for obj_str in self.objectives:
+            fig_path_name = 'genetic_algorithm_convergence' + obj_str
+            plt.figure(figsize=graphics.get_standard('fig_size'))
+            plt.plot(n_gen, best_f[i_obj], marker='o')
+            plt.xlabel('Generation')
+            plt.ylabel('Best Objective Value ' + obj_str)
+            plt.title('Convergence Plot')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.figure_path, fig_path_name + '.png'))
+            plt.cla()
+            plt.close()
 
-        # write to csv
-        graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_convergence.csv'), n_gen, best_f)
+            # write to csv
+            graphics.write_graph_to_csv(os.path.join(self.figure_path, fig_path_name + '.csv'), n_gen, best_f[i_obj])
+            i_obj += 1
