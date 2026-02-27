@@ -1,5 +1,4 @@
 # import cProfile
-from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory

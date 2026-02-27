@@ -1,9 +1,9 @@
+import logging
 from datetime import datetime
 
 import matplotlib
 from astropy import units as u
 from geovectorslib import geod
-from matplotlib.figure import Figure
 
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
@@ -48,6 +48,7 @@ class RoutingAlg:
         self.gcr_course = self.gcr_course * u.degree
 
         self.figure_path = get_figure_path()
+        import matplotlib.pyplot as plt
         plt.switch_backend("Agg")
 
         self.boat_speed = config.BOAT_SPEED * u.meter/u.second

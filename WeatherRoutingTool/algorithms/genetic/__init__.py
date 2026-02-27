@@ -3,8 +3,6 @@ import os
 import time
 from datetime import timedelta
 
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -71,7 +69,7 @@ class Genetic(RoutingAlg):
         :param verbose: Verbosity setting for logs
         :type verbose: Optional[bool]
         """
-
+        import matplotlib.pyplot as plt
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
@@ -236,7 +234,7 @@ class Genetic(RoutingAlg):
         :param res: Result object of minimization
         :type res: pymoo.core.result.Result
         """
-
+        import matplotlib.pyplot as plt
         running = RunningMetric()
 
         plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -297,6 +295,8 @@ class Genetic(RoutingAlg):
         :param best_route: Optimum route
         :type best_route: np.ndarray
         """
+        import cartopy.crs as ccrs
+        import matplotlib.pyplot as plt
         input_crs = ccrs.PlateCarree()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
@@ -357,6 +357,8 @@ class Genetic(RoutingAlg):
             plt.savefig(os.path.join(self.figure_path, figname))
 
     def plot_coverage(self, res, best_route):
+        import cartopy.crs as ccrs
+        import matplotlib.pyplot as plt
         history = res.history
         input_crs = ccrs.PlateCarree()
 
@@ -385,6 +387,7 @@ class Genetic(RoutingAlg):
 
     def plot_convergence(self, res):
         """Plot the convergence curve (best objective value per generation)."""
+        import matplotlib.pyplot as plt
 
         best_f = []
 
