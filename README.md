@@ -1,3 +1,21 @@
+## Quick Start (Beginner)
+
+This section helps first-time users quickly install and verify the
+WeatherRoutingTool.
+
+### Steps
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/52North/WeatherRoutingTool.git
+   cd WeatherRoutingTool
+ 
+### With this ✅ (safe + correct)
+```markdown
+4. Verify installation:
+
+Ensure that all dependencies are installed successfully.  
+You can now explore the example configurations or scripts provided in the repository.
 # Weather Routing Tool (WRT)
 
 A tool to perform optimization of ship routes based on fuel consumption in different weather conditions.
