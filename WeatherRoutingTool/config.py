@@ -68,8 +68,8 @@ class Config(BaseModel):
     # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
     # 'seamarks','water_depth', 'on_map', 'via_waypoints', 'status_error'
 
-    _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
-    _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc'
+    _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc', 'skip'
+    _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc', 'skip'
     DEFAULT_ROUTE: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
     # start and end point of the route (lat_start, lon_start, lat_end, lon_end)
     DEFAULT_MAP: Annotated[list[Union[int, float]], Field(min_length=4, max_length=4)]
@@ -387,8 +387,9 @@ class Config(BaseModel):
         :return: Config object with validated WEATHER_DATA regarding place and time
         :rtype: WeatherRoutingTool.config.Config
         """
-        # The Dijkstra algorithm does not consider weather data at the moment
+        # The Dijkstra and GCR Slider algorithms do not consider weather data at the moment
         if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
+            self._DATA_MODE_WEATHER = 'skip'
             return self
         path = Path(self.WEATHER_DATA)
         if path.exists():
@@ -439,8 +440,9 @@ class Config(BaseModel):
         :return: Config object with validated DEPTH_DATA regarding place
         :rtype: WeatherRoutingTool.config.Config
         """
-        # The Dijkstra algorithm does not consider depth data at the moment
+        # The Dijkstra and GCR Slider algorithms do not consider depth data at the moment
         if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
+            self._DATA_MODE_DEPTH = 'skip'
             return self
         path = Path(self.DEPTH_DATA)
         if path.exists():

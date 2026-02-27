@@ -565,7 +565,9 @@ class WaterDepth(NegativeContraint):
 
         self.depth_data = None
 
-        if data_mode == 'odc':
+        if data_mode == 'skip':
+            return
+        elif data_mode == 'odc':
             self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['z'])
         elif data_mode == 'automatic':
             self.depth_data = self.load_data_automatic(depth_path)
