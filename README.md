@@ -8,7 +8,8 @@ Introduction: [WRT-sandbox](https://github.com/52North/WRT-sandbox) [![Binder](h
 
 ## Funding
 
-|                                                                                      Project/Logo                                                                                      | Description                                                                                                                                                                                                                                                                                 |
-|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [<img alt="MariData" align="middle" width="267" height="50" src="https://github.com/52North/WeatherRoutingTool/blob/main/docs/_static/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="https://github.com/52North/WeatherRoutingTool/blob/main/docs/_static/bmwi_logo_en.png" style="float:right"/>](https://www.bmvi.de/) |
-|               [<img alt="TwinShip" align="middle" src="https://github.com/52North/WeatherRoutingTool/blob/main/docs/_static/twinship_logo.png"/>](https://twin-ship.eu/)               | Co-funded by the European Union’s Horizon Europe programme under grant agreement No. 101192583                                                                                                                                                                                              |
+
+| Logo | Project Description |
+|------|---------------------|
+| <img src="docs/_static/maridata_logo.png" width="120"/> | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi). |
+| <img src="docs/_static/twinship_logo.png" width="120"/> | Co-funded by the European Union’s Horizon Europe programme under grant agreement No. 101192583. |
