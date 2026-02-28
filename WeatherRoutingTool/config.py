@@ -56,7 +56,7 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal[
         'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
     ] = 'isofuel'
-    ARRIVAL_TIME: datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
+    ARRIVAL_TIME: Optional[datetime] = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
     BOAT_SPEED: float = -99.  # boat speed [m/s]
@@ -209,15 +209,28 @@ class Config(BaseModel):
 
     @field_validator('DEPARTURE_TIME', 'ARRIVAL_TIME', mode='before')
     @classmethod
-    def parse_and_validate_datetime(cls, v):
+    def parse_and_validate_datetime(cls, v, info: ValidationInfo):
+        field_name = info.field_name
+
+        # Allow ARRIVAL_TIME to be omitted or explicitly set to None
+        if v is None:
+            if field_name == 'ARRIVAL_TIME':
+                return None
+            raise ValueError(f"'{field_name}' must be in format YYYY-MM-DDTHH:MMZ")
+
         if isinstance(v, datetime):
             return v
 
-        try:
-            dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
-            return dt
-        except ValueError:
-            raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
+        if isinstance(v, str):
+            # Backward compatibility: treat the old sentinel string for ARRIVAL_TIME as "not set"
+            if field_name == 'ARRIVAL_TIME' and v == '9999-99-99T99:99Z':
+                return None
+            try:
+                return datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
+            except ValueError:
+                raise ValueError(f"'{field_name}' must be in format YYYY-MM-DDTHH:MMZ")
+
+        raise ValueError(f"'{field_name}' must be a datetime or string in format YYYY-MM-DDTHH:MMZ")
 
     @field_validator('COURSES_FILE', 'ROUTE_PATH', 'DIJKSTRA_MASK_FILE', 'GENETIC_POPULATION_PATH',
                      mode='after')
@@ -480,11 +493,14 @@ class Config(BaseModel):
     def check_speed_determination(self) -> Self:
         logger.info(f'arrival time: {self.ARRIVAL_TIME}')
         logger.info(f'speed: {self.BOAT_SPEED}')
-        if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
+        arrival_time_specified = self.ARRIVAL_TIME is not None
+        boat_speed_specified = self.BOAT_SPEED != -99.
+
+        if not arrival_time_specified and not boat_speed_specified:
             raise ValueError('Please specify either the boat speed or the arrival time')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
+        if arrival_time_specified and boat_speed_specified:
             raise ValueError('Please specify either the boat speed or the arrival time and not both.')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
+        if arrival_time_specified and self.ALGORITHM_TYPE != 'genetic':
             raise ValueError('The determination of the speed from the arrival time is only possible for the'
                              ' genetic algorithm')
         return self
