@@ -1,0 +1,9 @@
+# Core dependencies for minimal WeatherRoutingTool installation
+# These are essential for basic weather routing functionality
+
+numpy
+pandas
+xarray
+scipy>=1.10.0
+pydantic
+astropy
