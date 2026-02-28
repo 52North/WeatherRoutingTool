@@ -189,7 +189,12 @@ class Config(BaseModel):
         """
 
         if init_mode == 'from_json':
-            if Path(path).exists:
+            if path is None:
+                raise ValueError("You chose init_mode = 'from_json' but path has no value")
+
+            path = Path(path)
+
+            if path.exists():
                 with path.open("r") as f:
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
