@@ -530,28 +530,6 @@ class RandomWalkMutation(MutationConstraintRejection):
         return rt
 
 
-# ----------
-class RandomMutationsOrchestrator(MutationBase):
-    """Select a mutation operator at random and apply it to the population.
-
-    :param opts: List of Mutation classes.
-    :type opts: list[Mutation]
-    """
-
-    def __init__(self, opts, **kw):
-        super().__init__(**kw)
-
-        self.opts = opts
-
-    def _do(self, problem, X, **kw):
-        opt = self.opts[np.random.randint(0, len(self.opts))]
-        return opt._do(problem, X, **kw)
-
-    def print_mutation_statistics(self):
-        for opt in self.opts:
-            opt.print_mutation_statistics()
-
-
 class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
     """
     Ship speed mutation class.
@@ -625,6 +603,41 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         return rt_new
 
 
+# ----------
+class RandomMutationsOrchestrator(MutationBase):
+    """Select a mutation operator at random and apply it to the population.
+
+    :param speed_opts: List of Mutation classes for mutating speed.
+    :type speed_opts: list[Mutation]
+    :param waypoint_opts: List of Mutation classes for mutating waypoints.
+    :type waypoint_optsgit s: list[Mutation]
+    """
+
+    def __init__(self, speed_opts, waypoint_opts, **kw):
+        super().__init__(**kw)
+
+        self.speed_opts = speed_opts
+        self.waypoint_opts = waypoint_opts
+
+    def _do(self, problem, X, **kw):
+        if self.speed_opts:
+            speed_opt = self.speed_opts[np.random.randint(0, len(self.speed_opts))]
+            X = speed_opt._do(problem, X, **kw)
+        if self.waypoint_opts:
+            waypoint_opt = self.waypoint_opts[np.random.randint(0, len(self.waypoint_opts))]
+            X = waypoint_opt._do(problem, X, **kw)
+        return X
+
+    def print_mutation_statistics(self):
+        if self.speed_opts:
+            for opt in self.speed_opts:
+                opt.print_mutation_statistics()
+
+        if self.waypoint_opts:
+            for opt in self.waypoint_opts:
+                opt.print_mutation_statistics()
+
+
 # factory
 # ----------
 class MutationFactory:
@@ -641,12 +654,33 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
-                opts=[
+                waypoint_opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
                     RouteBlendMutation(config=config, constraints_list=constraints_list),
+                ],
+                speed_opts=[
                     # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
                     GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
+
+        if config.GENETIC_MUTATION_TYPE == "rndm_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
+            return RandomMutationsOrchestrator(
+                waypoint_opts=None,
+                speed_opts=[
+                    # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
+                    GaussianSpeedMutation(config=config, constraints_list=constraints_list)
+                ], )
+
+        if config.GENETIC_MUTATION_TYPE == "rndm_waypoints":
+            logger.debug('Setting mutation type of genetic algorithm to "rndm_waypoints".')
+            return RandomMutationsOrchestrator(
+                waypoint_opts=[
+                    RandomPlateauMutation(config=config, constraints_list=constraints_list),
+                    RouteBlendMutation(config=config, constraints_list=constraints_list),
+                ],
+                speed_opts=None
+            )
 
         if config.GENETIC_MUTATION_TYPE == "rndm_walk":
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
