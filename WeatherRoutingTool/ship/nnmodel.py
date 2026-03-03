@@ -44,7 +44,9 @@ class NNBoat(Boat):
         for key, value in info.items():
             print(f"  {key}: {value}")
 
-        if not config_obj.DEPTH_DATA == " ":
+        depth_path = str(config_obj.DEPTH_DATA)
+
+        if not depth_path == " ":
             self.use_depth_data = True
             self.depth_data = xr.open_dataset(config_obj.DEPTH_DATA)
         self.weather_path = config_obj.WEATHER_DATA
