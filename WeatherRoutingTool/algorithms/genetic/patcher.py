@@ -320,10 +320,9 @@ class IsofuelPatcher(PatcherBase):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
-        speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
-
         # single route
         if self.n_routes == "single":
+            speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
             return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step, speed], axis=1)
 
         # list of routes
@@ -333,6 +332,7 @@ class IsofuelPatcher(PatcherBase):
         routes = []
 
         for rt in alg.route_list:
+            speed = np.full(rt.lons_per_step.shape, src[2])
             routes.append(np.stack([rt.lats_per_step, rt.lons_per_step, speed], axis=1))
         return routes
 
