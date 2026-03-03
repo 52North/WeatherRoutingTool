@@ -122,13 +122,13 @@ class WeatherCond:
             time=time,
             latitude=slice(self.map_size.lat1, self.map_size.lat2),
             longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground=10,
+            height_above_ground=10
         )
         v = self.ds['v-component_of_wind_height_above_ground'].sel(
             time=time,
             latitude=slice(self.map_size.lat1, self.map_size.lat2),
             longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground=10,
+            height_above_ground=10
         )
 
         u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()

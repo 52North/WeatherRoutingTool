@@ -194,8 +194,6 @@ class Genetic(RoutingAlg):
         start_times = np.append(start_times, arrival_time)
         travel_times = np.append(travel_times, -99 * u.second)
 
-        ship_params.print()
-
         route = RouteParams(
             count=npoints - 1,
             start=self.start,
