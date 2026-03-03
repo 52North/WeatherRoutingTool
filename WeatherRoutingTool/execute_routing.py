@@ -1,5 +1,4 @@
 # import cProfile
-from datetime import datetime
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
@@ -14,13 +13,15 @@ def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
 
 
-def execute_routing(config):
+def execute_routing(config, ship_config):
     """
     Execute route optimization based on the user-defined configuration.
     After a successful run the final route is saved into the configured folder.
 
     :param config: validated configuration
     :type config: WeatherRoutingTool.config.Config
+    :param ship_config: validated ship configuration
+    :type ship_config: WeatherRoutingTool.ship.ship_config.ShipConfig
     :return: None
     """
     # prof = cProfile.Profile()
@@ -44,7 +45,7 @@ def execute_routing(config):
 
     # *******************************************
     # initialise boat
-    boat = ShipFactory.get_ship(config)
+    boat = ShipFactory.get_ship(config.BOAT_TYPE, ship_config)
 
     # *******************************************
     # initialise constraints

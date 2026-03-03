@@ -22,7 +22,7 @@ class WeatherFactory:
             return None
 
         if data_mode == 'from_file':
-            logger.info(form.get_log_step('Reading weather data from file:  ' + file_path, 0))
+            logger.info(form.get_log_step(f'Reading weather data from file:  {file_path}', 0))
             wt = WeatherCondFromFile(departure_time, time_forecast, time_resolution)
             wt.set_map_size(default_map)
             wt.read_dataset(file_path)

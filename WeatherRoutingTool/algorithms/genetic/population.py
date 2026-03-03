@@ -1,6 +1,7 @@
 import logging
 import os
 from math import ceil
+from pathlib import Path
 from re import match
 
 import astropy.units as u
@@ -179,10 +180,10 @@ class FromGeojsonPopulation(Population):
         example: `route_1.json, route_2.json, route_3.json, ...`
 
     :param routes_dir: Directory pointing to the routes folder
-    :type routes_dir: str
+    :type routes_dir: pathlib.Path
     """
 
-    def __init__(self, config: Config, routes_dir: str, default_route, constraints_list, pop_size):
+    def __init__(self, config: Config, routes_dir: Path, default_route, constraints_list, pop_size):
         super().__init__(
             config=config,
             default_route=default_route,
@@ -190,9 +191,9 @@ class FromGeojsonPopulation(Population):
             pop_size=pop_size
         )
 
-        if not os.path.exists(routes_dir) or not os.path.isdir(routes_dir):
+        if not routes_dir.exists() or not routes_dir.is_dir():
             raise FileNotFoundError("Routes directory not found")
-        self.routes_dir: str = routes_dir
+        self.routes_dir = routes_dir
 
     def generate(self, problem, n_samples, **kw):
         logger.debug(f"Population from geojson routes: {self.routes_dir}")

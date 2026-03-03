@@ -8,7 +8,7 @@ logger = logging.getLogger('WRT.ShipConfig')
 
 class ShipConfig(BaseModel):
     # Filepaths
-    WEATHER_DATA: Path  # path to weather data
+    WEATHER_DATA: Path = None  # path to weather data
     DEPTH_DATA: Path = None  # path to depth data
     COURSES_FILE: Path = None  # path to file that acts as intermediate storage for courses per routing step
 
@@ -64,16 +64,30 @@ class ShipConfig(BaseModel):
             raise
 
     @classmethod
-    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
-        if init_mode == 'from_json' and Path(path).exists:
-            with path.open("r") as f:
-                config_data = json.load(f)
-            return cls.validate_config(config_data)
+    def assign_config(cls, path: str | Path = None, init_mode='from_file', config_dict=None):
+        if init_mode == 'from_file':
+            if path is None:
+                msg = "You chose init_mode = 'from_file' but no path is given"
+                logger.info(msg)
+                raise ValueError(msg)
+            else:
+                if isinstance(path, str):
+                    path = Path(path)
+            if path.exists():
+                with path.open("r") as f:
+                    config_data = json.load(f)
+                    return cls.validate_config(config_data)
+            else:
+                msg = f"Given path to ship config json file '{path}' doesn't exist"
+                logger.info(msg)
+                raise ValueError(msg)
         elif init_mode == 'from_dict':
-            return cls.validate_config(config_dict)
+            if config_dict is not None:
+                return cls.validate_config(config_dict)
+            else:
+                raise ValueError("You chose init_mode = 'from_dict' but config_dict has no value")
         else:
-            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
-            logger.error(msg)
+            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_file' and 'from_dict'."
             raise ValueError(msg)
 
     @field_validator('BOAT_BREADTH', 'BOAT_LENGTH', 'BOAT_SMCR_POWER', mode='after')

@@ -8,8 +8,6 @@ import os
 from datetime import datetime
 
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy import units as u
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
@@ -18,11 +16,13 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
 def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dict, geojsondir, maripower_scenario,
                                 draught_fp, draught_ap, sog):
-    boat = MariPowerTanker(file_name=config.CONFIG_PATH)
+    ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
+    boat = MariPowerTanker(ship_config)
     boat.set_ship_property('Draught_FP', draught_fp.mean())
     boat.set_ship_property('Draught_AP', draught_ap.mean())
     boat.set_ship_property('WindForcesFactor', windfactor)
@@ -60,7 +60,8 @@ def run_maripower_test_scenario(calmfactor, windfactor, wavefactor, waypoint_dic
 
 
 def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
-    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
+    ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
+    boat = DirectPowerBoat(ship_config)
     boat.speed = sog
     boat.load_data()
 
@@ -148,8 +149,7 @@ if __name__ == "__main__":
     # read arguments
     args = parser.parse_args()
 
-    config = Config(file_name=args.file)
-    config.print()
+    config = Config.assign_config(args.file)
 
     scenario_name = args.name
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     figurefile = get_figure_path()
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
-    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = config.DEPARTURE_TIME
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
 
@@ -203,7 +203,8 @@ if __name__ == "__main__":
         )
 
     if str(args.boat_type) == 'data':
-        boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
+        ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
+        boat = DirectPowerBoat(ship_config)
         power = power * boat.power_at_sp * 0.01 * 4 / 3  # power_at_sp is 75% of SMCR power
 
         ship_params = ShipParams.set_default_array_1D(len(lon))

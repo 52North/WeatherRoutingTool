@@ -11,6 +11,7 @@ from pathlib import Path
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.unit_conversion as utils
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 have_maripower = False
 try:
@@ -405,7 +406,8 @@ class TestMariPowerTanker:
             'BOAT_BREADTH': 32
         }
 
-        pol = MariPowerTanker(init_mode="from_dict", config_dict=config)
+        ship_config = ShipConfig.assign_config(init_mode="from_dict", config_dict=config)
+        pol = MariPowerTanker(ship_config)
 
         assert pol.depth_path == depth_path
         assert pol.weather_path == weather_path

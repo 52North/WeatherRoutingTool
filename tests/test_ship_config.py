@@ -28,7 +28,7 @@ def load_example_config():
 
 def test_assign_config_from_json():
     _, config_path = load_example_config()
-    config = ShipConfig.assign_config(path=config_path, init_mode="from_json")
+    config = ShipConfig.assign_config(path=config_path, init_mode="from_file")
 
     assert isinstance(config, ShipConfig)
 

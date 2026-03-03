@@ -11,27 +11,26 @@ logger = logging.getLogger('WRT')
 class ShipFactory:
 
     @staticmethod
-    def get_ship(config):
+    def get_ship(boat_type: str, ship_config):
         ship = None
 
         form.print_line()
-        logger.info("Initialising of ship type")
+        logger.info("Initialising ship")
 
-        if config.BOAT_TYPE == 'speedy_isobased':
+        if boat_type == 'speedy_isobased':
             logger.info('Use speedy isobased model for modeling fuel consumption.')
-            ship = ConstantFuelBoat(file_name=config.CONFIG_PATH)
-        if config.BOAT_TYPE == 'direct_power_method':
+            ship = ConstantFuelBoat(ship_config)
+        if boat_type == 'direct_power_method':
             logger.info('Use direct power method for modeling fuel consumption.')
-            ship = DirectPowerBoat(file_name=config.CONFIG_PATH)
-        if config.BOAT_TYPE == 'CBT':
+            ship = DirectPowerBoat(ship_config)
+        if boat_type == 'CBT':
             logger.info('Use maripower for modeling fuel consumption.')
-            ship = MariPowerTanker(file_name=config.CONFIG_PATH)
-        if config.BOAT_TYPE == 'SAL':
+            ship = MariPowerTanker(ship_config)
+        if boat_type == 'SAL':
             raise NotImplementedError('Ship type SAL is not yet supported!')
 
         if not ship:
-            raise NotImplementedError('The ship type "' + str(config.SHIP_TYPE) + '", that you requested is '
-                                                                                  'not implemented.')
+            raise NotImplementedError(f"The ship type '{boat_type}' is not implemented.")
         ship.load_data()
         ship.check_data_meaningful()
         ship.print_init()

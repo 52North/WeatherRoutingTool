@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Annotated, List, Literal, Optional, Self, Union
 
 import pandas as pd
@@ -56,10 +56,10 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal[
         'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
     ] = 'isofuel'
-    ARRIVAL_TIME: datetime = '9999-99-99T99:99Z'  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
+    ARRIVAL_TIME: datetime = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
-    BOAT_SPEED: float = -99.  # boat speed [m/s]
+    BOAT_SPEED: float = None  # boat speed [m/s]
     BOAT_SPEED_MAX: float = 10  # maximum possible boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
@@ -79,7 +79,7 @@ class Config(BaseModel):
     DEPARTURE_TIME: datetime  # start time of travelling, format: 'yyyy-mm-ddThh:mmZ'
 
     # options for Dijkstra algorithm
-    DIJKSTRA_MASK_FILE: str = None  # can be found with "find ~ -type f -name globe_combined_mask_compressed.npz"
+    DIJKSTRA_MASK_FILE: Path = None  # can be found with "find ~ -type f -name globe_combined_mask_compressed.npz"
     # or downloaded via https://github.com/toddkarin/global-land-mask/blob/master/global_land_mask/globe_combined_mask_compressed.npz  # noqa: E501
     DIJKSTRA_NOF_NEIGHBORS: int = 1  # number of neighbors to use when creating a graph from the grid
     DIJKSTRA_STEP: int = 1  # step used to save final route to prevent very dense waypoints
@@ -101,7 +101,7 @@ class Config(BaseModel):
     GENETIC_POPULATION_SIZE: int = 20  # population size for genetic algorithm
     GENETIC_POPULATION_TYPE: Literal[
         'grid_based', 'from_geojson', 'isofuel', 'gcrslider'] = 'grid_based'  # type for initial population  # noqa: E501
-    GENETIC_POPULATION_PATH: Optional[str] = None  # path to initial population
+    GENETIC_POPULATION_PATH: Optional[Path] = None  # path to initial population
     GENETIC_REPAIR_TYPE: List[Literal[
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
@@ -138,12 +138,12 @@ class Config(BaseModel):
     TIME_FORECAST: float = 90  # forecast hours weather
 
     # Filepaths
-    COURSES_FILE: str = None  # needs to be declared after BOAT_TYPE
+    COURSES_FILE: Path = None  # needs to be declared after BOAT_TYPE
     # path to file that acts as intermediate storage for courses per routing step
-    DEPTH_DATA: str = None  # path to depth data
-    WEATHER_DATA: str = None  # path to weather data
-    ROUTE_PATH: str  # path to the folder where the json file with the route will be written
-    CONFIG_PATH: Union[str, PosixPath] = None  # path to config file
+    DEPTH_DATA: Path = None  # path to depth data
+    WEATHER_DATA: Path = None  # path to weather data
+    ROUTE_PATH: Path  # path to the folder where the json file with the route will be written
+    CONFIG_PATH: Path = None  # path to config file
 
     @classmethod
     def validate_config(cls, config_data):
@@ -171,13 +171,13 @@ class Config(BaseModel):
             raise
 
     @classmethod
-    def assign_config(cls, path=None, init_mode='from_json', config_dict=None):
+    def assign_config(cls, path: str | Path = None, init_mode='from_file', config_dict=None):
         """
         Check input type of config data and run validate_config
 
         :param path: path to json with config data, defaults to None
         :type path: str, optional
-        :param init_mode: _description_, defaults to 'from_json'
+        :param init_mode: _description_, defaults to 'from_file'
         :type init_mode: str, optional
         :param config_dict: dict with config data, defaults to None
         :type config_dict: dict, optional
@@ -187,37 +187,47 @@ class Config(BaseModel):
         :return: Validated config
         :rtype: WeatherRoutingTool.config.Config
         """
-
-        if init_mode == 'from_json':
-            if Path(path).exists:
+        if init_mode == 'from_file':
+            if path is None:
+                msg = "You chose init_mode = 'from_file' but no path is given"
+                logger.info(msg)
+                raise ValueError(msg)
+            else:
+                if isinstance(path, str):
+                    path = Path(path)
+            if path.exists():
                 with path.open("r") as f:
                     config_data = json.load(f)
                     config = cls.validate_config(config_data)
                     config.CONFIG_PATH = path
                 return config
             else:
-                logger.info(f"Given path to config json file: {path}")
-                raise ValueError("Path to config doesn't exist")
+                msg = f"Given path to config json file '{path}' doesn't exist"
+                logger.info(msg)
+                raise ValueError(msg)
         elif init_mode == 'from_dict':
             if config_dict is not None:
                 return cls.validate_config(config_dict)
             else:
                 raise ValueError("You chose init_mode = 'from_dict' but config_dict has no value")
         else:
-            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_json' and 'from_dict'."
+            msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_file' and 'from_dict'."
             raise ValueError(msg)
 
     @field_validator('DEPARTURE_TIME', 'ARRIVAL_TIME', mode='before')
     @classmethod
-    def parse_and_validate_datetime(cls, v):
+    def parse_and_validate_datetime(cls, v, info: ValidationInfo):
+        if info.field_name == 'ARRIVAL_TIME':
+            # ARRIVAL_TIME is allowed to be empty (see 'check_speed_determination' method)
+            if v is None:
+                return v
         if isinstance(v, datetime):
             return v
-
         try:
             dt = datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
             return dt
         except ValueError:
-            raise ValueError("'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ")
+            raise ValueError("'DEPARTURE_TIME/ARRIVAL_TIME' must be in format YYYY-MM-DDTHH:MMZ")
 
     @field_validator('COURSES_FILE', 'ROUTE_PATH', 'DIJKSTRA_MASK_FILE', 'GENETIC_POPULATION_PATH',
                      mode='after')
@@ -227,22 +237,24 @@ class Config(BaseModel):
             if info.data.get('BOAT_TYPE') != 'CBT':
                 return v
             else:
-                path = Path(os.path.dirname(v))
+                # The file will be created on-the-fly, thus we only check if the parent folder exists
+                tmp_path = v.parent
         elif info.field_name == 'DIJKSTRA_MASK_FILE':
             if info.data.get('ALGORITHM_TYPE') != 'dijkstra':
                 return v
             else:
-                path = Path(v)
+                tmp_path = v
         elif info.field_name == 'GENETIC_POPULATION_PATH':
-            if info.data.get('GENETIC_POPULATION_TYPE') != 'from_geojson':
+            if (info.data.get('ALGORITHM_TYPE') != 'genetic' or
+                    info.data.get('GENETIC_POPULATION_TYPE') != 'from_geojson'):
                 return v
             else:
-                path = Path(v)
+                tmp_path = v
         else:
-            path = Path(v)
-        if not path.exists():
-            raise ValueError(f"Path doesn't exist: {path}")
-        return str(path)
+            tmp_path = v
+        if not tmp_path.exists():
+            raise ValueError(f"Path doesn't exist: {tmp_path}")
+        return v
 
     @field_validator('DEFAULT_ROUTE', mode='after')
     @classmethod
@@ -391,8 +403,7 @@ class Config(BaseModel):
         if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
             self._DATA_MODE_WEATHER = 'skip'
             return self
-        path = Path(self.WEATHER_DATA)
-        if path.exists():
+        if self.WEATHER_DATA.exists():
             try:
                 ds = xr.open_dataset(self.WEATHER_DATA)
 
@@ -444,8 +455,7 @@ class Config(BaseModel):
         if self.ALGORITHM_TYPE in ['dijkstra', 'gcr_slider']:
             self._DATA_MODE_DEPTH = 'skip'
             return self
-        path = Path(self.DEPTH_DATA)
-        if path.exists():
+        if self.DEPTH_DATA.exists():
             try:
                 ds = xr.open_dataset(self.DEPTH_DATA)
 
@@ -470,6 +480,9 @@ class Config(BaseModel):
     @field_validator('BOAT_SPEED', mode='after')
     @classmethod
     def check_boat_speed(cls, v):
+        # BOAT_SPEED is allowed to be empty (see 'check_speed_determination' method)
+        if v is None:
+            return v
         if v > 10:
             logger.warning(
                 "Your 'BOAT_SPEED' is higher than 10 m/s."
@@ -480,11 +493,11 @@ class Config(BaseModel):
     def check_speed_determination(self) -> Self:
         logger.info(f'arrival time: {self.ARRIVAL_TIME}')
         logger.info(f'speed: {self.BOAT_SPEED}')
-        if self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.BOAT_SPEED == -99.:
-            raise ValueError('Please specify either the boat speed or the arrival time')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and not self.BOAT_SPEED == -99.:
-            raise ValueError('Please specify either the boat speed or the arrival time and not both.')
-        if not self.ARRIVAL_TIME == '9999-99-99T99:99Z' and self.ALGORITHM_TYPE != 'genetic':
+        if self.ARRIVAL_TIME is None and self.BOAT_SPEED is None:
+            raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
+        if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
+            raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
+        if self.ARRIVAL_TIME is not None and self.ALGORITHM_TYPE != 'genetic':
             raise ValueError('The determination of the speed from the arrival time is only possible for the'
                              ' genetic algorithm')
         return self

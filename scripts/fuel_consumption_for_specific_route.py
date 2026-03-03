@@ -5,7 +5,6 @@
 
 import argparse
 import json
-import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -17,12 +16,12 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
-from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
 def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
-    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
+    ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
+    boat = DirectPowerBoat(ship_config)
     boat.speed = sog
     boat.load_data()
 

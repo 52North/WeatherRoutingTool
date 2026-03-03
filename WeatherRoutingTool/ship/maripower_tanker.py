@@ -2,7 +2,6 @@ import copy
 import logging
 import math
 import os
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -66,40 +65,34 @@ class MariPowerTanker(Boat):
 
     use_depth_data: bool
 
-    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
-        super().__init__(init_mode, file_name, config_dict)
+    def __init__(self, ship_config: ShipConfig):
+        super().__init__(ship_config)
 
         if not have_maripower:
             raise ModuleNotFoundError(
                 'You are trying to use maripower to estimate the fuel consumption but maripower is'
                 ' not installed. Please install the necessary software.')
 
-        config_obj = None
-        if init_mode == "from_file":
-            config_obj = ShipConfig.assign_config(Path(file_name))
-        else:
-            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
-
         # mandatory variables for maripower
-        if not config_obj.COURSES_FILE:
+        if not ship_config.COURSES_FILE:
             raise Exception('COURSES_FILE is a mandatory parameter for the maripower tanker!')
 
-        self.courses_path = config_obj.COURSES_FILE
-        self.weather_path = config_obj.WEATHER_DATA
+        self.courses_path = str(ship_config.COURSES_FILE)
+        self.weather_path = str(ship_config.WEATHER_DATA)
 
         # optional variables for maripower
-        if not config_obj.DEPTH_DATA == " ":
+        if ship_config.DEPTH_DATA is not None:
             self.use_depth_data = True
-            self.depth_path = config_obj.DEPTH_DATA
+            self.depth_path = str(ship_config.DEPTH_DATA)
 
         self.hydro_model = mariPower.ship.CBT()
-        self.hydro_model.Draught_AP = np.array([config_obj.BOAT_DRAUGHT_AFT])
-        self.hydro_model.Draught_FP = np.array([config_obj.BOAT_DRAUGHT_FORE])
-        self.hydro_model.Roughness_Level = np.array([config_obj.BOAT_ROUGHNESS_LEVEL])
-        self.hydro_model.Roughness_Distribution_Level = np.array([config_obj.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
-        self.hydro_model.WindForcesFactor = config_obj.BOAT_FACTOR_WIND_FORCES
-        self.hydro_model.WaveForcesFactor = config_obj.BOAT_FACTOR_WAVE_FORCES
-        self.hydro_model.CalmWaterFactor = config_obj.BOAT_FACTOR_CALM_WATER
+        self.hydro_model.Draught_AP = np.array([ship_config.BOAT_DRAUGHT_AFT])
+        self.hydro_model.Draught_FP = np.array([ship_config.BOAT_DRAUGHT_FORE])
+        self.hydro_model.Roughness_Level = np.array([ship_config.BOAT_ROUGHNESS_LEVEL])
+        self.hydro_model.Roughness_Distribution_Level = np.array([ship_config.BOAT_ROUGHNESS_DISTRIBUTION_LEVEL])
+        self.hydro_model.WindForcesFactor = ship_config.BOAT_FACTOR_WIND_FORCES
+        self.hydro_model.WaveForcesFactor = ship_config.BOAT_FACTOR_WAVE_FORCES
+        self.hydro_model.CalmWaterFactor = ship_config.BOAT_FACTOR_CALM_WATER
 
         # Fine-tuning the following parameters might lead to a significant speedup of mariPower. However, they should
         # be set carefully because the accuracy of the predictions might also be affected

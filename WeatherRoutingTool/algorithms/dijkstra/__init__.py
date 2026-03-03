@@ -2,6 +2,7 @@ import json
 import logging
 from itertools import product
 from math import ceil, gcd
+from pathlib import Path
 from typing import Generator
 
 import networkx as nx
@@ -210,7 +211,7 @@ class DijkstraGlobalLandMask(RoutingAlg):
                 return True
         return False
 
-    def read_mask(self, mask_file):
+    def read_mask(self, mask_file: Path):
         # Mask shape: 21600 (lat) * 43200 (lon) = 933,120,000
         # Water equals to True, land equals to False
         npz_file = np.load(mask_file)
