@@ -11,6 +11,7 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.ship.evaluateSavedModels import SavedModelEvaluator
+from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.ship')
 
@@ -310,10 +311,10 @@ class NNBoat(Boat):
             # - calculate true wind angle 'true_ang_perp' for which apparent wind angle is 90°
             # - if true wind angle is larger than 'true_ang_perp', subtract pi from apparent wind angle
             # - apparent wind angle is always < 90° if boat speed > true wind speed; skip correction here
-            arg_arccos = speed / true_wind_speed[iang]
+            arg_arccos = speed[iang] / true_wind_speed[iang]
             if arg_arccos > 1:
                 continue
-            true_ang_perp = np.pi * u.radian - np.arccos(speed / true_wind_speed[iang])
+            true_ang_perp = np.pi * u.radian - np.arccos(speed[iang] / true_wind_speed[iang])
             if angle_rad[iang] * u.radian > true_ang_perp:
                 apparent_wind_angle[iang] = np.pi * u.radian - apparent_wind_angle[iang]
 
@@ -337,13 +338,12 @@ class NNBoat(Boat):
 
         # initialise clean ship params object
         dummy_array = np.full(n_requests, -99)
-        speed_array = np.full(n_requests, speed)
 
         ship_params = ShipParams(
             fuel_rate=dummy_array * u.kg / u.s,
             power=dummy_array * u.Watt,
             rpm=dummy_array * u.Hz,
-            speed=speed_array * u.meter / u.second,
+            speed=speed * u.meter / u.second,
             r_wind=dummy_array * u.N,
             r_calm=dummy_array * u.N,
             r_waves=dummy_array * u.N,
@@ -366,11 +366,13 @@ class NNBoat(Boat):
         # calculate added resistances & update ShipParams object respectively; update also for environmental conditions
         ship_params = self.evaluate_weather(ship_params, lats, lons, time)
 
-        absolute_wind_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_wind_speed.value,
-                                                                 ship_params.v_wind_speed.value)
+        absolute_wind_direction = WeatherCond.get_theta_from_uv(ship_params.u_wind_speed.value,
+                                                                ship_params.v_wind_speed.value)
         absolute_wind_direction = (absolute_wind_direction % 360) * u.degree
+        absolute_wind_direction[absolute_wind_direction > 180 * u.degree] = 360 * u.degree - absolute_wind_direction[
+            absolute_wind_direction > 180 * u.degree]
         absolute_wind_speed = (np.sqrt((ship_params.u_wind_speed.value * ship_params.u_wind_speed.value
-                                       + ship_params.v_wind_speed.value * ship_params.v_wind_speed.value))
+                                        + ship_params.v_wind_speed.value * ship_params.v_wind_speed.value))
                                * u.meter / u.second)
         wind_res = self.get_apparent_wind(speed, absolute_wind_speed, absolute_wind_direction)
 
