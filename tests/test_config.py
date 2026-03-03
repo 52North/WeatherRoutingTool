@@ -38,6 +38,40 @@ def test_invalid_time_raises_error():
     assert "'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
 
 
+def test_arrival_time_optional_when_omitted():
+    """Config validation should succeed when ARRIVAL_TIME is not provided."""
+    config_data, _ = load_example_config()
+    # ARRIVAL_TIME is intentionally omitted in the example config
+    assert "ARRIVAL_TIME" not in config_data
+
+    config = Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert config.ARRIVAL_TIME is None
+
+
+def test_both_arrival_time_and_boat_speed_specified_raises_error():
+    """Config validation should reject when both ARRIVAL_TIME and BOAT_SPEED are specified."""
+    config_data, _ = load_example_config()
+    config_data["ALGORITHM_TYPE"] = "genetic"
+    config_data["ARRIVAL_TIME"] = "2025-04-02T11:11Z"
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "Please specify either the boat speed or the arrival time and not both." in str(excinfo.value)
+
+
+def test_neither_arrival_time_nor_boat_speed_specified_raises_error():
+    """Config validation should reject when neither ARRIVAL_TIME nor BOAT_SPEED is specified."""
+    config_data, _ = load_example_config()
+    config_data["BOAT_SPEED"] = -99.
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "Please specify either the boat speed or the arrival time" in str(excinfo.value)
+
+
 def test_invalid_path_raises_error(tmp_path):
     config_data, _ = load_example_config()
     config_data["ROUTE_PATH"] = str(tmp_path / "nonexistent.nc")
