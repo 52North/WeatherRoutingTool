@@ -12,7 +12,8 @@ from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
 import WeatherRoutingTool.utils.unit_conversion as units
-from WeatherRoutingTool.ship.ship import Boat, NNBoat
+from WeatherRoutingTool.ship.ship import Boat
+from WeatherRoutingTool.ship.nnmodel import NNBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 

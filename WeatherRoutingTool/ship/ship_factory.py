@@ -2,7 +2,8 @@ import logging
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.ship.ship import ConstantFuelBoat, NNBoat
+from WeatherRoutingTool.ship.ship import ConstantFuelBoat
+from WeatherRoutingTool.ship.nnmodel import NNBoat
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 
 logger = logging.getLogger('WRT')
