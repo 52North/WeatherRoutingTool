@@ -8,6 +8,7 @@ Welcome to the documentation of the 52°North Weather Routing Tool (WRT)!
    :caption: Contents:
 
    source/installation
+   source/getting_started
    source/configuration
    source/algorithms/index
    source/constraints/index

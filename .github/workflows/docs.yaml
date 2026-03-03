@@ -32,7 +32,6 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get -y install graphviz
           pip3 install -r requirements.txt
-          pip3 install -r requirements-without-deps.txt --no-deps
           pip3 install -r docs/requirements.txt
       -
         name: Build docs using Sphinx

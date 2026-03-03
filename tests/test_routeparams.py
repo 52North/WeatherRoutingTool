@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 
+from geovectorslib import geod
 import numpy as np
 from astropy import units as u
 
@@ -12,7 +13,7 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 def test_get_acc_variables():
     lats = np.array([40, 50, 60, 70])
     lons = np.array([4, 5, 6, 7])
-    fuel_rate = np.array([1.12, 1.13, 1.15]) * u.kg/u.s
+    fuel_rate = np.array([1.12, 1.13, 1.15]) * u.kg / u.s
     dist = np.array([100, 200, 150]) * u.meter
     start_time = np.array([datetime(2022, 12, 19),
                            datetime(2022, 12, 19) + timedelta(hours=1),
@@ -25,7 +26,7 @@ def test_get_acc_variables():
         fuel_rate=fuel_rate,
         power=dummy * u.Watt,
         rpm=dummy * u.Hz,
-        speed=dummy * u.m/u.s,
+        speed=dummy * u.m / u.s,
         r_calm=dummy * u.N,
         r_wind=dummy * u.N,
         r_waves=dummy * u.N,
@@ -34,11 +35,11 @@ def test_get_acc_variables():
         wave_height=dummy * u.m,
         wave_direction=dummy * u.rad,
         wave_period=dummy * u.second,
-        u_currents=dummy * u.m/u.s,
-        v_currents=dummy * u.m/u.s,
-        u_wind_speed=dummy * u.m/u.s,
-        v_wind_speed=dummy * u.m/u.s,
-        pressure=dummy * u.kg/u.meter/u.second**2,
+        u_currents=dummy * u.m / u.s,
+        v_currents=dummy * u.m / u.s,
+        u_wind_speed=dummy * u.m / u.s,
+        v_wind_speed=dummy * u.m / u.s,
+        pressure=dummy * u.kg / u.meter / u.second ** 2,
         air_temperature=dummy * u.deg_C,
         salinity=dummy * u.dimensionless_unscaled,
         water_temperature=dummy * u.deg_C,
@@ -74,3 +75,89 @@ def test_get_acc_variables():
     assert test_fuel == rp_test.get_full_fuel()
     assert np.allclose(test_dist, rp_test.get_full_dist())
     assert test_time == rp_test.get_full_travel_time()
+
+
+'''
+    Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly.
+'''
+
+
+def test_get_waypoint_coords():
+    bs = 6 * u.meter / u.second
+    start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
+    route_lats = np.array([54.9, 54.7, 54.5, 54.2])
+    route_lons = np.array([13.2, 13.4, 13.7, 13.9])
+
+    start_lats_test = np.array([54.9, 54.7, 54.5])
+    start_lons_test = np.array([13.2, 13.4, 13.7])
+    dists_test = np.full(route_lats.shape[0] - 1, -99.)
+    start_times_test = np.full(route_lats.shape[0] - 1, start_time)
+    start_times_test[0] = start_time
+    travel_times_test = np.full(route_lats.shape[0] - 1, timedelta(seconds=0.))
+
+    for ipoint in range(3):
+        start_lat = route_lats[ipoint]
+        start_lon = route_lons[ipoint]
+        end_lat = route_lats[ipoint + 1]
+        end_lon = route_lons[ipoint + 1]
+
+        dists_test[ipoint] = geod.inverse(
+            [start_lat],
+            [start_lon],
+            [end_lat],
+            [end_lon]
+        )['s12'][0]
+        travel_times_test[ipoint] = (dists_test[ipoint] * u.meter / bs).value
+        if ipoint < 2:
+            start_times_test[ipoint + 1] = start_times_test[ipoint] + timedelta(seconds=travel_times_test[ipoint])
+
+    waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
+
+    assert np.all(start_lats_test == waypoint_dict['start_lats'])
+    assert np.all(start_lons_test == waypoint_dict['start_lons'])
+    assert np.all(dists_test == waypoint_dict['dist'].value)
+    assert np.all(start_times_test == waypoint_dict['start_times'])
+    assert np.all(travel_times_test == waypoint_dict['travel_times'].value)
+
+
+'''
+    Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly for boat speed array.
+'''
+
+
+def test_get_waypoint_coords_bsarray():
+    bs = np.array([6, 7, 8]) * u.meter / u.second
+    start_time = datetime.strptime("2023-07-20T10:00Z", '%Y-%m-%dT%H:%MZ')
+    route_lats = np.array([54.9, 54.7, 54.5, 54.2])
+    route_lons = np.array([13.2, 13.4, 13.7, 13.9])
+
+    start_lats_test = np.array([54.9, 54.7, 54.5])
+    start_lons_test = np.array([13.2, 13.4, 13.7])
+    dists_test = np.full(route_lats.shape[0] - 1, -99.)
+    start_times_test = np.full(route_lats.shape[0] - 1, start_time)
+    start_times_test[0] = start_time
+    travel_times_test = np.full(route_lats.shape[0] - 1, timedelta(seconds=0.))
+
+    for ipoint in range(3):
+        start_lat = route_lats[ipoint]
+        start_lon = route_lons[ipoint]
+        end_lat = route_lats[ipoint + 1]
+        end_lon = route_lons[ipoint + 1]
+
+        dists_test[ipoint] = geod.inverse(
+            [start_lat],
+            [start_lon],
+            [end_lat],
+            [end_lon]
+        )['s12'][0]
+        travel_times_test[ipoint] = (dists_test[ipoint] * u.meter / bs[ipoint]).value
+        if ipoint < 2:
+            start_times_test[ipoint + 1] = start_times_test[ipoint] + timedelta(seconds=travel_times_test[ipoint])
+
+    waypoint_dict = RouteParams.get_per_waypoint_coords(route_lons, route_lats, start_time, bs)
+
+    assert np.all(start_lats_test == waypoint_dict['start_lats'])
+    assert np.all(start_lons_test == waypoint_dict['start_lons'])
+    assert np.all(dists_test == waypoint_dict['dist'].value)
+    assert np.all(start_times_test == waypoint_dict['start_times'])
+    assert np.all(travel_times_test == waypoint_dict['travel_times'].value)

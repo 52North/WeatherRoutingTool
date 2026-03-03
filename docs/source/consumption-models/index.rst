@@ -52,7 +52,7 @@ The coordinates ``it_pos`` and ``it_course`` are iterators for the coordinate pa
 
 .. figure:: /_static/fuel_request_GA.png
    :alt: fuel_request_GA
-   :height: 500
+   :width: 200
    :align: center
 
    Fig.3 Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the genetic algorithm. All coordinate pairs marked by the same colour are send in one request.

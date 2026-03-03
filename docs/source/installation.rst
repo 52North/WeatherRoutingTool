@@ -30,15 +30,13 @@ Steps:
 
     .. code-block:: shell
 
-        pip install . && pip install --no-deps -r requirements-without-deps.txt
+        pip install .
 
     4.2. In editable mode (recommended for development)
 
     .. code-block:: shell
 
-        pip install -e . && pip install --no-deps -r requirements-without-deps.txt
-
-The part ``pip install --no-deps -r requirements-without-deps.txt`` is necessary because of a dependency issue (see `issue 8 <https://github.com/52North/WeatherRoutingTool/issues/8>`_). We might implement a different solution in the future making the installation easier/cleaner.
+        pip install -e .
 
 **Power/fuel consumption framework**
 

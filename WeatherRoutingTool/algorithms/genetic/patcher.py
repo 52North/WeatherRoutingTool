@@ -28,13 +28,15 @@ class PatcherBase:
     def __init__(self, *args, **kwargs):
         pass
 
-    def patch(self, src: tuple, dst: tuple):
+    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None):
         """Obtain waypoints between `src` and `dst`.
 
         :param src: Source coords as (lat, lon)
         :type src: tuple[float, float]
         :param dst: Destination coords as (lat, lon)
         :type dst: tuple[float, float]
+        :param departure_time: Departure time
+        :type departure_time: datetime
         """
         raise NotImplementedError("This patching method is not implemented.")
 
@@ -62,6 +64,8 @@ class SingletonBase(type):
 class GreatCircleRoutePatcher(PatcherBase):
     """Produce a set of waypoints along the Great Circle Route between src and dst.
 
+    The same speed as the speed at `src` is added to every waypoint.
+
     :param dist: Dist between each waypoint in the Great Circle Route
     :type dist: float
     """
@@ -73,20 +77,26 @@ class GreatCircleRoutePatcher(PatcherBase):
         # variables
         self.dist = dist
 
-    def patch(self, src: tuple, dst: tuple, departure_time: datetime = None, npoints=None, ) -> np.ndarray:
+    def patch(self,
+              src: tuple[float, float, float],
+              dst: tuple[float, float, float],
+              departure_time: datetime = None,
+              npoints=None,
+              ) -> np.ndarray:
         """Generate equi-distant waypoints across the Great Circle Route from src to
         dst
 
-        :param src: Source waypoint as (lat, lon) pair
-        :type src: tuple[float, float]
-        :param dst: Destination waypoint as (lat, lon) pair
-        :type dst: tuple[float, float]
-        :return: List of waypoints along the great circle (lat, lon)
-        :rtype: np.array[tuple[float, float]]
+        :param src: Source waypoint as (lat, lon, v) triple
+        :type src: tuple[float, float, float]
+        :param dst: Destination waypoint as (lat, lon, v) triple
+        :type dst: tuple[float, float, float]
+        :return: List of waypoints along the great circle (lat, lon, v)
+        :rtype: np.array[tuple[float, float, float]]
         """
 
         geod: Geodesic = Geodesic.WGS84
-        line = geod.InverseLine(*src, *dst)
+        line = geod.InverseLine(*src[:-1], *dst[:-1])
+        speed = src[2]
 
         if not npoints == None:
             self.dist = line.s13 / npoints
@@ -97,7 +107,7 @@ class GreatCircleRoutePatcher(PatcherBase):
         for i in range(npoints + 1):
             s = min(self.dist * i, line.s13)
             g = line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
-            route.append((g['lat2'], g['lon2']))
+            route.append((g['lat2'], g['lon2'], speed))
 
         return np.array([src, *route[1:-1], dst])
 
@@ -256,14 +266,20 @@ class IsofuelPatcher(PatcherBase):
 
         return wt, boat, water_depth, constraints_list
 
-    def patch(self, src, dst, departure_time: datetime = None):
+    def patch(self,
+              src: tuple[float, float, float],
+              dst: tuple[float, float, float],
+              departure_time: datetime = None
+              ):
         """
         Produce a set of waypoints between src and dst using the IsoFuel algorithm.
 
-        :param src: Source waypoint as (lat, lon) pair
-        :type src: tuple[float, float]
-        :param dst: Destination waypoint as (lat, lon) pair
-        :type dst: tuple[float, float]
+        The same speed as the speed at `src` is added to every waypoint.
+
+        :param src: Source waypoint as (lat, lon, speed) triple
+        :type src: tuple[float, float, float]
+        :param dst: Destination waypoint as (lat, lon, speed) triple
+        :type dst: tuple[float, float, float]
         :param departure_time: departure time from src
         :type departure_time: datetime
         :return: List of waypoints or list of multiple routes connecting src and dst
@@ -272,7 +288,7 @@ class IsofuelPatcher(PatcherBase):
         self.patch_count += 1
 
         cfg = self.config.model_copy(update={
-            "DEFAULT_ROUTE": [*src, *dst],
+            "DEFAULT_ROUTE": [*src[:-1], *dst[:-1]],
             "DEPARTURE_TIME": departure_time
         })
 
@@ -303,9 +319,11 @@ class IsofuelPatcher(PatcherBase):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
+        speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
+
         # single route
         if self.n_routes == "single":
-            return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step], axis=1)
+            return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step, speed], axis=1)
 
         # list of routes
         if not alg.route_list:
@@ -314,7 +332,7 @@ class IsofuelPatcher(PatcherBase):
         routes = []
 
         for rt in alg.route_list:
-            routes.append(np.stack([rt.lats_per_step, rt.lons_per_step], axis=1))
+            routes.append(np.stack([rt.lats_per_step, rt.lons_per_step, speed], axis=1))
         return routes
 
 

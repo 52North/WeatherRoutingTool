@@ -127,9 +127,8 @@ class TestRoutePostprocessing:
             ship_params_per_step=sp
         )
         boat = basic_test_func.create_dummy_Direct_Power_Ship("simpleship")
-        boat_speed = 6 * u.meter/u.second
         with engine.connect() as conn:
-            postprocessed_route = RoutePostprocessing(rp, boat, boat_speed, db_engine=conn.connection)
+            postprocessed_route = RoutePostprocessing(rp, boat, db_engine=conn.connection)
         return postprocessed_route
 
     def test_create_route_segments(self):
@@ -357,13 +356,15 @@ class TestRoutePostprocessing:
                   [datetime(2024, 5, 17, 10), LineString([(13, 2), (12, 2)])]])
 
         rpp = self.generate_test_route_postprocessing_obj()
-        rpp.ship_speed = 6 * u.meter / u.second
+        rpp.ship_speed = np.full(len(rpp.ship_speed), 6) * rpp.ship_speed.unit
         time_list = rpp.recalculate_starttime_per_node(final_route)
         # test_list = [(datetime(2024, 5, 17, 9), datetime(2024, 5, 18, 1, 16, 57), datetime(2024, 5, 18, 6, 26,  7))]
         # delta time 16:16:57, 05:09:10
         # [datetime.datetime(2024, 5, 17, 9, 0), datetime.datetime(2024, 5, 18, 1, 16, 52),
         # datetime.datetime(2024, 5, 18, 6, 25, 54)]
 
+        # FIXME: compare actual timestamp not only the type (before that make sure the values make sense/the algorithm
+        #  still works)
         for timestamp in time_list:
             assert isinstance(timestamp, datetime)
 

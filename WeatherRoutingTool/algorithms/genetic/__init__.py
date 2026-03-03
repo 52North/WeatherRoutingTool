@@ -6,11 +6,9 @@ from datetime import timedelta
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from astropy import units as u
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
-from pymoo.optimize import minimize
 from pymoo.termination import get_termination
 from pymoo.util.running_metric import RunningMetric
 

@@ -1,7 +1,8 @@
-import copy
 import logging
 import math
 import os
+import random
+from operator import add, sub
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -115,7 +116,8 @@ class MutationConstraintRejection(Mutation):
         :param problem: Routing problem.
         :type: RoutingProblem
         :param X: Route matrix in the form of ``np.array([[route_0], [route_1], ...])`` with
-            ``route_i=np.array([[lat_0, lon_0], [lat_1,lon_1], ...])``. X.shape = (n_routes, 1, n_waypoints, 2).
+            ``route_i=np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...])``.
+            X.shape = (n_routes, 1, n_waypoints, 3).
             Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
         :type X: np.array
         :return: Mutated route matrix. Same structure as for ``X``.
@@ -215,10 +217,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
@@ -231,11 +233,11 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :rtype: tuple[float, float]
         """
 
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         """
@@ -258,15 +260,15 @@ class RandomPlateauMutation(MutationConstraintRejection):
         :param problem: routing problem
         :type: RoutingProblem
         :params rt: route to be mutated
-        :type rt: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :type rt: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         :return: mutated route
-        :rtype: np.array([[lat_0, lon_0], [lat_1,lon_1], ...]),
+        :rtype: np.array([[lat_0, lon_0, v_0], [lat_1,lon_1, v_1], ...]),
         """
         debug = False
 
         # test whether input route rt has the correct shape
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
@@ -421,7 +423,7 @@ class RouteBlendMutation(MutationConstraintRejection):
         control_points = np.array(control_points)
         n = len(control_points) - 1  # degree
         t = np.linspace(0, 1, n_points)
-        curve = np.zeros((n_points, 2))
+        curve = np.zeros((n_points, 3))
 
         for i in range(n + 1):
             bernstein = math.comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
@@ -432,7 +434,7 @@ class RouteBlendMutation(MutationConstraintRejection):
     def mutate(self, problem, rt, **kw):
         # test shape of input route
         assert len(rt.shape) == 2
-        assert rt.shape[1] == 2
+        assert rt.shape[1] == 3
         route_length = rt.shape[0]
 
         # only mutate routes that are long enough
@@ -491,26 +493,26 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def random_walk(
             self,
-            point: tuple[float, float],
+            point: tuple[float, float, float],
             dist: float = 1e4,
             bearing: float = 45.0,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
         """Pick an N4 neighbour of a waypoint.
 
         :param point: (lat, lon) in degrees.
-        :type point: tuple[float, float]
+        :type point: tuple[float, float, float]
         :param dist: distance in meters
         :type dist: float
         :param bearing: Azimuth in degrees (clockwise from North)
         :type bearing: float
         :return: (lat, lon) in degrees.
-        :rtype: tuple[float, float]
+        :rtype: tuple[float, float, float]
         """
-        lat0, lon0 = point
+        lat0, lon0, speed = point
         result = Geodesic.WGS84.Direct(lat0, lon0, bearing, dist)
         lat2 = result["lat2"]
         lon2 = result["lon2"]
-        return lat2, lon2
+        return lat2, lon2, speed
 
     def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
@@ -547,6 +549,76 @@ class RandomMutationsOrchestrator(MutationBase):
             opt.print_mutation_statistics()
 
 
+class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    Speed values are mutated by randomly adding or subtracting a percentage. The percentage is randomly chosen
+    between 0 and a fixed maximum percentage (20 %).
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="RandomPercentageChangeSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        self.change_percent_max = 0.2
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        ops = (add, sub)
+        for i in indices:
+            op = random.choice(ops)
+            change_percent = random.uniform(0.0, self.change_percent_max)
+            new = op(rt[i][2], change_percent * rt[i][2])
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
+
+
+class GaussianSpeedMutation(MutationConstraintRejection):
+    """
+    Ship speed mutation class.
+    Speed values are updated by drawing random samples from a Gaussian distribution. The mean value of the distribution
+    is half of the maximum boat speed. The standard deviation is 1/6 of the maximum boat speed.
+    """
+    n_updates: int
+    config: Config
+
+    def __init__(self, n_updates: int = 10, **kw):
+        super().__init__(
+            mutation_type="GaussianSpeedMutation",
+            **kw
+        )
+        self.n_updates = n_updates
+        # FIXME: these numbers should be carefully evaluated
+        # ~99.7 % in interval (0, BOAT_SPEED_MAX)
+        self.mu = 0.5 * self.config.BOAT_SPEED_MAX
+        self.sigma = self.config.BOAT_SPEED_MAX / 6
+
+    def mutate(self, problem, rt, **kw):
+        try:
+            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+        except ValueError:
+            indices = range(0, rt.shape[0] - 1)
+        for i in indices:
+            new = random.normalvariate(self.mu, self.sigma)
+            if new < 0:
+                new = 0
+            elif new > self.config.BOAT_SPEED_MAX:
+                new = self.config.BOAT_SPEED_MAX
+            rt[i][2] = new
+        return rt
+
+
 # factory
 # ----------
 class MutationFactory:
@@ -556,11 +628,11 @@ class MutationFactory:
             constraints_list: None
     ) -> Mutation:
 
-        if "no_mutation" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "no_mutation":
             logger.debug('Setting mutation type of genetic algorithm to "no_mutation".')
             return NoMutation()
 
-        if "random" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
                 opts=[
@@ -568,16 +640,24 @@ class MutationFactory:
                     RouteBlendMutation(config=config, constraints_list=constraints_list)
                 ], )
 
-        if "rndm_walk" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_walk":
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
             return RandomWalkMutation(config=config, constraints_list=constraints_list)
 
-        if "rndm_plateau" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "rndm_plateau":
             logger.debug('Setting mutation type of genetic algorithm to "random_plateau".')
             return RandomPlateauMutation(config=config, constraints_list=constraints_list)
 
-        if "route_blend" in config.GENETIC_MUTATION_TYPE:
+        if config.GENETIC_MUTATION_TYPE == "route_blend":
             logger.debug('Setting mutation type of genetic algorithm to "route_blend".')
             return RouteBlendMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "percentage_change_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "percentage_change_speed".')
+            return RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list)
+
+        if config.GENETIC_MUTATION_TYPE == "gaussian_speed":
+            logger.debug('Setting mutation type of genetic algorithm to "gaussian_speed".')
+            return GaussianSpeedMutation(config=config, constraints_list=constraints_list)
 
         raise NotImplementedError(f'The mutation type {config.GENETIC_MUTATION_TYPE} is not implemented.')

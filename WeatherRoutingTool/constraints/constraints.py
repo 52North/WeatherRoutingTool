@@ -270,12 +270,6 @@ class ConstraintsList:
         else:
             return False
 
-    def have_negative(self):
-        if self.neg_size > 0:
-            return True
-        else:
-            return False
-
     def init_positive_lists(self, start, finish):
         lat = []
         lon = []
@@ -571,7 +565,9 @@ class WaterDepth(NegativeContraint):
 
         self.depth_data = None
 
-        if data_mode == 'odc':
+        if data_mode == 'skip':
+            return
+        elif data_mode == 'odc':
             self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['z'])
         elif data_mode == 'automatic':
             self.depth_data = self.load_data_automatic(depth_path)

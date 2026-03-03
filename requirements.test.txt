@@ -2,3 +2,4 @@
 flake8
 psycopg2
 pytest
+pytest-plt
