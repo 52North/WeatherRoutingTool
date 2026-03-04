@@ -10,6 +10,7 @@ import WeatherRoutingTool.utils.unit_conversion as utils
 import WeatherRoutingTool.utils.graphics as graphics
 
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 have_maripower = False
 
@@ -226,7 +227,9 @@ class TestDPM:
         - relative difference of wind direction and boat course is changing in steps of 10 degrees
         - effect from wave resistance is turned of for maripower; all other resistances are considerd by maripower
     '''
-    @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
+
+    @pytest.mark.skip(reason="maripower needs update of requirements.")
+    # @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
     @pytest.mark.manual
     def test_compare_wind_resistance_to_maripower(self):
         lats = np.full(10, 54.9)  # 37
@@ -279,7 +282,8 @@ class TestDPM:
             'WEATHER_DATA': "abc"
         }
 
-        pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+        ship_config = ShipConfig.assign_config(init_mode="from_dict", config_dict=config)
+        pol = DirectPowerBoat(ship_config)
         pol.load_data()
 
         hbr = 30 * u.meter
@@ -349,7 +353,8 @@ class TestDPM:
         }
 
         try:
-            pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+            ship_config = ShipConfig.assign_config(init_mode="from_dict", config_dict=config)
+            pol = DirectPowerBoat(ship_config)
             pol.load_data()
             # If we get here, the test passes
             assert True

@@ -12,7 +12,7 @@ def load_example_config():
 
 def test_assign_config_from_json():
     _, config_path = load_example_config()
-    config = Config.assign_config(path=config_path, init_mode="from_json")
+    config = Config.assign_config(path=config_path, init_mode="from_file")
 
     assert isinstance(config, Config)
     assert config.CONFIG_PATH == config_path
@@ -35,7 +35,7 @@ def test_invalid_time_raises_error():
     with pytest.raises(ValueError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "'DEPARTURE_TIME' must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
+    assert "'DEPARTURE_TIME/ARRIVAL_TIME' must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
 
 
 def test_invalid_path_raises_error(tmp_path):

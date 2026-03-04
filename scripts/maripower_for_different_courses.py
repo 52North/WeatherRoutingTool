@@ -134,15 +134,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    config = Config(file_name=args.file)
-    config.print()
+    config = Config.assign_config(path=args.file)
 
     routename = 'original_resistances_calm_weather'
     windfile = config.WEATHER_DATA
     figurepath = get_figure_path()
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
-    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = config.DEPARTURE_TIME
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
     lat_start, lon_start, lat_end, lon_end = config.DEFAULT_ROUTE  # lat_end and lon_end are not used

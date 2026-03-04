@@ -159,7 +159,7 @@ class IsofuelPatcher(PatcherBase):
             application="Isofuel patcher"
         )
 
-    def _setup_configuration(self) -> Config:
+    def _setup_configuration(self):
         """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
 
         The configuration is based on the general config file. Based on n_routes, this configuration is overwritten
@@ -169,6 +169,7 @@ class IsofuelPatcher(PatcherBase):
         :return: config object
         :rtype: Config
         """
+        # FIXME: this needs a clean up/refactoring
         cfg_select = self.config.model_dump(
             include=[
                 "DEFAULT_ROUTE",
@@ -243,7 +244,8 @@ class IsofuelPatcher(PatcherBase):
 
         # *******************************************
         # initialise boat
-        boat = ShipFactory.get_ship(config)
+        ship_config = ShipConfig.assign_config(Path(config.CONFIG_PATH))
+        boat = ShipFactory.get_ship(config.BOAT_TYPE, ship_config)
         boat.under_keel_clearance = self.config_boat_dict["BOAT_UNDER_KEEL_CLEARANCE"] * u.meter
         boat.draught_aft = self.config_boat_dict['BOAT_DRAUGHT_AFT'] * u.meter
         boat.draught_fore = self.config_boat_dict['BOAT_DRAUGHT_FORE'] * u.meter
@@ -320,10 +322,9 @@ class IsofuelPatcher(PatcherBase):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
-        speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
-
         # single route
         if self.n_routes == "single":
+            speed = np.full(min_fuel_route.lons_per_step.shape, src[2])
             return np.stack([min_fuel_route.lats_per_step, min_fuel_route.lons_per_step, speed], axis=1)
 
         # list of routes
@@ -333,6 +334,7 @@ class IsofuelPatcher(PatcherBase):
         routes = []
 
         for rt in alg.route_list:
+            speed = np.full(rt.lons_per_step.shape, src[2])
             routes.append(np.stack([rt.lats_per_step, rt.lons_per_step, speed], axis=1))
         return routes
 

@@ -565,7 +565,9 @@ class WaterDepth(NegativeContraint):
 
         self.depth_data = None
 
-        if data_mode == 'odc':
+        if data_mode == 'skip':
+            return
+        elif data_mode == 'odc':
             self.depth_data = self.load_data_ODC(depth_path, 'global_relief', measurements=['z'])
         elif data_mode == 'automatic':
             self.depth_data = self.load_data_automatic(depth_path)
@@ -654,7 +656,7 @@ class WaterDepth(NegativeContraint):
 
         # FIXME: if this loads the whole file into memory, apply subsetting already here
         # FIXME: can we delete the chunks for figure generation completely?
-        logger.info(form.get_log_step('Downloading depth data from file: ' + depth_path, 0))
+        logger.info(form.get_log_step(f'Downloading depth data from file: {depth_path}', 0))
         ds_depth = None
         # if graphics.get_figure_path():
         #    ds_depth = xr.open_dataset(depth_path, chunks={"time": "500MB"}, decode_times=False)
