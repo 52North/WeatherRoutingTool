@@ -39,11 +39,11 @@ class Population(Sampling):
 
         self.departure_time = config.DEPARTURE_TIME
         self.arrival_time = config.ARRIVAL_TIME
-        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
-
-        self.boat_speed_from_arrival_time = False
-        if self.boat_speed.value == -99.:
-            self.boat_speed_from_arrival_time = True
+        self.boat_speed_from_arrival_time = True
+        self.boat_speed = config.BOAT_SPEED
+        if self.boat_speed is not None:
+            self.boat_speed = self.boat_speed * u.meter / u.second
+            self.boat_speed_from_arrival_time = False
 
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
@@ -269,7 +269,6 @@ class IsoFuelPopulation(Population):
             Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
         :rtype: np.array
         """
-
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
             boat_speed = 6 * u.meter / u.second  # add dummy speed, will be recalculated

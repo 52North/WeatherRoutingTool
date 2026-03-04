@@ -124,7 +124,7 @@ class RouteParams:
         rp_dict['type'] = 'FeatureCollection'
         feature_list = []
 
-        logger.info('Write route parameters to ' + filename)
+        logger.info(f'Write route parameters to {filename}')
 
         for i in range(0, self.count + 2):
             feature = {}
