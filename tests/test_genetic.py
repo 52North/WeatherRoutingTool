@@ -12,7 +12,7 @@ from astropy import units as u
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic import Genetic
-from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover
+from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
@@ -407,3 +407,44 @@ def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
     plt.saveas = f"test_composite_weight_fuel{obj_fuel}_time{obj_time}.png"
 
     assert 1 == 2
+
+
+def test_speed_crossover(plt):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    sp = SpeedCrossover(config=config, departure_time=departure_time, constraints_list=constraint_list)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_speed_crossover.png"

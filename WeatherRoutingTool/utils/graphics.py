@@ -387,7 +387,7 @@ def get_route_lc(X):
     points = np.array([lons, lats]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
-    norm = Normalize(vmin=0, vmax=10)
+    norm = Normalize(vmin=0, vmax=20)
     lc = LineCollection(segments, cmap='viridis', norm=norm, transform=ccrs.Geodetic())
     lc.set_array(speed)
     lc.set_linewidth(1)
