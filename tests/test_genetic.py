@@ -406,8 +406,6 @@ def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
 
     plt.saveas = f"test_composite_weight_fuel{obj_fuel}_time{obj_time}.png"
 
-    assert 1 == 2
-
 
 def test_speed_crossover(plt):
     dirname = os.path.dirname(__file__)
