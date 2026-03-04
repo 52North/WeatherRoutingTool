@@ -522,7 +522,7 @@ class Genetic(RoutingAlg):
 
         for algorithm in res.history:
             F = algorithm.pop.get('F')
-            for iobj in range(F.ndim - 1):
+            for iobj in range(F.ndim):
                 if not is_initialised:
                     best_f.append([])
                 best_f[iobj].append(np.min(F[:, iobj]))

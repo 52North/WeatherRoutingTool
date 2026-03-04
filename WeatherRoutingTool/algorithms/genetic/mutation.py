@@ -663,7 +663,7 @@ class MutationFactory:
                     GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
 
-        if config.GENETIC_MUTATION_TYPE == "rndm_speed":
+        if config.GENETIC_MUTATION_TYPE == "speed":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
             return RandomMutationsOrchestrator(
                 waypoint_opts=None,
@@ -672,7 +672,7 @@ class MutationFactory:
                     GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
 
-        if config.GENETIC_MUTATION_TYPE == "rndm_waypoints":
+        if config.GENETIC_MUTATION_TYPE == "waypoints":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_waypoints".')
             return RandomMutationsOrchestrator(
                 waypoint_opts=[
