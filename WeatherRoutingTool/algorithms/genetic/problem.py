@@ -34,11 +34,10 @@ class RoutingProblem(ElementwiseProblem):
         self.constraint_list = constraint_list
         self.departure_time = departure_time
         self.arrival_time = arrival_time
-        self.boat_speed = boat_speed
         self.boat_speed_from_arrival_time = False
         self.objectives = objectives
 
-        if boat_speed.value == -99.:
+        if boat_speed is None:
             self.boat_speed_from_arrival_time = True
 
     def get_objectives(self, obj_dict: dict):
@@ -90,6 +89,7 @@ class RoutingProblem(ElementwiseProblem):
                 departure_time=self.departure_time,
                 arrival_time=self.arrival_time,
             )
+            bs = np.full(route[:, 1].shape[0]-1, bs) * u.meter/u.second
 
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],
