@@ -1,11 +1,12 @@
 import logging
 
-import astropy.units as u
 import numpy as np
+from astropy import units as u
 from pymoo.core.problem import ElementwiseProblem
 
+from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time
+from WeatherRoutingTool.algorithms.genetic.utils import get_constraints
 from WeatherRoutingTool.routeparams import RouteParams
-import WeatherRoutingTool.algorithms.genetic.utils as utils
 
 logger = logging.getLogger('WRT.Genetic')
 
@@ -39,7 +40,7 @@ class RoutingProblem(ElementwiseProblem):
 
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         fuel, _ = self.get_power(x[0])
-        constraints = utils.get_constraints(x[0], self.constraint_list)
+        constraints = get_constraints(x[0], self.constraint_list)
         # print(costs.shape)
         out['F'] = np.column_stack([fuel])
         out['G'] = np.column_stack([constraints])
@@ -49,7 +50,7 @@ class RoutingProblem(ElementwiseProblem):
         bs = bs[:-1] * u.meter/u.second
 
         if self.boat_speed_from_arrival_time:
-            bs = utils.get_speed_from_arrival_time(
+            bs = get_speed_from_arrival_time(
                 lons=route[:, 1],
                 lats=route[:, 0],
                 departure_time=self.departure_time,

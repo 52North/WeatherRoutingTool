@@ -2,6 +2,7 @@ import json
 import logging
 import math
 from copy import deepcopy
+from datetime import timedelta
 from hashlib import sha256
 from typing import TypedDict
 
@@ -9,9 +10,11 @@ import numpy as np
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 from geographiclib.geodesicline import GeodesicLine
+from geovectorslib.geod import inverse
 from global_land_mask import is_land as is_land_global_land_mask
 from shapely import line_interpolate_point, LineString
 
+from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
@@ -146,8 +149,24 @@ class GcrSliderAlgorithm(RoutingAlg):
             point_sequence = self.interpolate_equal_distance(point_sequence)
         lats, lons = list(zip(*point_sequence))
 
+        if self.boat_speed is not None:
+            boat_speed_arr = self.boat_speed * np.ones(len(point_sequence) - 1)
+        else:
+            bs = get_speed_from_arrival_time(
+                lons=np.array(lons),
+                lats=np.array(lats),
+                departure_time=self.departure_time,
+                arrival_time=self.arrival_time,
+            )
+            boat_speed_arr = np.full(len(point_sequence) - 1, bs.value) * bs.unit
+
+        distances = inverse(lats[:-1], lons[:-1], lats[1:], lons[1:])['s12'] * u.meter
+        times_per_step = distances / boat_speed_arr
+        start_times = ([self.departure_time] +
+                       [self.departure_time+timedelta(seconds=t.value) for t in np.cumsum(times_per_step)])
+
         ship_params = ShipParams(
-            speed=np.zeros(len(point_sequence) - 1) * u.meter / u.second,
+            speed=boat_speed_arr,
             fuel_rate=np.zeros(len(point_sequence) - 1) * u.kg / u.second,
             power=np.zeros(len(point_sequence) - 1) * u.Watt,
             rpm=np.zeros(len(point_sequence) - 1) * 1 / u.minute,
@@ -181,8 +200,8 @@ class GcrSliderAlgorithm(RoutingAlg):
             lats_per_step=lats,
             lons_per_step=lons,
             course_per_step=0,
-            dists_per_step=[0] * len(point_sequence),
-            starttime_per_step=[0] * len(point_sequence),
+            dists_per_step=distances,
+            starttime_per_step=start_times,
             ship_params_per_step=ship_params,
         )
         return route, 0

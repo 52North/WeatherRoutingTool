@@ -1,6 +1,9 @@
 import numpy as np
 import xarray as xr
+from astropy import units as u
 from geographiclib.geodesic import Geodesic
+
+from WeatherRoutingTool.routeparams import RouteParams
 
 
 def get_closest(array, value):
@@ -47,6 +50,7 @@ def distance(route):
 
 
 def time_diffs(speed, route):
+    # TODO: Where is this function used?
     geod = Geodesic.WGS84
     # speed = speed * 1.852
 
@@ -65,6 +69,35 @@ def time_diffs(speed, route):
     diffs = np.array(diffs) / speed
     # print(diffs)
     return diffs
+
+
+def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time) -> u.Quantity:
+    """
+    Calculate boat speed based on coordinates, departure and arrival time for a route array.
+
+    :param lons: longitudes
+    :type lons: np.array
+    :param lats: latitudes
+    :type lats: np.array
+    :param departure_time: departure time
+    :type departure_time: datetime object
+    :param arrival_time: arrival time
+    :type arrival_time: datetime object
+    :return: boat speed in m/s (scalar/float)
+    :rtype: u.Quantity
+
+    """
+    dummy_speed = 6 * u.meter / u.second
+    route_dict = RouteParams.get_per_waypoint_coords(
+        lons,
+        lats,
+        departure_time,
+        dummy_speed, )
+
+    full_travel_distance = np.sum(route_dict['dist'])
+    time_diff = arrival_time - departure_time
+    bs = full_travel_distance / (time_diff.total_seconds() * u.second)
+    return bs
 
 
 class GridMixin:

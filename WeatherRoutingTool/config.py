@@ -497,7 +497,7 @@ class Config(BaseModel):
             raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
         if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
             raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
-        if self.ARRIVAL_TIME is not None and self.ALGORITHM_TYPE != 'genetic':
+        if self.ARRIVAL_TIME is not None and self.ALGORITHM_TYPE not in ['genetic', 'gcr_slider']:
             raise ValueError('The determination of the speed from the arrival time is only possible for the'
-                             ' genetic algorithm')
+                             ' genetic and the gcr slider algorithm')
         return self

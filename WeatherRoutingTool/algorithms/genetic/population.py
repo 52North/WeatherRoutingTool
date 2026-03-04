@@ -4,8 +4,8 @@ from math import ceil
 from pathlib import Path
 from re import match
 
-import astropy.units as u
 import numpy as np
+from astropy import units as u
 from geographiclib.geodesic import Geodesic
 from pymoo.core.sampling import Sampling
 from skimage.graph import route_through_array
@@ -14,7 +14,7 @@ from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.data_utils import GridMixin
+from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time, GridMixin
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
@@ -85,7 +85,7 @@ class Population(Sampling):
         """
         Recalculate speed at the waypoints if no `BOAT_SPEED` but an `ARRIVAL_TIME` is specified.
         """
-        bs = utils.get_speed_from_arrival_time(
+        bs = get_speed_from_arrival_time(
             lons=rt[:, 1],
             lats=rt[:, 0],
             departure_time=self.departure_time,
@@ -297,7 +297,6 @@ class GcrSliderPopulation(Population):
             constraints_list=constraints_list,
             pop_size=pop_size
         )
-
         self.algo = GcrSliderAlgorithm(config)
 
     def generate(self, problem, n_samples, **kw):
@@ -312,11 +311,7 @@ class GcrSliderPopulation(Population):
            distance used to move the point incrementally.
         """
         # FIXME: how to handle already existing waypoints specified for the genetic algorithm?
-        boat_speed = self.boat_speed
-        if self.boat_speed_from_arrival_time:
-            boat_speed = 6 * u.meter / u.second  # dummy boat speed
-
-        route = self.create_route(speed=boat_speed.value)
+        route = self.create_route()
         routes = []
         if route is not None:
             routes.append(route)
@@ -335,7 +330,7 @@ class GcrSliderPopulation(Population):
             dist_orthogonal = wpt_increment_step * wpt_increment
             lat, lon = self.algo.move_point_orthogonally(g, dist_orthogonal, clockwise=clockwise)
             if not self.algo.is_land(lat, lon):
-                route = self.create_route(lat, lon, boat_speed.value)
+                route = self.create_route(lat, lon)
                 if route is not None:
                     routes.append(route)
                     logger.info(f"Found {len(routes)} of {n_samples} routes for initial population.")
@@ -353,8 +348,6 @@ class GcrSliderPopulation(Population):
 
         X = np.full((n_samples, 1), None, dtype=object)
         for i, rt in enumerate(routes):
-            if self.boat_speed_from_arrival_time:
-                rt = self.recalculate_speed_for_route(rt)
             X[i, 0] = rt
 
         # fallback: fill all other individuals with the same population as the last one
@@ -362,7 +355,7 @@ class GcrSliderPopulation(Population):
             X[j, 0] = np.copy(X[j - 1, 0])
         return X
 
-    def create_route(self, lat: float = None, lon: float = None, speed: float = None):
+    def create_route(self, lat: float = None, lon: float = None):
         """
         :param lat: latitude of the waypoint
         :type lat: float
@@ -377,7 +370,9 @@ class GcrSliderPopulation(Population):
             # import uuid
             # filename = f"{str(uuid.uuid4())}.geojson"
             # route.write_to_geojson(filename)
-            route = [[route.lats_per_step[i], route.lons_per_step[i], speed] for i in
+            # np.append creates a copy of the original array
+            speed = np.append(route.ship_params_per_step.speed, -99 * u.meter / u.second)
+            route = [[route.lats_per_step[i], route.lons_per_step[i], speed[i]] for i in
                      range(0, len(route.lats_per_step))]
             route = np.array(route)
         except Exception:
