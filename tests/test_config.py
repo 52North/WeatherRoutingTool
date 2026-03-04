@@ -131,3 +131,76 @@ def test_weather_start_time_compatibility():
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
     assert "Weather data does not cover the full routing time range." in str(excinfo.value)
+
+
+@pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type,ierr", [
+    (7, "2025-12-07T00:00Z", "waypoints", "waypoints", 0),
+    (None, None, "waypoints", "waypoints", 1),
+])
+def test_boat_speed_arrival_time_waypoint_optimisation_failure(boat_speed, arrival_time, mut_type, cross_type, ierr):
+    config_data, _ = load_example_config()
+    config_data["BOAT_SPEED"] = boat_speed
+    config_data["ARRIVAL_TIME"] = arrival_time
+    config_data["GENETIC_MUTATION_TYPE"] = mut_type
+    config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
+    config_data["ALGORITHM_TYPE"] = "genetic"
+    error_str_list = [
+        "Please specify EITHER the boat speed OR the arrival time but not both.",
+        "Please specify EITHER the boat speed OR the arrival time.",
+    ]
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert error_str_list[ierr] in str(excinfo.value)
+
+
+@pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type", [
+    (7, None, "waypoints", "waypoints"),
+    (None, "2025-12-07T00:00Z", "waypoints", "waypoints"),
+])
+def test_boat_speed_arrival_time_waypoint_optimisation_success(boat_speed, arrival_time, mut_type, cross_type, ):
+    config_data, _ = load_example_config()
+    config_data["BOAT_SPEED"] = boat_speed
+    config_data["ARRIVAL_TIME"] = arrival_time
+    config_data["GENETIC_MUTATION_TYPE"] = mut_type
+    config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
+    config_data["ALGORITHM_TYPE"] = "genetic"
+
+    Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+
+@pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type", [
+    (7, None, "random", "random"),
+    (None, "2025-12-07T00:00Z", "random", "random"),
+    (None, "2025-12-07T00:00Z", "waypoints", "random"),
+    (None, "2025-12-07T00:00Z", "random", "waypoints"),
+])
+def test_boat_speed_arrival_time_speed_optimisation_failure(boat_speed, arrival_time, mut_type, cross_type, ):
+    config_data, _ = load_example_config()
+    config_data["BOAT_SPEED"] = boat_speed
+    config_data["ARRIVAL_TIME"] = arrival_time
+    config_data["GENETIC_MUTATION_TYPE"] = mut_type
+    config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
+    config_data["ALGORITHM_TYPE"] = "genetic"
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "Please provide a valid arrival time and boat speed." in str(excinfo.value)
+
+
+@pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type", [
+    (7, "2025-12-07T00:00Z", "random", "random"),
+    (7, "2025-12-07T00:00Z", "random", "waypoints"),
+    (7, "2025-12-07T00:00Z", "waypoints", "random"),
+])
+def test_boat_speed_arrival_time_speed_optimisation_success(boat_speed, arrival_time, mut_type, cross_type, ):
+    config_data, _ = load_example_config()
+    config_data["BOAT_SPEED"] = boat_speed
+    config_data["ARRIVAL_TIME"] = arrival_time
+    config_data["GENETIC_MUTATION_TYPE"] = mut_type
+    config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
+    config_data["ALGORITHM_TYPE"] = "genetic"
+
+    Config.assign_config(init_mode="from_dict", config_dict=config_data)

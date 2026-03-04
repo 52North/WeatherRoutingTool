@@ -56,10 +56,10 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal[
         'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
     ] = 'isofuel'
-    ARRIVAL_TIME: datetime = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
+    ARRIVAL_TIME: datetime | None = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
-    BOAT_SPEED: float = None  # boat speed [m/s]
+    BOAT_SPEED: float | None = None  # boat speed [m/s]
     BOAT_SPEED_BOUNDARIES: Annotated[list[Union[float, float]], Field(min_length=2, max_length=2)] = [1., 10.]
     # minimum and maximum possible boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
@@ -496,11 +496,33 @@ class Config(BaseModel):
     def check_speed_determination(self) -> Self:
         logger.info(f'arrival time: {self.ARRIVAL_TIME}')
         logger.info(f'speed: {self.BOAT_SPEED}')
-        if self.ARRIVAL_TIME is None and self.BOAT_SPEED is None:
-            raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
-        if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
-            raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
-        if self.ARRIVAL_TIME is not None and self.ALGORITHM_TYPE != 'genetic':
-            raise ValueError('The determination of the speed from the arrival time is only possible for the'
-                             ' genetic algorithm')
+
+        mutate_only_waypoints = ((self.GENETIC_MUTATION_TYPE == "waypoints")
+                                 or (self.GENETIC_MUTATION_TYPE == "rndm_walk")
+                                 or (self.GENETIC_MUTATION_TYPE == "rndm_plateau")
+                                 or (self.GENETIC_MUTATION_TYPE == "route_blend"))
+
+        crossover_only_waypoints = self.GENETIC_CROSSOVER_TYPE == "waypoints"
+
+        if self.ALGORITHM_TYPE == "genetic":
+            # run mode: route optimisation with constant speed
+            if mutate_only_waypoints and crossover_only_waypoints:
+                logger.info('Algorithm run mode: only waypoint optimisation.')
+                if self.ARRIVAL_TIME is None and self.BOAT_SPEED is None:
+                    raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
+                if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
+                    raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
+
+            # run modes: speed optimisation for fixed route as well as simultaneous waypoint and speed optimisation
+            else:
+                logger.info('Algorithm run mode: speed optimisation for fixed route or simultaneous '
+                            'waypoint and speed optimisation.')
+                if self.ARRIVAL_TIME is None or self.BOAT_SPEED is None:
+                    raise ValueError('Please provide a valid arrival time and boat speed.')
+        else:
+            if self.BOAT_SPEED is None:
+                raise ValueError('Please provide a valid boat speed.')
+            if self.ARRIVAL_TIME:
+                logger.warning('You specified an arrival time. The arrival time is only used as input for the '
+                               'optimisation process for the genetic algorithm.')
         return self
