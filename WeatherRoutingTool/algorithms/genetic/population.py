@@ -39,10 +39,12 @@ class Population(Sampling):
 
         self.departure_time = config.DEPARTURE_TIME
         self.arrival_time = config.ARRIVAL_TIME
-        self.boat_speed = config.BOAT_SPEED * u.meter / u.second
-
+        self.boat_speed = config.BOAT_SPEED
         self.boat_speed_from_arrival_time = False
-        if self.boat_speed.value == -99.:
+
+        if self.boat_speed is not None:
+            self.boat_speed = self.boat_speed * u.meter / u.second
+        else:
             self.boat_speed_from_arrival_time = True
 
     def _do(self, problem, n_samples, **kw):

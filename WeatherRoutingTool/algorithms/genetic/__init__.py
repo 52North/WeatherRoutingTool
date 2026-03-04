@@ -6,9 +6,12 @@ from datetime import timedelta
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from astropy import units as u
+from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
+from pymoo.optimize import minimize
 from pymoo.termination import get_termination
 from pymoo.util.running_metric import RunningMetric
 
@@ -48,10 +51,22 @@ class Genetic(RoutingAlg):
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
+        self.objectives = config.GENETIC_OBJECTIVES
+        self.n_objs = len(config.GENETIC_OBJECTIVES)
+        self.get_objective_weights()
 
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
+
+    def get_objective_weights(self):
+        self.objective_weights = {}
+
+        for obj_str in self.objectives:
+            self.objective_weights[obj_str] = utils.get_weigths_from_rankarr(
+                np.array([self.objectives[obj_str]]),
+                self.n_objs
+            )
 
     def execute_routing(
             self,
@@ -83,7 +98,9 @@ class Genetic(RoutingAlg):
             arrival_time=self.arrival_time,
             boat_speed=self.boat_speed,
             boat=boat,
-            constraint_list=constraints_list, )
+            constraint_list=constraints_list,
+            objectives=self.objectives
+        )
 
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt, )
@@ -152,16 +169,94 @@ class Genetic(RoutingAlg):
 
         return res
 
+    def rank_solutions(self, obj, dec=False):
+        rank_ind = np.argsort(obj)
+        if dec:
+            rank_ind = rank_ind[::-1]
+        rank = np.argsort(rank_ind)
+        rank = rank + 1
+        return rank
+
+    def get_composite_weight(self, sol_weight_list, obj_weight_list):
+        sign = [1, -1]
+        denominator = 0
+        summands = 0
+        product = 1
+
+        if len(sol_weight_list) > 2:
+            raise NotImplementedError('Calculation of the composite weight of the R-method is not implemented for'
+                                      'more than two objectives.')
+
+        for i in range(len(sol_weight_list)):
+            denominator = denominator + sign[i] * 1. / obj_weight_list[i] * sol_weight_list[i]
+            product = product * sol_weight_list[i]
+        denominator = np.abs(denominator) + 0.2
+
+        for i in range(len(sol_weight_list)):
+            summands = summands + sol_weight_list[i] / denominator * obj_weight_list[i] * obj_weight_list[i]
+
+        composite_weight = product + summands
+        return composite_weight
+
+    def get_best_compromise(self, solutions):
+        debug = True
+        sol_weight_list = []
+        obj_weight_list = []
+
+        if self.n_objs == 1:
+            return solutions.argmin()
+
+        if debug:
+            print('solutions: ', solutions)
+            print('solutions shape: ', solutions.shape)
+
+        rmethod_table = pd.DataFrame()
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+
+        i_obj = 0
+        norm = 1.
+        for obj_str in self.objectives:
+            objective_values = solutions[:, i_obj]
+            max_value = np.max(objective_values)
+            if i_obj == 0:
+                norm = max_value
+            else:
+                objective_values = objective_values * norm * 1. / max_value
+            rmethod_table[obj_str + '_obj'] = objective_values
+            rmethod_table[obj_str + '_rank'] = self.rank_solutions(objective_values)
+            rmethod_table[obj_str + '_weight'] = utils.get_weigths_from_rankarr(
+                rmethod_table[obj_str + '_rank'].to_numpy(),
+                len(solutions))
+            i_obj += 1
+            sol_weight_list.append(rmethod_table[obj_str + '_weight'].to_numpy())
+            obj_weight_list.append(self.objective_weights[obj_str])
+
+        if debug:
+            print('rmethod table:', rmethod_table)
+
+        rmethod_table['composite_weight'] = self.get_composite_weight(
+            sol_weight_list=sol_weight_list,
+            obj_weight_list=obj_weight_list,
+        )
+        rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
+        best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
+
+        if debug:
+            print('rmethod table:', rmethod_table)
+            print('best index: ', rmethod_table.iloc[best_ind])
+        return best_ind
+
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
-
-        best_index = res.F.argmin()
-        # ensure res.X is of shape (n_sol, n_var)
+        best_index = self.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
-        fuel, ship_params = problem.get_power(best_route)
+        fuel_dict = problem.get_power(best_route)
+        fuel = fuel_dict["fuel_sum"]
+        ship_params = fuel_dict["shipparams"]
         logger.info(f"Best fuel: {fuel}")
 
         if self.figure_path is not None:
@@ -171,6 +266,7 @@ class Genetic(RoutingAlg):
             self.plot_population_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
+            self.plot_objective_space(res, best_index)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -211,6 +307,32 @@ class Genetic(RoutingAlg):
         self.check_destination()
         self.check_positive_power()
         return route
+
+    def plot_objective_space(self, res, best_index):
+        F = res.F
+        fig, ax = plt.subplots(figsize=(7, 5))
+
+        if self.n_objs == 2:
+            ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        else:
+            return
+
+        ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
+        ax.set_xlabel('f1', labelpad=10)
+        ax.set_ylabel('f2', labelpad=10)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        plt.title("Objective Space")
+
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1, 1))  # Force scientific notation
+
+        ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatter)
+
+        plt.savefig(os.path.join(self.figure_path, 'genetic_objective_space.png'))
+        plt.cla()
+        plt.close()
 
     def print_init(self):
         """Log messages to print on algorithm initialization"""
@@ -300,6 +422,7 @@ class Genetic(RoutingAlg):
         input_crs = ccrs.PlateCarree()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        route_lc = None
 
         for igen in range(len(history)):
             plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -331,6 +454,7 @@ class Genetic(RoutingAlg):
                         **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         label=f"full population [{last_pop.shape[0]}]",
+                        linewidth=0,
                         transform=input_crs)
 
                 else:
@@ -339,7 +463,11 @@ class Genetic(RoutingAlg):
                         last_pop[iroute, 0][:, 0],
                         **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
+                        linewidth=0,
                         transform=input_crs)
+
+                route_lc = graphics.get_route_lc(last_pop[iroute, 0])
+                ax.add_collection(route_lc)
 
             if igen == (self.n_generations - 1):
                 ax.plot(
@@ -350,6 +478,9 @@ class Genetic(RoutingAlg):
                     label="best route",
                     transform=input_crs
                 )
+            cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+            cbar.set_label('Geschwindigkeit ($m/s$)')
+            plt.tight_layout()
 
             ax.legend()
 
@@ -387,27 +518,32 @@ class Genetic(RoutingAlg):
         """Plot the convergence curve (best objective value per generation)."""
 
         best_f = []
+        is_initialised = False
 
         for algorithm in res.history:
-            # For single-objective, take min of F; for multi-objective, take min of first objective
             F = algorithm.pop.get('F')
-            if F.ndim == 2:
-                best_f.append(np.min(F[:, 0]))
-            else:
-                best_f.append(np.min(F))
+            for iobj in range(F.ndim):
+                if not is_initialised:
+                    best_f.append([])
+                best_f[iobj].append(np.min(F[:, iobj]))
+            is_initialised = True
 
-        n_gen = np.arange(1, len(best_f) + 1)
+        n_gen = np.arange(1, len(best_f[0]) + 1)
 
         # plot png
-        plt.figure(figsize=graphics.get_standard('fig_size'))
-        plt.plot(n_gen, best_f, marker='o')
-        plt.xlabel('Generation')
-        plt.ylabel('Best Objective Value')
-        plt.title('Convergence Plot')
-        plt.grid(True)
-        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
-        plt.cla()
-        plt.close()
+        i_obj = 0
+        for obj_str in self.objectives:
+            fig_path_name = 'genetic_algorithm_convergence' + obj_str
+            plt.figure(figsize=graphics.get_standard('fig_size'))
+            plt.plot(n_gen, best_f[i_obj], marker='o')
+            plt.xlabel('Generation')
+            plt.ylabel('Best Objective Value ' + obj_str)
+            plt.title('Convergence Plot')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.figure_path, fig_path_name + '.png'))
+            plt.cla()
+            plt.close()
 
-        # write to csv
-        graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_convergence.csv'), n_gen, best_f)
+            # write to csv
+            graphics.write_graph_to_csv(os.path.join(self.figure_path, fig_path_name + '.csv'), n_gen, best_f[i_obj])
+            i_obj += 1

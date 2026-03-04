@@ -10,6 +10,8 @@ import os
 import pandas as pd
 from astropy import units as u
 from geovectorslib import geod
+from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from PIL import Image
 
@@ -230,6 +232,8 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
     contents = np.array([])
     if power_type == 'fuel':
         contents = contents * u.kg / u.meter
+    elif power_type == 'speed':
+        contents = contents * u.meter / u.second
     else:
         contents = contents * u.Watt
     cent_temp = 0 * u.meter
@@ -373,3 +377,18 @@ def write_graph_to_csv(path, x, y):
 
         for i in range(0, len(x)):
             graphwriter.writerow([x[i], y[i]])
+
+
+def get_route_lc(X):
+    lats = X[:, 0]
+    lons = X[:, 1]
+    speed = X[:, 2]
+
+    points = np.array([lons, lats]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+    norm = Normalize(vmin=0, vmax=20)
+    lc = LineCollection(segments, cmap='viridis', norm=norm, transform=ccrs.Geodetic())
+    lc.set_array(speed)
+    lc.set_linewidth(1)
+    return lc
