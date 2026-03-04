@@ -1,0 +1,2301 @@
+{
+  "type": "FeatureCollection",
+  "route type": "Simulation Test",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.6,
+          35.6
+        ]
+      },
+      "properties": {
+        "time": "2026-02-11 14:33:20",
+        "speed": {
+          "value": 10.100274591474372,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 15455.77553270336,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.5977666267874007,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.0,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 9.0,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          141.56,
+          35.642
+        ]
+      },
+      "properties": {
+        "time": "2026-02-11 19:21:20",
+        "speed": {
+          "value": 9.784541686890668,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 14051.177588110326,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.3743920859513576,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.149750124970242,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.960863984850548,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          143.51999999999998,
+          35.684000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-12 00:09:20",
+        "speed": {
+          "value": 10.349714327264264,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16629.39107401547,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.6202988484468004,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.298003996192592,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.844221753243083,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.48,
+          35.726
+        ]
+      },
+      "properties": {
+        "time": "2026-02-12 04:57:20",
+        "speed": {
+          "value": 10.096772946237579,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 15439.706103658831,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.6248236130757472,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.4432803099920095,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.652355761249233,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          147.44,
+          35.768
+        ]
+      },
+      "properties": {
+        "time": "2026-02-12 09:45:20",
+        "speed": {
+          "value": 10.700976400115708,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18380.675921271588,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7405708756876064,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.5841275134629758,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.389020444053664,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          149.4,
+          35.81
+        ]
+      },
+      "properties": {
+        "time": "2026-02-12 14:33:20",
+        "speed": {
+          "value": 10.991251385457316,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19917.40167020796,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.9244479414759397,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.7191383079063045,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.059368749137953,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          151.35999999999999,
+          35.852000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-12 19:21:20",
+        "speed": {
+          "value": 11.108652628863881,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 20562.476474380557,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.9600418697455495,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.8469637100925533,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 7.669851303365233,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          153.32,
+          35.894
+        ]
+      },
+      "properties": {
+        "time": "2026-02-13 00:09:20",
+        "speed": {
+          "value": 10.576955706912226,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 17748.97656754291,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7256835986023527,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.966326530856537,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 7.228090187064868,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.28,
+          35.936
+        ]
+      },
+      "properties": {
+        "time": "2026-02-13 04:57:20",
+        "speed": {
+          "value": 10.947790173586828,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19682.06466408262,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.9503053702974977,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.0760341363492842,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 6.742729785106849,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          157.24,
+          35.978
+        ]
+      },
+      "properties": {
+        "time": "2026-02-13 09:45:20",
+        "speed": {
+          "value": 10.68265384161385,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18286.421524552545,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7907632475943207,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.174990364441225,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 6.223267633513157,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          159.2,
+          36.02
+        ]
+      },
+      "properties": {
+        "time": "2026-02-13 14:33:20",
+        "speed": {
+          "value": 10.534408946017107,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 17535.64642297258,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.8287918599556339,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.2622064772118446,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 5.679868571600963,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          161.16,
+          36.062000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-13 19:21:20",
+        "speed": {
+          "value": 10.592932928893086,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 17829.53129282156,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.733286199398562,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.336811040092153,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 5.123165836329864,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          163.12,
+          36.104
+        ]
+      },
+      "properties": {
+        "time": "2026-02-14 00:09:20",
+        "speed": {
+          "value": 11.127430156325982,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 20666.926270355172,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 2.104770939981372,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.3980586289508397,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 4.564052991040516,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.07999999999998,
+          36.146
+        ]
+      },
+      "properties": {
+        "time": "2026-02-14 04:57:20",
+        "speed": {
+          "value": 10.795278828026014,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18870.91034364435,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.8273589084452841,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4453372781257894,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 4.0134707601246635,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          167.04,
+          36.188
+        ]
+      },
+      "properties": {
+        "time": "2026-02-14 09:45:20",
+        "speed": {
+          "value": 10.382685450456988,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16788.826850019286,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.769154334329785,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4781745949826903,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 3.4821929408473813,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          169.0,
+          36.230000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-14 14:33:20",
+        "speed": {
+          "value": 10.237895863007285,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16096.200836021988,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.5622834345597034,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4962424799060816,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 2.9806155816005697,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.95999999999998,
+          36.272
+        ]
+      },
+      "properties": {
+        "time": "2026-02-14 19:21:20",
+        "speed": {
+          "value": 9.746562461407358,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 13888.190663394511,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.3595666671236073,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4993604045622577,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 2.5185535519492808,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          172.92,
+          36.314
+        ]
+      },
+      "properties": {
+        "time": "2026-02-15 00:09:20",
+        "speed": {
+          "value": 9.31198963726048,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 12112.079453514141,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.2432263578794032,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4874972156787027,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 2.1050484851897244,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          174.88,
+          36.356
+        ]
+      },
+      "properties": {
+        "time": "2026-02-15 04:57:20",
+        "speed": {
+          "value": 9.086616979867868,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 11253.767152264889,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.2179596805988073,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4607714463172927,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.7481918516004402,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          176.84,
+          36.398
+        ]
+      },
+      "properties": {
+        "time": "2026-02-15 09:45:20",
+        "speed": {
+          "value": 9.411843111393523,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 12505.909934118126,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.1884219704040984,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.4194501315311214,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.4549666244905919,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          178.8,
+          36.440000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-15 14:33:20",
+        "speed": {
+          "value": 9.044884329247296,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 11099.420650687818,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0399273881763604,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.3639461402385225,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.2311106373253669,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -179.24,
+          36.482
+        ]
+      },
+      "properties": {
+        "time": "2026-02-15 19:21:20",
+        "speed": {
+          "value": 8.956032370971354,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 10775.519643971644,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0102017741358962,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.2948140499733105,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.0810043057572631,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -177.28,
+          36.524
+        ]
+      },
+      "properties": {
+        "time": "2026-02-16 00:09:20",
+        "speed": {
+          "value": 9.052197846368403,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 11126.366752440512,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0912442940760072,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.212744605729385,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.0075849116194173,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -175.32,
+          36.566
+        ]
+      },
+      "properties": {
+        "time": "2026-02-16 04:57:20",
+        "speed": {
+          "value": 8.544089301526201,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 9355.96515608253,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 0.9117533211921608,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.11855781826508,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.0122891261724525,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -173.36,
+          36.608000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-16 09:45:20",
+        "speed": {
+          "value": 8.751498178076526,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 10053.99070049138,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0461575824979863,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 3.0131947708267264,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.0950248973103602,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -171.4,
+          36.650000000000006
+        ]
+      },
+      "properties": {
+        "time": "2026-02-16 14:33:20",
+        "speed": {
+          "value": 8.970264848109347,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 10826.973069589973,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0979332488027076,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.8977082161559347,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.2541732508368146,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -169.44,
+          36.692
+        ]
+      },
+      "properties": {
+        "time": "2026-02-16 19:21:20",
+        "speed": {
+          "value": 8.967275775353345,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 10816.153379835576,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.097905373124836,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.773252057732196,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.486619970564504,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -167.48000000000002,
+          36.734
+        ]
+      },
+      "properties": {
+        "time": "2026-02-17 00:09:20",
+        "speed": {
+          "value": 9.035497137035277,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 11064.898054343128,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0099273235173396,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.6410698203507446,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 1.7878165373210777,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -165.52,
+          36.776
+        ]
+      },
+      "properties": {
+        "time": "2026-02-17 04:57:20",
+        "speed": {
+          "value": 9.146294920344191,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 11476.959842665898,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.0773353389513023,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.502482225233857,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 2.1518691344067604,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -163.56,
+          36.818000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-17 09:45:20",
+        "speed": {
+          "value": 9.49445978119499,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 12838.137905522815,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.3228265075133703,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.3588739938209735,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 2.5716539778441794,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -161.60000000000002,
+          36.86
+        ]
+      },
+      "properties": {
+        "time": "2026-02-17 14:33:20",
+        "speed": {
+          "value": 9.647388880048537,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 13468.542904631013,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.4420018457685475,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.2116800120898006,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 3.0389567146372025,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -159.64000000000001,
+          36.902
+        ]
+      },
+      "properties": {
+        "time": "2026-02-17 19:21:20",
+        "speed": {
+          "value": 9.626750829522853,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 13382.29046951557,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.3933215803810621,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 2.0623709936499357,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 3.544633161292566,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -157.68,
+          36.944
+        ]
+      },
+      "properties": {
+        "time": "2026-02-18 00:09:20",
+        "speed": {
+          "value": 10.09778294133677,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 15444.339936922086,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.5407414618110156,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.91243878485863,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 4.078788237271765,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -155.72,
+          36.986000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-18 04:57:20",
+        "speed": {
+          "value": 10.243778633982911,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16123.963772228826,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.642036916308864,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.763381458785127,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 4.630969592001954,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -153.76,
+          37.028000000000006
+        ]
+      },
+      "properties": {
+        "time": "2026-02-18 09:45:20",
+        "speed": {
+          "value": 10.920838292105906,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19537.05901454215,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.8629265940843203,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.6166883469597524,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 5.190372136551154,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -151.8,
+          37.07
+        ]
+      },
+      "properties": {
+        "time": "2026-02-18 14:33:20",
+        "speed": {
+          "value": 10.334849088115575,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16557.83982567981,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.731470257880088,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.4738251584655702,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 5.746049477690299,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -149.84,
+          37.112
+        ]
+      },
+      "properties": {
+        "time": "2026-02-18 19:21:20",
+        "speed": {
+          "value": 10.705368282782182,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18403.31653971703,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7840748034829965,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.3362193350577218,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 6.287128116998887,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -147.88,
+          37.154
+        ]
+      },
+      "properties": {
+        "time": "2026-02-19 00:09:20",
+        "speed": {
+          "value": 10.650961140514507,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18124.1504909405,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.8382652666193995,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.2052457886372598,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 6.8030202235643955,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -145.92000000000002,
+          37.196000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-19 04:57:20",
+        "speed": {
+          "value": 10.970236606639164,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19803.37642815169,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.887069524773968,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 1.0822131635859216,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 7.283630816737814,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -143.96,
+          37.238
+        ]
+      },
+      "properties": {
+        "time": "2026-02-19 09:45:20",
+        "speed": {
+          "value": 10.828839269126693,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19047.456123451648,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.863401267449114,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.968350761224039,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 7.719555304791428,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -142.0,
+          37.28
+        ]
+      },
+      "properties": {
+        "time": "2026-02-19 14:33:20",
+        "speed": {
+          "value": 11.032013817033484,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 20139.8230437224,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.9862502036227974,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.8647962570381078,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.102263514041,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -140.04000000000002,
+          37.322
+        ]
+      },
+      "properties": {
+        "time": "2026-02-19 19:21:20",
+        "speed": {
+          "value": 11.074551007736023,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 20373.687589388952,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 2.060152523337959,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.7725843334033846,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.424266607349018,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -138.08,
+          37.364000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-20 00:09:20",
+        "speed": {
+          "value": 10.707443144059955,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18414.019131828853,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.8952253468021822,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.6926363413796177,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.679263625746557,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -136.12,
+          37.406000000000006
+        ]
+      },
+      "properties": {
+        "time": "2026-02-20 04:57:20",
+        "speed": {
+          "value": 10.835216323486735,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 19081.12682590867,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.9396730684202408,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.6257510948758176,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.86226478564607,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.16000000000003,
+          37.448
+        ]
+      },
+      "properties": {
+        "time": "2026-02-20 09:45:20",
+        "speed": {
+          "value": 10.08815456135024,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 15400.20285412136,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.6282940721869401,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5725968891657258,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.969689118964467,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -132.2,
+          37.49
+        ]
+      },
+      "properties": {
+        "time": "2026-02-20 14:33:20",
+        "speed": {
+          "value": 10.646618653286334,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 18101.991418034257,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7801032387186688,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5337048235023545,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.99943454553366,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -130.24,
+          37.532000000000004
+        ]
+      },
+      "properties": {
+        "time": "2026-02-20 19:21:20",
+        "speed": {
+          "value": 10.60939277810592,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 17912.77386007105,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.7610707853454541,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5094634945498031,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.95091900662123,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.28000000000003,
+          37.574000000000005
+        ]
+      },
+      "properties": {
+        "time": "2026-02-21 00:09:20",
+        "speed": {
+          "value": 10.315188931996564,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 16463.52470450451,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.5730793386714863,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5001151136538486,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.825091854660112,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.32,
+          37.616
+        ]
+      },
+      "properties": {
+        "time": "2026-02-21 04:57:20",
+        "speed": {
+          "value": 9.675094068643707,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 13584.912572916026,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.3961189432973584,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.505753086746239,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.62441527631298,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -124.36000000000001,
+          37.658
+        ]
+      },
+      "properties": {
+        "time": "2026-02-21 09:45:20",
+        "speed": {
+          "value": 9.970298991381894,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 14866.74203566821,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.5207170655344737,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5263210810635013,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.352816112385007,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.4,
+          37.7
+        ]
+      },
+      "properties": {
+        "time": "2026-02-21 14:33:20",
+        "speed": {
+          "value": 9.601616435604468,
+          "unit": "m/s"
+        },
+        "engine_power": {
+          "value": 13277.744810559476,
+          "unit": "kW"
+        },
+        "fuel_consumption": {
+          "value": 1.2973106686556468,
+          "unit": "t/h"
+        },
+        "wave_height": {
+          "value": 0.5616135880052924,
+          "unit": "m"
+        },
+        "u_wind_speed": {
+          "value": 8.015609017373219,
+          "unit": "m/s"
+        },
+        "v_wind_speed": {
+          "value": 0,
+          "unit": "m/s"
+        },
+        "wave_direction": {
+          "value": 0,
+          "unit": "deg"
+        },
+        "wave_period": {
+          "value": 8,
+          "unit": "s"
+        }
+      }
+    }
+  ]
+}
