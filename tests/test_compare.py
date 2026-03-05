@@ -18,7 +18,14 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 # ---------------------------------------------------------------------------
 
 def make_ship_params(n):
-    """Return a minimal 1-D ShipParams with n entries."""
+    """
+    Return a minimal 1-D ShipParams with n entries.
+
+    :param n: The number of entries in the ShipParams arrays.
+    :type n: int
+    :return: A ShipParams object initialized with dummy data.
+    :rtype: ShipParams
+    """
     return ShipParams(
         fuel_rate=np.ones(n) * u.kg / u.second,
         power=np.ones(n) * u.Watt,
@@ -57,7 +64,12 @@ class TestShipParamsPerDistLoop:
     """
 
     def test_old_code_raises_typeerror(self):
-        """Confirm the original buggy expression raises TypeError."""
+        """
+        Confirm the original buggy expression raises TypeError.
+
+        This test verifies that the `len()` function raises a `TypeError` when passed
+        multiple arguments, as it did in the original code.
+        """
         lats = np.array([38.0, 38.5, 39.0, 39.5, 40.0, 40.5, 41.0])
         with pytest.raises(TypeError):
             # This is intentionally the OLD buggy code to prove the bug existed
@@ -65,7 +77,12 @@ class TestShipParamsPerDistLoop:
                 pass
 
     def test_fixed_loop_runs_without_error(self):
-        """Fixed expression iterates without raising any exception."""
+        """
+        Fixed expression iterates without raising any exception.
+
+        This test ensures that the corrected `range(1, len(lats) - 1)` loop
+        executes successfully.
+        """
         lats = np.array([38.0, 38.5, 39.0, 39.5, 40.0, 40.5, 41.0])
         indices = []
         for i in range(1, len(lats) - 1):
@@ -98,7 +115,11 @@ class TestShipParamsFuelRateAttribute:
     """
 
     def test_fuel_rate_attribute_exists(self):
-        """ShipParams must expose a fuel_rate attribute."""
+        """
+        ShipParams must expose a fuel_rate attribute.
+
+        Verifies that the `ShipParams` class has the `fuel_rate` attribute.
+        """
         sp = make_ship_params(5)
         assert hasattr(sp, 'fuel_rate'), "ShipParams must have 'fuel_rate' attribute"
 
@@ -139,7 +160,11 @@ class TestComparePyPortablePaths:
     """
 
     def test_compare_py_exists(self):
-        """compare.py must exist in the project root."""
+        """
+        compare.py must exist in the project root.
+
+        Checks for the existence of `compare.py` in the expected directory.
+        """
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         compare_path = os.path.join(project_root, 'compare.py')
         assert os.path.isfile(compare_path), "compare.py not found in project root"
