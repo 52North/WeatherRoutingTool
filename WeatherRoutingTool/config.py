@@ -519,6 +519,11 @@ class Config(BaseModel):
                             'waypoint and speed optimisation.')
                 if self.ARRIVAL_TIME is None or self.BOAT_SPEED is None:
                     raise ValueError('Please provide a valid arrival time and boat speed.')
+
+
+            if self.GENETIC_MUTATION_TYPE == "speed" and self.GENETIC_CROSSOVER_TYPE == "speed":
+                raise NotImplementedError("Pure speed optimisation of single routes is not yet implemented but planned "
+                                          "for the future.")
         else:
             if self.BOAT_SPEED is None:
                 raise ValueError('Please provide a valid boat speed.')
