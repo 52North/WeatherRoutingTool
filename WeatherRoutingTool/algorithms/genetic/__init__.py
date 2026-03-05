@@ -17,6 +17,7 @@ from pymoo.util.running_metric import RunningMetric
 
 import WeatherRoutingTool.utils.formatting as formatting
 import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.algorithms.genetic.mcdm as MCDM
 from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
 from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
@@ -53,20 +54,10 @@ class Genetic(RoutingAlg):
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
         self.objectives = config.GENETIC_OBJECTIVES
         self.n_objs = len(config.GENETIC_OBJECTIVES)
-        self.get_objective_weights()
 
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
-
-    def get_objective_weights(self):
-        self.objective_weights = {}
-
-        for obj_str in self.objectives:
-            self.objective_weights[obj_str] = utils.get_weigths_from_rankarr(
-                np.array([self.objectives[obj_str]]),
-                self.n_objs
-            )
 
     def execute_routing(
             self,
@@ -169,89 +160,12 @@ class Genetic(RoutingAlg):
 
         return res
 
-    def rank_solutions(self, obj, dec=False):
-        rank_ind = np.argsort(obj)
-        if dec:
-            rank_ind = rank_ind[::-1]
-        rank = np.argsort(rank_ind)
-        rank = rank + 1
-        return rank
-
-    def get_composite_weight(self, sol_weight_list, obj_weight_list):
-        sign = [1, -1]
-        denominator = 0
-        summands = 0
-        product = 1
-
-        if len(sol_weight_list) > 2:
-            raise NotImplementedError('Calculation of the composite weight of the R-method is not implemented for'
-                                      'more than two objectives.')
-
-        for i in range(len(sol_weight_list)):
-            denominator = denominator + sign[i] * 1. / obj_weight_list[i] * sol_weight_list[i]
-            product = product * sol_weight_list[i]
-        denominator = np.abs(denominator) + 0.2
-
-        for i in range(len(sol_weight_list)):
-            summands = summands + sol_weight_list[i] / denominator * obj_weight_list[i] * obj_weight_list[i]
-
-        composite_weight = product + summands
-        return composite_weight
-
-    def get_best_compromise(self, solutions):
-        debug = True
-        sol_weight_list = []
-        obj_weight_list = []
-
-        if self.n_objs == 1:
-            return solutions.argmin()
-
-        if debug:
-            print('solutions: ', solutions)
-            print('solutions shape: ', solutions.shape)
-
-        rmethod_table = pd.DataFrame()
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-
-        i_obj = 0
-        norm = 1.
-        for obj_str in self.objectives:
-            objective_values = solutions[:, i_obj]
-            max_value = np.max(objective_values)
-            if i_obj == 0:
-                norm = max_value
-            else:
-                objective_values = objective_values * norm * 1. / max_value
-            rmethod_table[obj_str + '_obj'] = objective_values
-            rmethod_table[obj_str + '_rank'] = self.rank_solutions(objective_values)
-            rmethod_table[obj_str + '_weight'] = utils.get_weigths_from_rankarr(
-                rmethod_table[obj_str + '_rank'].to_numpy(),
-                len(solutions))
-            i_obj += 1
-            sol_weight_list.append(rmethod_table[obj_str + '_weight'].to_numpy())
-            obj_weight_list.append(self.objective_weights[obj_str])
-
-        if debug:
-            print('rmethod table:', rmethod_table)
-
-        rmethod_table['composite_weight'] = self.get_composite_weight(
-            sol_weight_list=sol_weight_list,
-            obj_weight_list=obj_weight_list,
-        )
-        rmethod_table['composite_rank'] = self.rank_solutions(rmethod_table['composite_weight'], True)
-        best_ind = np.argmax(rmethod_table['composite_rank'].to_numpy())
-
-        if debug:
-            print('rmethod table:', rmethod_table)
-            print('best index: ', rmethod_table.iloc[best_ind])
-        return best_ind
-
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
-        best_index = self.get_best_compromise(res.F)
+        mcdm = MCDM.RMethod(self.objectives)
+        best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel_dict = problem.get_power(best_route)
