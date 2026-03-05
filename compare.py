@@ -19,7 +19,7 @@ if __name__ == "__main__":
         segment = 0
         shipParams = routeparams.ship_params_per_step
 
-        for i in range(len(1, routeparams.lats_per_step - 1)):
+        for i in range(1, len(routeparams.lats_per_step) - 1):
             dist += routeparams.dist_per_step[i]
             if dist <= segment_dist:
                 fuels[segment] += (shipParams.fuel[i - 1])  # * routeparams.dist_per_step[i])
