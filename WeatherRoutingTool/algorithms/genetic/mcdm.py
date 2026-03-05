@@ -3,7 +3,7 @@ import pandas as pd
 
 
 class MCDM:
-    """Base Class for Multi-Criteria Decision Making
+    """Base Class for Multi-Criteria Decision Making (MCDM).
 
     This Class implements the base functionality for selecting a single solution from the set of non-dominated
     solutions found by the genetic algorithm.
@@ -18,7 +18,31 @@ class MCDM:
 
 
 class RMethod(MCDM):
-    def __init__(self, objectives: dict):
+    """
+        Implements the R-Method for MCDM.
+
+        The R-Method ranks alternatives by calculating a composite weight derived from
+        rank-based objective importance and solution performance rankings. It is
+        designed to identify the best compromise solution in multi-objective scenarios.
+
+        If two objectives are supposed to have equal rank, the user needs to provide the mean between the two
+        possible ranks, e.g. weight=1.5 for both objectives for optimisation with two objectives.
+
+        References:
+          R.V. Rao and R.J. Lakshmi, "Ranking of Pareto-optimal solutions and selecting the best solution in multi-and
+          many-objective optimization problems using R-method". Soft Computing Letters 3 (2021) 100015
+
+        :param objectives: dictionary of objective names (keys) and their weights (values).
+        :type objectives: dict
+    """
+
+    def __init__(self, objectives: dict[str, int]):
+        """
+        Initialises the RMethod instance.
+
+        :param objectives: dictionary of objective names (keys) and their weights (values).
+        :type objectives: dict
+        """
         super().__init__(objectives)
 
         self.objective_weights = {}
@@ -28,10 +52,19 @@ class RMethod(MCDM):
                 np.array([self.objectives[obj_str]]),
                 self.n_objs
             )
-        print('n_objs: ', self.n_objs)
-        print('objectives: ', self.objectives)
 
-    def rank_solutions(self, obj, dec=False):
+    def rank_solutions(self, obj: np.ndarray, dec: bool = False) -> np.ndarray:
+        """
+        Ranks array content according to increasing (dec = False) or decreasing (dec = True) values.
+
+        :param obj: Array to be ranked.
+        :type obj: numpy.ndarray
+        :param dec: If True, rank in descending order (highest value gets rank 1).
+                    Defaults to False.
+        :type dec: bool
+        :return: array of ranks
+        :rtype: numpy.ndarray
+        """
         rank_ind = np.argsort(obj)
         if dec:
             rank_ind = rank_ind[::-1]
@@ -39,7 +72,20 @@ class RMethod(MCDM):
         rank = rank + 1
         return rank
 
-    def get_composite_weight(self, sol_weight_list, obj_weight_list):
+    def get_composite_weight(self, sol_weight_list: list[np.ndarray], obj_weight_list: list[float]) -> np.ndarray:
+        """
+        Calculate the composite weight for all non-dominated solutions based on solution weights and objective weights.
+
+        Note: The current implementation is limited to problems with exactly two objectives.
+
+        :param sol_weight_list: List of weights for each solution based on their performance wrt. each objective.
+        :type sol_weight_list: list[numpy.ndarray]
+        :param obj_weight_list: List of objective weights based on user ranking.
+        :type obj_weight_list: list[float]
+        :raises NotImplementedError: If the number of objectives is greater than two.
+        :return: Calculated composite weights for all solutions.
+        :rtype: numpy.ndarray
+        """
         sign = [1, -1]
         denominator = 0
         summands = 0
@@ -60,8 +106,20 @@ class RMethod(MCDM):
         composite_weight = product + summands
         return composite_weight
 
-    def get_best_compromise(self, solutions):
-        debug = True
+    def get_best_compromise(self, solutions: np.ndarray) -> int:
+        """
+        Find the index of the best compromise solution from a set of candidates.
+
+        This method normalises the objective values for each solution, ranks the latter with respect to each objective,
+        and calculates composite weights based on solution and objective weights.
+
+        :param solutions: 2D array of objective values where rows are alternative solutions and columns are
+          objective values.
+        :type solutions: numpy.ndarray
+        :return: The index of the optimal solution in the provided array.
+        :rtype: int
+        """
+        debug = False
         sol_weight_list = []
         obj_weight_list = []
 
@@ -109,13 +167,31 @@ class RMethod(MCDM):
             print('best index: ', rmethod_table.iloc[best_ind])
         return best_ind
 
-    def get_rank_sum(self, rank_max):
+    def get_rank_sum(self, rank_max: int) -> float:
+        """
+        Calculate the reciprocal of the harmonic sum for a given rank.
+
+        :param rank_max: The rank to evaluate the sum for.
+        :type rank_max: int
+        :return: Reciprocal of the sum of (1/k) for k from 1 to rank_max.
+        :rtype: float
+        """
         rank_sum = 0
         for rk in range(1, rank_max + 1):
             rank_sum += 1 / rk
         return 1 / rank_sum
 
-    def get_weight_from_rank(self, rank, n_parts):
+    def get_weight_from_rank(self, rank: int, n_parts: int) -> float:
+        """
+        Compute a normalized weight for an individual rank of a solutions or objective.
+
+        :param rank: The specific rank of the item.
+        :type rank: int
+        :param n_parts: Total number of solutions/objectives in the set.
+        :type n_parts: int
+        :return: Normalized weight.
+        :rtype: float
+        """
         numerator = self.get_rank_sum(rank)
         denominator_sum = 0.
 
@@ -124,7 +200,20 @@ class RMethod(MCDM):
             denominator_sum += temp
         return numerator / denominator_sum
 
-    def get_weigths_from_rankarr(self, rank_arr, n_parts):
+    def get_weigths_from_rankarr(self, rank_arr: np.ndarray, n_parts: int) -> np.ndarray:
+        """
+        Convert an array of ranks into an array of weights.
+
+        Objectives or solutions can receive fractional ranks, if two of them are supposed to have equal ranks. These
+        fractional ranks are handled by averaging the weights of the floor and ceiling integer ranks.
+
+        :param rank_arr: Array of ranks.
+        :type rank_arr: numpy.ndarray
+        :param n_parts: Total number of solutions/objectives in the set.
+        :type n_parts: int
+        :return: Array containing the derived weights.
+        :rtype: numpy.ndarray
+        """
         weight_array = np.full(rank_arr.shape, -99.)
 
         for irank in range(0, rank_arr.shape[0]):
