@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import os
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.config as config
 from WeatherRoutingTool.routeparams import RouteParams
@@ -22,16 +23,16 @@ if __name__ == "__main__":
         for i in range(1, len(routeparams.lats_per_step) - 1):
             dist += routeparams.dist_per_step[i]
             if dist <= segment_dist:
-                fuels[segment] += (shipParams.fuel[i - 1])  # * routeparams.dist_per_step[i])
+                fuels[segment] += (shipParams.fuel_rate[i - 1])  # * routeparams.dist_per_step[i])
                 powers[segment] += shipParams.power[i - 1]
             else:
                 dist = dist - segment_dist
                 remaining_dist = routeparams.dist_per_step[i] - dist
                 if remaining_dist > 0:
-                    fuels[segment] += (shipParams.fuel[i - 1])  # *remaining_dist
+                    fuels[segment] += (shipParams.fuel_rate[i - 1])  # *remaining_dist
                     powers[segment] += shipParams.power[i - 1]
                 segment += 1
-                fuels[segment] += (shipParams.fuel[i - 1])  # *dist
+                fuels[segment] += (shipParams.fuel_rate[i - 1])  # *dist
                 powers[segment] += shipParams.power[i - 1]
         return fuels, powers
 
@@ -162,10 +163,11 @@ def plotShipParamsHist(route_params1, route_params2, figure_path):
 
     # simulation study plot
     print("Hello")
-    filename4 = "/Users/parichay/Mari/MariGeoRoute/GARoutes/british_channel/GA_Storm_2.json"
-    filename5 = '/Users/parichay/Mari/MariGeoRoute/GARoutes/british_channel/min_time_route_230622_09.json'
+    _here = os.path.dirname(os.path.abspath(__file__))
+    filename4 = os.path.join(_here, "min_time_route.geojson")
+    filename5 = os.path.join(_here, "min_time_route.geojson")
 
-    figure_path = '/Users/parichay/Mari/MariGeoRoute/WeatherRoutingTool/Figure'  # config.FIGURE_PATH
+    figure_path = _here  # config.FIGURE_PATH
     route4 = RouteParams.from_file(filename4)
     route_iso = RouteParams.from_file(filename5)
 
