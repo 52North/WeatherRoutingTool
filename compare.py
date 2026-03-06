@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import os
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.config as config
 from WeatherRoutingTool.routeparams import RouteParams
@@ -9,6 +10,14 @@ import numpy as np
 if __name__ == "__main__":
 
     def shipParamsPerDist(routeparams):
+        """
+        Calculate fuel and power parameters per distance segment for a given route.
+
+        :param routeparams: The route parameters containing distance and ship performance data.
+        :type routeparams: RouteParams
+        :return: Tuple containing arrays of fuel and power values for 10 distance segments.
+        :rtype: tuple(numpy.ndarray, numpy.ndarray)
+        """
         fuels = np.zeros(10)
         powers = np.zeros(10)
 
@@ -19,24 +28,34 @@ if __name__ == "__main__":
         segment = 0
         shipParams = routeparams.ship_params_per_step
 
-        for i in range(len(1, routeparams.lats_per_step - 1)):
+        for i in range(1, len(routeparams.lats_per_step) - 1):
             dist += routeparams.dist_per_step[i]
             if dist <= segment_dist:
-                fuels[segment] += (shipParams.fuel[i - 1])  # * routeparams.dist_per_step[i])
+                fuels[segment] += (shipParams.fuel_rate[i - 1])  # * routeparams.dist_per_step[i])
                 powers[segment] += shipParams.power[i - 1]
             else:
                 dist = dist - segment_dist
                 remaining_dist = routeparams.dist_per_step[i] - dist
                 if remaining_dist > 0:
-                    fuels[segment] += (shipParams.fuel[i - 1])  # *remaining_dist
+                    fuels[segment] += (shipParams.fuel_rate[i - 1])  # *remaining_dist
                     powers[segment] += shipParams.power[i - 1]
                 segment += 1
-                fuels[segment] += (shipParams.fuel[i - 1])  # *dist
+                fuels[segment] += (shipParams.fuel_rate[i - 1])  # *dist
                 powers[segment] += shipParams.power[i - 1]
         return fuels, powers
 
 
 def plotShipParamsHist(route_params1, route_params2, figure_path):
+    """
+    Plot a histogram comparing ship parameters (fuel and power) for two different routes.
+
+    :param route_params1: Route parameters for the first route.
+    :type route_params1: RouteParams
+    :param route_params2: RouteParams for the second route.
+    :type route_params2: RouteParams
+    :param figure_path: The directory path where the comparison plot should be saved.
+    :type figure_path: str
+    """
     fuels1, powers1 = shipParamsPerDist(route_params1)
     fuels2, powers2 = shipParamsPerDist(route_params2)
     print("Show...")
@@ -162,10 +181,11 @@ def plotShipParamsHist(route_params1, route_params2, figure_path):
 
     # simulation study plot
     print("Hello")
-    filename4 = "/Users/parichay/Mari/MariGeoRoute/GARoutes/british_channel/GA_Storm_2.json"
-    filename5 = '/Users/parichay/Mari/MariGeoRoute/GARoutes/british_channel/min_time_route_230622_09.json'
+    _here = os.path.dirname(os.path.abspath(__file__))
+    filename4 = os.path.join(_here, "min_time_route.geojson")
+    filename5 = os.path.join(_here, "min_time_route.geojson")
 
-    figure_path = '/Users/parichay/Mari/MariGeoRoute/WeatherRoutingTool/Figure'  # config.FIGURE_PATH
+    figure_path = _here  # config.FIGURE_PATH
     route4 = RouteParams.from_file(filename4)
     route_iso = RouteParams.from_file(filename5)
 
