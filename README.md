@@ -2,6 +2,40 @@
 
 A tool to perform optimization of ship routes based on fuel consumption in different weather conditions.
 
+Install `virtualenv`, if it is not installed yet:
+
+```
+sudo pip install virtualenv
+```
+
+To install the minimal dependencies version for the computational functionality, do this inside the virtual environment:
+
+```
+pip install . 
+```
+
+And, finally, test it with:
+
+```
+pytest tests
+```
+
+### Optional Dependencies
+
+To access the complete feature set (including geographic mapping algorithms and visualisations using datastores and `matplotlib`), utilize the new optional installations:
+
+**1) Visualisation Package:** `pip install .[vis]` 
+Provides data chart tools using `matplotlib` and `seaborn`.
+
+**2) geospatial/GIS Package:** `pip install .[geo]` 
+Enables cartography map and coordinate conversions handling `geopandas`, `cartopy`, `global_land_mask`, and `shapely`.
+
+**3) Extraneous data package:** `pip install .[data]` 
+Adds larger data fetching engines like `boto3`, `dask`, `datacube`, `netcdf4` and `scikit-image`.
+
+**4) Everything Inclusive:** `pip install .[all]` 
+Combines all previous sets for an all-encompassing installation.
+
 Documentation: https://52north.github.io/WeatherRoutingTool/
 
 Introduction: [WRT-sandbox](https://github.com/52North/WRT-sandbox) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/52North/WRT-sandbox.git/HEAD?urlpath=%2Fdoc%2Ftree%2FNotebooks/execute-WRT.ipynb)

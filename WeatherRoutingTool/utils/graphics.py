@@ -1,17 +1,7 @@
 import csv
-
-import cartopy.crs as ccrs
-import cartopy.feature as cf
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy as np
 import os
-import pandas as pd
 from astropy import units as u
 from geovectorslib import geod
-from matplotlib.figure import Figure
-from PIL import Image
 
 graphics_options = {'font_size': 20, 'fig_size': (12, 10)}
 
@@ -21,6 +11,8 @@ def get_standard(var):
 
 
 def get_standard_fig():
+    import matplotlib
+    from matplotlib.figure import Figure
     fig = Figure(figsize=get_standard('fig_size'), dpi=100)
     matplotlib.rcParams.update({'font.size': get_standard('font_size')})
     return fig
@@ -44,6 +36,9 @@ def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
 
 
 def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
+    import cartopy.crs as ccrs
+    import cartopy.feature as cf
+    from matplotlib.figure import Figure
     """Return map figure."""
     fig = Figure(figsize=(1600 / dpi, 800 * n_maps / dpi), dpi=dpi)
     fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
@@ -71,6 +66,9 @@ def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
 
 
 def create_map(lat1, lon1, lat2, lon2, dpi):
+    import cartopy.crs as ccrs
+    import cartopy.feature as cf
+    from matplotlib.figure import Figure
     """Return map figure."""
     fig = Figure(figsize=(1200 / dpi, 420 / dpi), dpi=dpi)
     fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
@@ -163,6 +161,7 @@ def get_linestyle(i):
 
 
 def rebin(a, rebinx, rebiny):
+    import numpy as np
     modx = a.shape[0] % rebinx
     mody = a.shape[1] % rebiny
 
@@ -182,6 +181,10 @@ def rebin(a, rebinx, rebiny):
 
 
 def merge_figs(path, ncounts):
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    from PIL import Image
+    
     fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
     ax.axis('off')
     image_list = []
@@ -212,6 +215,7 @@ def get_figure_path():
 
 
 def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
+    import numpy as np
     centres = np.array([])
     widths = np.array([])
     contents = np.array([])
@@ -226,6 +230,7 @@ def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
 
 
 def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
+    import numpy as np
     centres = np.array([]) * u.meter
     contents = np.array([])
     if power_type == 'fuel':
@@ -262,6 +267,7 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
 
 
 def get_accumulated_dist(dist_arr):
+    import numpy as np
     dist_acc = np.array([])
     full_dist = 0
 
@@ -274,6 +280,7 @@ def get_accumulated_dist(dist_arr):
 
 
 def set_graphics_standards(ax):
+    import matplotlib.pyplot as plt
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
         label.set_fontsize(20)
     plt.rcParams['font.size'] = '20'
@@ -289,6 +296,10 @@ def generate_basemap(
         show_depth=True,
         show_gcr=False
 ):
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cf
+    import numpy as np
     plt.rcParams['font.size'] = get_standard('font_size')
     (min_lat, max_lat, min_lon, max_lon) = map
 
@@ -356,6 +367,7 @@ def generate_basemap(
 
 # TODO: faulty
 def plot_genetic_algorithm_initial_population(src, dest, routes):
+    import matplotlib.pyplot as plt
     figure_path = get_figure_path()
     if figure_path is not None:
         plt.rcParams['font.size'] = get_standard('font_size')
