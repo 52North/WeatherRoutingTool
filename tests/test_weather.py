@@ -15,14 +15,14 @@ def test_theta_from_uv(u, v, theta_res):
 
 
 @pytest.mark.parametrize("theta,windspeed,u_res", [
-    (0, 1, 0.0),            # -sin(0) = 0
-    (90, 1, -1.0),          # -sin(90) = -1
-    (180, 1, 0.0),          # -sin(180) = 0
-    (270, 1, 1.0),          # -sin(270) = 1
-    (45, 1, -SQRT2_2),      # -sin(45) = -sqrt(2)/2
-    (135, 1, -SQRT2_2),     # -sin(135) = -sqrt(2)/2
-    (225, 1, SQRT2_2),      # -sin(225) = sqrt(2)/2
-    (315, 1, SQRT2_2),      # -sin(315) = sqrt(2)/2
+    (0, 1, 0.0),
+    (90, 1, -1.0),
+    (180, 1, 0.0),
+    (270, 1, 1.0),
+    (45, 1, -SQRT2_2),
+    (135, 1, -SQRT2_2),
+    (225, 1, SQRT2_2),
+    (315, 1, SQRT2_2),
 ])
 def test_get_u(theta, windspeed, u_res):
     u_test = WeatherCond.get_u(theta, windspeed)
@@ -31,14 +31,14 @@ def test_get_u(theta, windspeed, u_res):
 
 
 @pytest.mark.parametrize("theta,windspeed,v_res", [
-    (0, 1, -1.0),           # -cos(0) = -1
-    (90, 1, 0.0),           # -cos(90) = 0
-    (180, 1, 1.0),          # -cos(180) = 1
-    (270, 1, 0.0),          # -cos(270) = 0
-    (45, 1, -SQRT2_2),      # -cos(45) = -sqrt(2)/2
-    (135, 1, SQRT2_2),      # -cos(135) = sqrt(2)/2
-    (225, 1, SQRT2_2),      # -cos(225) = sqrt(2)/2
-    (315, 1, -SQRT2_2),     # -cos(315) = -sqrt(2)/2
+    (0, 1, -1.0),
+    (90, 1, 0.0),
+    (180, 1, 1.0),
+    (270, 1, 0.0),
+    (45, 1, -SQRT2_2),
+    (135, 1, SQRT2_2),
+    (225, 1, SQRT2_2),
+    (315, 1, -SQRT2_2),
 ])
 def test_get_v(theta, windspeed, v_res):
     v_test = WeatherCond.get_v(theta, windspeed)
