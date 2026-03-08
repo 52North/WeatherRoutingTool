@@ -157,6 +157,21 @@ class Genetic(RoutingAlg):
 
         super().terminate()
 
+        if res is None or res.F is None or res.X is None:
+            raise RuntimeError(
+                "Genetic optimization produced no feasible solution "
+                "(empty result: res.F/res.X is None). "
+                "This typically means all candidate routes violated constraints. "
+                "Try relaxing constraints (e.g., disable `water_depth` and/or `via_waypoints` temporarily), "
+                "reducing the bbox/time window, or verifying weather/depth inputs."
+            )
+
+        if np.size(res.F) == 0 or np.size(res.X) == 0:
+            raise RuntimeError(
+                "Genetic optimization produced no feasible solution (empty result array). "
+                "This typically means all candidate routes violated constraints."
+            )
+
         best_index = res.F.argmin()
         # ensure res.X is of shape (n_sol, n_var)
         best_route = np.atleast_2d(res.X)[best_index, 0]
