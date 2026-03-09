@@ -54,7 +54,7 @@ class RoutingAlg:
         if self.boat_speed is not None:
             self.boat_speed = self.boat_speed * u.meter/u.second
 
-    def get_boat_speed(self, dists=None):
+    def get_boat_speed(self):
         return self.boat_speed
 
     def init_fig(self, **kwargs):

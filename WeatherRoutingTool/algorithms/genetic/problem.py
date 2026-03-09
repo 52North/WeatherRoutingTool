@@ -1,10 +1,12 @@
 import datetime
 import logging
 
-import astropy.units as u
 import numpy as np
+from astropy import units as u
 from pymoo.core.problem import ElementwiseProblem
 
+from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time
+from WeatherRoutingTool.algorithms.genetic.utils import get_constraints
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
@@ -121,7 +123,7 @@ class RoutingProblem(ElementwiseProblem):
         bs = bs[:-1] * u.meter / u.second
 
         if self.boat_speed_from_arrival_time:
-            bs = utils.get_speed_from_arrival_time(
+            bs = get_speed_from_arrival_time(
                 lons=route[:, 1],
                 lats=route[:, 0],
                 departure_time=self.departure_time,
