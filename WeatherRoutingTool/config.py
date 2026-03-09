@@ -113,7 +113,8 @@ class Config(BaseModel):
     GENETIC_CROSSOVER_TYPE: Literal['random', 'speed', "waypoints"] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
-    GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5}
+    GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5} # dictionary for configuring
+    # the objectives and objective weights
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
