@@ -3,23 +3,20 @@
 Algorithm overview
 ==================
 
-The implementations of the individual algorithms meet different levels of sophistication. Currently, the
-implementation of the genetic algorithm is the most sophisticated as it considers weather and constraints and can be
-used for waypoint optimisation as well as combined waypoint and boat speed optimisation. Adding functionality
-for sole speed optimisation for a fixed route is planned for the near future.
+The implementations of the individual algorithms meet different levels of sophistication. In particular, the algorithms
+differ in the possible *degrees of freedom (DOF)* that can be manipulated (e.g. boat speed, waypoints) and the *objectives* that
+can be optimised (fuel, arrival-time accuracy, distance). The table below summarises the possible run modes for all available algorithms.
+Information on the configurations for the different run modes can be found in the sections that describe the functionality of each algorithm in detail.
 
-The table below summarises the level of sophistication for all available algorithms. Information on the configurations
-for the different run modes can be found in the sections that describe the functionality of each algorithm in detail.
-
-+------------------------+-----------------------+-------------------------+-------------------------------+---------+-------------+
-| Algorithm / Feature    | Waypoint optimization | Ship speed optimization | Waypoint & speed optimization | Weather | Constraints |
-+========================+=======================+=========================+===============================+=========+=============+
-| Genetic                | Yes                   | No                      | Yes                           | Yes     | Yes         |
-+------------------------+-----------------------+-------------------------+-------------------------------+---------+-------------+
-| Isofuel                | Yes                   | No                      | No                            | Yes     | Yes         |
-+------------------------+-----------------------+-------------------------+-------------------------------+---------+-------------+
-| GCR Slider             | Yes                   | No                      | No                            | No      | Partially   |
-+------------------------+-----------------------+-------------------------+-------------------------------+---------+-------------+
-| Dijkstra               | Yes                   | No                      | No                            | No      | Partially   |
-+------------------------+-----------------------+-------------------------+-------------------------------+---------+-------------+
++------------------------+-------------------------------------------------+-----------------------------------------+---------+-------------+
+| Algorithm / Feature    | Degrees of Freedom                              | Objectives                              | Weather | Constraints |
++========================+=======================+=========================+=========================================+=========+=============+
+| Genetic                | speed, waypoints, speed & waypoints             | fuel consumption, arrival-time accuracy | Yes     | Yes         |
++------------------------+-------------------------------------------------+-----------------------------------------+---------+-------------+
+| Isofuel                | waypoints                                       | fuel consumption                        | Yes     | Yes         |
++------------------------+-------------------------------------------------+-----------------------------------------+---------+-------------+
+| GCR Slider             | waypoints                                       | distance                                | No      | Partially   |
++------------------------+-------------------------------------------------+-----------------------------------------+---------+-------------+
+| Dijkstra               | waypoints                                       | distance                                | No      | Partially   |
++------------------------+-------------------------------------------------+-----------------------------------------+---------+-------------+
 
