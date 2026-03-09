@@ -14,7 +14,27 @@ logger = logging.getLogger('WRT.Genetic')
 
 
 class RoutingProblem(ElementwiseProblem):
-    """GA definition of the Weather Routing Problem"""
+    """
+    Definition of the Weather Routing Problem.
+
+    This class defines the optimization problem for finding the best weather-dependent
+    route using the pymoo framework. It handles the evaluation of fuel consumption,
+    arrival time accuracy, and navigational constraints.
+
+    :param departure_time: The time of departure.
+    :type departure_time: datetime.datetime
+    :param arrival_time: The desired time of arrival.
+    :type arrival_time: datetime.datetime
+    :param boat: Boat object for calculating fuel and power consumption.
+    :type boat: Boat
+    :param boat_speed: Boat speed. Only used to set self.boat_speed_from_arrival_time.
+    :type boat_speed: float
+    :param constraint_list: List of constraints to be checked.
+    :type constraint_list: ConstraintsList
+    :param objectives: dictionary of objective names and respective user weights.
+    :type objectives: dict
+
+    """
 
     def __init__(self,
                  departure_time: datetime.datetime,
@@ -22,7 +42,7 @@ class RoutingProblem(ElementwiseProblem):
                  boat: Boat,
                  boat_speed: float,
                  constraint_list: ConstraintsList,
-                 objectives: list
+                 objectives: dict
                  ):
         super().__init__(
             n_var=1,
@@ -40,7 +60,16 @@ class RoutingProblem(ElementwiseProblem):
         if boat_speed is None:
             self.boat_speed_from_arrival_time = True
 
-    def get_objectives(self, obj_dict: dict):
+    def get_objectives(self, obj_dict: dict) -> np.array:
+        """
+        Convert dictionary of objective values into a numpy array for pymoo.
+
+        :param obj_dict: Dictionary containing calculated metrics like 'time_obj' and 'fuel_sum'.
+        :type obj_dict: dict
+        :return: A column-stacked array of objective values.
+        :rtype: np.ndarray
+        :raises ValueError: If no valid objectives are specified or found in the dictionary.
+        """
         objective_keys = list(self.objectives.keys())
         objs = None
         if "arrival_time" in objective_keys:
@@ -56,27 +85,36 @@ class RoutingProblem(ElementwiseProblem):
 
         return objs
 
-    def _evaluate(self, x, out, *args, **kwargs):
-        """Overridden function for population evaluation
+    def _evaluate(self, x: np.ndarray, out: dict, *args, **kwargs) -> None:
+        """Overridden function for population evaluation.
 
         :param x: numpy matrix with shape (rows: number of solutions/individuals, columns: number of design variables)
-        :type x: numpy matrix
+        :type x: np.ndarray
         :param out:
             out['F']: function values, vector of length of number of solutions
             out['G']: constraints
         :type out: dict
-        :param *args:
-        :param **kwargs:
         """
 
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         obj_dict = self.get_power(x[0])
         constraints = utils.get_constraints(x[0], self.constraint_list)
-        # print(costs.shape)
         out['F'] = self.get_objectives(obj_dict)
         out['G'] = np.column_stack([constraints])
 
-    def get_power(self, route):
+    def get_power(self, route: np.array) -> dict:
+        """
+        Calculate objective values for fuel consumption and arrival-time accuracy for a specific route.
+
+        This method extracts speed data, calculates weather-dependent ship parameters, and determines the deviation
+        from the target arrival time.
+
+        :param route: A 2D numpy array where columns represent [latitude, longitude, speed].
+        :type route: np.ndarray
+        :return: A dictionary containing the total fuel consumption ('fuel_sum'), further ship parameters
+          ('shipparams'), and the objective value for the arrival-time accuracy.
+        :rtype: dict
+        """
         debug = False
 
         bs = route[:, 2]
@@ -89,7 +127,7 @@ class RoutingProblem(ElementwiseProblem):
                 departure_time=self.departure_time,
                 arrival_time=self.arrival_time,
             )
-            bs = np.full(route[:, 1].shape[0]-1, bs) * u.meter/u.second
+            bs = np.full(route[:, 1].shape[0] - 1, bs) * u.meter / u.second
 
         route_dict = RouteParams.get_per_waypoint_coords(
             route[:, 1],
@@ -118,7 +156,7 @@ class RoutingProblem(ElementwiseProblem):
 
         real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
             seconds=route_dict['travel_times'][-1].value)
-        time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds()/60
+        time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds() / 60
 
         # set minimal time difference to 1 minute
         if time_diff < 1:
