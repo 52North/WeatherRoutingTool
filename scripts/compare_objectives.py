@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.ticker as ticker
@@ -21,7 +22,7 @@ def time_str_convertert(time_str, days):
     return t_min
 
 
-def compare_time_obj():
+def compare_time_obj(figure_dir: str):
     # Sample data
     labels = ['fuel opt.', 'time opt.', 'fuel:time opt. 1:1']
     values = [
@@ -54,7 +55,7 @@ def compare_time_obj():
     ax.fill_between([-0.5, len(labels) - 0.5],
                     optimal_travel_time - 30,
                     optimal_travel_time + 30,
-                    color='gray', alpha=0.2, label='Arrival Window ($\pm 30$ min)')
+                    color='gray', alpha=0.2, label=r'Arrival Window ($\pm 30$ min)')
 
     # Apply the custom formatter
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(time_formatter))
@@ -69,12 +70,12 @@ def compare_time_obj():
     ax.legend(loc='upper left')
     ax.grid(axis='y', linestyle='--', alpha=0.5)
 
+    figure_path = f'{figure_dir}/arrival_time.png'
     plt.tight_layout()
-    plt.savefig(
-        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260203_feature-15-add-time-objective/Summary/arrival_time.png")
+    plt.savefig(figure_path)
 
 
-def compare_fuel_obj():
+def compare_fuel_obj(figure_dir: str):
     # Sample data
     labels = ['fuel opt.', 'time opt.', 'fuel:time opt. 1:1']
     values = [
@@ -101,12 +102,20 @@ def compare_fuel_obj():
     ax.legend(loc='upper left')
     ax.grid(axis='y', linestyle='--', alpha=0.5)
 
+    figure_path = f'{figure_dir}/fuel_consumption.png'
     plt.tight_layout()
-    plt.savefig(
-        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260203_feature-15-add-time-objective/Summary/fuel_consumption.png")
+    plt.savefig(figure_path)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Weather Routing Tool')
+    required_args = parser.add_argument_group('required arguments')
+    required_args.add_argument('--figure-dir', help="Figure directory (absolute path).",
+                               required=True, type=str)
+
+    args = parser.parse_args()
+    figure_dir = args.figure_dir
+
     # Compare variations of resistances for specific routes
-    compare_time_obj()
-    compare_fuel_obj()
+    compare_time_obj(figure_dir)
+    compare_fuel_obj(figure_dir)
