@@ -121,6 +121,8 @@ class RoutingProblem(ElementwiseProblem):
 
         bs = route[:, 2]
         bs = bs[:-1] * u.meter / u.second
+        fuel_obj = None
+        time_obj = None
 
         if self.boat_speed_from_arrival_time:
             bs = get_speed_from_arrival_time(
@@ -145,32 +147,35 @@ class RoutingProblem(ElementwiseProblem):
             speed=bs,
         )
 
-        fuel = shipparams.get_fuel_rate()
-        fuel = fuel * route_dict['travel_times']
-        fuel_spread = np.max(fuel) - np.min(fuel)
-        if debug:
-            print('max fuel: ', np.max(fuel))
-            print('min fuel: ', np.min(fuel))
-            print('fuel max spread: ', fuel_spread)
+        if "fuel_consumption" in self.objectives.keys():
+            fuel = shipparams.get_fuel_rate()
+            fuel = fuel * route_dict['travel_times']
+            fuel_spread = np.max(fuel) - np.min(fuel)
+            if debug:
+                print('max fuel: ', np.max(fuel))
+                print('min fuel: ', np.min(fuel))
+                print('fuel max spread: ', fuel_spread)
 
-            print('last start_time: ', route_dict['start_times'][-1])
-            print('last travel time: ', route_dict['travel_times'][-1].value)
+                print('last start_time: ', route_dict['start_times'][-1])
+                print('last travel time: ', route_dict['travel_times'][-1].value)
+            fuel_obj = np.sum(fuel)
 
-        real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
-            seconds=route_dict['travel_times'][-1].value)
-        time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds() / 60
+        if "arrival_time" in self.objectives.keys():
+            real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
+                seconds=route_dict['travel_times'][-1].value)
+            time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds() / 60
 
-        # set minimal time difference to 1 minute
-        if time_diff < 1:
-            time_diff = 1
+            # set minimal time difference to 1 minute
+            if time_diff < 1:
+                time_diff = 1
 
-        time_obj = time_diff * time_diff * time_diff * time_diff
-        if debug:
-            print('departure time: ', self.departure_time)
-            print('planned arrival time:', self.arrival_time)
+            time_obj = time_diff * time_diff * time_diff * time_diff
+            if debug:
+                print('departure time: ', self.departure_time)
+                print('planned arrival time:', self.arrival_time)
 
-            print('real arrival time: ', real_arrival_time)
-            print('time_diff: ', time_diff)
-            print('time obj.: ', time_obj)
+                print('real arrival time: ', real_arrival_time)
+                print('time_diff: ', time_diff)
+                print('time obj.: ', time_obj)
 
-        return {"fuel_sum": np.sum(fuel), "shipparams": shipparams, "time_obj": time_obj}
+        return {"fuel_sum": fuel_obj, "shipparams": shipparams, "time_obj": time_obj}
