@@ -160,10 +160,28 @@ class Genetic(RoutingAlg):
 
         return res
 
+    # FIXME temporary consistency check
+    def consistency_check(self, res, problem):
+        X = res.X
+        i_route = 0
+        for route in X:
+            fuel_dict = problem.get_power(route[0])
+
+            i_obj = 0
+            for obj_str in self.objectives:
+                if obj_str == "fuel_consumption":
+                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res.F[i_route, i_obj], 5)
+                else:
+                    np.testing.assert_equal(fuel_dict["time_obj"], res.F[i_route, i_obj], 5)
+                i_obj += 1
+            i_route += 1
+
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
+        self.consistency_check(res, problem)
+
         mcdm = MCDM.RMethod(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
