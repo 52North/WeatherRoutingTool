@@ -365,7 +365,7 @@ class Genetic(RoutingAlg):
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
-                        **(marker_kw if igen != self.n_generations - 1 else {}),
+                        # **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         label=f"full population [{last_pop.shape[0]}]",
                         linewidth=0,
@@ -375,7 +375,7 @@ class Genetic(RoutingAlg):
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
-                        **(marker_kw if igen != self.n_generations - 1 else {}),
+                        # **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         linewidth=0,
                         transform=input_crs)
@@ -436,7 +436,8 @@ class Genetic(RoutingAlg):
 
         for algorithm in res.history:
             F = algorithm.pop.get('F')
-            for iobj in range(F.ndim):
+
+            for iobj in range(self.n_objs):
                 if not is_initialised:
                     best_f.append([])
                 best_f[iobj].append(np.min(F[:, iobj]))
