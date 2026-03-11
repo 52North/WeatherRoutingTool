@@ -5,15 +5,16 @@ Genetic Algorithm
 
 The Weather Routing Tool makes use of `pymoo <https://pymoo.org/>`__
 as the supporting library for the Genetic algorithm’s implementation. The Genetic algorithm
-  - considers weather and constraints and
-  - can be used for waypoint optimisation as well as combined waypoint and boat speed optimisation (DOF: waypoints and/or speed) and
+  - considers weather conditions,
+  - considers constraints,
+  - can be used for waypoint optimisation as well as combined waypoint and boat speed optimisation (degrees of freedom: waypoints and/or speed) and
   - can be used for optimisation of fuel consumption and arrival-time accuracy (objectives: fuel consumption and/or arrival-time accuracy).
 Adding functionality for sole speed optimisation for a fixed route is planned for the near future.
 
 
-The Different Run Modes
+Different Run Modes
 -----------------------
-*Degrees of Freedom*
+*Degrees of Freedom (DOF)*
 
 The DOF can be specified by setting the config variables ``GENETIC_MUTATION_TYPE`` and ``GENETIC_CROSSOVER_TYPE``.
 
@@ -27,7 +28,7 @@ The DOF can be specified by setting the config variables ``GENETIC_MUTATION_TYPE
   optimised are read from a GeoJSON file. Only speed optimisation of a single route is allowed, meaning only one GeoJSON file can
   be provided as initial population.
 
-- waypoint and speed optimisation: Any other combination of both config variables result in mixed speed and waypoint optimisation. The initial
+- waypoint and speed optimisation: Any other combination of both config variables results in mixed speed and waypoint optimisation. The initial
   population differs in waypoints but is generated with constant speed from the user input to ``BOAT_SPEED``. All generation methods for the initial
   population are allowed.
 
@@ -44,7 +45,10 @@ Along with the objective keys, integer weights are to be specified that rank the
 E.g. ``GENETIC_OBJECTIVES={"fuel_consumption": 2, "arrival_time": 1}`` refers to optimisation of fuel consumption and arrival-time
 accuracy with an emphasis on fuel-consumption optimisation. In case both objectives
 are to be considered of equal importance, the mean values of the maximum possible rank shall be provided e.g.
-``GENETIC_OBJECTIVES={"fuel_consumption": 1.5, "arrival_time": 1.5}``
+``GENETIC_OBJECTIVES={"fuel_consumption": 1.5, "arrival_time": 1.5}``.
+
+The selection of the final solution is done using methods for Multi-Criteria Decision-Making (MCDM). Further details are given in the respective
+section below.
 
 
 General Concept
@@ -357,22 +361,14 @@ Route Patching
       process.
 
 
-**Implementation Notes:**
+Multi-Criteria Decision-Making
+------------------------------
+Currently, the *R-Method* by R.V. Rao and R.J. Lakshmi is implemented for MCDM. This method starts from the ranking of the objectives by the user via the config
+variable ``GENETIC_OBJECTIVES``. These ranks are converted into weights :math:`w^\text{o}_{obj}` with *obj* =  time, fuel. After the optimisation with the Genetic algorithm, the alternative solutions of the set of non-dominated solutions are ranked separately according to their performance
+with respect to each objective. As for the objective ranks, the solution ranks are converted into weights :math:`w^s_{obj}` for solution *s* with *obj* = time, fuel. From the objective weights and the solution weights, a composite weight is determined for each solution.
+In contrast to the original method, the WRT uses the following function to determine the composite weight as it was found to perform better for MCDM with two objectives
 
-The intuition behind having Route Patching implementations setup as
-classes follows the following:
-   a. Route patching can be quite expensive during both the preparation
-   (defining map, loading configs, etc.) and the execution stage (patching
-   between point A and point B). An Object Oriented implementation of the same
-   helps separate the two processes, avoids redundancy and can contribute to the
-   overall speed in the longer run.
-
-   b. Implementation consistency makes it easier to swap between different
-   Patching implementations and maintains clean code
-
-
-Multi-Objective Optimisation
-----------------------------
+:math:`c_s = \frac{w^s_\text{fuel} w^\text{o}_\text{fuel} + w^s_\text{time} w^\text{o}_\text{time}}{1/w^\text{o}_\text{fuel} w^s_\text{fuel} - 1/w^\text{o}_\text{time} w^s_\text{time} + 0.2}.`
 
 
 Useful References
