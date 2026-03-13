@@ -13,7 +13,7 @@ def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
 
 
-def execute_routing(config, ship_config):
+def execute_routing(config, ship_config, csv_export_path: str = None):
     """
     Execute route optimization based on the user-defined configuration.
     After a successful run the final route is saved into the configured folder.
@@ -67,6 +67,8 @@ def execute_routing(config, ship_config):
     min_fuel_route, error_code = alg.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
     min_fuel_route.write_to_geojson(routepath / f"{min_fuel_route.route_type}.geojson")
+    if csv_export_path:
+        min_fuel_route.write_summary_to_csv(csv_export_path)
 
     if config.ROUTE_POSTPROCESSING:
         postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
