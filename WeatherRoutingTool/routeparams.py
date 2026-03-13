@@ -1,3 +1,4 @@
+from fileinput import filename
 import json
 from datetime import datetime, timedelta
 
@@ -204,6 +205,55 @@ class RouteParams:
 
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
+    def write_summary_to_csv(self, filename: str) -> None:
+        import csv
+
+        with open(filename, mode="w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            writer.writerow([
+                "waypoint_id",
+                "latitude_deg",
+                "longitude_deg",
+                "timestamp",
+                "speed_mps",
+                "engine_power_kW",
+                "fuel_rate_kg_per_s",
+                "wave_height_m",
+                "wind_resistance_N",
+                "dist_to_next_m",
+                "status"
+            ])
+            for i in range(0, self.count + 2):
+                if i == (self.count + 1):
+                # Destination row with sentinel values
+                    writer.writerow([
+                        i,
+                        self.lats_per_step[i],
+                        self.lons_per_step[i],
+                        self.starttime_per_step[i],
+                        -99,
+                        -99,
+                        -99,
+                        -99,
+                        -99,
+                        -99,
+                        -99
+                    ])
+                else:
+                    writer.writerow([
+                        i,
+                        self.lats_per_step[i],
+                        self.lons_per_step[i],
+                        self.starttime_per_step[i],
+                        self.ship_params_per_step.speed[i].value,
+                        self.ship_params_per_step.power[i].to("kW").value,
+                        self.ship_params_per_step.fuel_rate[i].value,
+                        self.ship_params_per_step.wave_height[i].value,
+                        self.ship_params_per_step.r_wind[i].value,
+                        -99,
+                        self.ship_params_per_step.status[i]
+                    ])
 
     @classmethod
     def from_file(cls, filename):
