@@ -21,11 +21,11 @@ def get_closest(array, value):
 
 
 def distance(route):
-    """TODO: Where is this function used?
-    Calculates the accumulated distance along a route
+    """
+    Calculates the accumulated distance along a route.
 
-    :param route: Some kind of route
-    :type route: TODO: add type of route
+    :param route: A sequence of route coordinates.
+    :type route: numpy.ndarray
     :return: Accumulated distance along a route
     :rtype: np.array
     """
@@ -50,7 +50,16 @@ def distance(route):
 
 
 def time_diffs(speed, route):
-    # TODO: Where is this function used?
+    \"\"\"
+    Calculates the accumulated time differences between route coordinates based on speed.
+
+    :param speed: The speed of the boat.
+    :type speed: float
+    :param route: A sequence of route coordinates.
+    :type route: numpy.ndarray
+    :return: Accumulated time difference along a route
+    :rtype: np.array
+    \"\"\"
     geod = Geodesic.WGS84
     # speed = speed * 1.852
 
@@ -101,9 +110,9 @@ def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time) -> u.Q
 
 
 class GridMixin:
-    """TODO: add class description
-    _summary_
-
+    """
+    Mixin class that provides grid-based operations.
+    Converts route points between coordinate and index representations.
     """
     grid: xr.Dataset
 
