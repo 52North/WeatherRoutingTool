@@ -17,6 +17,13 @@ if __name__ == "__main__":
                         required=False, type=str, default='False')
     parser.add_argument('--filter-warnings', help="Filter action. <default|error|ignore|always|module|once>."
                         "Defaults to 'default'.", required=False, type=str, default='default')
+    parser.add_argument(
+        '--export-csv',
+        help="Path for a per-waypoint CSV summary of the optimised route.",
+        required=False,
+        type=str,
+        default=None
+    )
     args = parser.parse_args()
     if not args.file:
         raise RuntimeError("No config file name provided!")
@@ -37,7 +44,7 @@ if __name__ == "__main__":
     # Validate config with pydantic and run route optimization
     config = Config.assign_config(args.file)
     ship_config = ShipConfig.assign_config(args.file)
-    execute_routing(config, ship_config)
+    execute_routing(config, ship_config, csv_export_path=args.export_csv)
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
