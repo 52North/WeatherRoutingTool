@@ -21,6 +21,16 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
+[project.optional-dependencies]
+geo = ["cartopy>0.20.0", "geopandas", "shapely", "global_land_mask"]
+vis = ["matplotlib", "seaborn"]
+data = ["dask", "datacube", "netcdf4", "scikit-image"]
+all = [
+    "cartopy>0.20.0", "geopandas", "shapely", "global_land_mask",
+    "matplotlib", "seaborn",
+    "dask", "datacube", "netcdf4", "scikit-image"
+]
+
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 

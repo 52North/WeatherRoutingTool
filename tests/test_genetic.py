@@ -115,7 +115,7 @@ def get_route_lc(X):
 
 
 @pytest.mark.manual
-def test_random_plateau_mutation(plt):
+def test_random_plateau_mutation():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -149,10 +149,10 @@ def test_random_plateau_mutation(plt):
     ax.add_collection(new_route_two_lc)
 
     cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
-    cbar.set_label('Geschwindigkeit ($m/s$)')
+    cbar.set_label('Geschwindigkeit (m/s)')
 
     pyplot.tight_layout()
-    plt.saveas = "test_random_plateau_mutation.png"
+    pyplot.savefig("test_random_plateau_mutation.png")
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -190,7 +190,7 @@ def test_random_plateau_mutation_refusal():
 
 
 @pytest.mark.manual
-def test_bezier_curve_mutation(plt):
+def test_bezier_curve_mutation():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -224,10 +224,10 @@ def test_bezier_curve_mutation(plt):
     ax.add_collection(new_route_two_lc)
 
     cbar = fig.colorbar(old_route_one_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
-    cbar.set_label('Geschwindigkeit ($m/s$)')
+    cbar.set_label('Geschwindigkeit (m/s)')
 
     pyplot.tight_layout()
-    plt.saveas = "test_bezier_curve_mutation.png"
+    pyplot.savefig("test_bezier_curve_mutation.png")
 
     assert old_route.shape == new_route.shape
     for i_route in range(old_route.shape[0]):
@@ -279,7 +279,7 @@ def test_configuration_isofuel_patcher():
 
 
 @pytest.mark.manual
-def test_constraint_violation_repair(plt):
+def test_constraint_violation_repair():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
@@ -314,10 +314,10 @@ def test_constraint_violation_repair(plt):
     ax.add_collection(new_route_lc)
 
     cbar = fig.colorbar(old_route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
-    cbar.set_label('Geschwindigkeit ($m/s$)')
+    cbar.set_label('Geschwindigkeit (m/s)')
 
     pyplot.tight_layout()
-    plt.saveas = "test_constraint_violation_repair.png"
+    pyplot.savefig("test_constraint_violation_repair.png")
 
     assert np.array_equal(new_route[0], old_route[0, 0][0])
     assert np.array_equal(new_route[-2], old_route[0, 0][-2])
