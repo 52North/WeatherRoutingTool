@@ -27,6 +27,20 @@ def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
 
+def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    # ax.set_ylim(4000, 5500)
+    for irp in range(0, len(rp_list)):
+        rp_list[irp].plot_speed_vs_dist(graphics.get_colour(irp), rp_str_list[irp], ax)
+
+    ax.legend(loc='upper left', frameon=False)
+    ax.tick_params(top=True, right=True)
+    # ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
+    ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
+            transform=ax.transAxes)
+    plt.savefig(figurefile + '/speed_vs_dist.png')
+
+
 def plot_acc_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
@@ -89,7 +103,8 @@ if __name__ == "__main__":
         'fuel_vs_lat': False,
         'power_vs_dist_showing_weather': False,
         'power_vs_dist_ratios': False,
-        'fuel_vs_dist_ratios': False
+        'fuel_vs_dist_ratios': False,
+        'speed_vs_dist': False
     }
 
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
@@ -188,7 +203,7 @@ if __name__ == "__main__":
     # plotting routes in depth profile
     if hist_dict['route']:
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        depth = xr.open_dataset(depth_path)
+        # depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
@@ -210,6 +225,9 @@ if __name__ == "__main__":
     # plotting  vs. distance
     if hist_dict['power_vs_dist']:
         plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'power')
+
+    if hist_dict['speed_vs_dist']:
+        plot_speed_vs_dist(rp_list, rp_str_list, scenario_str)
 
     if hist_dict['fuel_vs_dist']:
         plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel')
@@ -251,7 +269,7 @@ if __name__ == "__main__":
         plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, 'fuel')
 
     ##
-    # write fuel consumption, travel distance and time
+    # write fuel consumption, trafvel distance and time
     print('Full fuel consumption:')
     for irp in range(0, len(rp_list)):
         print(rp_str_list[irp] + ': ' + str(rp_list[irp].get_full_fuel()))

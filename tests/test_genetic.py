@@ -8,12 +8,11 @@ import numpy as np
 import matplotlib.pyplot as pyplot
 import pytest
 from astropy import units as u
-from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize
 
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover
+from WeatherRoutingTool.algorithms.genetic import Genetic
+from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
@@ -99,21 +98,6 @@ def get_dummy_route_input(length='long'):
 '''
 
 
-def get_route_lc(X):
-    lats = X[:, 0]
-    lons = X[:, 1]
-    speed = X[:, 2]
-
-    points = np.array([lons, lats]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-
-    norm = Normalize(vmin=10, vmax=20)
-    lc = LineCollection(segments, cmap='viridis', norm=norm, transform=ccrs.Geodetic())
-    lc.set_array(speed)
-    lc.set_linewidth(3)
-    return lc
-
-
 @pytest.mark.manual
 def test_random_plateau_mutation(plt):
     dirname = os.path.dirname(__file__)
@@ -139,10 +123,10 @@ def test_random_plateau_mutation(plt):
         show_depth=False,
         show_gcr=False
     )
-    old_route_one_lc = get_route_lc(old_route[0, 0])
-    old_route_two_lc = get_route_lc(old_route[1, 0])
-    new_route_one_lc = get_route_lc(new_route[0, 0])
-    new_route_two_lc = get_route_lc(new_route[1, 0])
+    old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
+    old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
+    new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
+    new_route_two_lc = graphics.get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -214,10 +198,10 @@ def test_bezier_curve_mutation(plt):
         show_gcr=False
     )
 
-    old_route_one_lc = get_route_lc(old_route[0, 0])
-    old_route_two_lc = get_route_lc(old_route[1, 0])
-    new_route_one_lc = get_route_lc(new_route[0, 0])
-    new_route_two_lc = get_route_lc(new_route[1, 0])
+    old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
+    old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
+    new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
+    new_route_two_lc = graphics.get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -308,8 +292,8 @@ def test_constraint_violation_repair(plt):
         show_depth=False,
         show_gcr=False
     )
-    old_route_lc = get_route_lc(old_route[0, 0])
-    new_route_lc = get_route_lc(new_route)
+    old_route_lc = graphics.get_route_lc(old_route[0, 0])
+    new_route_lc = graphics.get_route_lc(new_route)
     ax.add_collection(old_route_lc)
     ax.add_collection(new_route_lc)
 
@@ -389,3 +373,44 @@ def test_single_point_crossover(plt):
     ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
 
     plt.saveas = "test_single_point_crossoverr.png"
+
+
+def test_speed_crossover(plt):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    sp = SpeedCrossover(config=config, departure_time=departure_time, constraints_list=constraint_list)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_speed_crossover.png"

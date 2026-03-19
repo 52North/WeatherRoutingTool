@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from astropy import units as u
 
 import WeatherRoutingTool.utils.unit_conversion as unit
+import WeatherRoutingTool.algorithms.genetic.utils as gen_utils
 from WeatherRoutingTool.utils.maps import Map
 
 

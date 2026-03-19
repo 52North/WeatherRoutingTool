@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Annotated, List, Literal, Optional, Self, Union
+from typing import Annotated, List, Literal, Optional, Self, Union, Dict
 
 import pandas as pd
 import xarray as xr
@@ -56,11 +56,12 @@ class Config(BaseModel):
     ALGORITHM_TYPE: Literal[
         'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
     ] = 'isofuel'
-    ARRIVAL_TIME: datetime = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
+    ARRIVAL_TIME: datetime | None = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
-    BOAT_SPEED: float = None  # boat speed [m/s]
-    BOAT_SPEED_MAX: float = 10  # maximum possible boat speed [m/s]
+    BOAT_SPEED: float | None = None  # boat speed [m/s]
+    BOAT_SPEED_BOUNDARIES: Annotated[list[Union[float, float]], Field(min_length=2, max_length=2)] = [1., 10.]
+    # minimum and maximum possible boat speed [m/s]
     CONSTRAINTS_LIST: List[Literal[
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'via_waypoints', 'status_error'
@@ -106,11 +107,14 @@ class Config(BaseModel):
         'waypoints_infill', 'constraint_violation', 'no_repair'
     ]] = ["waypoints_infill", "constraint_violation"]
     GENETIC_MUTATION_TYPE: Literal[
-        'random', 'rndm_walk', 'rndm_plateau', 'route_blend', 'percentage_change_speed', 'gaussian_speed', 'no_mutation'
+        'random', 'speed', 'waypoints', 'rndm_walk', 'rndm_plateau', 'route_blend',
+        'percentage_change_speed', 'gaussian_speed', 'no_mutation'
     ] = 'random'
-    GENETIC_CROSSOVER_TYPE: Literal['random', 'speed'] = 'random'
+    GENETIC_CROSSOVER_TYPE: Literal['random', 'speed', "waypoints"] = 'random'
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
+    GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5}  # dictionary for configuring
+    # the objectives and objective weights
 
     INTERMEDIATE_WAYPOINTS: Annotated[
         list[Annotated[list[Union[int, float]], Field(min_length=2, max_length=2)]],
@@ -493,11 +497,37 @@ class Config(BaseModel):
     def check_speed_determination(self) -> Self:
         logger.info(f'arrival time: {self.ARRIVAL_TIME}')
         logger.info(f'speed: {self.BOAT_SPEED}')
-        if self.ARRIVAL_TIME is None and self.BOAT_SPEED is None:
-            raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
-        if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
-            raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
-        if self.ARRIVAL_TIME is not None and self.ALGORITHM_TYPE not in ['genetic', 'gcr_slider']:
-            raise ValueError('The determination of the speed from the arrival time is only possible for the'
-                             ' genetic and the gcr slider algorithm')
+
+        mutate_only_waypoints = ((self.GENETIC_MUTATION_TYPE == "waypoints")
+                                 or (self.GENETIC_MUTATION_TYPE == "rndm_walk")
+                                 or (self.GENETIC_MUTATION_TYPE == "rndm_plateau")
+                                 or (self.GENETIC_MUTATION_TYPE == "route_blend"))
+
+        crossover_only_waypoints = self.GENETIC_CROSSOVER_TYPE == "waypoints"
+
+        if self.ALGORITHM_TYPE == "genetic":
+            # run mode: route optimisation with constant speed
+            if mutate_only_waypoints and crossover_only_waypoints:
+                logger.info('Algorithm run mode: only waypoint optimisation.')
+                if self.ARRIVAL_TIME is None and self.BOAT_SPEED is None:
+                    raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
+                if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
+                    raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
+
+            # run modes: speed optimisation for fixed route as well as simultaneous waypoint and speed optimisation
+            else:
+                logger.info('Algorithm run mode: speed optimisation for fixed route or simultaneous '
+                            'waypoint and speed optimisation.')
+                if self.ARRIVAL_TIME is None or self.BOAT_SPEED is None:
+                    raise ValueError('Please provide a valid arrival time and boat speed.')
+
+            if self.GENETIC_MUTATION_TYPE == "speed" and self.GENETIC_CROSSOVER_TYPE == "speed":
+                raise NotImplementedError("Pure speed optimisation of single routes is not yet implemented but planned "
+                                          "for the future.")
+        else:
+            if self.BOAT_SPEED is None:
+                raise ValueError('Please provide a valid boat speed.')
+            if self.ARRIVAL_TIME:
+                logger.warning('You specified an arrival time. The arrival time is only used as input for the '
+                               'optimisation process for the genetic algorithm.')
         return self

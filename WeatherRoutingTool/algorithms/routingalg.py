@@ -52,7 +52,7 @@ class RoutingAlg:
 
         self.boat_speed = config.BOAT_SPEED
         if self.boat_speed is not None:
-            self.boat_speed = self.boat_speed * u.meter / u.second
+            self.boat_speed = self.boat_speed * u.meter/u.second
 
     def get_boat_speed(self):
         return self.boat_speed

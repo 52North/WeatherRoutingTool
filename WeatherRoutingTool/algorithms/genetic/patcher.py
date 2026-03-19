@@ -182,7 +182,8 @@ class IsofuelPatcher(PatcherBase):
                 "ROUTE_PATH",
                 "BOAT_UNDER_KEEL_CLEARANCE",
                 "BOAT_DRAUGHT_AFT",
-                "BOAT_DRAUGHT_FORE"
+                "BOAT_DRAUGHT_FORE",
+                "GENETIC_POPULATION_SIZE"
             ], )
 
         cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
@@ -208,7 +209,8 @@ class IsofuelPatcher(PatcherBase):
         # set config path to patcher configuration
         cfg.CONFIG_PATH = cfg_path
         self.config = cfg
-        print('self.config: ', cfg)
+        self.config.ISOCHRONE_NUMBER_OF_ROUTES = cfg_select["GENETIC_POPULATION_SIZE"]
+        return
 
     def _setup_components(self) -> tuple[WeatherCond, Boat, WaterDepth, ConstraintsList]:
         """

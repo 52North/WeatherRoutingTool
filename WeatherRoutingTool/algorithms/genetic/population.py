@@ -269,6 +269,7 @@ class IsoFuelPopulation(Population):
             Access i'th route as ``X[i,0]`` and the j'th coordinate pair off the i'th route as ``X[i,0][j, :]``.
         :rtype: np.array
         """
+
         boat_speed = self.boat_speed
         if self.boat_speed_from_arrival_time:
             boat_speed = 6 * u.meter / u.second  # add dummy speed, will be recalculated
@@ -297,6 +298,7 @@ class GcrSliderPopulation(Population):
             constraints_list=constraints_list,
             pop_size=pop_size
         )
+
         self.algo = GcrSliderAlgorithm(config)
 
     def generate(self, problem, n_samples, **kw):
