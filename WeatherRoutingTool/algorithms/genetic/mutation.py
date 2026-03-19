@@ -530,28 +530,6 @@ class RandomWalkMutation(MutationConstraintRejection):
         return rt
 
 
-# ----------
-class RandomMutationsOrchestrator(MutationBase):
-    """Select a mutation operator at random and apply it to the population.
-
-    :param opts: List of Mutation classes.
-    :type opts: list[Mutation]
-    """
-
-    def __init__(self, opts, **kw):
-        super().__init__(**kw)
-
-        self.opts = opts
-
-    def _do(self, problem, X, **kw):
-        opt = self.opts[np.random.randint(0, len(self.opts))]
-        return opt._do(problem, X, **kw)
-
-    def print_mutation_statistics(self):
-        for opt in self.opts:
-            opt.print_mutation_statistics()
-
-
 class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
     """
     Ship speed mutation class.
@@ -579,10 +557,10 @@ class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
             op = random.choice(ops)
             change_percent = random.uniform(0.0, self.change_percent_max)
             new = op(rt[i][2], change_percent * rt[i][2])
-            if new < 0:
-                new = 0
-            elif new > self.config.BOAT_SPEED_MAX:
-                new = self.config.BOAT_SPEED_MAX
+            if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[0]
+            elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
+                new = self.config.BOAT_SPEED_BOUNDARIES[1]
             rt[i][2] = new
         return rt
 
@@ -604,22 +582,60 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.n_updates = n_updates
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
-        self.mu = 0.5 * self.config.BOAT_SPEED_MAX
-        self.sigma = self.config.BOAT_SPEED_MAX / 6
+        self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
+        self.sigma = self.config.BOAT_SPEED_BOUNDARIES[1] / 6
 
     def mutate(self, problem, rt, **kw):
+        rt_new = copy.deepcopy(rt)
         try:
             indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
         except ValueError:
             indices = range(0, rt.shape[0] - 1)
         for i in indices:
-            new = random.normalvariate(self.mu, self.sigma)
-            if new < 0:
-                new = 0
-            elif new > self.config.BOAT_SPEED_MAX:
-                new = self.config.BOAT_SPEED_MAX
-            rt[i][2] = new
-        return rt
+            old_speed = rt[i][2]
+            new = random.normalvariate(old_speed, self.sigma)
+            if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
+                new = old_speed
+            elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
+                new = old_speed
+            rt_new[i][2] = new
+
+        return rt_new
+
+
+# ----------
+class RandomMutationsOrchestrator(MutationBase):
+    """Select a mutation operator at random and apply it to the population.
+
+    :param speed_opts: List of Mutation classes for mutating speed.
+    :type speed_opts: list[Mutation]
+    :param waypoint_opts: List of Mutation classes for mutating waypoints.
+    :type waypoint_optsgit s: list[Mutation]
+    """
+
+    def __init__(self, speed_opts, waypoint_opts, **kw):
+        super().__init__(**kw)
+
+        self.speed_opts = speed_opts
+        self.waypoint_opts = waypoint_opts
+
+    def _do(self, problem, X, **kw):
+        if self.speed_opts:
+            speed_opt = self.speed_opts[np.random.randint(0, len(self.speed_opts))]
+            X = speed_opt._do(problem, X, **kw)
+        if self.waypoint_opts:
+            waypoint_opt = self.waypoint_opts[np.random.randint(0, len(self.waypoint_opts))]
+            X = waypoint_opt._do(problem, X, **kw)
+        return X
+
+    def print_mutation_statistics(self):
+        if self.speed_opts:
+            for opt in self.speed_opts:
+                opt.print_mutation_statistics()
+
+        if self.waypoint_opts:
+            for opt in self.waypoint_opts:
+                opt.print_mutation_statistics()
 
 
 # factory
@@ -638,10 +654,33 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
-                opts=[
+                waypoint_opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
-                    RouteBlendMutation(config=config, constraints_list=constraints_list)
+                    RouteBlendMutation(config=config, constraints_list=constraints_list),
+                ],
+                speed_opts=[
+                    # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
+                    GaussianSpeedMutation(config=config, constraints_list=constraints_list)
                 ], )
+
+        if config.GENETIC_MUTATION_TYPE == "speed":
+            logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
+            return RandomMutationsOrchestrator(
+                waypoint_opts=None,
+                speed_opts=[
+                    # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
+                    GaussianSpeedMutation(config=config, constraints_list=constraints_list)
+                ], )
+
+        if config.GENETIC_MUTATION_TYPE == "waypoints":
+            logger.debug('Setting mutation type of genetic algorithm to "rndm_waypoints".')
+            return RandomMutationsOrchestrator(
+                waypoint_opts=[
+                    RandomPlateauMutation(config=config, constraints_list=constraints_list),
+                    RouteBlendMutation(config=config, constraints_list=constraints_list),
+                ],
+                speed_opts=None
+            )
 
         if config.GENETIC_MUTATION_TYPE == "rndm_walk":
             logger.debug('Setting mutation type of genetic algorithm to "random_walk".')
