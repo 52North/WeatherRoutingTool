@@ -1,4 +1,5 @@
 ﻿import numpy as np
+from pathlib import Path
 from astropy import units as u
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.ship.ship_config import ShipConfig
@@ -10,7 +11,7 @@ from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 
 class TestRoutingProblem:
     def test_get_power_returns_positive_fuel(self):
-        config_path = r'C:\Users\Aakriti\WeatherRoutingTool\config.json'
+        config_path = str(Path(__file__).parent.parent / 'config.json')
         config = Config.assign_config(config_path)
         ship_config = ShipConfig.assign_config(config_path)
 
