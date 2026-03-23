@@ -157,9 +157,13 @@ class Genetic(RoutingAlg):
 
         super().terminate()
 
-        best_index = res.F.argmin()
-        # ensure res.X is of shape (n_sol, n_var)
-        best_route = np.atleast_2d(res.X)[best_index, 0]
+        if res.F is None or res.X is None:
+            import logging
+            logging.getLogger("WRT.genetic").warning("No feasible solution found - all routes violated constraints. Returning initial population best.")
+            best_route = np.atleast_2d(res.pop.get("X"))[0, 0]
+        else:
+            best_index = res.F.argmin()
+            best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel, ship_params = problem.get_power(best_route)
         logger.info(f"Best fuel: {fuel}")

@@ -1,0 +1,43 @@
+{
+  "DEFAULT_ROUTE": [
+    10.0,
+    20.0,
+    10.7,
+    20.7
+  ],
+  "DEPARTURE_TIME": "2026-03-04T00:00Z",
+  "DEFAULT_MAP": [
+    10.0,
+    20.0,
+    10.7,
+    20.7
+  ],
+  "INTERMEDIATE_WAYPOINTS": [[10.1, 20.1], [10.15, 20.15], [10.2, 20.2], [10.3, 20.3], [10.4, 20.4], [10.5, 20.5], [10.6, 20.6]],
+  "CONSTRAINTS_LIST": [
+    "land_crossing_global_land_mask"
+  ],
+  "TIME_FORECAST": 90,
+  "ROUTING_STEPS": 20,
+  "DELTA_TIME_FORECAST": 3,
+  "DELTA_FUEL": 3000,
+  "COURSES_FILE": "output/courses.json",
+  "DEPTH_DATA": "data/depth_data.nc",
+  "WEATHER_DATA": "data/weather_data.nc",
+  "DATA_MODE_WEATHER": "NETCDF",
+  "ROUTE_PATH": "C:\\Users\\Aakriti\\WeatherRoutingTool\\output",
+  "ALGORITHM_TYPE": "genetic",
+  "GENETIC_POPULATION_SIZE": 20,
+  "GENETIC_NUMBER_GENERATIONS": 10,
+  "GENETIC_NUMBER_OFFSPRINGS": 2,
+  "GENETIC_POPULATION_TYPE": "grid_based",
+  "BOAT_TYPE": "direct_power_method",
+  "BOAT_BREADTH": 32,
+  "BOAT_FUEL_RATE": 167,
+  "BOAT_HBR": 30,
+  "BOAT_LENGTH": 180,
+  "BOAT_SMCR_POWER": 6502,
+  "BOAT_SMCR_SPEED": 3.09,
+  "BOAT_SPEED": 3.09,
+  "LOG_LEVEL": "DEBUG",
+  "BOAT_UNDER_KEEL_CLEARANCE": 0.0
+}

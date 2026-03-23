@@ -116,6 +116,8 @@ class RouteParams:
 
     def write_to_file(self, filename):
         rp_dict = self.convert_to_dict()
+        import os
+        os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
@@ -202,6 +204,8 @@ class RouteParams:
 
         rp_dict['features'] = feature_list
 
+        import os
+        os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 

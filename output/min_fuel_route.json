@@ -1,0 +1,207 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    20.0,
+                    10.0
+                ]
+            },
+            "properties": {
+                "time": "2026-03-04 00:00:00",
+                "speed": {
+                    "value": 3.09,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 4877.838394324601,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.8145990118522082,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": -99.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": -99.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 272.8765127826471,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": -99.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": -99.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": "1.5",
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": "180.0",
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": "4.5",
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": "0.1350238",
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": "0.040084492",
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": "-6.123234e-16",
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": "5.0",
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": "101294.586",
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": "16.339478",
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": "0.034707006",
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": "15.719407",
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": "-99"
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    20.7,
+                    10.7
+                ]
+            },
+            "properties": {
+                "time": "2026-03-04 09:47:42",
+                "speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": -99,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": -99,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": -99,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": -99,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": -99,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": -99,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": -99,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": -99,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": -99,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": -99,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": -99
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 1
+        }
+    ]
+}

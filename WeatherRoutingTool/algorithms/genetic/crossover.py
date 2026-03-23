@@ -164,8 +164,11 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         # setup patching
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="SP crossover")
 
-        p1x = np.random.randint(1, p1.shape[0] - 1)
-        p2x = np.random.randint(1, p2.shape[0] - 1)
+        # Safety guard for single point crossover
+        if p1.shape[0] < 3 or p2.shape[0] < 3:
+            return p1.copy(), p2.copy()
+        p1x = np.random.randint(1, max(2, p1.shape[0] - 1))
+        p2x = np.random.randint(1, max(2, p2.shape[0] - 1))
 
         r1 = np.concatenate([
             p1[:p1x],
@@ -195,11 +198,14 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     def crossover(self, p1, p2):
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="TP crossover")
 
+        # Safety guard: need >= 6 points for two-point crossover
+        if p1.shape[0] < 6 or p2.shape[0] < 6:
+            return p1.copy(), p2.copy()
         p1x1 = np.random.randint(1, p1.shape[0] - 4)
-        p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
+        p1x2 = p1x1 + np.random.randint(1, max(2, p1.shape[0] - p1x1 - 1))
 
         p2x1 = np.random.randint(1, p2.shape[0] - 4)
-        p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
+        p2x2 = p2x1 + np.random.randint(1, max(2, p2.shape[0] - p2x1 - 1))
 
         r1 = np.concatenate([
             p1[:p1x1],
