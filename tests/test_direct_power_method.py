@@ -358,3 +358,15 @@ class TestDPM:
         except ValueError:
             # If we get here, there was an unexpected ValueError
             assert False, "Valid parameters should not raise ValueError"
+    def test_get_apparent_wind_no_nan_with_edge_values(self):
+        wind_dir = np.array([0, 90, 180]) * u.degree
+    
+    # slightly tricky values to trigger floating precision issues
+        wind_speed = np.array([10, 10, 10]) * u.meter / u.second
+
+        pol = basic_test_func.create_dummy_Direct_Power_Ship('simpleship')
+        wind_result = pol.get_apparent_wind(wind_speed, wind_dir)
+
+    # check no NaN in outputs
+        assert not np.isnan(wind_result['app_wind_speed']).any()
+        assert not np.isnan(wind_result['app_wind_angle']).any()
