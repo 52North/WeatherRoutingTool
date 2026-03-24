@@ -159,10 +159,13 @@ class Genetic(RoutingAlg):
 
         super().terminate()
         
-        if res is None or res.F is None or res.X is None:
-            raise ValueError(
-        "No feasible solution found, all candidates violated constraints. Please rerun."
+        
+      # Inside Genetic.terminate()
+        if res is None or res.F is None or res.X is None or len(res.F) == 0:
+                      raise ValueError(
+        "No feasible solution found. All candidates violated constraints. Please rerun with relaxed constraints."
     )
+
         best_index = res.F.argmin()
         # ensure res.X is of shape (n_sol, n_var)
         best_route = np.atleast_2d(res.X)[best_index, 0]
