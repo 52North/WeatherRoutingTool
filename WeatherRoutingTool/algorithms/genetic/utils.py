@@ -3,8 +3,12 @@ import logging
 from typing import Optional
 
 import numpy as np
+from astropy import units as u
 from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
+
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger("WRT.genetic")
 
@@ -146,6 +150,23 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
         dt = json.load(fp)
 
     return route_from_geojson(dt)
+
+
+def get_hist_values_from_route(route: np.array, departure_time):
+    lats = route[:, 0]
+    lons = route[:, 1]
+    speed = route[:, 2]
+    speed = speed[:-1] * u.meter / u.second
+
+    waypoint_coords = RouteParams.get_per_waypoint_coords(
+        route_lons=lons,
+        route_lats=lats,
+        start_time=departure_time,
+        bs=speed, )
+    dist = waypoint_coords['dist']
+
+    hist_values = graphics.get_hist_values_from_widths(dist, speed, "speed")
+    return hist_values
 
 
 # ----------
