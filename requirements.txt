@@ -9,8 +9,10 @@ global_land_mask
 maridatadownloader@git+https://github.com/52North/maridatadownloader
 matplotlib
 netcdf4
+networkx
 numpy
 pandas
+pydantic
 pymoo>=0.6.1
 scikit-image
 scipy>=1.10.0
