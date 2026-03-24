@@ -205,8 +205,15 @@ class IsoFuelPopulation(Population):
 
         # fallback: fill all other individuals with the same population as the last one
         for j in range(i + 1, n_samples):
-            X[j, 0] = np.copy(X[j - 1, 0])
-        return X
+    route = np.copy(X[j - 1, 0])
+
+    noise = np.random.normal(
+        loc=0,
+        scale=0.01,
+        size=route.shape
+    )
+
+    X[j, 0] = route + noise
 
 
 class GcrSliderPopulation(Population):
