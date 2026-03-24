@@ -3,12 +3,53 @@
 Genetic Algorithm
 =================
 
-
-Foundation
-----------
-
 The Weather Routing Tool makes use of `pymoo <https://pymoo.org/>`__
-as the supporting library for the Genetic algorithm’s implementation.
+as the supporting library for the Genetic algorithm’s implementation. The Genetic algorithm
+  - considers weather conditions,
+  - considers constraints,
+  - can be used for waypoint optimisation as well as combined waypoint and boat speed optimisation (degrees of freedom: waypoints and/or speed) and
+  - can be used for optimisation of fuel consumption and arrival-time accuracy (objectives: fuel consumption and/or arrival-time accuracy).
+Adding functionality for sole speed optimisation for a fixed route is planned for the near future.
+
+
+Different Run Modes
+-----------------------
+*Degrees of Freedom (DOF)*
+
+The DOF can be specified by setting the config variables ``GENETIC_MUTATION_TYPE`` and ``GENETIC_CROSSOVER_TYPE``.
+
+- pure waypoint optimisation: In case pure waypoint optimisation is requested, both config variables need to be set to ``"waypoints"``.
+  ``GENETIC_MUTATION_TYPE`` can also be ``"rndm_walk"``, ``"rndm_plateau"`` or ``"route_blend"``. The boat speed is taken from the
+  user input to ``BOAT_SPEED`` and is left constant.
+
+- pure speed optimisation (NOT YET IMPLEMENTED!): In case pure speed optimisation is requested,
+  both config variables need to be set to ``"speed"``. ``GENETIC_MUTATION_TYPE`` can also be ``"percentage_change_speed"`` or ``"gaussian_speed"``.
+  The boat speed of the initial population is read from the user input to ``BOAT_SPEED``. The waypoints of the route to be
+  optimised are read from a GeoJSON file. Only speed optimisation of a single route is allowed, meaning only one GeoJSON file can
+  be provided as initial population.
+
+- waypoint and speed optimisation: Any other combination of both config variables results in mixed speed and waypoint optimisation. The initial
+  population differs in waypoints but is generated with constant speed from the user input to ``BOAT_SPEED``. All generation methods for the initial
+  population are allowed.
+
+*Objectives*
+
+The objectives can be specified by setting the config variable ``GENETIC_OBJECTIVES``. Currently only the optimisation of the total fuel
+consumption (``"fuel_consumption"``) and/or arrival-time accuracy (``"arrival_time"``) is possible. In case fuel consumption shall be optimised, the algorithm minimises the total amount of fuel that is consumed for
+a route. In case the arrival-time accuracy shall be optimised, the algorithm minimises the following function of the real arrival time (t_real)
+and the planned arrival time (t_planned):
+
+:math:`(t_{planned} - t_{real})^4.`
+
+Along with the objective keys, integer weights are to be specified that rank the objectives according to their importance.
+E.g. ``GENETIC_OBJECTIVES={"fuel_consumption": 2, "arrival_time": 1}`` refers to optimisation of fuel consumption and arrival-time
+accuracy with an emphasis on fuel-consumption optimisation. In case both objectives
+are to be considered of equal importance, the mean values of the maximum possible rank shall be provided e.g.
+``GENETIC_OBJECTIVES={"fuel_consumption": 1.5, "arrival_time": 1.5}``.
+
+The selection of the final solution is done using methods for Multi-Criteria Decision-Making (MCDM). Further details are given in the respective
+section below.
+
 
 General Concept
 ---------------
@@ -320,43 +361,15 @@ Route Patching
       process.
 
 
-**Implementation Notes:**
+Multi-Criteria Decision-Making
+------------------------------
+Currently, the *R-Method* by R.V. Rao and R.J. Lakshmi is implemented for MCDM. This method starts from the ranking of the objectives by the user via the config
+variable ``GENETIC_OBJECTIVES``. These ranks are converted into weights :math:`w^\text{o}_{obj}` with *obj* =  time, fuel. After the optimisation with the Genetic algorithm, the alternative solutions of the set of non-dominated solutions are ranked separately according to their performance
+with respect to each objective. As for the objective ranks, the solution ranks are converted into weights :math:`w^s_{obj}` for solution *s* with *obj* = time, fuel. From the objective weights and the solution weights, a composite weight is determined for each solution.
+In contrast to the original method, the WRT uses the following function to determine the composite weight as it was found to perform better for MCDM with two objectives
 
-The intuition behind having Route Patching implementations setup as
-classes follows the following:
-   a. Route patching can be quite expensive during both the preparation
-   (defining map, loading configs, etc.) and the execution stage (patching
-   between point A and point B). An Object Oriented implementation of the same
-   helps separate the two processes, avoids redundancy and can contribute to the
-   overall speed in the longer run.
+:math:`c_s = \frac{w^s_\text{fuel} w^\text{o}_\text{fuel} + w^s_\text{time} w^\text{o}_\text{time}}{1/w^\text{o}_\text{fuel} w^s_\text{fuel} - 1/w^\text{o}_\text{time} w^s_\text{time} + 0.2}.`
 
-   b. Implementation consistency makes it easier to swap between different
-   Patching implementations and maintains clean code
-
-Config Parameters
------------------
-
-1. ``GENETIC_NUMBER_GENERATIONS`` — Max number of generations.
-
-2. ``GENETIC_NUMBER_OFFSPRINGS`` — Number of offsprings.
-
-3. ``GENETIC_POPULATION_SIZE`` — Population size of the genetic algorithm.
-
-4. ``GENETIC_POPULATION_TYPE`` — Population generation method for the.
-   genetic algorithm
-
-   a. ``GENETIC_POPULATION_PATH`` — Path to population directory when.
-      ``GENETIC_POPULATION_TYPE`` is “\ *from_geojson*\ ”
-
-5.  ``GENETIC_REPAIR_TYPE`` - Repair strategy for genetic algorithm.
-
-6.  ``GENETIC_MUTATION_TYPE`` - Mutation strategy.
-
-7.  ``GENETIC_CROSSOVER_PATCHER`` - Patching strategy for crossover.
-
-8.  ``GENETIC_FIX_RANDOM_SEED`` - Handling of random seed.
-
-For more details on the configuration variables, please check the general section on Configuration.
 
 Useful References
 -----------------
