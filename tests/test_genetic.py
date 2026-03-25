@@ -15,7 +15,7 @@ from WeatherRoutingTool.algorithms.genetic import Genetic
 from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
-from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
+from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation, FromGeojsonPopulation
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
@@ -414,3 +414,48 @@ def test_speed_crossover(plt):
 
     pyplot.tight_layout()
     plt.saveas = "test_speed_crossover.png"
+
+
+def test_spread_velocity(plt):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    routepath = Path(os.path.join(dirname, 'data/'))
+    config = Config.assign_config(Path(configpath))
+    default_map = [32., 15, 36, 29]
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
+    min_boat_speed = 3
+    max_boat_speed = 15
+    boat_speed = 7
+    population_size = 20
+
+    pop = FromGeojsonPopulation(
+        config=config,
+        default_route=default_map,
+        constraints_list=constraint_list,
+        pop_size=population_size,
+        routes_dir=routepath
+    )
+    quantiles = pop.spread_velocity(min_boat_speed, max_boat_speed, boat_speed, population_size)
+
+    assert quantiles.shape[0] == population_size
+    assert np.min(quantiles) >= min_boat_speed
+    assert np.max(quantiles) <= max_boat_speed
+
+    x_dummy = np.full(quantiles.shape, 1)
+    fig, ax = pyplot.subplots(figsize=graphics.get_standard('fig_size'))
+    marker_quant = dict(
+        marker="o",
+        markersize=5,
+        markerfacecolor="gold",
+        markeredgecolor="black", )
+
+    marker_bounds = dict(
+        marker="x",
+        markersize=7,
+        markerfacecolor="blue",
+        markeredgecolor="blue", )
+    ax.plot(quantiles, x_dummy, **marker_quant, color="none")
+    ax.plot([min_boat_speed, max_boat_speed, boat_speed], [1, 1, 1], **marker_bounds, color="none")
+
+    plt.saveas = "test_spread_velocidy.png"
