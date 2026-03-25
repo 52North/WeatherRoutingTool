@@ -386,6 +386,7 @@ class Genetic(RoutingAlg):
                 )
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
+            ax.set_ylim(0, 10)
 
             plt.ylabel("speed (m/s)")
             plt.xlabel('travel distance (km)')
