@@ -10,14 +10,13 @@ class Map:
         self.lat2 = float(lat2)
         self.lon2 = float(lon2)
 
-    def extend_variable(self, var, type, width):
-        if type == 'min':
-            var = var - width
-        elif type == 'max':
-            var = var + width
+    def extend_variable(self, var, mode, width):
+        if mode == 'min':
+            return var - width
+        elif mode == 'max':
+            return var + width
         else:
             raise ValueError('Only min and max are accepted!')
-        return var
 
     def get_widened_map(self, width):
         lat1 = self.extend_variable(self.lat1, 'min', width)
@@ -27,4 +26,4 @@ class Map:
         return Map(lat1, lon1, lat2, lon2)
 
     def get_var_tuple(self):
-        return (self.lat1, self.lat2, self.lon1, self.lon2)
+        return (self.lat1, self.lon1, self.lat2, self.lon2)
