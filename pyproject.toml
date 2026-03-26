@@ -21,8 +21,70 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
+[project.optional-dependencies]
+# Core dependencies for basic weather routing functionality
+core = [
+    "numpy",
+    "pandas", 
+    "xarray",
+    "scipy>=1.10.0",
+    "pydantic",
+    "astropy"
+]
+
+# Visualization and plotting capabilities
+viz = [
+    "matplotlib",
+    "seaborn",
+    "cartopy>0.20.0"
+]
+
+# Advanced geospatial features
+geospatial = [
+    "geopandas",
+    "shapely", 
+    "geographiclib",
+    "geovectorslib",
+    "global_land_mask"
+]
+
+# Large dataset processing and data access
+data = [
+    "dask",
+    "datacube",
+    "netcdf4"
+]
+
+# External data downloading capabilities
+download = [
+    "maridatadownloader@git+https://github.com/52North/maridatadownloader"
+]
+
+# Genetic algorithm optimization
+genetic = [
+    "pymoo>=0.6.1"
+]
+
+# Image processing features
+image = [
+    "scikit-image",
+    "Pillow"
+]
+
+# All optional dependencies (full installation)
+all = [
+    "WeatherRoutingTool[core,viz,geospatial,data,download,genetic,image]"
+]
+
+# Development dependencies
+dev = [
+    "WeatherRoutingTool[all]",
+    "flake8",
+    "pytest"
+]
+
 [tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+dependencies = { file = ["requirements.core.txt"] }
 
 [tool.setuptools.packages.find]
 include = ["WeatherRoutingTool*"]
