@@ -4,6 +4,7 @@ import pytest
 from WeatherRoutingTool.algorithms.genetic.mcdm import RMethod
 
 
+@pytest.mark.manual
 @pytest.mark.parametrize("obj_fuel,obj_time", [(1, 1), (1, 2), (2, 1)])
 def test_weight_determination_for_solution_selection(plt, obj_fuel, obj_time):
     fuel_weight = np.random.rand(1, 10000) * 0.1
