@@ -22,6 +22,8 @@ from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepa
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.utils.maps import Map
 
+pytestmark = pytest.mark.integration
+
 
 def test_isofuelpatcher_singleton():
     dirname = os.path.dirname(__file__)

@@ -8,6 +8,8 @@ import WeatherRoutingTool.utils.unit_conversion as unit
 import WeatherRoutingTool.algorithms.genetic.utils as gen_utils
 from WeatherRoutingTool.utils.maps import Map
 
+pytestmark = pytest.mark.unit
+
 
 def test_get_angle_bins_2greater360():
     min_alpha = 380 * u.degree
