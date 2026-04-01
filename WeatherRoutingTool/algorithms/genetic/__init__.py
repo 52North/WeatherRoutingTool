@@ -162,18 +162,30 @@ class Genetic(RoutingAlg):
 
     # FIXME temporary consistency check
     def consistency_check(self, res, problem):
+        """
+        Temporary consistency check to uncover memory issues.
+        """
         X = res.X
+        res_objs = res.F
         i_route = 0
+
+        # solve shape issue in case there is only one objective
+        if self.n_objs == 1:
+            res_objs = np.array([res.F])
+            X = [X]
+
         for route in X:
             fuel_dict = problem.get_power(route[0])
 
-            i_obj = 0
+            # ordering of objective values in res.F is defined by RoutingProblem.get_objectives()
             for obj_str in self.objectives:
                 if obj_str == "fuel_consumption":
-                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res.F[i_route, i_obj], 5)
+                    i_obj = 1
+                    if self.n_objs == 1:
+                        i_obj = 0
+                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res_objs[i_route, i_obj], 5)
                 else:
-                    np.testing.assert_equal(fuel_dict["time_obj"], res.F[i_route, i_obj], 5)
-                i_obj += 1
+                    np.testing.assert_equal(fuel_dict["time_obj"], res_objs[i_route, 0], 5)
             i_route += 1
 
     def terminate(self, res: Result, problem: RoutingProblem):
