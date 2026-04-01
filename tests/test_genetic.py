@@ -10,9 +10,10 @@ import pytest
 from astropy import units as u
 
 import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.algorithms.genetic.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic import Genetic
-from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover
+from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover, TwoPointCrossoverSpeed
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation, FromGeojsonPopulation
@@ -459,3 +460,87 @@ def test_spread_velocity(plt):
     ax.plot([min_boat_speed, max_boat_speed, boat_speed], [1, 1, 1], **marker_bounds, color="none")
 
     plt.saveas = "test_spread_velocidy.png"
+
+
+@pytest.mark.parametrize("speed_arr,viol_list", [
+    (np.array([1, 2, 3, 4, 5, 6, 7, -99]), []),
+    (np.array([1, 4, 3, 4, 8, 7, 6, -99]), [0, 1, 3, 4]),
+])
+def test_check_speed_dif(speed_arr, viol_list):
+    """
+    Test whether correct lists is returned from utils.check_speed_dif
+    """
+    viol_list_test = utils.check_speed_dif(speed_arr, 2)
+    assert viol_list_test == viol_list
+
+
+@pytest.mark.parametrize("speed_arr,", [
+    (np.array([1., 2., 100000., 4., 5., 6., 1000., -99])),
+])
+def test_smoothen_speed_rec_error(speed_arr):
+    """
+    Test whether exception is raised if utils.smoothen_speed_rec function is called too often.
+    """
+    with pytest.raises(Exception) as excinfo:
+        utils.smoothen_speed(speed_arr, 2)
+
+    assert "Too many calls to smoothen" in str(excinfo.value)
+
+
+@pytest.mark.parametrize("speed_arr,smooth_res", [
+    (np.array([1., 2., 5., 4., 5., 6., 10., -99.]), np.array([1., 2.5, 4., 4., 5., 6.75, 8.6666666, -99.])),
+    (np.array([10., 2., 5., 4., 5., 6., 10., -99.]),
+     np.array([6.472222, 5.2083333, 4., 4., 5., 6.75, 8.6666666, -99.])),
+
+])
+def test_smoothen_speed_success(speed_arr, smooth_res):
+    """
+    Test whether correct smoothened list is returned from utils.smoothen_speed.
+    """
+    smooth_arr = utils.smoothen_speed(speed_arr, 2)
+
+    assert np.isclose(smooth_arr, smooth_res).all()
+
+
+def test_twopoint_crossover_speed(plt):
+    """
+    Test whether TwoPointCrossoverSpeed provides sensible results via monitoring plot.
+    """
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    sp = TwoPointCrossoverSpeed(config=config, departure_time=departure_time, constraints_list=constraint_list)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_twopoint_crossover_speed.png"
