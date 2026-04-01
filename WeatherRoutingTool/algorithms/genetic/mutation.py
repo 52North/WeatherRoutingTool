@@ -147,6 +147,9 @@ class NoMutation(MutationBase):
     def _do(self, problem, X, **kw):
         return X
 
+    def print_mutation_statistics(self):
+        print('No mutation.')
+
 
 class RandomPlateauMutation(MutationConstraintRejection):
     """
@@ -574,7 +577,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
     n_updates: int
     config: Config
 
-    def __init__(self, n_updates: int = 10, **kw):
+    def __init__(self, n_updates: int = 5, **kw):
         super().__init__(
             mutation_type="GaussianSpeedMutation",
             **kw
@@ -583,7 +586,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
         self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
-        self.sigma = self.config.BOAT_SPEED_BOUNDARIES[1] / 6
+        self.sigma = 1.
 
     def mutate(self, problem, rt, **kw):
         rt_new = copy.deepcopy(rt)
@@ -600,6 +603,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
                 new = old_speed
             rt_new[i][2] = new
 
+        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], 1)
         return rt_new
 
 
