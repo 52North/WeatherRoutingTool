@@ -518,6 +518,9 @@ class Config(BaseModel):
                     raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
                 if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
                     raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
+                if "arrival_time" in self.GENETIC_OBJECTIVES.keys():
+                    raise ValueError(
+                        'Optimisation for arrival-time accuracy is meaningless for pure waypoint optimisation.')
 
             # run modes: speed optimisation for fixed route as well as simultaneous waypoint and speed optimisation
             else:

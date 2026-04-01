@@ -136,6 +136,8 @@ def test_weather_start_time_compatibility():
 @pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type,ierr", [
     (7, "2025-12-07T00:00Z", "waypoints", "waypoints", 0),
     (None, None, "waypoints", "waypoints", 1),
+    (7, None, "waypoints", "waypoints", 2),
+    (None, "2025-12-07T00:00Z", "waypoints", "waypoints", 2),
 ])
 def test_boat_speed_arrival_time_waypoint_optimisation_failure(boat_speed, arrival_time, mut_type, cross_type, ierr):
     config_data, _ = load_example_config()
@@ -147,6 +149,7 @@ def test_boat_speed_arrival_time_waypoint_optimisation_failure(boat_speed, arriv
     error_str_list = [
         "Please specify EITHER the boat speed OR the arrival time but not both.",
         "Please specify EITHER the boat speed OR the arrival time.",
+        "Optimisation for arrival-time accuracy is meaningless for pure waypoint optimisation."
     ]
 
     with pytest.raises(ValueError) as excinfo:
@@ -166,6 +169,7 @@ def test_boat_speed_arrival_time_waypoint_optimisation_success(boat_speed, arriv
     config_data["GENETIC_MUTATION_TYPE"] = mut_type
     config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
     config_data["ALGORITHM_TYPE"] = "genetic"
+    config_data["GENETIC_OBJECTIVES"] = {"fuel_consumption" : 1.}
 
     Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
