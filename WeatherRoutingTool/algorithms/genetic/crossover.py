@@ -281,6 +281,55 @@ class SpeedCrossover(OffspringRejectionCrossover):
         return o1, o2
 
 
+class TwoPointCrossoverSpeed(OffspringRejectionCrossover):
+    """
+    Class for two-point crossover of ship speed.
+
+    The ship speed of a random sequence of one chromosome is replaced by the average ship speed of a random sequence
+    of another individual.
+    """
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def crossover(self, p1, p2) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Crossover implementation for two-point crossover of ship speed.
+
+        :param p1: the first chromosome
+        :param p2: the second chromosome
+        :return: the two offspring chromosomes
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
+        r1 = deepcopy(p1)
+        r2 = deepcopy(p2)
+
+        p1x1 = np.random.randint(1, p1.shape[0] - 4)
+        p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
+
+        p2x1 = np.random.randint(1, p2.shape[0] - 4)
+        p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
+
+        speed1 = p1[:, -1]
+        speed2 = p2[:, -1]
+        av_speed_seg1 = np.average(speed1[p1x1:p1x2 + 1])
+        av_speed_seg2 = np.average(speed2[p2x1:p2x2 + 1])
+
+        new_speed1 = np.concatenate([
+            speed1[:p1x1],
+            np.full(p1x2 - p1x1, av_speed_seg2),
+            speed1[p1x2:], ])
+        new_speed2 = np.concatenate([
+            speed2[:p2x1],
+            np.full(p2x2 - p2x1, av_speed_seg1),
+            speed2[p2x2:], ])
+
+        r1[:, -1] = new_speed1
+        r2[:, -1] = new_speed2
+
+        return r1, r2
+
+
 # factory
 # ----------
 class CrossoverFactory:
@@ -292,7 +341,7 @@ class CrossoverFactory:
 
         if config.GENETIC_CROSSOVER_TYPE == "speed":
             logger.debug('Setting crossover type of genetic algorithm to "speed".')
-            return SpeedCrossover(
+            return TwoPointCrossoverSpeed(
                 config=config,
                 departure_time=departure_time,
                 constraints_list=constraints_list,
