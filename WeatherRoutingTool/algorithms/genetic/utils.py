@@ -185,7 +185,7 @@ def check_speed_dif(speed_arr: np.ndarray, max_diff: float) -> list[int]:
     """
 
     viol_list = []
-    debug = True
+    debug = False
 
     previous = speed_arr[0]
     for i in range(speed_arr.shape[0] - 1):

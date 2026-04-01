@@ -346,7 +346,7 @@ class CrossoverFactory:
                 departure_time=departure_time,
                 constraints_list=constraints_list,
                 prob=.5,
-                crossover_type="Speed crossover")
+                crossover_type="TP Crossover speed")
 
         if config.GENETIC_CROSSOVER_TYPE == "waypoints":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
