@@ -22,6 +22,8 @@ try:
 except ModuleNotFoundError:
     pass  # maripower installation is optional
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.mark.skip(reason="maripower needs update of requirements.")
 # @pytest.mark.skipif(not have_maripower, reason="maripower is not installed")
