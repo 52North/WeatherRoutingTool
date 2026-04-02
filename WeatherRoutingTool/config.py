@@ -505,6 +505,11 @@ class Config(BaseModel):
 
         crossover_only_waypoints = self.GENETIC_CROSSOVER_TYPE == "waypoints"
 
+        mutate_only_speed = ((self.GENETIC_MUTATION_TYPE == "speed")
+                             or (self.GENETIC_MUTATION_TYPE == "percentage_change_speed")
+                             or (self.GENETIC_MUTATION_TYPE == "gaussian_speed"))
+        crossover_only_speed = self.GENETIC_CROSSOVER_TYPE == "speed"
+
         if self.ALGORITHM_TYPE == "genetic":
             # run mode: route optimisation with constant speed
             if mutate_only_waypoints and crossover_only_waypoints:
@@ -513,17 +518,28 @@ class Config(BaseModel):
                     raise ValueError('Please specify EITHER the boat speed OR the arrival time.')
                 if self.ARRIVAL_TIME is not None and self.BOAT_SPEED is not None:
                     raise ValueError('Please specify EITHER the boat speed OR the arrival time but not both.')
+                if "arrival_time" in self.GENETIC_OBJECTIVES.keys():
+                    raise ValueError(
+                        'Optimisation for arrival-time accuracy is meaningless for pure waypoint optimisation.')
 
             # run modes: speed optimisation for fixed route as well as simultaneous waypoint and speed optimisation
             else:
-                logger.info('Algorithm run mode: speed optimisation for fixed route or simultaneous '
-                            'waypoint and speed optimisation.')
                 if self.ARRIVAL_TIME is None or self.BOAT_SPEED is None:
                     raise ValueError('Please provide a valid arrival time and boat speed.')
 
-            if self.GENETIC_MUTATION_TYPE == "speed" and self.GENETIC_CROSSOVER_TYPE == "speed":
-                raise NotImplementedError("Pure speed optimisation of single routes is not yet implemented but planned "
-                                          "for the future.")
+            # run mode: pure speed optimisation
+            if mutate_only_speed and crossover_only_speed:
+                logger.info('Algorithm run mode: speed optimisation for fixed route.')
+
+                if self.GENETIC_POPULATION_TYPE != "from_geojson":
+                    raise ValueError('For pure speed optimisaton, only input from geojson is allowed.')
+
+                nof_files = len(os.listdir(self.GENETIC_POPULATION_PATH))
+                if nof_files > 1:
+                    raise ValueError(
+                        'For pure speed optimisaton, only a single route can be optimised. Your directory contains: ',
+                        nof_files)
+
         else:
             if self.BOAT_SPEED is None:
                 raise ValueError('Please provide a valid boat speed.')

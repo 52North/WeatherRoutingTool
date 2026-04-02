@@ -190,10 +190,52 @@ class FromGeojsonPopulation(Population):
             constraints_list=constraints_list,
             pop_size=pop_size
         )
+        self.sole_speed_mutation = config.GENETIC_MUTATION_TYPE == "speed" and config.GENETIC_CROSSOVER_TYPE == "speed"
+        self.min_boat_speed = config.BOAT_SPEED_BOUNDARIES[0]
+        self.max_boat_speed = config.BOAT_SPEED_BOUNDARIES[1]
 
         if not routes_dir.exists() or not routes_dir.is_dir():
             raise FileNotFoundError("Routes directory not found")
         self.routes_dir = routes_dir
+
+    @staticmethod
+    def spread_velocity(min_boat_speed: float, max_boat_speed: float, boat_speed: float, pop_size: float) -> np.ndarray:
+        """
+        Calculate velocity spread for individuals in case of pure speed optimisation.
+
+        The following steps are performed to obtain values for the boat speed that are accumulated around the original
+        boat speed:
+            - sample a numpy array from a gaussian distribution (mean = original boat speed,
+              sigma = 1/4 possible value range of boat speed)
+            - cut values below the minimum velocity and above the maximum velocity
+            - determine `pop_size` quantiles with equally spaced probabilities
+
+        :param min_boat_speed: Minimum boat speed
+        :type min_boat_speed: float
+        :param max_boat_speed: Maximum boat speed
+        :type max_boat_speed: float
+        :param boat_speed: Boat speed
+        :type boat_speed: float
+        :param pop_size: Population size
+        :type pop_size: int
+        :return: array of quantiles
+        :rtype: np.ndarray
+        """
+        std_dev = (max_boat_speed - min_boat_speed) / 4
+        gaussian_sample = np.random.normal(boat_speed, std_dev, 1000)
+        gaussian_sample[gaussian_sample < min_boat_speed] = np.nan
+        gaussian_sample[gaussian_sample > max_boat_speed] = np.nan
+        gaussian_sample = gaussian_sample[~np.isnan(gaussian_sample)]
+
+        quant_size = 100. / pop_size * 0.01
+
+        quantiles = np.full(pop_size, np.nan)
+        quant_sum = 0
+        for q in range(pop_size):
+            quantiles[q] = np.quantile(gaussian_sample, q=quant_sum)
+            quant_sum += quant_size
+
+        return quantiles
 
     def generate(self, problem, n_samples, **kw):
         logger.debug(f"Population from geojson routes: {self.routes_dir}")
@@ -205,15 +247,22 @@ class FromGeojsonPopulation(Population):
         # FIXME: add test in config.py and raise exception depending on configuration (not only speed optimization...)
 
         X = np.full((n_samples, 1), None, dtype=object)
+        quantiles = None
 
+        # determine quantiles for pure speed optimisation
+        if self.sole_speed_mutation:
+            quantiles = self.spread_velocity(self.min_boat_speed, self.max_boat_speed, self.boat_speed.value,
+                                             self.pop_size)
+
+        # obtain list of filenames
         files = []
         for file in os.listdir(self.routes_dir):
             if match(r"route_[0-9]+\.(json|geojson)$", file.lower()):
                 files.append(file)
-
         if len(files) == 0:
             raise ValueError(f"Couldn't find any route in {self.routes_dir} for the initial population.")
 
+        # read route(s) from file
         for i, file in enumerate(files):
             path = os.path.join(self.routes_dir, file)
             if not os.path.exists(path):
@@ -226,6 +275,12 @@ class FromGeojsonPopulation(Population):
         while added_routes < n_samples:
             X[added_routes, 0] = np.copy(X[0, 0])
             added_routes += 1
+
+        # mutate velocity in case of pure speed optimisation
+        if self.sole_speed_mutation:
+            for i, (rt,) in enumerate(X):
+                rt[:, -1] = quantiles[i]
+                rt[-1, -1] = -99.
 
         return X
 

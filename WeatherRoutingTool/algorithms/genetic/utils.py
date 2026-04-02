@@ -1,10 +1,15 @@
+import copy
 import json
 import logging
 from typing import Optional
 
 import numpy as np
+from astropy import units as u
 from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
+
+import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger("WRT.genetic")
 
@@ -146,6 +151,131 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
         dt = json.load(fp)
 
     return route_from_geojson(dt)
+
+
+def get_hist_values_from_route(route: np.array, departure_time):
+    lats = route[:, 0]
+    lons = route[:, 1]
+    speed = route[:, 2]
+    speed = speed[:-1] * u.meter / u.second
+
+    waypoint_coords = RouteParams.get_per_waypoint_coords(
+        route_lons=lons,
+        route_lats=lats,
+        start_time=departure_time,
+        bs=speed, )
+    dist = waypoint_coords['dist']
+
+    hist_values = graphics.get_hist_values_from_widths(dist, speed, "speed")
+    return hist_values
+
+
+def check_speed_dif(speed_arr: np.ndarray, max_diff: float) -> list[int]:
+    """
+    Identify indices where the speed difference between consecutive points exceeds a limit.
+
+    This function iterates through the speed array and compares each element
+    with the previous one. If the absolute difference is greater than the
+    specified threshold, both the current and previous indices are added to the output list.
+
+    :param speed_arr: array containing speed values
+    :type speed_arr: np.ndarray
+    :param max_diff: the maximum allowed difference between consecutive speeds
+    :return: a sorted list of unique indice pairs for which speed violations occurred
+    """
+
+    viol_list = []
+    debug = False
+
+    previous = speed_arr[0]
+    for i in range(speed_arr.shape[0] - 1):
+        speed = speed_arr[i]
+        diff = abs(previous - speed)
+        if debug:
+            print('diff:', diff)
+        if diff > max_diff:
+            viol_list.append(i)
+            viol_list.append(i - 1)
+        previous = speed
+
+    if debug:
+        print("before duplicate removal viol_list: ", viol_list)
+    viol_list = list(set(viol_list))
+    if debug:
+        print("returning viol_list: ", viol_list)
+
+    return viol_list
+
+
+def smoothen_speed_rec(speed_arr: np.ndarray, viol_list: list[int], n_calls: int) -> tuple[np.ndarray, int]:
+    r"""
+        Perform a single pass of weighted averaging on consecutive speed values violating the maximum speed difference.
+
+        Updates values at the provided indices by averaging them with their
+        immediate neighbors. It uses a weighted formula:
+        $$(2 \times current + lower + upper) / n\_smooth$$
+
+        :param speed_arr: the original array of speed values
+        :param viol_list: list of indices identified as having excessive speed differences
+        :param n_calls: the current recursion/iteration count
+        :raises Exception: if ``n_calls`` exceeds the hardcoded limit of 40
+        :return: a tuple containing the updated (smoothened) array and the incremented call count
+    """
+    arr_smooth = copy.deepcopy(speed_arr)
+    max_calls = 40
+    debug = False
+
+    if debug:
+        print('Call: ', n_calls)
+
+    if n_calls > max_calls:
+        raise Exception("Too many calls to smoothen")
+
+    for ispeed in viol_list:
+        lower = 0.
+        upper = 0.
+        n_smooth = 4
+
+        if ispeed > 0:
+            lower = speed_arr[ispeed - 1]
+        else:
+            n_smooth -= 1
+        if (ispeed < speed_arr.shape[0] - 1) and (speed_arr[ispeed + 1] != -99):
+            upper = speed_arr[ispeed + 1]
+        else:
+            n_smooth -= 1
+        arr_smooth[ispeed] = (speed_arr[ispeed] * 2 + lower + upper) / n_smooth
+
+        if debug:
+            print('    lower: ', lower)
+            print('    upper: ', upper)
+            print('    orig: ', speed_arr[ispeed])
+            print('    av: ', arr_smooth[ispeed])
+
+    n_calls += 1
+    return arr_smooth, n_calls
+
+
+def smoothen_speed(speed_arr: np.ndarray, max_diff: float) -> np.ndarray:
+    """
+        Iteratively smoothen a speed array until all consecutive differences are within limits.
+
+        This acts as the main controller that repeatedly checks for violations
+        and applies the smoothing algorithm until all consecutive differences are within limits or
+        the maximum iteration limit is reached.
+
+        :param speed_arr: the initial array of speed values to be processed
+        :param max_diff: the allowed difference for speed consecutive speed values
+        :return: the final smoothened array where no differences exceed ``max_diff``
+    """
+    viol_list = check_speed_dif(speed_arr, max_diff)
+    n_calls = 0
+
+    while viol_list != []:
+        speed_arr, n_calls = smoothen_speed_rec(speed_arr, viol_list, n_calls)
+        viol_list = check_speed_dif(speed_arr, max_diff)
+
+    return speed_arr
 
 
 # ----------

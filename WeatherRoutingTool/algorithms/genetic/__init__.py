@@ -162,18 +162,30 @@ class Genetic(RoutingAlg):
 
     # FIXME temporary consistency check
     def consistency_check(self, res, problem):
+        """
+        Temporary consistency check to uncover memory issues.
+        """
         X = res.X
+        res_objs = res.F
         i_route = 0
+
+        # solve shape issue in case there is only one objective
+        if self.n_objs == 1:
+            res_objs = np.array([res.F])
+            X = [X]
+
         for route in X:
             fuel_dict = problem.get_power(route[0])
 
-            i_obj = 0
+            # ordering of objective values in res.F is defined by RoutingProblem.get_objectives()
             for obj_str in self.objectives:
                 if obj_str == "fuel_consumption":
-                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res.F[i_route, i_obj], 5)
+                    i_obj = 1
+                    if self.n_objs == 1:
+                        i_obj = 0
+                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res_objs[i_route, i_obj], 5)
                 else:
-                    np.testing.assert_equal(fuel_dict["time_obj"], res.F[i_route, i_obj], 5)
-                i_obj += 1
+                    np.testing.assert_equal(fuel_dict["time_obj"], res_objs[i_route, 0], 5)
             i_route += 1
 
     def terminate(self, res: Result, problem: RoutingProblem):
@@ -196,6 +208,7 @@ class Genetic(RoutingAlg):
 
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
+            self.plot_speed_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
             self.plot_objective_space(res, best_index)
@@ -343,8 +356,62 @@ class Genetic(RoutingAlg):
         plt.cla()
         plt.close()
 
+    def plot_speed_per_generation(self, res, best_route) -> None:
+        """Plot line diagrams of speed vs. travel distance for each individual in one generation.
+
+        :param res: Result of GA minimization
+        :type res: pymoo.core.result.Result
+        :param best_route: Optimum route
+        :type best_route: np.ndarray
+        """
+        history = res.history
+
+        for igen in range(len(history)):
+            plt.clf()
+            plt.close('all')
+
+            fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+            plt.rcParams['font.size'] = graphics.get_standard('font_size')
+
+            last_pop = history[igen].pop.get('X')
+            objs = []
+            for iroute in range(0, last_pop.shape[0]):
+                hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
+
+                new_line = ax.plot(
+                    hist_values["bin_centres"].to(u.km).value,
+                    hist_values["bin_contents"].to(u.m / u.second).value,
+                    color="blue",
+                    alpha=0.3,
+                    linestyle='-',
+                    zorder=2
+                )
+                objs.append(new_line)
+
+            if igen == (self.n_generations - 1):
+                hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
+                ax.plot(
+                    hist_values_best_route["bin_centres"].to(u.km).value,
+                    hist_values_best_route["bin_contents"].to(u.m / u.second).value,
+                    color="firebrick",
+                    linewidth=3
+                )
+            left, right = plt.xlim()
+            ax.set_xlim(-100, right)
+            ax.set_ylim(0, 10)
+
+            plt.ylabel("speed (m/s)")
+            plt.xlabel('travel distance (km)')
+            plt.xticks()
+            plt.tight_layout()
+            ax.legend()
+
+            figname = f"genetic_algorithm_speed {igen:02}.png"
+            plt.savefig(os.path.join(self.figure_path, figname))
+            plt.close(fig)
+
     def plot_population_per_generation(self, res, best_route):
-        """Plot figures and save them in WRT_FIGURE_PATH
+        """Plot routes for each individual in one generation on a map.
 
         :param res: Result of GA minimization
         :type res: pymoo.core.result.Result
@@ -413,7 +480,6 @@ class Genetic(RoutingAlg):
             cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
             cbar.set_label('Geschwindigkeit ($m/s$)')
             plt.tight_layout()
-
             ax.legend()
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
