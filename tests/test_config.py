@@ -169,7 +169,7 @@ def test_boat_speed_arrival_time_waypoint_optimisation_success(boat_speed, arriv
     config_data["GENETIC_MUTATION_TYPE"] = mut_type
     config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
     config_data["ALGORITHM_TYPE"] = "genetic"
-    config_data["GENETIC_OBJECTIVES"] = {"fuel_consumption" : 1.}
+    config_data["GENETIC_OBJECTIVES"] = {"fuel_consumption": 1.}
 
     Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
