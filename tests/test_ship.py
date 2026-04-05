@@ -39,7 +39,7 @@ class TestShip:
         salinity = np.array([6.4, 6.5, 6.41, 6.42])
         water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
         status = np.array([1, 2, 2, 3])
-        message = np.array(['OK', 'OK', 'Error' 'OK'])
+        message = np.array(['OK', 'OK', 'Error', 'OK'])
 
         sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed, r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
                         r_shallow=rshallow, r_roughness=rroughness, wave_height=wave_height,
@@ -105,7 +105,7 @@ class TestShip:
         salinity = np.array([6.4, 6.5, 6.41, 6.42])
         water_temperature = np.array([6.7, 6.8, 6.71, 6.72])
         status = np.array([1, 2, 2, 3])
-        message = np.array(['OK', 'OK', 'Error' 'OK'])
+        message = np.array(['OK', 'OK', 'Error', 'OK'])
 
         sp = ShipParams(fuel_rate=fuel, power=power, rpm=rpm, speed=speed,
                         r_wind=rwind, r_calm=rcalm, r_waves=rwaves,
