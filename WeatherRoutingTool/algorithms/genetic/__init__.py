@@ -192,6 +192,17 @@ class Genetic(RoutingAlg):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
+
+        if res.F is None or res.X is None:
+            logger.error(
+                "No feasible solution found. All candidates violated constraints. "
+                "Try relaxing constraints or adjusting the start/end points."
+            )
+            raise RuntimeError(
+                "Optimization failed: no feasible solution found. "
+                "All candidates violated the given constraints."
+            )
+
         self.consistency_check(res, problem)
 
         mcdm = MCDM.RMethod(self.objectives)
