@@ -369,6 +369,24 @@ class TestRoutePostprocessing:
         for timestamp in time_list:
             assert isinstance(timestamp, datetime)
 
+    def test_recalculate_starttime_scalar_speed(self):
+        """Test that recalculate_starttime_per_node handles scalar speed correctly."""
+        final_route = gpd.GeoDataFrame(
+            columns=["timestamp", "geometry"],
+            data=[[datetime(2024, 5, 17, 9), LineString([(16, 1), (13, 2)])],
+                  [datetime(2024, 5, 17, 10), LineString([(13, 2), (12, 2)])]])
+
+        rpp = self.generate_test_route_postprocessing_obj()
+        rpp.ship_speed = 6 * u.meter / u.second  # scalar Quantity
+        time_list = rpp.recalculate_starttime_per_node(final_route)
+
+        assert len(time_list) == 3
+        for timestamp in time_list:
+            assert isinstance(timestamp, datetime)
+        # timestamps must be monotonically increasing
+        for i in range(1, len(time_list)):
+            assert time_list[i] > time_list[i - 1]
+
     def test_find_point_from_perpendicular_angle(self):
         test_point = Point(1, 1)
 
