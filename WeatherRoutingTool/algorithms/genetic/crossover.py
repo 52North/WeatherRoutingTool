@@ -145,23 +145,36 @@ class OffspringRejectionCrossover(CrossoverBase):
             is_constrained=[False] * (route.shape[0] - 1), )
 
         return np.array(is_constrained)
-
+    def fallback_mutate(self, route: np.ndarray) -> np.ndarray:
+        """Apply a small mutation to maintain diversity when crossover is skipped."""
+        # Step 1: Force conversion to float taaki koi crash na ho (Casting Error Fix)
+        mutated_route = route.copy().astype(float)
+        
+        # Step 2: Route length check
+        n_points = route.shape[0]
+        
+        if n_points >= 2:
+            # Step 3: Pick ANY index (0 se n_points-1 tak)
+            idx = np.random.randint(0, n_points)
+            # Step 4: Apply small perturbation
+            mutated_route[idx, 0:2] += np.random.uniform(-0.01, 0.01, size=2)
+            
+        return mutated_route
 
 # crossover implementations
 # ----------
 class SinglePointCrossover(OffspringRejectionCrossover):
-    """Single-point Crossover.
-
-    :param patch_type: Type of patcher. Defaults to patching with ``GreatCircleRoutePatcherSingleton``.
-    :type patch_type: str
-    """
+    """Single-point Crossover."""
 
     def __init__(self, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
         self.patch_type = patch_type
 
     def crossover(self, p1, p2):
-        # setup patching
+        if p1.shape[0] < 3 or p2.shape[0] < 3:
+            logger.debug("Route too small for SP crossover. Applying fallback mutation.")
+            return self.fallback_mutate(p1), self.fallback_mutate(p2)
+        
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="SP crossover")
 
         p1x = np.random.randint(1, p1.shape[0] - 1)
@@ -169,16 +182,17 @@ class SinglePointCrossover(OffspringRejectionCrossover):
 
         r1 = np.concatenate([
             p1[:p1x],
-            patchfn.patch(tuple(p1[p1x - 1]), tuple(p2[p2x]), self.departure_time),
+            # [p1x - 1, 0:2] aur [p2x, 0:2]
+            patchfn.patch(tuple(p1[p1x - 1, 0:2]), tuple(p2[p2x, 0:2]), self.departure_time),
             p2[p2x:], ])
 
         r2 = np.concatenate([
             p2[:p2x],
-            patchfn.patch(tuple(p2[p2x - 1]), tuple(p1[p1x]), self.departure_time),
+            #  [p2x - 1, 0:2] aur [p1x, 0:2]
+            patchfn.patch(tuple(p2[p2x - 1, 0:2]), tuple(p1[p1x, 0:2]), self.departure_time),
             p1[p1x:], ])
 
         return r1, r2
-
 
 class TwoPointCrossover(OffspringRejectionCrossover):
     """Two-point Crossover.
@@ -189,37 +203,39 @@ class TwoPointCrossover(OffspringRejectionCrossover):
 
     def __init__(self, patch_type: str = "gcr", **kw):
         super().__init__(**kw)
-
         self.patch_type = patch_type
 
     def crossover(self, p1, p2):
+        if p1.shape[0] < 6 or p2.shape[0] < 6:
+            logger.debug(f"Route too small for TP crossover. Applying fallback mutation.")
+            return self.fallback_mutate(p1), self.fallback_mutate(p2)
+
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="TP crossover")
 
         p1x1 = np.random.randint(1, p1.shape[0] - 4)
         p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
-
         p2x1 = np.random.randint(1, p2.shape[0] - 4)
         p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
 
         r1 = np.concatenate([
             p1[:p1x1],
-            patchfn.patch(tuple(p1[p1x1 - 1]), tuple(p2[p2x1]), self.departure_time),
+            #  [p1x1 - 1, 0:2] aur [p2x1, 0:2]
+            patchfn.patch(tuple(p1[p1x1 - 1, 0:2]), tuple(p2[p2x1, 0:2]), self.departure_time),
             p2[p2x1:p2x2],
-            patchfn.patch(tuple(p2[p2x2]), tuple(p1[p1x2]), self.departure_time),
+            #  [p2x2, 0:2] aur [p1x2, 0:2]
+            patchfn.patch(tuple(p2[p2x2, 0:2]), tuple(p1[p1x2, 0:2]), self.departure_time),
             p1[p1x2:], ])
 
         r2 = np.concatenate([
             p2[:p2x1],
-            patchfn.patch(tuple(p2[p2x1 - 1]), tuple(p1[p1x1]), self.departure_time),
+            # [p2x1 - 1, 0:2] aur [p1x1, 0:2]
+            patchfn.patch(tuple(p2[p2x1 - 1, 0:2]), tuple(p1[p1x1, 0:2]), self.departure_time),
             p1[p1x1:p1x2],
-            patchfn.patch(tuple(p1[p1x2 - 1]), tuple(p2[p2x2]), self.departure_time),
+            #  [p1x2 - 1, 0:2] aur [p2x2, 0:2]
+            patchfn.patch(tuple(p1[p1x2 - 1, 0:2]), tuple(p2[p2x2, 0:2]), self.departure_time),
             p2[p2x2:], ])
 
         return r1, r2
-
-
-#
-# ----------
 class RandomizedCrossoversOrchestrator(CrossoverBase):
     """Randomly selects one of the provided crossovers during every call of ``_do``.
 
