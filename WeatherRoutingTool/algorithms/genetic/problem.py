@@ -165,11 +165,17 @@ class RoutingProblem(ElementwiseProblem):
                 seconds=route_dict['travel_times'][-1].value)
             time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds() / 60
 
-            # set minimal time difference to 1 minute
-            if time_diff < 1:
-                time_diff = 1
+            # being early
+            if time_diff > 0:
+                if time_diff < 1:
+                    time_diff = 1
+                time_obj = time_diff * time_diff
+            else:
+            # delay
+                if time_diff > -1:
+                    time_diff = -1
+                time_obj = 0.01 * time_diff * time_diff * time_diff * time_diff
 
-            time_obj = time_diff * time_diff * time_diff * time_diff
             if debug:
                 print('departure time: ', self.departure_time)
                 print('planned arrival time:', self.arrival_time)
