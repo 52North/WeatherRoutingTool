@@ -386,10 +386,10 @@ class CrossoverFactory:
                         constraints_list=constraints_list,
                         prob=.5,
                         crossover_type="SP crossover"),
-                    SpeedCrossover(
+                    TwoPointCrossoverSpeed(
                         config=config,
                         departure_time=departure_time,
                         constraints_list=constraints_list,
                         prob=.5,
-                        crossover_type="Speed crossover")
+                        crossover_type="TP Crossover speed")
                 ])
