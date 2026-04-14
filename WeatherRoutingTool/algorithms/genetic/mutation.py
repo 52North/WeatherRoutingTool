@@ -588,15 +588,23 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
         self.sigma = 1.
 
+        # Fix random seed depending on configuration
+        self.rndm_gen = None
+        if self.config.GENETIC_FIX_RANDOM_SEED:
+            self.rndm_gen = np.random.default_rng(1)
+        else:
+            self.rndm_gen = np.random.default_rng()
+
     def mutate(self, problem, rt, **kw):
         rt_new = copy.deepcopy(rt)
+        all_inds = np.linspace(start=0, stop=rt.shape[0] - 1, num=rt.shape[0], dtype=int)
         try:
-            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+            indices = np.random.choice(all_inds, self.n_updates)
         except ValueError:
-            indices = range(0, rt.shape[0] - 1)
+            indices = all_inds
         for i in indices:
             old_speed = rt[i][2]
-            new = random.normalvariate(old_speed, self.sigma)
+            new = self.rndm_gen.normal(loc=old_speed, scale=self.sigma)
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
                 new = old_speed
             elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
