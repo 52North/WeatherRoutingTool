@@ -1,0 +1,1116 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.330964,
+                    13.397171
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 0
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.314511076949,
+                    13.629022153898003
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 1
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.42288414337534,
+                    13.845768286750676
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 2
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.53125720980168,
+                    14.062514419603355
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 3
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.62149253491405,
+                    14.285970139656232
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 4
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.68026608220175,
+                    14.521064328807002
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 5
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.73903962948944,
+                    14.756158517957774
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 6
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.79781317677714,
+                    14.991252707108545
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 7
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.82479370004603,
+                    15.231958000306943
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 8
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.85365626281819,
+                    15.472315215734133
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": 0.0,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": 0.0,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": 0.0,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": 0.0,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": 0.0,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": 0.0,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": 0.0,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": 0.0,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": 0.0,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": 0.0,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": 0.0,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": 0.0
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 9
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    80.865905,
+                    15.714335
+                ]
+            },
+            "properties": {
+                "time": 0,
+                "speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "engine_power": {
+                    "value": -99,
+                    "unit": "kW"
+                },
+                "fuel_consumption": {
+                    "value": -99,
+                    "unit": "t/h"
+                },
+                "fuel_type": "HFO",
+                "propeller_revolution": {
+                    "value": -99,
+                    "unit": "rpm"
+                },
+                "calm_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wind_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wave_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "shallow_water_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "hull_roughness_resistance": {
+                    "value": -99,
+                    "unit": "N"
+                },
+                "wave_height": {
+                    "value": -99,
+                    "unit": "m"
+                },
+                "wave_direction": {
+                    "value": -99,
+                    "unit": "radian"
+                },
+                "wave_period": {
+                    "value": -99,
+                    "unit": "s"
+                },
+                "u_currents": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "v_currents": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "u_wind_speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "v_wind_speed": {
+                    "value": -99,
+                    "unit": "m/s"
+                },
+                "pressure": {
+                    "value": -99,
+                    "unit": "Pa"
+                },
+                "air_temperature": {
+                    "value": -99,
+                    "unit": "\u00b0C"
+                },
+                "salinity": {
+                    "value": -99,
+                    "unit": "-"
+                },
+                "water_temperature": {
+                    "value": -99,
+                    "unit": "\u00b0C"
+                },
+                "status": {
+                    "value": -99
+                },
+                "message": {
+                    "value": ""
+                }
+            },
+            "id": 10
+        }
+    ]
+}

@@ -1,3 +1,4 @@
+
 import logging
 import random
 from copy import deepcopy
@@ -160,25 +161,30 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         super().__init__(**kw)
         self.patch_type = patch_type
 
-    def crossover(self, p1, p2):
-        # setup patching
-        patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="SP crossover")
+def crossover(self, p1, p2):
 
-        p1x = np.random.randint(1, p1.shape[0] - 1)
-        p2x = np.random.randint(1, p2.shape[0] - 1)
+    # Handle small routes where crossover is not feasible
+    if p1.shape[0] <= 3 or p2.shape[0] <= 3:
+        p1_new = p1.copy()
+        p2_new = p2.copy()
 
-        r1 = np.concatenate([
-            p1[:p1x],
-            patchfn.patch(tuple(p1[p1x - 1]), tuple(p2[p2x]), self.departure_time),
-            p2[p2x:], ])
+        # apply small perturbation to maintain diversity
+        idx1 = np.random.randint(0, p1_new.shape[0])
+        p1_new[idx1] += np.random.normal(0, 0.0001, size=p1_new.shape[1])
 
-        r2 = np.concatenate([
-            p2[:p2x],
-            patchfn.patch(tuple(p2[p2x - 1]), tuple(p1[p1x]), self.departure_time),
-            p1[p1x:], ])
+        idx2 = np.random.randint(0, p2_new.shape[0])
+        p2_new[idx2] += np.random.normal(0, 0.0001, size=p2_new.shape[1])
 
-        return r1, r2
+        return p1_new, p2_new
 
+    # Standard crossover for normal routes
+    p1x = np.random.randint(1, p1.shape[0] - 1)
+    p2x = np.random.randint(1, p2.shape[0] - 1)
+
+    o1 = np.vstack((p1[:p1x], p2[p2x:]))
+    o2 = np.vstack((p2[:p2x], p1[p1x:]))
+
+    return o1, o2
 
 class TwoPointCrossover(OffspringRejectionCrossover):
     """Two-point Crossover.
@@ -195,6 +201,17 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     def crossover(self, p1, p2):
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="TP crossover")
 
+        if p1.shape[0] <= 4:
+            p1_new = p1.copy()
+            p2_new = p2.copy()
+
+            idx1 = np.random.randint(0, p1_new.shape[0])
+            p1_new[idx1] += np.random.normal(0, 0.0001, size=p1_new.shape[1])
+
+            idx2 = np.random.randint(0, p2_new.shape[0])
+            p2_new[idx2] += np.random.normal(0, 0.0001, size=p2_new.shape[1])
+
+            return p1_new, p2_new   
         p1x1 = np.random.randint(1, p1.shape[0] - 4)
         p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
 
