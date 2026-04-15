@@ -170,8 +170,8 @@ class RoutingProblem(ElementwiseProblem):
                 if time_diff < 1:
                     time_diff = 1
                 time_obj = time_diff * time_diff
-            else:
             # delay
+            else:
                 if time_diff > -1:
                     time_diff = -1
                 time_obj = 0.01 * time_diff * time_diff * time_diff * time_diff

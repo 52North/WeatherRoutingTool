@@ -222,7 +222,7 @@ def smoothen_speed_rec(speed_arr: np.ndarray, viol_list: list[int], n_calls: int
         :return: a tuple containing the updated (smoothened) array and the incremented call count
     """
     arr_smooth = copy.deepcopy(speed_arr)
-    max_calls = 40
+    max_calls = 60
     debug = False
 
     if debug:
