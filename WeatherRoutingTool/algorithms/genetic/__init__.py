@@ -79,9 +79,11 @@ class Genetic(RoutingAlg):
         """
 
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
+        seed = None
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
             np.random.seed(1)
+            seed = 1
 
         # inputs
         problem = RoutingProblem(
@@ -107,7 +109,7 @@ class Genetic(RoutingAlg):
 
         # optimize
         res_minimize = self.optimize(
-            problem, initial_population, crossover, mutation, duplicates, repair)
+            problem, initial_population, crossover, mutation, duplicates, repair, seed)
 
         # terminate
         res_terminate = self.terminate(
@@ -124,6 +126,7 @@ class Genetic(RoutingAlg):
             mutation,
             duplicates,
             repair,
+            seed
     ):
         """Optimization function for the Genetic Algorithm"""
 
@@ -147,7 +150,8 @@ class Genetic(RoutingAlg):
             algorithm=algorithm,
             termination=termination,
             save_history=True,
-            verbose=True, )
+            verbose=True,
+            seed=seed)
 
         while algorithm.has_next():
             algorithm.next()
@@ -195,6 +199,7 @@ class Genetic(RoutingAlg):
         self.consistency_check(res, problem)
 
         mcdm = MCDM.RMethod(self.objectives)
+        # mcdm = MCDM.PymoosAFS(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
