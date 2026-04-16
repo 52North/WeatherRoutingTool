@@ -501,9 +501,11 @@ class Config(BaseModel):
         mutate_only_waypoints = ((self.GENETIC_MUTATION_TYPE == "waypoints")
                                  or (self.GENETIC_MUTATION_TYPE == "rndm_walk")
                                  or (self.GENETIC_MUTATION_TYPE == "rndm_plateau")
-                                 or (self.GENETIC_MUTATION_TYPE == "route_blend"))
+                                 or (self.GENETIC_MUTATION_TYPE == "route_blend")
+                                 or (self.GENETIC_MUTATION_TYPE == "no_mutation"))
 
-        crossover_only_waypoints = self.GENETIC_CROSSOVER_TYPE == "waypoints"
+        crossover_only_waypoints = ((self.GENETIC_CROSSOVER_TYPE == "waypoints")
+                                    or (self.GENETIC_CROSSOVER_TYPE == "no_mutation"))
 
         mutate_only_speed = ((self.GENETIC_MUTATION_TYPE == "speed")
                              or (self.GENETIC_MUTATION_TYPE == "percentage_change_speed")
