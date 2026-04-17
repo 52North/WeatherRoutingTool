@@ -21,13 +21,21 @@ def get_closest(array, value):
 
 
 def distance(route):
-    """TODO: Where is this function used?
-    Calculates the accumulated distance along a route
+    """Calculates the accumulated geodesic distance along a route.
 
-    :param route: Some kind of route
-    :type route: TODO: add type of route
-    :return: Accumulated distance along a route
-    :rtype: np.array
+    .. warning::
+        This function is not imported or called anywhere in the main WRT
+        package. It appears to be unused. Consider removing it in a future
+        clean-up (see issue: orphaned helpers in data_utils.py).
+        Unit tests in tests/test_data_utils.py::TestDistance act as a
+        regression guard until a removal decision is made.
+
+    :param route: Array of waypoints with columns [lat, lon].
+    :type route: numpy.ndarray, shape (n, 2)
+    :return: Accumulated geodesic distance from the first waypoint (m).
+             Element 0 is always 0. Element i is the total distance from
+             waypoint 0 to waypoint i.
+    :rtype: numpy.ndarray
     """
 
     geod = Geodesic.WGS84
@@ -50,7 +58,24 @@ def distance(route):
 
 
 def time_diffs(speed, route):
-    # TODO: Where is this function used?
+    """Calculates the accumulated travel time along a route at a constant speed.
+
+    .. warning::
+        This function is not imported or called anywhere in the main WRT
+        package. It appears to be unused. Consider removing it in a future
+        clean-up (see issue: orphaned helpers in data_utils.py).
+        Unit tests in tests/test_data_utils.py::TestTimeDiffs act as a
+        regression guard until a removal decision is made.
+
+    :param speed: Constant boat speed in m/s.
+    :type speed: float
+    :param route: Array of waypoints with columns [lat, lon].
+    :type route: numpy.ndarray, shape (n, 2)
+    :return: Accumulated travel time from the first waypoint (s).
+             Element 0 is always 0. Element i is the total time from
+             waypoint 0 to waypoint i.
+    :rtype: numpy.ndarray
+    """
     geod = Geodesic.WGS84
     # speed = speed * 1.852
 
