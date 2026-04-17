@@ -335,6 +335,7 @@ def test_recalculate_speed_for_route():
     assert np.all((new_route[:, 2] - bs_approx.value) < 0.3)
 
 
+@pytest.mark.manual
 @pytest.mark.skip(reason="Test needs modified route array.")
 def test_single_point_crossover(plt):
     dirname = os.path.dirname(__file__)
@@ -376,6 +377,7 @@ def test_single_point_crossover(plt):
     plt.saveas = "test_single_point_crossoverr.png"
 
 
+@pytest.mark.manual
 def test_speed_crossover(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
