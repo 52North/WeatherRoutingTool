@@ -22,6 +22,8 @@ try:
 except ModuleNotFoundError:
     pass  # maripower installation is optional
 
+pytestmark = pytest.mark.integration
+
 
 class TestDPM:
     '''

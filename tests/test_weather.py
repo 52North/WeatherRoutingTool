@@ -2,6 +2,8 @@ import pytest
 
 from WeatherRoutingTool.weather import WeatherCond
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize("u,v,theta_res", [(-1, -1, 45), (1, -1, 315), (1, 1, 225), (-1, 1, 135)])
 def test_theta_from_uv(u, v, theta_res):
