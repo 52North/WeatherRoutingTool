@@ -154,7 +154,7 @@ def get_marker(i):
 
 
 def get_linestyle(i):
-    linestyles = ['solid', 'dotted', 'dashed', 'dashdot']
+    linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
 
     if i > 3:
         i = i - 4
