@@ -199,7 +199,7 @@ class Genetic(RoutingAlg):
         self.consistency_check(res, problem)
 
         mcdm = MCDM.RMethod(self.objectives)
-        # mcdm = MCDM.PymoosAFS(self.objectives)
+        # mcdm = MCDM.PymoosASF(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 

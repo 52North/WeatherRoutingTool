@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pymoo.decomposition.asf import ASF
 
 
 class MCDM:
@@ -7,6 +8,11 @@ class MCDM:
 
     This Class implements the base functionality for selecting a single solution from the set of non-dominated
     solutions found by the genetic algorithm.
+
+    :param objectives: dictionary of objective names (keys) and their weights (values).
+    :type objectives: dict
+    :param n_objs: number of objectives
+    :type n_objs: int
     """
 
     def __init__(self, objectives: dict):
@@ -32,8 +38,6 @@ class RMethod(MCDM):
           R.V. Rao and R.J. Lakshmi, "Ranking of Pareto-optimal solutions and selecting the best solution in multi-and
           many-objective optimization problems using R-method". Soft Computing Letters 3 (2021) 100015
 
-        :param objectives: dictionary of objective names (keys) and their weights (values).
-        :type objectives: dict
     """
 
     def __init__(self, objectives: dict[str, int]):
@@ -143,6 +147,8 @@ class RMethod(MCDM):
                 norm = max_value
             else:
                 objective_values = objective_values * norm * 1. / max_value
+                solutions[:, i_obj] = objective_values
+
             rmethod_table[obj_str + '_obj'] = objective_values
             rmethod_table[obj_str + '_rank'] = self.rank_solutions(objective_values)
             rmethod_table[obj_str + '_weight'] = self.get_weigths_from_rankarr(
@@ -227,3 +233,48 @@ class RMethod(MCDM):
                 weight_array[irank] = self.get_weight_from_rank(int(rank_arr[irank]), n_parts)
 
         return weight_array
+
+
+class PymoosASF(MCDM):
+
+    def __init__(self, objectives: dict[str, int]):
+        """
+        Calls the ASF method for MCDM as implemented by pymoo.
+        """
+        super().__init__(objectives)
+
+    def get_best_compromise(self, solutions):
+        """
+        Find the index of the best compromise solution from a set of candidates.
+
+        This method normalises the objective values for each solution and calls the ASF method by pymoo to find the
+        best compromise.
+
+        :param solutions: 2D array of objective values where rows are alternative solutions and columns are
+          objective values.
+        :type solutions: numpy.ndarray
+        :return: The index of the optimal solution in the provided array.
+        :rtype: int
+        """
+
+        if self.n_objs == 1:
+            return solutions.argmin()
+
+        weights = np.array([self.objectives["fuel_consumption"], self.objectives["arrival_time"]])
+        decomp = ASF()
+
+        i_obj = 0
+        norm = 1.
+        for obj_str in self.objectives:
+            objective_values = solutions[:, i_obj]
+            max_value = np.max(objective_values)
+            if i_obj == 0:
+                norm = max_value
+            else:
+                objective_values = objective_values * norm * 1. / max_value
+            solutions[:, i_obj] = objective_values
+            i_obj += 1
+
+        best_ind = decomp(solutions, weights).argmin()
+
+        return best_ind
