@@ -1,11 +1,15 @@
 import logging
 import os
+import sys
 from pathlib import Path
 
 import dill
 import numpy as np
+import torch
 import xarray as xr
 from astropy import units as u
+
+from surrogate_lib.evaluation.test import ModelManager
 
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -17,7 +21,7 @@ from WeatherRoutingTool.weather import WeatherCond
 
 class NNBoat(Boat):
     model_path: str
-    evaluator: SavedModelEvaluator
+    evaluator: ModelManager
     depth_data: xr
     weather_path: str
     draught: float
@@ -37,15 +41,10 @@ class NNBoat(Boat):
         self.model_path = config_obj.BOAT_NNMODEL_PATH
         self.draught = (config_obj.BOAT_DRAUGHT_AFT + config_obj.BOAT_DRAUGHT_FORE) / 2
 
-        self.evaluator = SavedModelEvaluator()
-        info = self.evaluator.get_model_info(self.model_path)
-
-        print("\nNN Model Info:")
-        for key, value in info.items():
-            print(f"  {key}: {value}")
+        # init nnmodel
+        self.evaluator = ModelManager()
 
         depth_path = str(config_obj.DEPTH_DATA)
-
         if not depth_path == " ":
             self.use_depth_data = True
             self.depth_data = xr.open_dataset(config_obj.DEPTH_DATA)
@@ -59,19 +58,12 @@ class NNBoat(Boat):
 
         self.feature_names = [
             'STW',  # speed through water (m/s)
-            'draft_fp_interpolated_between_low_speeds',  # fore draft (m)
-            'draft_ap_interpolated_between_low_speeds',  # after draft (m)
-            'rel_wind_direction',  # relative wind direction (0-360°)
-            'thetao',  # water temperature (°C)
-            'Temperature_surface',  # air temperatrue (°K)
-            'rel_seaway_direction',  # wave direction (0-360°)
-            'z',  # water depth (m)
-            'Pressure_reduced_to_MSL_msl',  # pressure (Pa)
+            'AP (interpolated)',  # after draft (m)
+            'FP (interpolated)',  # fore draft (m)
+            'WIND_SPEED_REL',  # wind speed
+            'WIND_DIRECTION_REL', # relative wind direction in deg, remapped to -180 to +180  (e.g. raw 210° → -150°)
+            'rel_seaway_direction',  # relative wave direction in deg, remapped to -180 to +180
             'VHM0',  # wave height (m)
-            'VTPK',  # wave period
-            'so',  # salinity
-            'ucomponent_of_wind_height_above_ground',  # u component wind speed (m/s)
-            'vcomponent_of_wind_height_above_ground'  # v component wind speed (m/s)
         ]
 
     def get_relative_wind_dir(self, ang_boat, ang_wind):
@@ -88,11 +80,6 @@ class NNBoat(Boat):
         delta_ang[delta_ang > 180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang > 180 * u.degree])
 
         return delta_ang
-
-    def coordinate_transformation(self, input_dict):
-        input_dict['Temperature_surface'] = input_dict['Temperature_surface'] + 274.15
-        input_dict['so'] = input_dict['so'] * 1000
-        return input_dict
 
     def get_input_data(self, input_dict):
         input_data = np.array([[]])
@@ -169,11 +156,45 @@ class NNBoat(Boat):
                 raise ValueError('Apparent wind angle is nan!')
 
         apparent_wind_angle = apparent_wind_angle.to(u.degree)
-
         return {'app_wind_speed': apparent_wind_speed, 'app_wind_angle': apparent_wind_angle}
 
+    def load_normalization(self, model_path: str):
+        """Extract x_mean and x_std stored inside the .pth checkpoint."""
+        checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
+        params = checkpoint.get("normalization_params", {})
+        x_mean = params.get("x_mean")
+        x_std = params.get("x_std")
+        if x_mean is None or x_std is None:
+            raise ValueError(
+                f"x_mean/x_std not found in {model_path}. "
+                "Only final_model.pth files are supported, not fold models."
+            )
+        if isinstance(x_mean, torch.Tensor):
+            x_mean = x_mean.cpu().numpy()
+        if isinstance(x_std, torch.Tensor):
+            x_std = x_std.cpu().numpy()
+        return x_mean, x_std
+
+    def predict_mean(self,manager: ModelManager, model_path: str,
+                     X: np.ndarray, device: str = "cpu") -> np.ndarray:
+        """
+        Predict in original (denormalized) target units.
+
+        Parameters
+        ----------
+        X : np.ndarray, shape (n_samples, 7)
+            Raw input features in the order defined by FEATURES.
+
+        Returns
+        -------
+        np.ndarray, shape (n_samples,)
+        """
+        x_mean, x_std = self.load_normalization(model_path)
+        preds = manager.predict(model_path, X, x_mean=x_mean, x_std=x_std, device=device)
+        return preds.flatten()
+
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
-        debug = False
+        debug = True
         n_requests = len(courses)
 
         # initialise clean ship params object
@@ -214,7 +235,7 @@ class NNBoat(Boat):
                                         + ship_params.v_wind_speed.value * ship_params.v_wind_speed.value))
                                * u.meter / u.second)
 
-        # calculate apparend wind speed and wind direction in boat coordinate system
+        # calculate apparent wind speed and wind direction in boat coordinate system
         wind_res = self.get_apparent_wind(speed, absolute_wind_speed, absolute_wind_direction)
         relative_wind_direction = self.get_relative_wind_dir(courses, wind_res['app_wind_angle'])
 
@@ -227,10 +248,9 @@ class NNBoat(Boat):
             print('u: ', ship_params.u_wind_speed.value)
             print('v: ', ship_params.v_wind_speed.value)
 
-        # absolute_seaway_direction = 180 + 180 / np.pi * np.arctan2(ship_params.u_currents.value,
-        #                                                            ship_params.v_currents.value)
-        # absolute_seaway_direction = (absolute_seaway_direction % 360) * u.degree
-        # rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
+        absolute_seaway_direction = WeatherCond.get_theta_from_uv(ship_params.u_currents.value,
+                                                                    ship_params.v_currents.value) * u.degree
+        rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
 
         # lat_da = xr.DataArray(lats, dims="dummy")
         # lon_da = xr.DataArray(lons, dims="dummy")
@@ -251,32 +271,20 @@ class NNBoat(Boat):
         for ipoint in range(len(lats)):
             input_dict = {
                 'STW': speed[ipoint],  # STW
-                # 'draft_fp_interpolated_between_low_speeds': draught[ipoint],
-                # draft_fp_interpolated_between_low_speeds
-                # 'draft_ap_interpolated_between_low_speeds': draught[ipoint],
-                # draft_ap_interpolated_between_low_speeds,
-                'rel_wind_speed': wind_res['app_wind_speed'][ipoint].value,
-                'rel_wind_direction': relative_wind_direction[ipoint].value,  # rel_wind_direction
-                # 'thetao': ship_params.water_temperature[ipoint].value,  # thetao
-                # 'Temperature_surface': ship_params.air_temperature[ipoint].value,  # Temperature_surface
-                # 'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
-                # 'z': depth[ipoint],  # z
-                # 'Pressure_reduced_to_MSL_msl': ship_params.pressure[ipoint].value,  # Pressure_reduced_to_MSL_msl
-                # 'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
-                # 'VTPK': ship_params.wave_period[ipoint].value,  # VTPK
-                # 'so': ship_params.salinity[ipoint].value,  # so
-                # 'ucomponent_of_wind_height_above_ground': ship_params.u_wind_speed[ipoint].value,  # u_wind
-                # 'vcomponent_of_wind_height_above_ground': ship_params.v_wind_speed[ipoint].value  # v_wind
+                'AP (interpolated)': draught[ipoint],
+                'FP (interpolated)': draught[ipoint],
+                'WIND_SPEED_REL': wind_res['app_wind_speed'][ipoint].value,
+                'WIND_DIRECTION_REL': relative_wind_direction[ipoint].value,  # rel_wind_direction
+                'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
+                'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
             }
-            # if debug:
-            #    print('before conversion: ', input_dict)
-            # input_dict = self.coordinate_transformation(input_dict)
-            # if debug:
-            #    print('after conversion: ', input_dict)
+            if debug:
+                print('input_dict: ', input_dict)
             input_data = self.get_input_data(input_dict)
             if debug:
                 print('input_data: ', input_data)
-            P_perc[ipoint] = self.evaluator.evaluate(model_path=self.model_path, input_data=input_data)
+            pred = self.predict_mean(self.evaluator, self.model_path, input_data)
+            P_perc[ipoint] = pred[0]
             if debug:
                 print('prediction: ', P_perc[ipoint])
 
