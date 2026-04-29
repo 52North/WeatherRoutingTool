@@ -6,6 +6,7 @@
 import argparse
 import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,6 +14,7 @@ from astropy import units as u
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.ship.nnmodel import NNBoat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
@@ -63,6 +65,37 @@ def run_dpm_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
     boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
     boat.speed = sog
     boat.load_data()
+
+    print('Running direct power boat setting ' + maripower_scenario)
+
+    ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
+                                           waypoint_dict['start_lons'], time[:-1], sog)
+
+    start = (lat[0], lon[0])
+    finish = (lat[-1], lon[-1])
+
+    rp = RouteParams(
+        count=lat.shape[0] - 2,
+        start=start,
+        finish=finish,
+        gcr=None,
+        route_type='read_from_csv',
+        time=waypoint_dict['travel_times'],
+        lats_per_step=lat,
+        lons_per_step=lon,
+        course_per_step=waypoint_dict['courses'],
+        dists_per_step=waypoint_dict['dist'],
+        starttime_per_step=time,
+        ship_params_per_step=ship_params)
+
+    if geojsondir:
+        filename = os.path.join(geojsondir, 'route_' + maripower_scenario + '.json')
+        print('Writing file: ', filename)
+        rp.write_to_geojson(filename)
+
+
+def run_nn_test_scenario(waypoint_dict, geojsondir, maripower_scenario, sog):
+    boat = NNBoat(file_name=config.CONFIG_PATH)
 
     print('Running direct power boat setting ' + maripower_scenario)
 
@@ -148,8 +181,7 @@ if __name__ == "__main__":
     # read arguments
     args = parser.parse_args()
 
-    config = Config(file_name=args.file)
-    config.print()
+    config = Config.assign_config(Path(args.file))
 
     scenario_name = args.name
 
@@ -163,9 +195,10 @@ if __name__ == "__main__":
     figurefile = get_figure_path()
     time_resolution = config.DELTA_TIME_FORECAST
     time_forecast = config.TIME_FORECAST
-    departure_time = datetime.strptime(config.DEPARTURE_TIME, '%Y-%m-%dT%H:%MZ')
+    departure_time = config.DEPARTURE_TIME
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
+    default_route = config.DEFAULT_ROUTE
 
     maripower_test_scenarios_calm = args.calm_water_scenario
     maripower_test_scenarios_wind = args.wind_scenario
@@ -174,8 +207,8 @@ if __name__ == "__main__":
     lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
 
     # possibility to analyse only single parts of the route
-    # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
-    #                                                               aft_draught, cut_route)
+    lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
+                                                                 aft_draught, (default_route))
 
     # obtain position, time and courses for every waypoint
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
@@ -199,6 +232,14 @@ if __name__ == "__main__":
             scenario_name,
             fore_draught,
             aft_draught,
+            sog
+        )
+
+    if str(args.boat_type) == 'nnmodel':
+        run_nn_test_scenario(
+            waypoint_dict,
+            routepath,
+            scenario_name,
             sog
         )
 
