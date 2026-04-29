@@ -15,7 +15,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(4000, 5500)
+    ax.set_ylim(2000, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # plotting routes in depth profile
     if hist_dict['route']:
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        depth = xr.open_dataset(depth_path)
+        # depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
