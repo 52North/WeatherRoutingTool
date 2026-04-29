@@ -7,6 +7,7 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintPars, \
     SeamarkCrossing, LandPolygonsCrossing
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+from WeatherRoutingTool.ship.nnmodel import NNBoat
 
 try:
     import mariPower
