@@ -61,7 +61,7 @@ class NNBoat(Boat):
             'AP (interpolated)',  # after draft (m)
             'FP (interpolated)',  # fore draft (m)
             'WIND_SPEED_REL',  # wind speed
-            'WIND_DIRECTION_REL', # relative wind direction in deg, remapped to -180 to +180  (e.g. raw 210° → -150°)
+            'WIND_DIRECTION_REL',  # relative wind direction in deg, remapped to -180 to +180  (e.g. raw 210° → -150°)
             'rel_seaway_direction',  # relative wave direction in deg, remapped to -180 to +180
             'VHM0',  # wave height (m)
         ]
@@ -175,7 +175,7 @@ class NNBoat(Boat):
             x_std = x_std.cpu().numpy()
         return x_mean, x_std
 
-    def predict_mean(self,manager: ModelManager, model_path: str,
+    def predict_mean(self, manager: ModelManager, model_path: str,
                      X: np.ndarray, device: str = "cpu") -> np.ndarray:
         """
         Predict in original (denormalized) target units.
@@ -249,7 +249,7 @@ class NNBoat(Boat):
             print('v: ', ship_params.v_wind_speed.value)
 
         absolute_seaway_direction = WeatherCond.get_theta_from_uv(ship_params.u_currents.value,
-                                                                    ship_params.v_currents.value) * u.degree
+                                                                  ship_params.v_currents.value) * u.degree
         rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
 
         # lat_da = xr.DataArray(lats, dims="dummy")
@@ -258,7 +258,7 @@ class NNBoat(Boat):
         # depth = rounded_ds.to_numpy()
 
         array_shape = ship_params.water_temperature.shape
-        speed = np.full(array_shape[0], speed) * 1.994
+        speed = np.full(array_shape[0], speed)
         draught = np.full(array_shape[0], self.draught)
         P_perc = np.full(array_shape[0], -99)
 
@@ -275,8 +275,8 @@ class NNBoat(Boat):
                 'FP (interpolated)': draught[ipoint],
                 'WIND_SPEED_REL': wind_res['app_wind_speed'][ipoint].value,
                 'WIND_DIRECTION_REL': relative_wind_direction[ipoint].value,  # rel_wind_direction
-                'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
                 'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
+                'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
             }
             if debug:
                 print('input_dict: ', input_dict)
