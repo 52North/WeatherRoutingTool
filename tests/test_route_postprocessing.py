@@ -11,6 +11,7 @@ import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 test_seamark_gdf = gpd.GeoDataFrame(
     columns=["tags", "geometry"],

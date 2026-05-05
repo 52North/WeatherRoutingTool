@@ -5,14 +5,14 @@
 ##
 
 import argparse
+import os
+from datetime import datetime, timedelta
+
 import matplotlib.image as image
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-from datetime import datetime, timedelta
-from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
-
 from astropy import units as u
+from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
@@ -20,12 +20,14 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
 def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, waypoint_dict, maripower_scenario,
                                 weather_scenario):
-    boat = MariPowerTanker(file_name=config_obj.CONFIG_PATH)
+    ship_config = ShipConfig.assign_config(path=config_obj.CONFIG_PATH)
+    boat = MariPowerTanker(ship_config)
     boat.set_ship_property('WindForcesFactor', windfactor)
     boat.set_ship_property('WaveForcesFactor', wavefactor)
     boat.set_ship_property('CalmWaterFactor', calmfactor)
@@ -40,7 +42,8 @@ def run_maripower_test_scenario(config_obj, calmfactor, windfactor, wavefactor, 
 
 
 def run_dpm_test_scenario(config_obj, waypoint_dict, weather_scenario):
-    boat = DirectPowerBoat(file_name=config_obj.CONFIG_PATH)
+    ship_config = ShipConfig.assign_config(path=config_obj.CONFIG_PATH)
+    boat = DirectPowerBoat(ship_config)
     boat.load_data()
 
     print('Running scenario for ' + weather_scenario + ' with direct power method')
@@ -112,8 +115,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    config = Config(file_name=args.file)
-    config.print()
+    config = Config.assign_config(path=args.file)
 
     windfile = config.WEATHER_DATA
     figurepath = get_figure_path()

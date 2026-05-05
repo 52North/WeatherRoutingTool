@@ -10,6 +10,7 @@ import WeatherRoutingTool.utils.unit_conversion as utils
 import WeatherRoutingTool.utils.graphics as graphics
 
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 have_maripower = False
 
@@ -281,7 +282,8 @@ class TestDPM:
             'WEATHER_DATA': "abc"
         }
 
-        pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+        ship_config = ShipConfig.assign_config(init_mode="from_dict", config_dict=config)
+        pol = DirectPowerBoat(ship_config)
         pol.load_data()
 
         hbr = 30 * u.meter
@@ -351,7 +353,8 @@ class TestDPM:
         }
 
         try:
-            pol = DirectPowerBoat(init_mode="from_dict", config_dict=config)
+            ship_config = ShipConfig.assign_config(init_mode="from_dict", config_dict=config)
+            pol = DirectPowerBoat(ship_config)
             pol.load_data()
             # If we get here, the test passes
             assert True

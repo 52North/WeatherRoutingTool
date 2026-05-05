@@ -159,7 +159,7 @@ class IsofuelPatcher(PatcherBase):
             application="Isofuel patcher"
         )
 
-    def _setup_configuration(self) -> Config:
+    def _setup_configuration(self):
         """ Setup configuration for generation of a single or multiple routes with the IsofuelPatcher.
 
         The configuration is based on the general config file. Based on n_routes, this configuration is overwritten
@@ -169,6 +169,7 @@ class IsofuelPatcher(PatcherBase):
         :return: config object
         :rtype: Config
         """
+        # FIXME: this needs a clean up/refactoring
         cfg_select = self.config.model_dump(
             include=[
                 "DEFAULT_ROUTE",
@@ -181,7 +182,8 @@ class IsofuelPatcher(PatcherBase):
                 "ROUTE_PATH",
                 "BOAT_UNDER_KEEL_CLEARANCE",
                 "BOAT_DRAUGHT_AFT",
-                "BOAT_DRAUGHT_FORE"
+                "BOAT_DRAUGHT_FORE",
+                "GENETIC_POPULATION_SIZE"
             ], )
 
         cfg_path = Path(os.path.dirname(__file__)) / "configs" / "config.isofuel_single_route.json"
@@ -207,7 +209,7 @@ class IsofuelPatcher(PatcherBase):
         # set config path to patcher configuration
         cfg.CONFIG_PATH = cfg_path
         self.config = cfg
-        print('self.config: ', cfg)
+        self.config.ISOCHRONE_NUMBER_OF_ROUTES = cfg_select["GENETIC_POPULATION_SIZE"]
         return
 
     def _setup_components(self) -> tuple[WeatherCond, Boat, WaterDepth, ConstraintsList]:
@@ -242,7 +244,8 @@ class IsofuelPatcher(PatcherBase):
 
         # *******************************************
         # initialise boat
-        boat = ShipFactory.get_ship(config)
+        ship_config = ShipConfig.assign_config(Path(config.CONFIG_PATH))
+        boat = ShipFactory.get_ship(config.BOAT_TYPE, ship_config)
         boat.under_keel_clearance = self.config_boat_dict["BOAT_UNDER_KEEL_CLEARANCE"] * u.meter
         boat.draught_aft = self.config_boat_dict['BOAT_DRAUGHT_AFT'] * u.meter
         boat.draught_fore = self.config_boat_dict['BOAT_DRAUGHT_FORE'] * u.meter

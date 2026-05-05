@@ -10,6 +10,8 @@ Algorithm Classes
 The routing algorithms follow a clear inheritance pattern with ``RoutingAlg`` as the base class:
 
 .. inheritance-diagram::
+   WeatherRoutingTool.algorithms.dijkstra
+   WeatherRoutingTool.algorithms.gcrslider
    WeatherRoutingTool.algorithms.genetic
    WeatherRoutingTool.algorithms.isobased
    WeatherRoutingTool.algorithms.isochrone

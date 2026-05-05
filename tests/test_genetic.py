@@ -8,15 +8,15 @@ import numpy as np
 import matplotlib.pyplot as pyplot
 import pytest
 from astropy import units as u
-from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize
 
 import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.algorithms.genetic.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover
+from WeatherRoutingTool.algorithms.genetic import Genetic
+from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover, TwoPointCrossoverSpeed
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
-from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation
+from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation, FromGeojsonPopulation
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
@@ -99,21 +99,6 @@ def get_dummy_route_input(length='long'):
 '''
 
 
-def get_route_lc(X):
-    lats = X[:, 0]
-    lons = X[:, 1]
-    speed = X[:, 2]
-
-    points = np.array([lons, lats]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-
-    norm = Normalize(vmin=10, vmax=20)
-    lc = LineCollection(segments, cmap='viridis', norm=norm, transform=ccrs.Geodetic())
-    lc.set_array(speed)
-    lc.set_linewidth(3)
-    return lc
-
-
 @pytest.mark.manual
 def test_random_plateau_mutation(plt):
     dirname = os.path.dirname(__file__)
@@ -139,10 +124,10 @@ def test_random_plateau_mutation(plt):
         show_depth=False,
         show_gcr=False
     )
-    old_route_one_lc = get_route_lc(old_route[0, 0])
-    old_route_two_lc = get_route_lc(old_route[1, 0])
-    new_route_one_lc = get_route_lc(new_route[0, 0])
-    new_route_two_lc = get_route_lc(new_route[1, 0])
+    old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
+    old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
+    new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
+    new_route_two_lc = graphics.get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -214,10 +199,10 @@ def test_bezier_curve_mutation(plt):
         show_gcr=False
     )
 
-    old_route_one_lc = get_route_lc(old_route[0, 0])
-    old_route_two_lc = get_route_lc(old_route[1, 0])
-    new_route_one_lc = get_route_lc(new_route[0, 0])
-    new_route_two_lc = get_route_lc(new_route[1, 0])
+    old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
+    old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
+    new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
+    new_route_two_lc = graphics.get_route_lc(new_route[1, 0])
     ax.add_collection(old_route_one_lc)
     ax.add_collection(old_route_two_lc)
     ax.add_collection(new_route_one_lc)
@@ -308,8 +293,8 @@ def test_constraint_violation_repair(plt):
         show_depth=False,
         show_gcr=False
     )
-    old_route_lc = get_route_lc(old_route[0, 0])
-    new_route_lc = get_route_lc(new_route)
+    old_route_lc = graphics.get_route_lc(old_route[0, 0])
+    new_route_lc = graphics.get_route_lc(new_route)
     ax.add_collection(old_route_lc)
     ax.add_collection(new_route_lc)
 
@@ -389,3 +374,173 @@ def test_single_point_crossover(plt):
     ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
 
     plt.saveas = "test_single_point_crossoverr.png"
+
+
+def test_speed_crossover(plt):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    sp = SpeedCrossover(config=config, departure_time=departure_time, constraints_list=constraint_list)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_speed_crossover.png"
+
+
+def test_spread_velocity(plt):
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    routepath = Path(os.path.join(dirname, 'data/'))
+    config = Config.assign_config(Path(configpath))
+    default_map = [32., 15, 36, 29]
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+
+    min_boat_speed = 3
+    max_boat_speed = 15
+    boat_speed = 7
+    population_size = 20
+
+    pop = FromGeojsonPopulation(
+        config=config,
+        default_route=default_map,
+        constraints_list=constraint_list,
+        pop_size=population_size,
+        routes_dir=routepath
+    )
+    quantiles = pop.spread_velocity(min_boat_speed, max_boat_speed, boat_speed, population_size)
+
+    assert quantiles.shape[0] == population_size
+    assert np.min(quantiles) >= min_boat_speed
+    assert np.max(quantiles) <= max_boat_speed
+
+    x_dummy = np.full(quantiles.shape, 1)
+    fig, ax = pyplot.subplots(figsize=graphics.get_standard('fig_size'))
+    marker_quant = dict(
+        marker="o",
+        markersize=5,
+        markerfacecolor="gold",
+        markeredgecolor="black", )
+
+    marker_bounds = dict(
+        marker="x",
+        markersize=7,
+        markerfacecolor="blue",
+        markeredgecolor="blue", )
+    ax.plot(quantiles, x_dummy, **marker_quant, color="none")
+    ax.plot([min_boat_speed, max_boat_speed, boat_speed], [1, 1, 1], **marker_bounds, color="none")
+
+    plt.saveas = "test_spread_velocidy.png"
+
+
+@pytest.mark.parametrize("speed_arr,viol_list", [
+    (np.array([1, 2, 3, 4, 5, 6, 7, -99]), []),
+    (np.array([1, 4, 3, 4, 8, 7, 6, -99]), [0, 1, 3, 4]),
+])
+def test_check_speed_dif(speed_arr, viol_list):
+    """
+    Test whether correct lists is returned from utils.check_speed_dif
+    """
+    viol_list_test = utils.check_speed_dif(speed_arr, 2)
+    assert viol_list_test == viol_list
+
+
+@pytest.mark.parametrize("speed_arr,", [
+    (np.array([1., 2., 100000., 4., 5., 6., 1000., -99])),
+])
+def test_smoothen_speed_rec_error(speed_arr):
+    """
+    Test whether exception is raised if utils.smoothen_speed_rec function is called too often.
+    """
+    with pytest.raises(Exception) as excinfo:
+        utils.smoothen_speed(speed_arr, 2)
+
+    assert "Too many calls to smoothen" in str(excinfo.value)
+
+
+@pytest.mark.parametrize("speed_arr,smooth_res", [
+    (np.array([1., 2., 5., 4., 5., 6., 10., -99.]), np.array([1., 2.5, 4., 4., 5., 6.75, 8.6666666, -99.])),
+    (np.array([10., 2., 5., 4., 5., 6., 10., -99.]),
+     np.array([6.472222, 5.2083333, 4., 4., 5., 6.75, 8.6666666, -99.])),
+
+])
+def test_smoothen_speed_success(speed_arr, smooth_res):
+    """
+    Test whether correct smoothened list is returned from utils.smoothen_speed.
+    """
+    smooth_arr = utils.smoothen_speed(speed_arr, 2)
+
+    assert np.isclose(smooth_arr, smooth_res).all()
+
+
+def test_twopoint_crossover_speed(plt):
+    """
+    Test whether TwoPointCrossoverSpeed provides sensible results via monitoring plot.
+    """
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    sp = TwoPointCrossoverSpeed(config=config, departure_time=departure_time, constraints_list=constraint_list)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_twopoint_crossover_speed.png"

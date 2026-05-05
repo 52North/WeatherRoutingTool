@@ -5,7 +5,6 @@
 
 import argparse
 import json
-import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -17,17 +16,17 @@ from WeatherRoutingTool.utils.graphics import get_figure_path
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
-from WeatherRoutingTool.ship.maripower_tanker import MariPowerTanker
-from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
 def run_dpm_test_scenario(waypoint_dict, geojsondir, sog, output_route):
-    boat = DirectPowerBoat(file_name=config.CONFIG_PATH)
-    boat.speed = sog
+    ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
+    boat = DirectPowerBoat(ship_config)
+    speed = np.full(waypoint_dict['courses'].shape[0], sog) * u.meter / u.second
     boat.load_data()
 
     ship_params = boat.get_ship_parameters(waypoint_dict['courses'], waypoint_dict['start_lats'],
-                                           waypoint_dict['start_lons'], waypoint_dict['start_times'], sog)
+                                           waypoint_dict['start_lons'], waypoint_dict['start_times'], speed)
 
     start = (lat[0], lon[0])
     finish = (lat[-1], lon[-1])
@@ -106,7 +105,7 @@ if __name__ == "__main__":
     departure_time = config.DEPARTURE_TIME
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
-    sog = 7.717 * u.meter/u.second
+    sog = 7.717 * u.meter / u.second
 
     # obtain position, time and courses for every waypoint
     lat, lon = lat_lon_from_file(input_route)
@@ -114,8 +113,8 @@ if __name__ == "__main__":
 
     # obtain RouteParams object for different models or for gzip data
     run_dpm_test_scenario(
-            waypoint_dict,
-            input_route,
-            sog,
-            output_route
+        waypoint_dict,
+        input_route,
+        sog,
+        output_route
     )

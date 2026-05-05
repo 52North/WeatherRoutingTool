@@ -249,10 +249,6 @@ class SpeedCrossover(OffspringRejectionCrossover):
     """
 
     def __init__(self, **kw):
-        # for now, we don't want to allow repairing routes for speed crossover
-        config = deepcopy(kw['config'])
-        config.GENETIC_REPAIR_TYPE = ["no_repair"]
-        kw['config'] = config
         super().__init__(**kw)
         self.threshold = 50000  # in m
         self.percentage = 0.5
@@ -262,24 +258,76 @@ class SpeedCrossover(OffspringRejectionCrossover):
             p1: np.ndarray,
             p2: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
+        o1 = deepcopy(p1)
+        o2 = deepcopy(p2)
+
         # Find points between parents with a distance below the specified threshold.
         # There should always be one candidate (source). The destination has to be ignored.
         crossover_candidates = []
-        for m in range(0, len(p1)-1):
-            coord1 = p1[m, 0:2]
-            for n in range(0, len(p2)-1):
-                coord2 = p2[n, 0:2]
+        for m in range(0, len(o1) - 1):
+            coord1 = o1[m, 0:2]
+            for n in range(0, len(o2) - 1):
+                coord2 = o2[n, 0:2]
                 d = geod.Inverse(coord1[0], coord1[1], coord2[0], coord2[1])["s12"]
                 if d < self.threshold:
                     crossover_candidates.append((m, n))
         # Swap speed values for a subset of candidate points
-        indices = random.sample(range(0, len(crossover_candidates)), ceil(self.percentage*len(crossover_candidates)))
+        indices = random.sample(range(0, len(crossover_candidates)), ceil(self.percentage * len(crossover_candidates)))
         for idx in indices:
             c = crossover_candidates[idx]
-            speed1 = p1[c[0], -1]
-            p1[c[0], -1] = p2[c[1], -1]
-            p2[c[1], -1] = speed1
-        return p1, p2
+            speed1 = o1[c[0], -1]
+            o1[c[0], -1] = o2[c[1], -1]
+            o2[c[1], -1] = speed1
+        return o1, o2
+
+
+class TwoPointCrossoverSpeed(OffspringRejectionCrossover):
+    """
+    Class for two-point crossover of ship speed.
+
+    The ship speed of a random sequence of one chromosome is replaced by the average ship speed of a random sequence
+    of another individual.
+    """
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def crossover(self, p1, p2) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Crossover implementation for two-point crossover of ship speed.
+
+        :param p1: the first chromosome
+        :param p2: the second chromosome
+        :return: the two offspring chromosomes
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
+        r1 = deepcopy(p1)
+        r2 = deepcopy(p2)
+
+        p1x1 = np.random.randint(1, p1.shape[0] - 4)
+        p1x2 = p1x1 + np.random.randint(3, p1.shape[0] - p1x1 - 1)
+
+        p2x1 = np.random.randint(1, p2.shape[0] - 4)
+        p2x2 = p2x1 + np.random.randint(3, p2.shape[0] - p2x1 - 1)
+
+        speed1 = p1[:, -1]
+        speed2 = p2[:, -1]
+        av_speed_seg1 = np.average(speed1[p1x1:p1x2 + 1])
+        av_speed_seg2 = np.average(speed2[p2x1:p2x2 + 1])
+
+        new_speed1 = np.concatenate([
+            speed1[:p1x1],
+            np.full(p1x2 - p1x1, av_speed_seg2),
+            speed1[p1x2:], ])
+        new_speed2 = np.concatenate([
+            speed2[:p2x1],
+            np.full(p2x2 - p2x1, av_speed_seg1),
+            speed2[p2x2:], ])
+
+        r1[:, -1] = new_speed1
+        r2[:, -1] = new_speed2
+
+        return r1, r2
 
 
 # factory
@@ -293,12 +341,32 @@ class CrossoverFactory:
 
         if config.GENETIC_CROSSOVER_TYPE == "speed":
             logger.debug('Setting crossover type of genetic algorithm to "speed".')
-            return SpeedCrossover(
+            return TwoPointCrossoverSpeed(
                 config=config,
                 departure_time=departure_time,
                 constraints_list=constraints_list,
                 prob=.5,
-                crossover_type="Speed crossover")
+                crossover_type="TP Crossover speed")
+
+        if config.GENETIC_CROSSOVER_TYPE == "waypoints":
+            logger.debug('Setting crossover type of genetic algorithm to "random".')
+            return RandomizedCrossoversOrchestrator(
+                opts=[
+                    TwoPointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="TP crossover"),
+                    SinglePointCrossover(
+                        config=config,
+                        patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="SP crossover")
+                ])
 
         if config.GENETIC_CROSSOVER_TYPE == "random":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
@@ -317,5 +385,11 @@ class CrossoverFactory:
                         departure_time=departure_time,
                         constraints_list=constraints_list,
                         prob=.5,
-                        crossover_type="SP crossover")
+                        crossover_type="SP crossover"),
+                    TwoPointCrossoverSpeed(
+                        config=config,
+                        departure_time=departure_time,
+                        constraints_list=constraints_list,
+                        prob=.5,
+                        crossover_type="TP Crossover speed")
                 ])

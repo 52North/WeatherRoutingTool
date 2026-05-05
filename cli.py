@@ -1,10 +1,10 @@
 import argparse
 import warnings
-from pathlib import Path
-import sys
 
-from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.config import Config, set_up_logging
+from WeatherRoutingTool.execute_routing import execute_routing
+from WeatherRoutingTool.ship.ship_config import ShipConfig
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
@@ -35,8 +35,9 @@ if __name__ == "__main__":
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
     # Validate config with pydantic and run route optimization
-    config = Config.assign_config(Path(args.file))
-    execute_routing(config)
+    config = Config.assign_config(args.file)
+    ship_config = ShipConfig.assign_config(args.file)
+    execute_routing(config, ship_config)
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)

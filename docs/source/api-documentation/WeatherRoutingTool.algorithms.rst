@@ -60,6 +60,14 @@ WeatherRoutingTool.algorithms.genetic.repair module
    :undoc-members:
    :show-inheritance:
 
+WeatherRoutingTool.algorithms.genetic.mcdm module
+---------------------------------------------------
+
+.. automodule:: WeatherRoutingTool.algorithms.genetic.mcdm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 WeatherRoutingTool.algorithms.genetic.utils module
 ---------------------------------------------------
 

@@ -6,14 +6,18 @@ from datetime import timedelta
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from astropy import units as u
+from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
+from pymoo.optimize import minimize
 from pymoo.termination import get_termination
 from pymoo.util.running_metric import RunningMetric
 
 import WeatherRoutingTool.utils.formatting as formatting
 import WeatherRoutingTool.utils.graphics as graphics
+import WeatherRoutingTool.algorithms.genetic.mcdm as MCDM
 from WeatherRoutingTool.algorithms.genetic.population import PopulationFactory
 from WeatherRoutingTool.algorithms.genetic.crossover import CrossoverFactory
 from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
@@ -48,6 +52,8 @@ class Genetic(RoutingAlg):
 
         self.n_generations = config.GENETIC_NUMBER_GENERATIONS
         self.n_offsprings = config.GENETIC_NUMBER_OFFSPRINGS
+        self.objectives = config.GENETIC_OBJECTIVES
+        self.n_objs = len(config.GENETIC_OBJECTIVES)
 
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
@@ -73,9 +79,11 @@ class Genetic(RoutingAlg):
         """
 
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
+        seed = None
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
             np.random.seed(1)
+            seed = 1
 
         # inputs
         problem = RoutingProblem(
@@ -83,7 +91,9 @@ class Genetic(RoutingAlg):
             arrival_time=self.arrival_time,
             boat_speed=self.boat_speed,
             boat=boat,
-            constraint_list=constraints_list, )
+            constraint_list=constraints_list,
+            objectives=self.objectives
+        )
 
         initial_population = PopulationFactory.get_population(
             self.config, boat, constraints_list, wt, )
@@ -99,7 +109,7 @@ class Genetic(RoutingAlg):
 
         # optimize
         res_minimize = self.optimize(
-            problem, initial_population, crossover, mutation, duplicates, repair)
+            problem, initial_population, crossover, mutation, duplicates, repair, seed)
 
         # terminate
         res_terminate = self.terminate(
@@ -116,6 +126,7 @@ class Genetic(RoutingAlg):
             mutation,
             duplicates,
             repair,
+            seed
     ):
         """Optimization function for the Genetic Algorithm"""
 
@@ -139,7 +150,8 @@ class Genetic(RoutingAlg):
             algorithm=algorithm,
             termination=termination,
             save_history=True,
-            verbose=True, )
+            verbose=True,
+            seed=seed)
 
         while algorithm.has_next():
             algorithm.next()
@@ -152,16 +164,48 @@ class Genetic(RoutingAlg):
 
         return res
 
+    # FIXME temporary consistency check
+    def consistency_check(self, res, problem):
+        """
+        Temporary consistency check to uncover memory issues.
+        """
+        X = res.X
+        res_objs = res.F
+        i_route = 0
+
+        # solve shape issue in case there is only one objective
+        if self.n_objs == 1:
+            res_objs = np.array([res.F])
+            X = [X]
+
+        for route in X:
+            fuel_dict = problem.get_power(route[0])
+
+            # ordering of objective values in res.F is defined by RoutingProblem.get_objectives()
+            for obj_str in self.objectives:
+                if obj_str == "fuel_consumption":
+                    i_obj = 1
+                    if self.n_objs == 1:
+                        i_obj = 0
+                    np.testing.assert_equal(fuel_dict["fuel_sum"].value, res_objs[i_route, i_obj], 5)
+                else:
+                    np.testing.assert_equal(fuel_dict["time_obj"], res_objs[i_route, 0], 5)
+            i_route += 1
+
     def terminate(self, res: Result, problem: RoutingProblem):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
+        self.consistency_check(res, problem)
 
-        best_index = res.F.argmin()
-        # ensure res.X is of shape (n_sol, n_var)
+        mcdm = MCDM.RMethod(self.objectives)
+        # mcdm = MCDM.PymoosASF(self.objectives)
+        best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
-        fuel, ship_params = problem.get_power(best_route)
+        fuel_dict = problem.get_power(best_route)
+        fuel = fuel_dict["fuel_sum"]
+        ship_params = fuel_dict["shipparams"]
         logger.info(f"Best fuel: {fuel}")
 
         if self.figure_path is not None:
@@ -169,8 +213,10 @@ class Genetic(RoutingAlg):
 
             self.plot_running_metric(res)
             self.plot_population_per_generation(res, best_route)
+            self.plot_speed_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
+            self.plot_objective_space(res, best_index)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -211,6 +257,32 @@ class Genetic(RoutingAlg):
         self.check_destination()
         self.check_positive_power()
         return route
+
+    def plot_objective_space(self, res, best_index):
+        F = res.F
+        fig, ax = plt.subplots(figsize=(7, 5))
+
+        if self.n_objs == 2:
+            ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        else:
+            return
+
+        ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
+        ax.set_xlabel('f1', labelpad=10)
+        ax.set_ylabel('f2', labelpad=10)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        plt.title("Objective Space")
+
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-1, 1))  # Force scientific notation
+
+        ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatter)
+
+        plt.savefig(os.path.join(self.figure_path, 'genetic_objective_space.png'))
+        plt.cla()
+        plt.close()
 
     def print_init(self):
         """Log messages to print on algorithm initialization"""
@@ -289,8 +361,62 @@ class Genetic(RoutingAlg):
         plt.cla()
         plt.close()
 
+    def plot_speed_per_generation(self, res, best_route) -> None:
+        """Plot line diagrams of speed vs. travel distance for each individual in one generation.
+
+        :param res: Result of GA minimization
+        :type res: pymoo.core.result.Result
+        :param best_route: Optimum route
+        :type best_route: np.ndarray
+        """
+        history = res.history
+
+        for igen in range(len(history)):
+            plt.clf()
+            plt.close('all')
+
+            fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+            plt.rcParams['font.size'] = graphics.get_standard('font_size')
+
+            last_pop = history[igen].pop.get('X')
+            objs = []
+            for iroute in range(0, last_pop.shape[0]):
+                hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
+
+                new_line = ax.plot(
+                    hist_values["bin_centres"].to(u.km).value,
+                    hist_values["bin_contents"].to(u.m / u.second).value,
+                    color="blue",
+                    alpha=0.3,
+                    linestyle='-',
+                    zorder=2
+                )
+                objs.append(new_line)
+
+            if igen == (self.n_generations - 1):
+                hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
+                ax.plot(
+                    hist_values_best_route["bin_centres"].to(u.km).value,
+                    hist_values_best_route["bin_contents"].to(u.m / u.second).value,
+                    color="firebrick",
+                    linewidth=3
+                )
+            left, right = plt.xlim()
+            ax.set_xlim(-100, right)
+            ax.set_ylim(0, 10)
+
+            plt.ylabel("speed (m/s)")
+            plt.xlabel('travel distance (km)')
+            plt.xticks()
+            plt.tight_layout()
+            ax.legend()
+
+            figname = f"genetic_algorithm_speed {igen:02}.png"
+            plt.savefig(os.path.join(self.figure_path, figname))
+            plt.close(fig)
+
     def plot_population_per_generation(self, res, best_route):
-        """Plot figures and save them in WRT_FIGURE_PATH
+        """Plot routes for each individual in one generation on a map.
 
         :param res: Result of GA minimization
         :type res: pymoo.core.result.Result
@@ -300,6 +426,7 @@ class Genetic(RoutingAlg):
         input_crs = ccrs.PlateCarree()
         history = res.history
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        route_lc = None
 
         for igen in range(len(history)):
             plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -328,18 +455,23 @@ class Genetic(RoutingAlg):
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
-                        **(marker_kw if igen != self.n_generations - 1 else {}),
+                        # **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
                         label=f"full population [{last_pop.shape[0]}]",
+                        linewidth=0,
                         transform=input_crs)
 
                 else:
                     ax.plot(
                         last_pop[iroute, 0][:, 1],
                         last_pop[iroute, 0][:, 0],
-                        **(marker_kw if igen != self.n_generations - 1 else {}),
+                        # **(marker_kw if igen != self.n_generations - 1 else {}),
                         color="firebrick",
+                        linewidth=0,
                         transform=input_crs)
+
+                route_lc = graphics.get_route_lc(last_pop[iroute, 0])
+                ax.add_collection(route_lc)
 
             if igen == (self.n_generations - 1):
                 ax.plot(
@@ -350,7 +482,9 @@ class Genetic(RoutingAlg):
                     label="best route",
                     transform=input_crs
                 )
-
+            cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+            cbar.set_label('Geschwindigkeit ($m/s$)')
+            plt.tight_layout()
             ax.legend()
 
             figname = f"genetic_algorithm_generation {igen:02}.png"
@@ -387,27 +521,33 @@ class Genetic(RoutingAlg):
         """Plot the convergence curve (best objective value per generation)."""
 
         best_f = []
+        is_initialised = False
 
         for algorithm in res.history:
-            # For single-objective, take min of F; for multi-objective, take min of first objective
             F = algorithm.pop.get('F')
-            if F.ndim == 2:
-                best_f.append(np.min(F[:, 0]))
-            else:
-                best_f.append(np.min(F))
 
-        n_gen = np.arange(1, len(best_f) + 1)
+            for iobj in range(self.n_objs):
+                if not is_initialised:
+                    best_f.append([])
+                best_f[iobj].append(np.min(F[:, iobj]))
+            is_initialised = True
+
+        n_gen = np.arange(1, len(best_f[0]) + 1)
 
         # plot png
-        plt.figure(figsize=graphics.get_standard('fig_size'))
-        plt.plot(n_gen, best_f, marker='o')
-        plt.xlabel('Generation')
-        plt.ylabel('Best Objective Value')
-        plt.title('Convergence Plot')
-        plt.grid(True)
-        plt.savefig(os.path.join(self.figure_path, 'genetic_algorithm_convergence.png'))
-        plt.cla()
-        plt.close()
+        i_obj = 0
+        for obj_str in self.objectives:
+            fig_path_name = 'genetic_algorithm_convergence' + obj_str
+            plt.figure(figsize=graphics.get_standard('fig_size'))
+            plt.plot(n_gen, best_f[i_obj], marker='o')
+            plt.xlabel('Generation')
+            plt.ylabel('Best Objective Value ' + obj_str)
+            plt.title('Convergence Plot')
+            plt.grid(True)
+            plt.savefig(os.path.join(self.figure_path, fig_path_name + '.png'))
+            plt.cla()
+            plt.close()
 
-        # write to csv
-        graphics.write_graph_to_csv(os.path.join(self.figure_path, 'genetic_algorithm_convergence.csv'), n_gen, best_f)
+            # write to csv
+            graphics.write_graph_to_csv(os.path.join(self.figure_path, fig_path_name + '.csv'), n_gen, best_f[i_obj])
+            i_obj += 1

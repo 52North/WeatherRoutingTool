@@ -50,42 +50,37 @@ class DirectPowerBoat(Boat):
 
     air_mass_density: float  # air mass density
 
-    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
-        super().__init__(init_mode, file_name, config_dict)
-        config_obj = None
-        if init_mode == "from_file":
-            config_obj = ShipConfig.assign_config(Path(file_name))
-        else:
-            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
+    def __init__(self, ship_config: ShipConfig):
+        super().__init__(ship_config)
 
         # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
-        self.power_at_sp = config_obj.BOAT_SMCR_POWER * u.kiloWatt
+        self.power_at_sp = ship_config.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
-        self.speed_at_sp = config_obj.BOAT_SMCR_SPEED * u.meter / u.second
+        self.speed_at_sp = ship_config.BOAT_SMCR_SPEED * u.meter / u.second
 
-        self.eta_prop = config_obj.BOAT_PROPULSION_EFFICIENCY
-        self.overload_factor = config_obj.BOAT_OVERLOAD_FACTOR
+        self.eta_prop = ship_config.BOAT_PROPULSION_EFFICIENCY
+        self.overload_factor = ship_config.BOAT_OVERLOAD_FACTOR
         self.head_wind_coeff = 1
 
-        self.Axv = config_obj.BOAT_AXV * u.meter * u.meter
-        self.Ayv = config_obj.BOAT_AYV * u.meter * u.meter
-        self.Aod = config_obj.BOAT_AOD * u.meter * u.meter
-        self.length = config_obj.BOAT_LENGTH * u.meter
-        self.breadth = config_obj.BOAT_BREADTH * u.meter
-        self.hs1 = config_obj.BOAT_HS1 * u.meter
-        self.hs2 = config_obj.BOAT_HS2 * u.meter
-        self.ls1 = config_obj.BOAT_LS1 * u.meter
-        self.ls2 = config_obj.BOAT_LS2 * u.meter
-        self.bs1 = config_obj.BOAT_BS1 * u.meter
-        self.cmc = config_obj.BOAT_CMC * u.meter
-        self.hbr = config_obj.BOAT_HBR * u.meter
-        self.hc = config_obj.BOAT_HC * u.meter
-        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
+        self.Axv = ship_config.BOAT_AXV * u.meter * u.meter
+        self.Ayv = ship_config.BOAT_AYV * u.meter * u.meter
+        self.Aod = ship_config.BOAT_AOD * u.meter * u.meter
+        self.length = ship_config.BOAT_LENGTH * u.meter
+        self.breadth = ship_config.BOAT_BREADTH * u.meter
+        self.hs1 = ship_config.BOAT_HS1 * u.meter
+        self.hs2 = ship_config.BOAT_HS2 * u.meter
+        self.ls1 = ship_config.BOAT_LS1 * u.meter
+        self.ls2 = ship_config.BOAT_LS2 * u.meter
+        self.bs1 = ship_config.BOAT_BS1 * u.meter
+        self.cmc = ship_config.BOAT_CMC * u.meter
+        self.hbr = ship_config.BOAT_HBR * u.meter
+        self.hc = ship_config.BOAT_HC * u.meter
+        self.fuel_rate = ship_config.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
 
-        self.weather_path = config_obj.WEATHER_DATA
-        self.air_mass_density = config_obj.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
+        self.weather_path = str(ship_config.WEATHER_DATA)
+        self.air_mass_density = ship_config.AIR_MASS_DENSITY * u.kg / (u.meter * u.meter * u.meter)
 
     def print_init(self):
         logger.info(form.get_log_step('SMCR power: ' + str(self.power_at_sp.to(u.kiloWatt)), 1))

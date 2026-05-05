@@ -50,11 +50,11 @@ class RoutingAlg:
         self.figure_path = get_figure_path()
         plt.switch_backend("Agg")
 
-        self.boat_speed = config.BOAT_SPEED * u.meter/u.second
+        self.boat_speed = config.BOAT_SPEED
+        if self.boat_speed is not None:
+            self.boat_speed = self.boat_speed * u.meter/u.second
 
-    def get_boat_speed(self, dists=None):
-        if self.boat_speed == -99:
-            return None
+    def get_boat_speed(self):
         return self.boat_speed
 
     def init_fig(self, **kwargs):

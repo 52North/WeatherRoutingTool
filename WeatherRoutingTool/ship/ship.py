@@ -18,16 +18,10 @@ logger = logging.getLogger('WRT.ship')
 class Boat:
     weather_path: str  # path to netCDF containing weather data
 
-    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
-        config_obj = None
-        if init_mode == "from_file":
-            config_obj = ShipConfig.assign_config(Path(file_name))
-        else:
-            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
-
-        self.under_keel_clearance = config_obj.BOAT_UNDER_KEEL_CLEARANCE * u.meter
-        self.draught_aft = config_obj.BOAT_DRAUGHT_AFT * u.meter
-        self.draught_fore = config_obj.BOAT_DRAUGHT_FORE * u.meter
+    def __init__(self, ship_config: ShipConfig):
+        self.under_keel_clearance = ship_config.BOAT_UNDER_KEEL_CLEARANCE * u.meter
+        self.draught_aft = ship_config.BOAT_DRAUGHT_AFT * u.meter
+        self.draught_fore = ship_config.BOAT_DRAUGHT_FORE * u.meter
 
     def get_required_water_depth(self):
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
@@ -119,16 +113,11 @@ class Boat:
 class ConstantFuelBoat(Boat):
     fuel_rate: float  # dummy value for fuel_rate that is returned
 
-    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
-        super().__init__(init_mode, file_name, config_dict)
-        config_obj = None
-        if init_mode == "from_file":
-            config_obj = ShipConfig.assign_config(Path(file_name))
-        else:
-            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
+    def __init__(self, ship_config: ShipConfig):
+        super().__init__(ship_config)
 
         # mandatory variables
-        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.kg / u.second
+        self.fuel_rate = ship_config.BOAT_FUEL_RATE * u.kg / u.second
 
     def print_init(self):
         logger.info(form.get_log_step('boat fuel rate' + str(self.fuel_rate), 1))
