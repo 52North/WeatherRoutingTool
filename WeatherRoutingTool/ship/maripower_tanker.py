@@ -84,9 +84,9 @@ class MariPowerTanker(Boat):
         self.weather_path = str(ship_config.WEATHER_DATA)
 
         self.correct_by_nnmodel = False
-        if config_obj.BOAT_CORRECT_BY_NNMODEL is True:
+        if ship_config.BOAT_CORRECT_BY_NNMODEL is True:
             logger.info('Correct maripower by grey-box model.')
-            self.nnmodel = NNBoat(file_name=file_name)
+            self.nnmodel = NNBoat(ship_config)
             self.correct_by_nnmodel = True
 
         # optional variables for maripower

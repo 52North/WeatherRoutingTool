@@ -29,8 +29,8 @@ class ShipFactory:
             ship = MariPowerTanker(ship_config)
         if boat_type == 'SAL':
             raise NotImplementedError('Ship type SAL is not yet supported!')
-        if config.BOAT_TYPE == 'nnmodel':
-            ship = NNBoat(file_name=config.CONFIG_PATH)
+        if boat_type == 'nnmodel':
+            ship = NNBoat(ship_config)
 
         if not ship:
             raise NotImplementedError(f"The ship type '{boat_type}' is not implemented.")
