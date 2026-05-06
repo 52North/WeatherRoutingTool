@@ -46,54 +46,192 @@ def test_get_relative_wind_dir(ang_boat, ang_wind, delta_ang_test):
     assert delta_ang >= 0 * u.degree
 
 
-def test_wind_dir_polar_plot(plt):
-    configpath = os.path.join(
-        "/home/kdemmich/1_Projekte/TwinShip/5_Results/260428_Biskaya_Model_Comparison/config_KD.json")
-    dirname = os.path.dirname(__file__)
+@pytest.fixture
+def model_name(request):
+    return request.config.getoption("--model_name")
 
-    nnboat = NNBoat(file_name=configpath)
-    nnboat.weather_path = os.path.join(dirname, 'data/tests_weather_data.nc')
-    nnboat.courses_path = os.path.join(dirname, 'data/CoursesRoute.nc')
-    nnboat.depth_path = os.path.join(dirname, 'data/tests_depth_data.nc')
+
+@pytest.fixture
+def model_path(request):
+    return request.config.getoption("--model_path")
+
+
+@pytest.fixture
+def model_type(request):
+    return request.config.getoption("--model_type")
+
+
+@pytest.fixture
+def config_dir(request):
+    return request.config.getoption("--config_dir")
+
+
+@pytest.fixture
+def results_dir(request):
+    return request.config.getoption("--results_dir")
+
+
+def get_input_pars(dataset: str, wind_var: bool, wave_var: bool, npoints: int, ipoint: int):
+    available_pars = {
+        'STW': 7,  # STW
+        'AP': 9.5,
+        'FP': 9.5,
+        'WIND_SPEED_REL': 15,
+        'WIND_DIRECTION_REL': -45.0,  # rel_wind_direction
+        'VHM0': 1.5,  # VHM0
+        'rel_seaway_direction': -45.0  # rel_seaway_direction
+    }
+
+    par_list = []
+    if dataset == "smallDataset_Copernicus":
+        par_list = ["STW", "AP", "FP", "WIND_SPEED_REL", "WIND_DIRECTION_REL", "VHM0", "rel_seaway_direction"]
+    if dataset == "smallDataset_boardWind_9features":
+        par_list = ["STW", "AP", "FP", "WIND_SPEED_REL", "WIND_DIRECTION_REL", "VHM0", "rel_seaway_direction"]
+    if dataset == "STWAndWaves":
+        par_list = ["STW", "VHM0", "rel_seaway_direction"]
+    if dataset == "STWAndWind":
+        par_list = ["STW", "WIND_SPEED_REL", "WIND_DIRECTION_REL"]
+
+    input_data = {}
+    for var in par_list:
+        input_data[var] = available_pars[var]
+
+        if (var == "WIND_DIRECTION_REL" and wind_var) or (var == "rel_seaway_direction" and wave_var):
+            temp = np.linspace(-180, 180, npoints)
+            input_data[var] = temp[ipoint]
+
+    return input_data
+
+
+def test_wind_dir_polar_plot(plt, model_name, model_path, model_type, config_dir, results_dir):
+    print(f"\nTesting Model: {model_name} with Path {model_path}")
+
+    nnboat = basic_test_func.create_dummy_NNBoat(config_dir)
+    nnboat.model_path = model_path
     nnboat.load_data()
 
-    boat_speed = np.full(19, 7)
     debug = True
+    npoints = 37
+    P_perc = np.full(npoints, -99.)
 
-    wind_dir = np.linspace(0, 180, 19)
-    P_perc = np.full(19, -99.)
-
-    for ipoint in range(len(wind_dir)):
-        input_dict = {
-            'STW': boat_speed[ipoint],  # STW
-            'AP (interpolated)': 9.5,
-            'FP (interpolated)': 9.5,
-            'WIND_SPEED_REL': 15,
-            'WIND_DIRECTION_REL': wind_dir[ipoint],  # rel_wind_direction
-            'VHM0': 1.5,  # VHM0
-            'rel_seaway_direction': -45.0,  # rel_seaway_direction
-        }
+    for ipoint in range(npoints):
+        input_dict = get_input_pars(
+            dataset=model_type,
+            wind_var=True,
+            wave_var=False,
+            npoints=npoints,
+            ipoint=ipoint
+        )
         if debug:
             print('input_dict: ', input_dict)
         input_data = nnboat.get_input_data(input_dict)
         if debug:
             print('input_data: ', input_data)
-        pred = nnboat.predict_mean(nnboat.evaluator, nnboat.model_path, input_data)
+
+        # call NN models using predict_mean, call GP models using predict_with_uncertainty
+        pred = None
+        if "GP" in model_name:
+            pred, std = nnboat.predict_with_uncertainty(nnboat.evaluator, nnboat.model_path, input_data, model_type)
+        else:
+            pred = nnboat.predict_mean(nnboat.evaluator, nnboat.model_path, input_data, model_type)
+
         P_perc[ipoint] = pred[0]
         if debug:
             print('prediction: ', P_perc[ipoint])
 
     P_perc = P_perc / 100 * 6502
 
+    wind_dir = np.linspace(-180, 180, npoints)
     fig, axes = pyplot.subplots(1, 1, subplot_kw={'projection': 'polar'})
     wind_dir_rad = np.radians(wind_dir)
     axes.plot(wind_dir_rad, P_perc)
     axes.legend()
     axes.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
     axes.set_theta_zero_location("S")
+    axes.set_thetamin(-180)
+    axes.set_thetamax(180)
     axes.grid(True)
     axes.set_title("Power", va='bottom')
 
+    ticks_deg = np.arange(-180, 180, 45)
+    ticks_rad = np.deg2rad(ticks_deg)
+    axes.set_xticks(ticks_rad)
+    axes.set_xticklabels([f"{d}°" for d in ticks_deg])
+
     pyplot.tight_layout()
-    plt.saveas = ("/home/kdemmich/1_Projekte/TwinShip/5_Results/260428_Biskaya_Model_Comparison/"
-                  "summary/polar_winddir.png")
+    results_path = f"{results_dir}/{model_name}_polar_winddir.png"
+    print(f"Writing figures to {results_path}")
+    plt.saveas = (results_path)
+
+
+def test_wave_dir_polar_plot(plt, model_name, model_path, model_type, config_dir, results_dir):
+    print(f"\nTesting Model: {model_name} with Path {model_path}")
+
+    nnboat = basic_test_func.create_dummy_NNBoat(config_dir)
+    nnboat.model_path = model_path
+    nnboat.load_data()
+
+    debug = True
+    npoints = 37
+    P_perc = np.full(npoints, -99.)
+
+    for ipoint in range(npoints):
+        input_dict = get_input_pars(
+            dataset=model_type,
+            wind_var=False,
+            wave_var=True,
+            npoints=npoints,
+            ipoint=ipoint
+        )
+        if debug:
+            print('input_dict: ', input_dict)
+        input_data = nnboat.get_input_data(input_dict)
+        if debug:
+            print('input_data: ', input_data)
+
+        # call NN models using predict_mean, call GP models using predict_with_uncertainty
+        pred = None
+        if "GP" in model_name:
+            pred, std = nnboat.predict_with_uncertainty(nnboat.evaluator, nnboat.model_path, input_data, model_type)
+        else:
+            pred = nnboat.predict_mean(nnboat.evaluator, nnboat.model_path, input_data, model_type)
+
+        P_perc[ipoint] = pred[0]
+        if debug:
+            print('prediction: ', P_perc[ipoint])
+
+    P_perc = P_perc / 100 * 6502
+
+    wave_dir = np.linspace(-180, 180, npoints)
+    fig, axes = pyplot.subplots(1, 1, subplot_kw={'projection': 'polar'})
+    wave_dir_rad = np.radians(wave_dir)
+    axes.plot(wave_dir_rad, P_perc)
+    axes.legend()
+    axes.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    axes.set_theta_zero_location("S")
+    axes.set_thetamin(-180)
+    axes.set_thetamax(180)
+    axes.grid(True)
+    axes.set_title("Power", va='bottom')
+
+    ticks_deg = np.arange(-180, 180, 45)
+    ticks_rad = np.deg2rad(ticks_deg)
+    axes.set_xticks(ticks_rad)
+    axes.set_xticklabels([f"{d}°" for d in ticks_deg])
+
+    pyplot.tight_layout()
+    results_path = f"{results_dir}/{model_name}_polar_wavedir.png"
+    print(f"Writing figures to {results_path}")
+    plt.saveas = (results_path)
+
+
+@pytest.mark.parametrize("ang_boat,ang_wind,delta_ang_test",
+                         [(0, 45, 45), (0, 315, -45), (90, 120, 30), (120, 90, -30), (270, 10, 100), (10, 270, -100),
+                          (370, 270, -100)])
+def test_get_relative_wind_dir_asymmetric(ang_boat, ang_wind, delta_ang_test):
+    boat = basic_test_func.create_dummy_NNBoat()
+    delta_ang = boat.get_relative_wind_dir_asymmetric(ang_boat * u.degree, ang_wind * u.degree)
+
+    assert delta_ang == delta_ang_test * u.degree
+    assert delta_ang <= 180 * u.degree
+    assert delta_ang > -180 * u.degree
