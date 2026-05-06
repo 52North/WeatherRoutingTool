@@ -29,30 +29,25 @@ class NNBoat(Boat):
     P_perc: np.array
     feature_names: list
 
-    def __init__(self, init_mode='from_file', file_name=None, config_dict=None):
-        super().__init__(init_mode, file_name, config_dict)
-        config_obj = None
-        if init_mode == "from_file":
-            config_obj = ShipConfig.assign_config(Path(file_name))
-        else:
-            config_obj = ShipConfig.assign_config(init_mode='from_dict', config_dict=config_dict)
+    def __init__(self, ship_config: ShipConfig):
+        super().__init__(ship_config)
 
         # mandatory variables
-        self.model_path = config_obj.BOAT_NNMODEL_PATH
-        self.draught = (config_obj.BOAT_DRAUGHT_AFT + config_obj.BOAT_DRAUGHT_FORE) / 2
+        self.model_path = ship_config.BOAT_NNMODEL_PATH
+        self.draught = (ship_config.BOAT_DRAUGHT_AFT + ship_config.BOAT_DRAUGHT_FORE) / 2
 
         # init nnmodel
         self.evaluator = ModelManager()
 
-        depth_path = str(config_obj.DEPTH_DATA)
+        depth_path = str(ship_config.DEPTH_DATA)
         if not depth_path == " ":
             self.use_depth_data = True
-            self.depth_data = xr.open_dataset(config_obj.DEPTH_DATA)
-        self.weather_path = config_obj.WEATHER_DATA
+            self.depth_data = xr.open_dataset(ship_config.DEPTH_DATA)
+        self.weather_path = ship_config.WEATHER_DATA
 
-        self.nominal_power = config_obj.BOAT_SMCR_POWER * u.kiloWatt
+        self.nominal_power = ship_config.BOAT_SMCR_POWER * u.kiloWatt
         self.nominal_power = self.nominal_power.to(u.Watt)
-        self.fuel_rate = config_obj.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
+        self.fuel_rate = ship_config.BOAT_FUEL_RATE * u.gram / (u.kiloWatt * u.hour)
         self.fuel_rate = self.fuel_rate.to(u.kg / (u.Watt * u.second))
         self.P_perc = np.array([])
 
@@ -78,6 +73,25 @@ class NNBoat(Boat):
 
         delta_ang[delta_ang < 0 * u.degree] = abs(delta_ang[delta_ang < 0 * u.degree])
         delta_ang[delta_ang > 180 * u.degree] = abs(360 * u.degree - delta_ang[delta_ang > 180 * u.degree])
+
+        return delta_ang
+
+    def get_relative_wind_dir_asymmetric(self, ang_boat, ang_wind):
+        """
+            calculate relative wind direction [-180°, 180°] between ship course and true wind direction
+        """
+
+        delta_ang = ang_wind - ang_boat
+
+        delta_ang = delta_ang % (360 * u.degree)
+        print('delta_ang', delta_ang)
+
+        if delta_ang > 180 * u.degree:
+            delta_ang = delta_ang - 360 * u.degree
+        if delta_ang < -180 * u.degree:
+            delta_ang = delta_ang + 360 * u.degree
+
+        print('delta_ang: ', delta_ang)
 
         return delta_ang
 
@@ -175,23 +189,137 @@ class NNBoat(Boat):
             x_std = x_std.cpu().numpy()
         return x_mean, x_std
 
+    def preprocess(self, X_raw: np.ndarray, model_type: str) -> np.ndarray:
+        """
+        Convert raw user input (7 features, angles in degrees) to the 9-feature
+        sin/cos encoded format expected by the models.
+
+        Parameters
+        ----------
+        X_raw : np.ndarray, shape (n_samples, 7)
+            Columns in INPUT_FEATURES order:
+            STW, AP, FP, WIND_SPEED_REL, WIND_DIRECTION_REL, VHM0, rel_seaway_direction
+
+        Returns
+        -------
+        np.ndarray, shape (n_samples, 9)
+            Columns in MODEL_FEATURES order.
+        """
+        X_raw = np.atleast_2d(X_raw).astype(float)
+
+        if model_type == "smallDataset_boardWind_9features":
+            stw = X_raw[:, 0]
+            ap = X_raw[:, 1]
+            fp = X_raw[:, 2]
+            wind_speed = X_raw[:, 3]
+            wind_dir_deg = self._wrap(X_raw[:, 4])
+            vhm0 = X_raw[:, 5]
+            sea_dir_deg = self._wrap(X_raw[:, 6])
+
+            wind_rad = np.deg2rad(wind_dir_deg)
+            sea_rad = np.deg2rad(sea_dir_deg)
+
+            return np.column_stack([
+                stw,
+                ap,
+                fp,
+                wind_speed,
+                np.sin(wind_rad),
+                np.cos(wind_rad),
+                vhm0,
+                np.sin(sea_rad),
+                np.cos(sea_rad),
+            ])
+        if model_type == "smallDataset_Copernicus":
+            stw = X_raw[:, 0]
+            ap = X_raw[:, 1]
+            fp = X_raw[:, 2]
+            wind_speed = X_raw[:, 3]
+            wind_dir_deg = self._wrap(X_raw[:, 4])
+            vhm0 = X_raw[:, 5]
+            sea_dir_deg = self._wrap(X_raw[:, 6])
+
+            wind_rad = np.deg2rad(wind_dir_deg)
+            sea_rad = np.deg2rad(sea_dir_deg)
+
+            return np.column_stack([
+                stw,
+                ap,
+                fp,
+                wind_speed,
+                wind_dir_deg,
+                vhm0,
+                sea_dir_deg,
+            ])
+        if model_type == "STWAndWaves":
+            stw = X_raw[:, 0]
+            vhm0 = X_raw[:, 1]
+            sea_dir_deg = self._wrap(X_raw[:, 2])
+            sea_rad = np.deg2rad(sea_dir_deg)
+
+            return np.column_stack([
+                stw,
+                vhm0,
+                np.sin(sea_rad),
+                np.cos(sea_rad),
+            ])
+
+        if model_type == "STWAndWind":
+            stw = X_raw[:, 0]
+            wind_speed = X_raw[:, 1]
+            wind_dir_deg = self._wrap(X_raw[:, 2])
+            wind_rad = np.deg2rad(wind_dir_deg)
+
+            return np.column_stack([
+                stw,
+                wind_speed,
+                np.sin(wind_rad),
+                np.cos(wind_rad),
+            ])
+
     def predict_mean(self, manager: ModelManager, model_path: str,
-                     X: np.ndarray, device: str = "cpu") -> np.ndarray:
+                     X_raw: np.ndarray, model_type: str, device: str = "cpu") -> np.ndarray:
         """
         Predict in original (denormalized) target units.
 
         Parameters
         ----------
-        X : np.ndarray, shape (n_samples, 7)
-            Raw input features in the order defined by FEATURES.
+        X_raw : np.ndarray, shape (n_samples, 3)
+            Raw input features in INPUT_FEATURES order. Angle in degrees.
 
         Returns
         -------
         np.ndarray, shape (n_samples,)
         """
+        X = self.preprocess(X_raw, model_type)
         x_mean, x_std = self.load_normalization(model_path)
-        preds = manager.predict(model_path, X, x_mean=x_mean, x_std=x_std, device=device)
-        return preds.flatten()
+        return manager.predict(model_path, X, x_mean=x_mean, x_std=x_std, device=device).flatten()
+
+    def _wrap(self, deg: np.ndarray) -> np.ndarray:
+        """Wrap any degree value(s) to the ±180° range."""
+        return (np.asarray(deg, dtype=float) + 180.0) % 360.0 - 180.0
+
+    def predict_with_uncertainty(self, manager: ModelManager, model_path: str,
+                                 X_raw: np.ndarray, model_type: str, device: str = "cpu"):
+        """
+        Predict mean and 1-sigma std for GP models (denormalized).
+
+        Parameters
+        ----------
+        X_raw : np.ndarray, shape (n_samples, 7)
+            Raw input features in INPUT_FEATURES order. Angles in degrees.
+
+        Returns
+        -------
+        mean : np.ndarray, shape (n_samples,)
+        std  : np.ndarray, shape (n_samples,)
+        """
+        X = self.preprocess(X_raw, model_type)
+        x_mean, x_std = self.load_normalization(model_path)
+        mean, std = manager.predict_with_uncertainty(
+            model_path, X, x_mean=x_mean, x_std=x_std, device=device
+        )
+        return mean.flatten(), std.flatten()
 
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = True
@@ -237,7 +365,7 @@ class NNBoat(Boat):
 
         # calculate apparent wind speed and wind direction in boat coordinate system
         wind_res = self.get_apparent_wind(speed, absolute_wind_speed, absolute_wind_direction)
-        relative_wind_direction = self.get_relative_wind_dir(courses, wind_res['app_wind_angle'])
+        relative_wind_direction = self.get_relative_wind_dir_asymmetric(courses, wind_res['app_wind_angle'])
 
         if debug:
             print('absolute wind direction: ', absolute_wind_direction)
@@ -250,7 +378,7 @@ class NNBoat(Boat):
 
         absolute_seaway_direction = WeatherCond.get_theta_from_uv(ship_params.u_currents.value,
                                                                   ship_params.v_currents.value) * u.degree
-        rel_seaway_direction = self.get_relative_wind_dir(courses, absolute_seaway_direction)
+        rel_seaway_direction = self.get_relative_wind_dir_asymmetric(courses, absolute_seaway_direction)
 
         # lat_da = xr.DataArray(lats, dims="dummy")
         # lon_da = xr.DataArray(lons, dims="dummy")
