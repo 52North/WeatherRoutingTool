@@ -15,7 +15,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 
 def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(2000, 5500)
+    ax.set_ylim(0, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
 
@@ -25,6 +25,17 @@ def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
+
+def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_type='fuel'):
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(
+        nrows=4, ncols=1, sharex=True, figsize=(8, 10), gridspec_kw={"hspace": 0}, layout="constrained"
+    )
+    for irp in range(0, len(rp_list)):
+        rp_list[irp].plot_power_vs_dist_resistances(graphics.get_colour(irp), rp_str_list[irp], power_type, ax1, ax2, ax3, ax4)
+
+    ax3.legend(loc='upper right', frameon=False)
+
+    plt.savefig(figurefile + '/' + power_type + '_vs_dist_res.png')
 
 
 def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
@@ -104,7 +115,8 @@ if __name__ == "__main__":
         'power_vs_dist_showing_weather': False,
         'power_vs_dist_ratios': False,
         'fuel_vs_dist_ratios': False,
-        'speed_vs_dist': False
+        'speed_vs_dist': False,
+        'power_vs_dist_res': False,
     }
 
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
@@ -231,6 +243,9 @@ if __name__ == "__main__":
 
     if hist_dict['fuel_vs_dist']:
         plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel')
+
+    if hist_dict['power_vs_dist_res']:
+        plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, 'power')
 
     ##
     # plotting  accumulated vs. distance
