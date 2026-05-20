@@ -86,11 +86,8 @@ class NNBoat(Boat):
         delta_ang = delta_ang % (360 * u.degree)
         print('delta_ang', delta_ang)
 
-        if delta_ang > 180 * u.degree:
-            delta_ang = delta_ang - 360 * u.degree
-        if delta_ang < -180 * u.degree:
-            delta_ang = delta_ang + 360 * u.degree
-
+        delta_ang[delta_ang < -180 * u.degree] = delta_ang[delta_ang < -180 * u.degree] + 360 * u.degree
+        delta_ang[delta_ang > 180 * u.degree] = delta_ang[delta_ang > 180 * u.degree] - 360 * u.degree
         print('delta_ang: ', delta_ang)
 
         return delta_ang
@@ -207,7 +204,7 @@ class NNBoat(Boat):
         """
         X_raw = np.atleast_2d(X_raw).astype(float)
 
-        if model_type == "smallDataset_boardWind_9features":
+        if model_type == "smallDataset_boardWind_9features" or model_type == "NNfinal":
             stw = X_raw[:, 0]
             ap = X_raw[:, 1]
             fp = X_raw[:, 2]
@@ -276,6 +273,7 @@ class NNBoat(Boat):
                 np.sin(wind_rad),
                 np.cos(wind_rad),
             ])
+        raise NotImplementedError(f"The model_type {model_type} not implemented.")
 
     def predict_mean(self, manager: ModelManager, model_path: str,
                      X_raw: np.ndarray, model_type: str, device: str = "cpu") -> np.ndarray:
@@ -411,7 +409,8 @@ class NNBoat(Boat):
             input_data = self.get_input_data(input_dict)
             if debug:
                 print('input_data: ', input_data)
-            pred = self.predict_mean(self.evaluator, self.model_path, input_data)
+            model_type = "NNfinal"
+            pred = self.predict_mean(self.evaluator, self.model_path, input_data, model_type)
             P_perc[ipoint] = pred[0]
             if debug:
                 print('prediction: ', P_perc[ipoint])
