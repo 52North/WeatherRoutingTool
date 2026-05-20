@@ -26,12 +26,14 @@ def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
             transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
+
 def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(
         nrows=4, ncols=1, sharex=True, figsize=(8, 10), gridspec_kw={"hspace": 0}, layout="constrained"
     )
     for irp in range(0, len(rp_list)):
-        rp_list[irp].plot_power_vs_dist_resistances(graphics.get_colour(irp), rp_str_list[irp], power_type, ax1, ax2, ax3, ax4)
+        rp_list[irp].plot_power_vs_dist_resistances(graphics.get_colour(irp), rp_str_list[irp], power_type, ax1, ax2,
+                                                    ax3, ax4)
 
     ax3.legend(loc='upper right', frameon=False)
 
