@@ -23,6 +23,10 @@ class Boat:
         self.draught_aft = ship_config.BOAT_DRAUGHT_AFT * u.meter
         self.draught_fore = ship_config.BOAT_DRAUGHT_FORE * u.meter
 
+        self.time_min_max = [None, None]
+        self.lat_min_max = [None, None]
+        self.lon_min_max = [None, None]
+
     def get_required_water_depth(self):
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
         return needs_water_depth.value
@@ -48,6 +52,18 @@ class Boat:
         air_temperature = []
         salinity = []
         water_temperature = []
+
+        if self.time_min_max == [None, None]:
+            self.time_min_max = [weather_data['time'].min(), weather_data['time'].max()]
+            self.lat_min_max = [weather_data['latitude'].min(), weather_data['latitude'].max()]
+            self.lon_min_max = [weather_data['longitude'].min(), weather_data['longitude'].max()]
+
+            # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+            # print('Coverage of weather data: ')
+            # print(f'time range: {self.time_min_max[0]} - {self.time_min_max[1]}')
+            # print(f'latitude range: {self.lat_min_max[0]} - {self.lat_min_max[1]}')
+            # print(f'longitude range: {self.lon_min_max[0]} - {self.lon_min_max[1]}')
+            # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
         for i_coord in range(0, n_coords):
             wave_direction.append(
@@ -87,9 +103,22 @@ class Boat:
         ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
         ship_params.water_temperature = np.array(water_temperature, dtype='float32') * u.deg_C
 
+        weather_data.close()
+
         return ship_params
 
+    def check_value_in_range(self, lats, lons, time):
+        if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
+            raise ValueError(f'Latitude {lats} is out of weather range.')
+        if (lons > self.lon_min_max[1] or lons < self.lon_min_max[0]).any():
+            raise ValueError(f'Longitude {lons} is out of weather range.')
+        if (np.datetime64(time) > self.time_min_max[1] or np.datetime64(time) < self.time_min_max[0]).any():
+            raise ValueError(f'Time {time} is out of weather range.')
+
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
+
+        self.check_value_in_range(lats, lons, time)
+
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:
             ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)
