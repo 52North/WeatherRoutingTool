@@ -13,11 +13,32 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
-def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
+def plot_power_vs_dist(
+        rp_list,
+        rp_str_list,
+        scenario_str,
+        power_type='fuel',
+        norm=1.
+):
+    '''
+    The variable 'norm' is only considered to scale the power. If power_type='relative_power' is selected, the power
+    is calculated as P[%] = power/norm * 100
+    '''
+
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0, 5500)
+    if 'relative' in power_type:
+        ax.set_ylim(0, 100)
+    else:
+        ax.set_ylim(0, 6000)
+
     for irp in range(0, len(rp_list)):
-        rp_list[irp].plot_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type, ax)
+        rp_list[irp].plot_power_vs_dist(
+            color=graphics.get_colour(irp),
+            label=rp_str_list[irp],
+            power_type=power_type,
+            ax=ax,
+            norm=norm
+        )
 
     ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)
@@ -42,7 +63,7 @@ def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_typ
 
 def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    # ax.set_ylim(4000, 5500)
+    ax.set_ylim(0, 10)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_speed_vs_dist(graphics.get_colour(irp), rp_str_list[irp], ax)
 
@@ -75,7 +96,7 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
 
 def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.9, 1.1)
+    ax.set_ylim(0.8, 1.2)
     colour = 0
 
     rp_bruch = copy.deepcopy(rp_list[0])
@@ -141,6 +162,12 @@ if __name__ == "__main__":
     optional_args.add_argument('--scenario-str',
                                help="String that can be added to the final plot for further description.",
                                required=False, default=' ', type=str)
+    optional_args.add_argument('--norm',
+                               help="Optional ormalisation of power consumption. Will be considered as P = power/norm.",
+                               required=False, default=1., type=float)
+    optional_args.add_argument('--plot-relative',
+                               help="Plot the relative (True) power consumption scaled by the SMCR power.",
+                               required=False, default=False, action='store_true')
     optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
     optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
@@ -153,6 +180,8 @@ if __name__ == "__main__":
     rp_str_list = args.name_list
     hist_list = args.hist_list
     depth_path = args.depth_file
+    norm = args.norm
+    plot_relative = args.plot_relative
 
     rp_list = []
     for path in filelist:
@@ -190,7 +219,7 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (30, 10, 40, 35)
+    lat1, lon1, lat2, lon2 = (30.742, 21.183, 38.224, 36.770)
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -238,13 +267,16 @@ if __name__ == "__main__":
     ##
     # plotting  vs. distance
     if hist_dict['power_vs_dist']:
-        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'power')
+        power_type_str = 'power'
+        if plot_relative:
+            power_type_str = 'relative_power'
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type_str, norm=norm)
 
     if hist_dict['speed_vs_dist']:
         plot_speed_vs_dist(rp_list, rp_str_list, scenario_str)
 
     if hist_dict['fuel_vs_dist']:
-        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel')
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel', norm=norm)
 
     if hist_dict['power_vs_dist_res']:
         plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, 'power')
