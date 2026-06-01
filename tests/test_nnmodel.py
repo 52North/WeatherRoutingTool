@@ -271,6 +271,18 @@ def test_wave_dir_polar_plot(plt, model_name, model_path, model_type, config_dir
     plt.saveas = (results_path)
 
 
+def test_apparent_wind(plt):
+    nnboat = basic_test_func.create_dummy_NNBoat()
+    nnboat.model_path = model_path
+    nnboat.load_data()
+
+    boat_speed = np.full(37, 6.) * u.meter / u.second
+    wind_speed = np.full(37, 11.) * u.meter / u.second
+    wind_angle = np.linspace(-180, 180, 37) * u.degree
+    wind_res = nnboat.get_apparent_wind(boat_speed, wind_speed, wind_angle)
+    print('wind_res:', wind_res)
+
+
 def test_speed_dependence(plt, model_name, model_path, model_type, config_dir, results_dir):
     print(f"\nTesting Model: {model_name} with Path {model_path}")
 

@@ -204,11 +204,21 @@ if __name__ == "__main__":
     default_map = Map(lat1, lon1, lat2, lon2)
     default_route = config.DEFAULT_ROUTE
 
+    data_file_type = "csv"
+    data_path = args.route
+
+    if data_path.lower().endswith("gzip"):
+        data_file_type = "gzip"
+        print('Reading GZIP file.')
+
     maripower_test_scenarios_calm = args.calm_water_scenario
     maripower_test_scenarios_wind = args.wind_scenario
     maripower_test_scenarios_wave = args.wave_scenario
 
-    lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
+    if data_file_type == "gzip":
+        lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
+    else:
+        lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_csv_file(args.route)
 
     # possibility to analyse only single parts of the route
     # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
