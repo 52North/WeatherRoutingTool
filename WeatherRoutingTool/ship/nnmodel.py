@@ -99,13 +99,14 @@ class NNBoat(Boat):
         return input_data
 
     def get_fuel_rate_from_power(self, n, P):
-        filepath = "/home/kdemmich/1_Projekte/MariData/3_Code/maripower/mariPower"
+        filepath = ("/home/kdemmich/3_Software/MariDataEpilog_surrogate_lib/venv_martrans/lib/python3.11/"
+                    "site-packages/mariPower/")
         n = np.full(P.shape, n)
         power = P.value / 1000
 
         fuel_model = dill.load(
             open(
-                os.path.join(filepath, "data", "CBT_FOC_of_n_Power_quadratic_311.pickle"), "rb"
+                os.path.join(filepath, "data", "CBT_FOC_of_n_Power_quadratic_FDS.pcl"), "rb"
             )
         )
 
@@ -155,6 +156,8 @@ class NNBoat(Boat):
             true_ang_perp = np.pi * u.radian - np.arccos(speed[iang] / true_wind_speed[iang])
             if angle_rad[iang] * u.radian > true_ang_perp:
                 apparent_wind_angle[iang] = np.pi * u.radian - apparent_wind_angle[iang]
+            if -angle_rad[iang] * u.radian > true_ang_perp:
+                apparent_wind_angle[iang] = -np.pi * u.radian - apparent_wind_angle[iang]
 
             if np.isnan(apparent_wind_angle[iang]):
                 print('true_wind_speed: ', true_wind_speed[iang])
@@ -330,7 +333,7 @@ class NNBoat(Boat):
             fuel_rate=dummy_array * u.kg / u.s,
             power=dummy_array * u.Watt,
             rpm=dummy_array * u.Hz,
-            speed=speed * u.meter / u.second,
+            speed=speed,
             r_wind=dummy_array * u.N,
             r_calm=dummy_array * u.N,
             r_waves=dummy_array * u.N,
@@ -362,20 +365,20 @@ class NNBoat(Boat):
                                * u.meter / u.second)
 
         # calculate apparent wind speed and wind direction in boat coordinate system
-        wind_res = self.get_apparent_wind(speed, absolute_wind_speed, absolute_wind_direction)
-        relative_wind_direction = self.get_relative_wind_dir_asymmetric(courses, wind_res['app_wind_angle'])
+        relative_wind_direction = self.get_relative_wind_dir_asymmetric(courses, absolute_wind_direction)
+        wind_res = self.get_apparent_wind(speed, absolute_wind_speed, relative_wind_direction)
 
         if debug:
+            print('courses: ', courses)
             print('absolute wind direction: ', absolute_wind_direction)
-            print('relative wind direction: ', wind_res['app_wind_angle'])
-            print('relative wind direction converted:', relative_wind_direction)
+            print('relative wind direction: ', relative_wind_direction)
+            print('relative wind direction converted:', wind_res['app_wind_angle'])
             print('true wind speed: ', absolute_wind_speed)
             print('apparent wind speed', wind_res['app_wind_speed'])
             print('u: ', ship_params.u_wind_speed.value)
             print('v: ', ship_params.v_wind_speed.value)
 
-        absolute_seaway_direction = WeatherCond.get_theta_from_uv(ship_params.u_currents.value,
-                                                                  ship_params.v_currents.value) * u.degree
+        absolute_seaway_direction = ship_params.wave_direction
         rel_seaway_direction = self.get_relative_wind_dir_asymmetric(courses, absolute_seaway_direction)
 
         # lat_da = xr.DataArray(lats, dims="dummy")
@@ -400,7 +403,7 @@ class NNBoat(Boat):
                 'AP (interpolated)': draught[ipoint],
                 'FP (interpolated)': draught[ipoint],
                 'WIND_SPEED_REL': wind_res['app_wind_speed'][ipoint].value,
-                'WIND_DIRECTION_REL': relative_wind_direction[ipoint].value,  # rel_wind_direction
+                'WIND_DIRECTION_REL': wind_res['app_wind_angle'][ipoint].value,
                 'VHM0': ship_params.wave_height[ipoint].value,  # VHM0
                 'rel_seaway_direction': rel_seaway_direction[ipoint].value,  # rel_seaway_direction
             }
