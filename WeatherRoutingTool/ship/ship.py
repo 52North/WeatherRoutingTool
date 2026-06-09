@@ -157,62 +157,6 @@ class Boat:
         
         return ship_params
     
-    #old version without cache
-    def evaluate_weather_old(self, ship_params, lats, lons, time):
-        weather_data = self._get_weather_data()
-        n_coords = len(lats)
-
-        wave_height = []
-        wave_direction = []
-        wave_period = []
-        u_wind_speed = []
-        v_wind_speed = []
-        u_currents = []
-        v_currents = []
-        pressure = []
-        air_temperature = []
-        salinity = []
-        water_temperature = []
-
-        for i_coord in range(0, n_coords):
-            wave_direction.append(
-                self.approx_weather(weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
-            wave_period.append(self.approx_weather(weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
-            wave_height.append(self.approx_weather(weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
-            v_currents.append(
-                self.approx_weather(weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            u_currents.append(
-                self.approx_weather(weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            pressure.append(
-                self.approx_weather(weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord],
-                                    time[i_coord]))
-            water_temperature.append(
-                self.approx_weather(weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            salinity.append(
-                self.approx_weather(weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            air_temperature.append(
-                self.approx_weather(weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
-            u_wind_speed.append(
-                self.approx_weather(weather_data['u-component_of_wind_height_above_ground'], lats[i_coord],
-                                    lons[i_coord], time[i_coord], 10))
-            v_wind_speed.append(
-                self.approx_weather(weather_data['v-component_of_wind_height_above_ground'], lats[i_coord],
-                                    lons[i_coord], time[i_coord], 10))
-
-        ship_params.wave_direction = np.array(wave_direction, dtype='float32') * u.radian
-        ship_params.wave_period = np.array(wave_period, dtype='float32') * u.second
-        ship_params.wave_height = np.array(wave_height, dtype='float32') * u.meter
-        ship_params.u_wind_speed = np.array(u_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_wind_speed = np.array(v_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter / u.second
-        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter / u.second
-        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second ** 2)
-        ship_params.air_temperature = np.array(air_temperature, dtype='float32') * u.Kelvin
-        ship_params.air_temperature = ship_params.air_temperature.to(u.deg_C, equivalencies=u.temperature())
-        ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
-        ship_params.water_temperature = np.array(water_temperature, dtype='float32') * u.deg_C
-
-        return ship_params
     
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
