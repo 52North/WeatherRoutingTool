@@ -119,16 +119,17 @@ class Boat:
         air_temperature = []
         salinity = []
         water_temperature = []
+        
+        def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
+            key = (var_key, float(lat), float(lon), np.datetime64(t) if np.issubdtype(type(t), np.datetime64) else t, height, depth)
+            val = self._weather_cache.get(key)
+            if val is not None:
+                return val
+            v = self.approx_weather(da, lat, lon, t, height, depth)
+            self._weather_cache.set(key, v)
+            return v
 
         for i_coord in range(0, n_coords):
-            def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
-                key = (var_key, float(lat), float(lon), np.datetime64(t) if np.issubdtype(type(t), np.datetime64) else t, height, depth)
-                val = self._weather_cache.get(key)
-                if val is not None:
-                    return val
-                v = self.approx_weather(da, lat, lon, t, height, depth)
-                self._weather_cache.set(key, v)
-                return v
 
             wave_direction.append(cached_lookup('VMDR', weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
             wave_period.append(cached_lookup('VTPK', weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
