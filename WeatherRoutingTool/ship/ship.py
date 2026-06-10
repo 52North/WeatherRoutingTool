@@ -12,11 +12,12 @@ from collections import deque
 from typing import Tuple, Optional, Sequence, Any
 
 
-logger = logging.getLogger('WRT.ship')
+logger = logging.getLogger("WRT.ship")
 
 
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.
+
 
 class Cache:
     """
@@ -43,7 +44,7 @@ class Cache:
 
     def set(self, key: Any, value: Any) -> None:
         if key in self._cache:
-            # update value but do not change order 
+            # update value but do not change order
             self._cache[key] = value
             return
         self._cache[key] = value
@@ -91,21 +92,24 @@ class Boat:
         if self._weather_data is not None:
             self._weather_data.close()
             self._weather_data = None
-    
+
     def get_required_water_depth(self):
-        needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
+        needs_water_depth = (
+            max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
+        )
         return needs_water_depth.value
 
-    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
+    def get_ship_parameters(
+        self, courses, lats, lons, time, speed, unique_coords=False
+    ):
         pass
 
     def print_init(self):
         pass
 
-    
     def evaluate_weather(self, ship_params, lats, lons, time):
         weather_data = self._get_weather_data()
-        #weather_data= xr.open_dataset(self.weather_path)
+        # weather_data= xr.open_dataset(self.weather_path)
         n_coords = len(lats)
 
         wave_height = []
@@ -119,9 +123,16 @@ class Boat:
         air_temperature = []
         salinity = []
         water_temperature = []
-        
+
         def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
-            key = (var_key, float(lat), float(lon), np.datetime64(t) if np.issubdtype(type(t), np.datetime64) else t, height, depth)
+            key = (
+                var_key,
+                float(lat),
+                float(lon),
+                np.datetime64(t) if np.issubdtype(type(t), np.datetime64) else t,
+                height,
+                depth,
+            )
             val = self._weather_cache.get(key)
             if val is not None:
                 return val
@@ -130,44 +141,163 @@ class Boat:
             return v
 
         for i_coord in range(0, n_coords):
+            wave_direction.append(
+                cached_lookup(
+                    "VMDR",
+                    weather_data["VMDR"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                )
+            )
+            wave_period.append(
+                cached_lookup(
+                    "VTPK",
+                    weather_data["VTPK"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                )
+            )
+            wave_height.append(
+                cached_lookup(
+                    "VHM0",
+                    weather_data["VHM0"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                )
+            )
+            v_currents.append(
+                cached_lookup(
+                    "vtotal",
+                    weather_data["vtotal"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    None,
+                    0.5,
+                )
+            )
+            u_currents.append(
+                cached_lookup(
+                    "utotal",
+                    weather_data["utotal"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    None,
+                    0.5,
+                )
+            )
+            pressure.append(
+                cached_lookup(
+                    "Pressure_reduced_to_MSL_msl",
+                    weather_data["Pressure_reduced_to_MSL_msl"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                )
+            )
+            water_temperature.append(
+                cached_lookup(
+                    "thetao",
+                    weather_data["thetao"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    None,
+                    0.5,
+                )
+            )
+            salinity.append(
+                cached_lookup(
+                    "so",
+                    weather_data["so"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    None,
+                    0.5,
+                )
+            )
+            air_temperature.append(
+                cached_lookup(
+                    "Temperature_surface",
+                    weather_data["Temperature_surface"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                )
+            )
+            u_wind_speed.append(
+                cached_lookup(
+                    "u-component_of_wind_height_above_ground",
+                    weather_data["u-component_of_wind_height_above_ground"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    10,
+                )
+            )
+            v_wind_speed.append(
+                cached_lookup(
+                    "v-component_of_wind_height_above_ground",
+                    weather_data["v-component_of_wind_height_above_ground"],
+                    lats[i_coord],
+                    lons[i_coord],
+                    time[i_coord],
+                    10,
+                )
+            )
 
-            wave_direction.append(cached_lookup('VMDR', weather_data['VMDR'], lats[i_coord], lons[i_coord], time[i_coord]))
-            wave_period.append(cached_lookup('VTPK', weather_data['VTPK'], lats[i_coord], lons[i_coord], time[i_coord]))
-            wave_height.append(cached_lookup('VHM0', weather_data['VHM0'], lats[i_coord], lons[i_coord], time[i_coord]))
-            v_currents.append(cached_lookup('vtotal', weather_data['vtotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            u_currents.append(cached_lookup('utotal', weather_data['utotal'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            pressure.append(cached_lookup('Pressure_reduced_to_MSL_msl', weather_data['Pressure_reduced_to_MSL_msl'], lats[i_coord], lons[i_coord], time[i_coord]))
-            water_temperature.append(cached_lookup('thetao', weather_data['thetao'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            salinity.append(cached_lookup('so', weather_data['so'], lats[i_coord], lons[i_coord], time[i_coord], None, 0.5))
-            air_temperature.append(cached_lookup('Temperature_surface', weather_data['Temperature_surface'], lats[i_coord], lons[i_coord], time[i_coord]))
-            u_wind_speed.append(cached_lookup('u-component_of_wind_height_above_ground', weather_data['u-component_of_wind_height_above_ground'], lats[i_coord], lons[i_coord], time[i_coord], 10))
-            v_wind_speed.append(cached_lookup('v-component_of_wind_height_above_ground', weather_data['v-component_of_wind_height_above_ground'], lats[i_coord], lons[i_coord], time[i_coord], 10))
+        ship_params.wave_direction = (
+            np.array(wave_direction, dtype="float32") * u.radian
+        )
+        ship_params.wave_period = np.array(wave_period, dtype="float32") * u.second
+        ship_params.wave_height = np.array(wave_height, dtype="float32") * u.meter
+        ship_params.u_wind_speed = (
+            np.array(u_wind_speed, dtype="float32") * u.meter / u.second
+        )
+        ship_params.v_wind_speed = (
+            np.array(v_wind_speed, dtype="float32") * u.meter / u.second
+        )
+        ship_params.v_currents = (
+            np.array(v_currents, dtype="float32") * u.meter / u.second
+        )
+        ship_params.u_currents = (
+            np.array(u_currents, dtype="float32") * u.meter / u.second
+        )
+        ship_params.pressure = (
+            np.array(pressure, dtype="float32") * u.kg / (u.meter * u.second**2)
+        )
+        ship_params.air_temperature = (
+            np.array(air_temperature, dtype="float32") * u.Kelvin
+        )
+        ship_params.air_temperature = ship_params.air_temperature.to(
+            u.deg_C, equivalencies=u.temperature()
+        )
+        ship_params.salinity = (
+            np.array(salinity, dtype="float32") * 0.001 * u.dimensionless_unscaled
+        )
+        ship_params.water_temperature = (
+            np.array(water_temperature, dtype="float32") * u.deg_C
+        )
 
-        ship_params.wave_direction = np.array(wave_direction, dtype='float32') * u.radian
-        ship_params.wave_period = np.array(wave_period, dtype='float32') * u.second
-        ship_params.wave_height = np.array(wave_height, dtype='float32') * u.meter
-        ship_params.u_wind_speed = np.array(u_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_wind_speed = np.array(v_wind_speed, dtype='float32') * u.meter / u.second
-        ship_params.v_currents = np.array(v_currents, dtype='float32') * u.meter / u.second
-        ship_params.u_currents = np.array(u_currents, dtype='float32') * u.meter / u.second
-        ship_params.pressure = np.array(pressure, dtype='float32') * u.kg / (u.meter * u.second ** 2)
-        ship_params.air_temperature = np.array(air_temperature, dtype='float32') * u.Kelvin
-        ship_params.air_temperature = ship_params.air_temperature.to(u.deg_C, equivalencies=u.temperature())
-        ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
-        ship_params.water_temperature = np.array(water_temperature, dtype='float32') * u.deg_C
-        
         return ship_params
-    
-    
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
-        ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
+        ship_var = var.sel(
+            latitude=lats, longitude=lons, time=time, method="nearest", drop=False
+        )
         if height:
-            ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)
+            ship_var = ship_var.sel(
+                height_above_ground=height, method="nearest", drop=False
+            )
         if depth:
-            ship_var = ship_var.sel(depth=depth, method='nearest', drop=False)
+            ship_var = ship_var.sel(depth=depth, method="nearest", drop=False)
         ship_var = ship_var.fillna(0).to_numpy()
-        self.counter =+ 1
+        self.counter = +1
 
         return ship_var
 
@@ -192,10 +322,12 @@ class ConstantFuelBoat(Boat):
         self.fuel_rate = ship_config.BOAT_FUEL_RATE * u.kg / u.second
 
     def print_init(self):
-        logger.info(form.get_log_step('boat fuel rate' + str(self.fuel_rate), 1))
+        logger.info(form.get_log_step("boat fuel rate" + str(self.fuel_rate), 1))
         form.print_line()
 
-    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
+    def get_ship_parameters(
+        self, courses, lats, lons, time, speed, unique_coords=False
+    ):
         debug = False
         n_requests = len(courses)
 
@@ -219,16 +351,16 @@ class ConstantFuelBoat(Boat):
             v_currents=dummy_array * u.meter / u.second,
             u_wind_speed=dummy_array * u.meter / u.second,
             v_wind_speed=dummy_array * u.meter / u.second,
-            pressure=dummy_array * u.kg / u.meter / u.second ** 2,
+            pressure=dummy_array * u.kg / u.meter / u.second**2,
             air_temperature=dummy_array * u.deg_C,
             salinity=dummy_array * u.dimensionless_unscaled,
             water_temperature=dummy_array * u.deg_C,
             status=dummy_array,
-            message=np.full(n_requests, "")
+            message=np.full(n_requests, ""),
         )
 
-        if (debug):
+        if debug:
             ship_params.print()
-            form.print_step('fuel result' + str(ship_params.get_fuel_rate()))
+            form.print_step("fuel result" + str(ship_params.get_fuel_rate()))
 
         return ship_params
