@@ -6,6 +6,10 @@ import argparse
 import copy
 import datetime as dt
 
+import matplotlib.pyplot as plt
+
+# Assuming graphics is located here based on your usage; adjust if necessary
+from WeatherRoutingTool.utils import graphics 
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
@@ -13,7 +17,7 @@ from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather_factory import WeatherFactory
 
 
-def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
+def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, figurefile, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     ax.set_ylim(4000, 5500)
     for irp in range(0, len(rp_list)):
@@ -21,61 +25,52 @@ def plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type='fuel'):
 
     ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)
-    # ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
     ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
     plt.savefig(figurefile + '/' + power_type + '_vs_dist.png')
 
 
-def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
+def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str, figurefile):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    # ax.set_ylim(4000, 5500)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_speed_vs_dist(graphics.get_colour(irp), rp_str_list[irp], ax)
 
     ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)
-    # ax.tick_params(labelleft=False, left=False, top=True)   # hide y labels
     ax.text(0.95, 0.96, scenario_str, verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes)
     plt.savefig(figurefile + '/speed_vs_dist.png')
 
 
-def plot_acc_power_vs_dist(rp_list, rp_str_list, power_type='fuel'):
+def plot_acc_power_vs_dist(rp_list, rp_str_list, figurefile, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_acc_power_vs_dist(graphics.get_colour(irp), rp_str_list[irp], power_type)
 
     ax.legend(loc='upper center')
-    # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + 'acc_vs_dist.png')
 
 
-def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
+def plot_power_vs_coord(rp_list, rp_str_list, coordstring, figurefile, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_coord(ax, graphics.get_colour(irp), rp_str_list[irp], coordstring, power_type)
     ax.legend(loc='lower left')
-    # ax.set_ylim(0, 0.016)
     plt.savefig(figurefile + '/' + power_type + '_vs_' + coordstring + '.png')
 
 
-def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
+def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, figurefile, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
     ax.set_ylim(0.9, 1.1)
     colour = 0
 
     rp_bruch = copy.deepcopy(rp_list[0])
 
+    # [FIX 3]: Removed the redundant if/else block. The logic applies cleanly to all items.
     for irp in range(0, len(rp_list)):
-        if rp_str_list[irp] == '':
-            rp_list[irp].plot_power_vs_dist_ratios(rp_bruch, graphics.get_colour(colour),
-                                                   rp_str_list[irp], power_type)
-            colour = colour + 1
-        else:
-            rp_list[irp].plot_power_vs_dist_ratios(rp_bruch, graphics.get_colour(colour),
-                                                   rp_str_list[irp], power_type)
-            colour = colour + 1
+        rp_list[irp].plot_power_vs_dist_ratios(rp_bruch, graphics.get_colour(colour),
+                                               rp_str_list[irp], power_type)
+        colour = colour + 1
 
     ax.legend(loc='upper left', bbox_to_anchor=(0, 1), handlelength=0.1, frameon=False)
     ax.tick_params(top=True, right=True)
@@ -84,7 +79,6 @@ def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fu
 
     ax.text(0.2, 1.2, 'dashed lines: averages', verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes)
-    # plt.axhline(y=1, color='gainsboro', linestyle='-')
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_ratios' + '.png')
 
 
@@ -110,6 +104,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     required_args = parser.add_argument_group('required arguments')
     optional_args = parser.add_argument_group('optional arguments')
+    
     required_args.add_argument('--base-dir', help="Base directory of route geojson files (absolute path).",
                                required=True, type=str)
     required_args.add_argument('--figure-dir', help="Figure directory (absolute path).",
@@ -124,6 +119,7 @@ if __name__ == "__main__":
                                help="List of histograms that shall be plotted. "
                                     "The following types are supported: "
                                     + str(hist_dict.keys()), nargs="*", required=True, type=str)
+    
     optional_args.add_argument('--scenario-str',
                                help="String that can be added to the final plot for further description.",
                                required=False, default=' ', type=str)
@@ -131,6 +127,16 @@ if __name__ == "__main__":
                                type=str)
     optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
+
+    # [FIX 4]: Added weather and coordinate parameters to argparse with the original hardcoded values as defaults
+    optional_args.add_argument('--departure-time', help="Departure time in format YYYY-MM-DDTHH:MMZ", 
+                               required=False, default="2023-08-19T10:32Z", type=str)
+    optional_args.add_argument('--plot-time', help="Time for plotting in format YYYY-MM-DDTHH:MMZ", 
+                               required=False, default="2023-08-19T12:00Z", type=str)
+    optional_args.add_argument('--time-forecast', help="Forecast duration", 
+                               required=False, default=60, type=int)
+    optional_args.add_argument('--bbox', help="Bounding box coordinates: lat1 lon1 lat2 lon2", 
+                               nargs=4, required=False, default=[50.0, -2.0, 60.0, 14.257], type=float)
 
     # read arguments
     args = parser.parse_args()
@@ -172,11 +178,11 @@ if __name__ == "__main__":
         raise ValueError('You need to pass at least two histograms for ratio plots.')
 
     ##
-    # init weather
-    departure_time = "2023-08-19T10:32Z"
-    time_for_plotting = "2023-08-19T12:00Z"
-    time_forecast = 60
-    lat1, lon1, lat2, lon2 = (50, -2, 60, 14.257)
+    # init weather [FIX 4: Now maps dynamically to the argparse variables]
+    departure_time = args.departure_time
+    time_for_plotting = args.plot_time
+    time_forecast = args.time_forecast
+    lat1, lon1, lat2, lon2 = args.bbox
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -196,14 +202,9 @@ if __name__ == "__main__":
         plt.show()
 
     ##
-    # init Constraints
-    # water_depth = WaterDepth('from_file', 20, default_map, depth_data)
-
-    ##
     # plotting routes in depth profile
     if hist_dict['route']:
         fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        # depth = xr.open_dataset(depth_path)
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
@@ -215,42 +216,40 @@ if __name__ == "__main__":
             False
         )
 
-        # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):
             ax = rp_list[irp].plot_route(ax, graphics.get_colour(irp), rp_str_list[irp], graphics.get_linestyle(irp))
         ax.legend()
         plt.savefig(figurefile + '/route_waterdepth.png')
 
     ##
-    # plotting  vs. distance
+    # plotting  vs. distance (Passed figurefile to functions)
     if hist_dict['power_vs_dist']:
-        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'power')
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, figurefile, 'power')
 
     if hist_dict['speed_vs_dist']:
-        plot_speed_vs_dist(rp_list, rp_str_list, scenario_str)
+        plot_speed_vs_dist(rp_list, rp_str_list, scenario_str, figurefile)
 
     if hist_dict['fuel_vs_dist']:
-        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel')
+        plot_power_vs_dist(rp_list, rp_str_list, scenario_str, figurefile, 'fuel')
 
     ##
     # plotting  accumulated vs. distance
-
     if hist_dict['acc_fuel_vs_dist']:
-        plot_acc_power_vs_dist(rp_list, rp_str_list, 'fuel')
+        plot_acc_power_vs_dist(rp_list, rp_str_list, figurefile, 'fuel')
 
     ##
     # plotting power vs. coordinate
     if hist_dict['power_vs_lat']:
-        plot_power_vs_coord(rp_list, rp_str_list, 'lat', 'power')
+        plot_power_vs_coord(rp_list, rp_str_list, 'lat', figurefile, 'power')
 
     if hist_dict['fuel_vs_lat']:
-        plot_power_vs_coord(rp_list, rp_str_list, 'lat', 'fuel')
+        plot_power_vs_coord(rp_list, rp_str_list, 'lat', figurefile, 'fuel')
 
     if hist_dict['power_vs_lon']:
-        plot_power_vs_coord(rp_list, rp_str_list, 'lon', 'power')
+        plot_power_vs_coord(rp_list, rp_str_list, 'lon', figurefile, 'power')
 
     if hist_dict['fuel_vs_lon']:
-        plot_power_vs_coord(rp_list, rp_str_list, 'lon', 'fuel')
+        plot_power_vs_coord(rp_list, rp_str_list, 'lon', figurefile, 'fuel')
 
     ##
     # plotting power vs dist vs weather
@@ -263,13 +262,13 @@ if __name__ == "__main__":
     ##
     # plotting power vs dist ratios
     if hist_dict["power_vs_dist_ratios"]:
-        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, 'power')
+        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, figurefile, 'power')
 
     if hist_dict["fuel_vs_dist_ratios"]:
-        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, 'fuel')
+        plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, figurefile, 'fuel')
 
     ##
-    # write fuel consumption, trafvel distance and time
+    # write fuel consumption, travel distance and time
     print('Full fuel consumption:')
     for irp in range(0, len(rp_list)):
         print(rp_str_list[irp] + ': ' + str(rp_list[irp].get_full_fuel()))
