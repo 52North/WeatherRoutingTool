@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from math import ceil
 
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import datacube
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,6 +46,8 @@ class WeatherCond:
     ds: xr.Dataset
 
     def __init__(self, time, hours, time_res):
+        if time is None:
+            return
         self.time_res = time_res
         self.time_start = time
         self.time_end = time + timedelta(hours=hours)
@@ -160,6 +163,62 @@ class WeatherCond:
     def get_v(theta, windspeed):
         theta = theta * np.pi / 180
         return -np.abs(windspeed) * np.cos(theta)
+
+    def visualise_on_map(self, variables: list) -> None:
+        '''
+        Function to visualise a selection of variables from a netCDF file for the first timestamp on a map.
+
+        The user provides a list of variables that is displayed on a 3x3 panel. If the number of variables is > 9, a
+        ValueError is raised. Only data for the 1st timestamp is visualised on separate maps in a single panel.
+
+        :params variables: list of variables to visualise
+        :type variables: list
+        '''
+
+        if len(variables) > 9:
+            raise ValueError("The maximum number of variables to visualise is 9.")
+
+        # recognise variables with additional dimension 'depth'
+        vars_with_depth = ['so', 'thetao']
+
+        proj = ccrs.PlateCarree()
+        fig, axes = plt.subplots(3, 3, subplot_kw={"projection": proj}, figsize=(18, 18),
+                                 sharex=True, sharey=True)
+        axes = axes.flatten()
+        lat = self.ds['latitude']
+        lon = self.ds['longitude']
+
+        for i, var in enumerate(variables):
+            ax = axes[i]
+
+            if var in vars_with_depth:
+                data = self.ds[var].isel(time=0, depth=0)
+            else:
+                data = self.ds[var].isel(time=0)
+
+            # plot data and map
+            im = ax.pcolormesh(lon, lat, data, cmap='viridis', shading='auto')
+            ax.coastlines(resolution="50m", linewidth=0.6)
+            ax.add_feature(cfeature.BORDERS, linewidth=0.3)
+            ax.set_extent([lon.min(), lon.max(), lat.min(), lat.max()])
+
+            # Set titles and colorbars
+            units = data.attrs['units']
+            mean_val = data.mean().to_numpy()
+            ax.set_title(f"{var} ({units})\n average: {mean_val:.2}", fontsize=10)
+            fig.colorbar(im, ax=ax, orientation='vertical', shrink=0.8)
+            ax.grid(True, linestyle='--', alpha=0.5)
+
+        for j in range(len(variables), len(axes)):
+            axes[j].axis('off')
+
+        # Add common axis labels and main title
+        fig.text(0.5, -0.02, 'Longitude (°E)', ha='center', fontsize=13)
+        fig.text(-0.02, 0.5, 'Latitude (°N)', va='center', rotation='vertical', fontsize=13)
+
+        # Adjust layout and save the visualization
+        plt.tight_layout()
+        plt.savefig('weather_variables_first_timestamp.png', bbox_inches='tight', dpi=150)
 
 
 class WeatherCondEnvAutomatic(WeatherCond):
@@ -327,7 +386,7 @@ class WeatherCondFromFile(WeatherCond):
     wind_functions: None
     wind_vectors: None
 
-    def __init__(self, time, hours, time_res):
+    def __init__(self, time=None, hours=None, time_res=None):
         super().__init__(time, hours, time_res)
 
     def calculate_wind_function(self, time):

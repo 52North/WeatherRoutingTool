@@ -285,7 +285,7 @@ def set_graphics_standards(ax):
 
 
 def generate_basemap(
-        map,
+        map_coords,
         depth,
         start=None,
         finish=None,
@@ -294,7 +294,7 @@ def generate_basemap(
         show_gcr=False
 ):
     plt.rcParams['font.size'] = get_standard('font_size')
-    (min_lat, max_lat, min_lon, max_lon) = map
+    (min_lat, max_lat, min_lon, max_lon) = map_coords
 
     fig = plt.figure(figsize=get_standard('fig_size'))
     fig_width, fig_height = get_standard('fig_size')
