@@ -116,7 +116,7 @@ def test_random_plateau_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.937, 27.859),
@@ -190,7 +190,7 @@ def test_bezier_curve_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -285,7 +285,7 @@ def test_constraint_violation_repair(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -360,7 +360,7 @@ def test_single_point_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -391,7 +391,7 @@ def test_speed_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -520,7 +520,7 @@ def test_twopoint_crossover_speed(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
