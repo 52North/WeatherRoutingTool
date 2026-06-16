@@ -474,7 +474,7 @@ def test_check_speed_dif(speed_arr, viol_list):
     assert viol_list_test == viol_list
 
 
-@pytest.mark.parametrize("speed_arr,", [
+@pytest.mark.parametrize("speed_arr", [
     (np.array([1., 2., 100000., 4., 5., 6., 1000., -99])),
 ])
 def test_smoothen_speed_rec_error(speed_arr):
