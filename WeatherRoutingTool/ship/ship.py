@@ -109,10 +109,16 @@ class Boat:
 
     def check_value_in_range(self, lats, lons, time):
         if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'lat: {weather_data["latitude"].min().to_numpy()} - {weather_data["latitude"].max().to_numpy()}')
             raise ValueError(f'Latitude {lats} is out of weather range.')
         if (lons > self.lon_min_max[1] or lons < self.lon_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'lon: {weather_data["longitude"].min().to_numpy()} - {weather_data["longitude"].max().to_numpy()}')
             raise ValueError(f'Longitude {lons} is out of weather range.')
         if (np.datetime64(time) > self.time_min_max[1] or np.datetime64(time) < self.time_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'time: {weather_data["time"].min()} - {weather_data["time"].max()}')
             raise ValueError(f'Time {time} is out of weather range.')
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
