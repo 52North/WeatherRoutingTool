@@ -383,24 +383,30 @@ class Genetic(RoutingAlg):
             for iroute in range(0, last_pop.shape[0]):
                 hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
 
-                new_line = ax.plot(
-                    hist_values["bin_centres"].to(u.km).value,
-                    hist_values["bin_contents"].to(u.m / u.second).value,
+                lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+                new_line = plt.step(
+                    lower_bin_boundaries,
+                    hist_values["bin_contents"],
+                    where='mid',
+                    linewidth=2,
                     color="blue",
                     alpha=0.3,
-                    linestyle='-',
-                    zorder=2
                 )
+
                 objs.append(new_line)
 
             if igen == (self.n_generations - 1):
                 hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
-                ax.plot(
-                    hist_values_best_route["bin_centres"].to(u.km).value,
-                    hist_values_best_route["bin_contents"].to(u.m / u.second).value,
-                    color="firebrick",
-                    linewidth=3
+                lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
+                    "bin_widths"]) / 1000
+                plt.step(
+                    lower_bin_boundaries,
+                    hist_values_best_route["bin_contents"],
+                    where='mid',
+                    linewidth=2,
+                    color="red",
                 )
+
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
             ax.set_ylim(0, 10)
