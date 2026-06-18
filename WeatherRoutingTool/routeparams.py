@@ -360,48 +360,33 @@ class RouteParams:
                 markersize=10)
         return ax
 
-    def get_power_type(self, power_type):
+    def get_power_type(self, power_type, norm=1.):
         if power_type == 'power':
-            return {"value": self.ship_params_per_step.get_power(), "label": 'power consumption (kW)', "unit": u.Watt}
+            power = self.ship_params_per_step.get_power() / norm * 1. / 1000
+            return {"value": power, "label": 'power consumption (kW)', "unit": u.Watt}
+        if power_type == 'relative_power':
+            norm = norm * u.Watt
+            power = self.ship_params_per_step.get_power() / norm * 100
+            return {"value": power, "label": 'power consumption (%)', "unit": u.Watt}
         if power_type == 'fuel':
-            return {"value": self.get_fuel_per_dist(), "label": "fuel consumption", "unit": u.kg}
+            power = self.get_fuel_per_dist()
+            return {"value": power, "label": "fuel consumption", "unit": u.kg}
+        raise NotImplementedError(f'The power type "{power_type}" is not implemented.')
 
-    def plot_power_vs_dist(self, color, label, power_type, ax, bin_center_mean=None, bin_width_mean=None):
-        power = self.get_power_type(power_type)
+    def plot_power_vs_dist(self, color, label, power_type, ax, norm=1.):
+        power = self.get_power_type(power_type, norm)
         dist = self.dists_per_step
 
         hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
+        hist_values["bin_contents"] = hist_values["bin_contents"]
 
-        # only for power: also plot bin showing weighted mean. This does not make sense for fuel.
-        if power_type == 'power':
-            weighted_mean = power["value"] * dist
-            weighted_mean = weighted_mean.sum() / dist.sum()
-
-            if bin_width_mean is None:
-                bin_width_mean = 150 * u.km
-            if bin_center_mean is None:
-                bin_center_mean = max(hist_values["bin_centres"]) + 2 * bin_width_mean
-
-            # append mean bin
-            # hist_values["bin_centres"] = np.append(hist_values["bin_centres"], bin_center_mean)
-            # hist_values["bin_contents"] = np.append(hist_values["bin_contents"], weighted_mean)
-            # hist_values["bin_widths"] = np.append(hist_values["bin_widths"], bin_width_mean)
-
-            # plt.ylabel(power["label"] + ' (kW)')
+        if power_type == 'power' or power_type == 'relative_power':
             plt.ylabel(power["label"])
-            plt.bar(
-                hist_values["bin_centres"].to(u.km).value,
-                hist_values["bin_contents"].to(u.kiloWatt).value,
-                hist_values["bin_widths"].to(u.km).value,
-                fill=False, color=color, edgecolor=color, label=label, linewidth=2)
-            # ax.set_ylim(0, 6000)
 
-            # customise labels
-            # labels = ax.get_xticks().tolist()
-            # for i in range(0, len(labels)):
-            #    labels[i] = int(labels[i])
-            # labels[-2] = 'weighted mean'
-            # ax.set_xticklabels(labels)
+            lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+            plt.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid', linewidth=2, color=color,
+                     label=label)
+
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
         else:
@@ -712,16 +697,19 @@ class RouteParams:
         else:
             return 0 * u.kW * u.hour
 
-    @classmethod
-    def from_gzip_file(cls, filename):
+    @staticmethod
+    def from_gzip_file(filename):
         data = pandas.read_parquet(filename)
+        pandas.options.display.max_columns = None
+        pandas.options.display.max_rows = None
+
         data = data.drop(['POSITION'], axis=1)  # drop colum POSITION as it can't be converted to numeric value
 
         full_fuel_consumed = data['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg / u.h
         mean_engine_load = data['ME_LOAD'].mean()
 
         # select every interval's element from dataset
-        interval = 100
+        interval = 1
         sog_data = utils.unit_conversion.downsample_dataframe(data, interval)
         sog = sog_data['SOG'].values
         sog = sog[:-1] * u.Unit('knots')  # delete last element and convert from knots to m/s
@@ -739,6 +727,40 @@ class RouteParams:
 
         # fix inconsistencies between pandas and numpy time formats
         time = data.index[::interval].values
+        time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
+
+        logger.info('Reading route from file: ' + filename)
+        logger.info('start: (' + str(lat[0]) + ',' + str(lon[0]) + ')')
+        logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
+        logger.info('start time: ' + str(time[0]))
+        logger.info('end time: ' + str(time[-1]))
+        logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
+        logger.info('ME load (percentage): ' + str(mean_engine_load))
+        logger.info('fore draught: ' + str(fore_draught))
+        logger.info('aft draught: ' + str(aft_draught))
+
+        return lat, lon, time_converted, sog, fore_draught, aft_draught, power, fuel_rate
+
+    @staticmethod
+    def from_csv_file(filename):
+        df = pandas.read_csv(filename)
+
+        full_fuel_consumed = df['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg / u.h
+        mean_engine_load = df['ME_LOAD'].mean()
+
+        sog = df["SOG"].values
+        sog = sog[:-1] * u.meter / u.second
+
+        power = df['ME_LOAD'].values
+        fuel_rate = df['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].values * u.kg / u.h
+
+        fore_draught = df['draft_fp_interpolated_between_low_speeds'].mean()
+        aft_draught = df['draft_ap_interpolated_between_low_speeds'].mean()
+
+        lat = df['Latitude'].values
+        lon = df['Longitude'].values
+
+        time = df.iloc[:, 0].values
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
 
         logger.info('Reading route from file: ' + filename)
