@@ -417,7 +417,57 @@ class RouteParams:
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
-    def plot_speed_vs_dist(self, color, label,  ax):
+    def plot_power_vs_dist_resistances(self, color, label, power_type, ax1, ax2, ax3, ax4):
+        power = self.get_power_type(power_type)
+        dist = self.dists_per_step
+        r_wind = self.ship_params_per_step.r_wind
+        r_wave = self.ship_params_per_step.r_waves
+        r_calm = self.ship_params_per_step.r_calm
+
+        hist_values = graphics.get_hist_values_from_widths(dist, power["value"], power_type)
+
+        # only for power: also plot bin showing weighted mean. This does not make sense for fuel.
+        if power_type == 'power':
+            ax1.set_label(power["label"])
+            ax1.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                hist_values["bin_contents"].to(u.kiloWatt).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+
+            left, right = plt.xlim()
+            ax1.set_xlim(-100, right)
+        else:
+            ax1.set_label(power["label"] + ' (t/km)')
+            ax1.bar(
+                hist_values["bin_centres"].to(u.km).value,
+                hist_values["bin_contents"].to(u.tonne / u.kilometer).value,
+                hist_values["bin_widths"].to(u.km).value,
+                fill=False, color=color, edgecolor=color, label=label
+            )
+            ax1.set_ylim(0, 0.05)
+        ax2.bar(
+            hist_values["bin_centres"].to(u.km).value,
+            r_wind.value,
+            hist_values["bin_widths"].to(u.km).value,
+            fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+        ax2.set_ylabel("r_wind (N)")
+        ax3.bar(
+            hist_values["bin_centres"].to(u.km).value,
+            r_wave.value,
+            hist_values["bin_widths"].to(u.km).value,
+            fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+        ax3.set_ylabel("r_wave (N)")
+        ax4.bar(
+            hist_values["bin_centres"].to(u.km).value,
+            r_calm.value,
+            hist_values["bin_widths"].to(u.km).value,
+            fill=False, color=color, edgecolor=color, label=label, linewidth=2)
+        ax4.set_ylabel("r_calm (N)")
+        plt.xlabel('travel distance (km)')
+        plt.xticks()
+
+    def plot_speed_vs_dist(self, color, label, ax):
         speed = self.ship_params_per_step.get_speed()
         dist = self.dists_per_step
 
@@ -427,9 +477,9 @@ class RouteParams:
         plt.ylabel("speed (m/s)")
         plt.bar(
             hist_values["bin_centres"].to(u.km).value,
-            hist_values["bin_contents"].to(u.m/u.second).value,
+            hist_values["bin_contents"].to(u.m / u.second).value,
             hist_values["bin_widths"].to(u.km).value,
-            alpha=0.5,  color=color, edgecolor=color, label=label, linewidth=2)
+            alpha=0.5, color=color, edgecolor=color, label=label, linewidth=2)
 
         left, right = plt.xlim()
         ax.set_xlim(-100, right)
