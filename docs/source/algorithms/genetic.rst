@@ -50,6 +50,41 @@ are to be considered of equal importance, the mean values of the maximum possibl
 The selection of the final solution is done using methods for Multi-Criteria Decision-Making (MCDM). Further details are given in the respective
 section below.
 
+*Configuration Decision Tree*
+
+The following flow chart lists all valid ways to configure the genetic algorithm. Starting from the desired degrees of freedom
+and objectives, each box states the config variables that have to be set in order to reach a valid run mode (green).
+
+.. mermaid::
+
+    flowchart TD
+        Start(["Set ALGORITHM_TYPE = 'genetic'"]) --> Pre["Set BOAT_TYPE = CBT, SAL or direct_power_method<br/>Provide WEATHER_DATA + DEPTH_DATA covering the map and time range"]
+        Pre --> Q{"What do you want to optimise?"}
+
+        Q -->|"Waypoints only<br/>(constant speed)"| A1["Set GENETIC_CROSSOVER_TYPE = waypoints<br/>Set GENETIC_MUTATION_TYPE = waypoints, rndm_walk,<br/>rndm_plateau, route_blend or no_mutation"]
+        A1 --> A2["Set GENETIC_OBJECTIVES = {'fuel_consumption': w}<br/>(do NOT add 'arrival_time')"]
+        A2 --> A3{"Fix the schedule via<br/>speed or arrival time?"}
+        A3 -->|"via speed"| A4["Set BOAT_SPEED<br/>Leave ARRIVAL_TIME unset"]
+        A3 -->|"via arrival time"| A5["Set ARRIVAL_TIME<br/>Leave BOAT_SPEED unset"]
+        A4 --> APOP["Set GENETIC_POPULATION_TYPE =<br/>grid_based, isofuel, gcrslider or from_geojson<br/>(if from_geojson: set GENETIC_POPULATION_PATH)"]
+        A5 --> APOP
+        APOP --> AOK(["Valid: waypoint optimisation"])
+
+        Q -->|"Speed + waypoints"| C1["Set GENETIC_MUTATION_TYPE and GENETIC_CROSSOVER_TYPE<br/>to any other combination (e.g. both = random)"]
+        C1 --> C2["Set GENETIC_OBJECTIVES = {'fuel_consumption': w1,<br/>'arrival_time': w2} (one or both keys)"]
+        C2 --> C3["Set BOAT_SPEED<br/>Set ARRIVAL_TIME"]
+        C3 --> CPOP["Set GENETIC_POPULATION_TYPE =<br/>grid_based, isofuel, gcrslider or from_geojson<br/>(if from_geojson: set GENETIC_POPULATION_PATH)"]
+        CPOP --> COK(["Valid: combined speed + waypoint optimisation"])
+
+        Q -->|"Speed only<br/>(fixed route, not yet implemented)"| B1["Set GENETIC_CROSSOVER_TYPE = speed<br/>Set GENETIC_MUTATION_TYPE = speed,<br/>percentage_change_speed or gaussian_speed"]
+        B1 --> B2["Set GENETIC_OBJECTIVES = {'arrival_time': w}"]
+        B2 --> B3["Set BOAT_SPEED<br/>Set ARRIVAL_TIME"]
+        B3 --> B4["Set GENETIC_POPULATION_TYPE = from_geojson<br/>Set GENETIC_POPULATION_PATH to a directory<br/>containing exactly one route file"]
+        B4 --> BOK(["Valid: pure speed optimisation"])
+
+        classDef ok fill:#e0ffe0,stroke:#00aa00,color:#060;
+        class AOK,COK,BOK ok;
+
 
 General Concept
 ---------------
