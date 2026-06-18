@@ -585,8 +585,9 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.n_updates = n_updates
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
-        self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
-        self.sigma = 1.
+        # self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
+        self.sigma = 1.54
+        self.max_acceleration = 1
 
         # Fix random seed depending on configuration
         self.rndm_gen = None
@@ -611,7 +612,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
                 new = old_speed
             rt_new[i][2] = new
 
-        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], 1)
+        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], self.max_acceleration)
         return rt_new
 
 
