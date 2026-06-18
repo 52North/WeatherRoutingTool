@@ -6,8 +6,11 @@
 import argparse
 import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
+import matplotlib.pyplot as plt
+from astropy import units as u
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.routeparams import RouteParams
@@ -149,7 +152,7 @@ if __name__ == "__main__":
     # read arguments
     args = parser.parse_args()
 
-    config = Config.assign_config(args.file)
+    config = Config.assign_config(Path(args.file))
 
     scenario_name = args.name
 
@@ -166,6 +169,7 @@ if __name__ == "__main__":
     departure_time = config.DEPARTURE_TIME
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
     default_map = Map(lat1, lon1, lat2, lon2)
+    default_route = config.DEFAULT_ROUTE
 
     maripower_test_scenarios_calm = args.calm_water_scenario
     maripower_test_scenarios_wind = args.wind_scenario
@@ -174,8 +178,8 @@ if __name__ == "__main__":
     lat, lon, time, sog, fore_draught, aft_draught, power, fuel_rate = RouteParams.from_gzip_file(args.route)
 
     # possibility to analyse only single parts of the route
-    # lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
-    #                                                               aft_draught, cut_route)
+    lat, lon, time, sog, fore_draught, aft_draught = cut_indices(lat, lon, time, sog, fore_draught,
+                                                                 aft_draught, (default_route))
 
     # obtain position, time and courses for every waypoint
     waypoint_dict = RouteParams.get_per_waypoint_coords(lon, lat, time[0], sog)
@@ -204,12 +208,12 @@ if __name__ == "__main__":
 
     if str(args.boat_type) == 'data':
         ship_config = ShipConfig.assign_config(path=config.CONFIG_PATH)
-        boat = DirectPowerBoat(ship_config)
-        power = power * boat.power_at_sp * 0.01 * 4 / 3  # power_at_sp is 75% of SMCR power
+        # boat = DirectPowerBoat(ship_config)
+        # power = power * boat.power_at_sp * 0.01 * 4 / 3  # power_at_sp is 75% of SMCR power
 
         ship_params = ShipParams.set_default_array_1D(len(lon))
         ship_params.fuel_rate = fuel_rate
-        ship_params.power = power
+        ship_params.power = power * 6500 / 100 * u.kW
 
         start = (lat[0], lon[0])
         finish = (lat[-1], lon[-1])
