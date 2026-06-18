@@ -435,7 +435,7 @@ class Genetic(RoutingAlg):
             ax.remove()
 
             fig, ax = graphics.generate_basemap(
-                map=self.default_map.get_var_tuple(),
+                map_coords=self.default_map.get_var_tuple(),
                 depth=None,
                 start=self.start,
                 finish=self.finish,
@@ -496,7 +496,7 @@ class Genetic(RoutingAlg):
 
         # Create an empty plot
         fig, ax = graphics.generate_basemap(
-            map=self.default_map.get_var_tuple(),
+            map_coords=self.default_map.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
