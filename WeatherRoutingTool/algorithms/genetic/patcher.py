@@ -241,6 +241,7 @@ class IsofuelPatcher(PatcherBase):
             time_forecast,
             time_resolution,
             default_map, )
+        time_frame = (wt.time_start, wt.time_end)
 
         # *******************************************
         # initialise boat
@@ -265,7 +266,8 @@ class IsofuelPatcher(PatcherBase):
             map_size=default_map,
             depthfile=depthfile,
             waypoints=config.INTERMEDIATE_WAYPOINTS,
-            courses_path=config.COURSES_FILE, )
+            courses_path=config.COURSES_FILE,
+            time_frame=time_frame)
 
         return wt, boat, water_depth, constraints_list
 

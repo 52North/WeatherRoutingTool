@@ -42,6 +42,7 @@ def execute_routing(config, ship_config):
     # initialise weather
     wt = WeatherFactory.get_weather(config._DATA_MODE_WEATHER, windfile, departure_time, time_forecast, time_resolution,
                                     default_map)
+    time_frame = (wt.time_start, wt.time_end)
 
     # *******************************************
     # initialise boat
@@ -55,7 +56,7 @@ def execute_routing(config, ship_config):
         constraints_string_list=config.CONSTRAINTS_LIST, data_mode=config._DATA_MODE_DEPTH,
         min_depth=boat.get_required_water_depth(),
         map_size=default_map, depthfile=depthfile, waypoints=config.INTERMEDIATE_WAYPOINTS,
-        courses_path=config.COURSES_FILE)
+        courses_path=config.COURSES_FILE, time_frame=time_frame)
 
     # *******************************************
     # initialise route

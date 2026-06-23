@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -28,7 +29,8 @@ class Constraint:
     """
     Main class for handling of constraints. Constraints implemented so far:
     LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with too low water depth),
-    StayOnMap (prohibit leaving the area for which the weather data has been obtained)
+    StayOnMap (prohibit leaving the area for which the weather data has been obtained),
+    StayInTime (prohibit leaving the timeframe for which the weather data has been obtained)
     """
 
     name: str
@@ -50,6 +52,9 @@ class Constraint:
         pass
 
     def constraint_on_point(self, lat, lon, time):
+        pass
+
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         pass
 
     def print_debug(self, message):
@@ -190,6 +195,17 @@ class ConstraintsListFactory:
             on_map.set_map(map_size.lat1, map_size.lon1, map_size.lat2, map_size.lon2)
             constraints_list.add_neg_constraint(on_map)
             is_stay_on_map = True
+
+        if 'in_time' in constraints_string_list:
+            if 'time_frame' not in kwargs:
+                raise ValueError('To use the in-time constraint module, you need to provide the timeframe '
+                                 'of the weather data.')
+            time = kwargs.get('time_frame')
+            time_start = time[0]
+            time_end = time[1]
+            in_time = StayInTime()
+            in_time.set_time(time_start, time_end)
+            constraints_list.add_neg_constraint(in_time, 'continuous')
 
         if 'seamarks' in constraints_string_list:
             if is_stay_on_map:
@@ -339,13 +355,44 @@ class ConstraintsList:
             is_constrained += is_constrained_temp
         return is_constrained
 
-    def safe_crossing(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
-        is_constrained_discrete = is_constrained
-        is_constrained_continuous = is_constrained
-        is_constrained_discrete = self.safe_crossing_discrete(lat_start, lon_start, lat_end, lon_end, current_time,
-                                                              is_constrained)
-        is_constrained_continuous = self.safe_crossing_continuous(lat_start, lon_start, lat_end, lon_end,
-                                                                  is_constrained)
+    def safe_crossing(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray, lon_end: np.ndarray,
+                      start_times: np.ndarray, is_constrained: list[bool]):
+        """
+        Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
+        (lat_end, lon_end).
+
+        :param lat_start: Latitude(s) of start point(s) of section(s) to check
+        :type lat_start: numpy.ndarray or float
+        :param lon_start: Longitude(s) of start point(s) of section(s) to check
+        :type lon_start: numpy.ndarray or float
+        :param lat_end: Latitude(s) of end point(s) of section(s) to check
+        :type lat_end: numpy.ndarray or float
+        :param lon_end: Longitude(s) of end point(s) of section(s) to check
+        :type lon_end: numpy.ndarray or float
+        :param current_time: Time(s) at the start point(s) of the section(s); may be None
+        :type current_time: numpy.ndarray or None
+        :param is_constrained: Booleans for every section stating if it is already constrained
+        :type is_constrained: list[bool]
+        :return: is_constrained
+        :rtype: list[bool]
+        """
+
+        is_constrained_discrete = self.safe_crossing_discrete(
+            lat_start=lat_start,
+            lon_start=lon_start,
+            lat_end=lat_end,
+            lon_end=lon_end,
+            current_time=start_times,
+            is_constrained=is_constrained
+        )
+        is_constrained_continuous = self.safe_crossing_continuous(
+            lat_start=lat_start,
+            lon_start=lon_start,
+            lat_end=lat_end,
+            lon_end=lon_end,
+            time_start=start_times,
+            is_constrained=is_constrained
+        )
 
         # TO BE UPDATED
         is_constrained_array = (np.array(is_constrained) | np.array(is_constrained_discrete)
@@ -353,7 +400,8 @@ class ConstraintsList:
         is_constrained = is_constrained_array.tolist()
         return is_constrained
 
-    def safe_crossing_continuous(self, lat_start, lon_start, lat_end, lon_end, is_constrained):
+    def safe_crossing_continuous(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray,
+                                 lon_end: np.ndarray, time_start: np.ndarray, is_constrained: list[bool]):
         """TODO: add description
         _summary_
 
@@ -367,6 +415,8 @@ class ConstraintsList:
         :type lon_end: numpy.ndarray or float
         :param is_constrained: List of booleans for every constraint stating if the section is constraint by it
         :type is_constrained: list[bool]
+        :param time_start: Time(s) at start point(s) of section(s) to check
+        :type time_start: numpy.ndarray or None
         :return: is_constrained.tolist()
         :rtype: list[bool]
         """
@@ -377,12 +427,19 @@ class ConstraintsList:
         # logger.debug('Length of latitudes: ' + str(len(lat_start)))
 
         for constr in self.negative_constraints_continuous:
-            is_constrained_temp = constr.check_crossing(lat_start, lon_start, lat_end, lon_end)
+            is_constrained_temp = constr.check_crossing(
+                lat_start=lat_start,
+                lon_start=lon_start,
+                lat_end=lat_end,
+                lon_end=lon_end,
+                time_start=time_start
+            )
             is_constrained = np.array(is_constrained) | np.array(is_constrained_temp)
 
         return is_constrained.tolist()
 
-    def safe_crossing_discrete(self, lat_start, lon_start, lat_end, lon_end, current_time, is_constrained):
+    def safe_crossing_discrete(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray,
+                               lon_end: np.ndarray, current_time: np.ndarray, is_constrained: list[bool]):
         """
         Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination
         (lat_end, lon_end).
@@ -511,7 +568,7 @@ class StatusCodeError(NegativeContraint):
         routeData.close()
         return status, lats, lons
 
-    def check_crossing(self, lat_start=None, lon_start=None, lat_end=None, lon_end=None, current_time=None):
+    def check_crossing(self, lat_start=None, lon_start=None, lat_end=None, lon_end=None, time_start=None):
         status, lats_netcdf, lon_netcdf = self.load_data_from_file(self.courses_path)
         # Double-check coordinates
         assert (lats_netcdf == lat_start).all()
@@ -799,6 +856,56 @@ class StayOnMap(NegativeContraint):
         self.lon2 = lon2
 
 
+class StayInTime(NegativeContraint):
+    """
+    Constraint such that the boat can't leave the timeframe that has weather data available
+    """
+
+    time_start: datetime
+    time_end: datetime
+
+    def __init__(self):
+        NegativeContraint.__init__(self, "StayInTime")
+        self.message += "leaving wheather time frame!"  # self.resource_type = 0
+
+    def check_crossing(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray, lon_end: np.ndarray,
+                       time_start: np.ndarray = None):
+        """
+        Check whether array of start times from route waypoints is covered by weather data.
+
+        time_start can be None. In this case, all waypoints are not constrained.
+        :param lat_start: Start latitude
+        :type lat_start: np.ndarray
+        :param lon_start: Start longitude
+        :type lon_start: np.ndarray
+        :param lat_end: End latitude
+        :type lat_end: np.ndarray
+        :param lon_end: End longitude
+        :type lon_end: np.ndarray
+        :param time_start: Start time
+        :type time_start: np.ndarray or None
+        :return is_out_of_time: list constraints
+        :rtype is_out_of_time: list[bool]
+
+        """
+
+        if time_start is None:
+            return np.full(np.shape(lat_start), False)
+        is_out_of_time = ((time_start > self.time_end) + (time_start < self.time_start))
+        # if is_out_of_time.any():
+        #    print('checking time: ' + str(time_start))
+        #    print('is_out_of_time: ' + str(is_out_of_time))
+        #    print(f'start_time={self.time_start}, end_time={self.time_end}')
+        return is_out_of_time
+
+    def print_info(self):
+        logger.info(form.get_log_step("stay in wheather time frame", 1))
+
+    def set_time(self, time_start, time_end):
+        self.time_start = time_start
+        self.time_end = time_end
+
+
 class ContinuousCheck(NegativeContraint):
     """
     Contains various functions to test data connection, gathering and use for obtaining spatial relations
@@ -876,7 +983,7 @@ class RunTestContinuousChecks(ContinuousCheck):
     def connect_database(self):
         pass
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time=None):
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         result_length = len(lat_start)
         res = []
 
@@ -1024,7 +1131,7 @@ class SeamarkCrossing(ContinuousCheck):
         else:
             return "false query passed"
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end):
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         """
         Check if certain route crosses specified seamark objects
 
@@ -1106,7 +1213,7 @@ class LandPolygonsCrossing(ContinuousCheck):
         gdf = gdf[gdf["geom"] != None]
         return gdf
 
-    def check_crossing(self, lat_start, lon_start, lat_end, lon_end):
+    def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         """
         Check if certain route crosses specified seamark objects
 

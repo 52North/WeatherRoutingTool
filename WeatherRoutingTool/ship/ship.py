@@ -123,7 +123,7 @@ class Boat:
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
 
-        self.check_value_in_range(lats, lons, time)
+        # self.check_value_in_range(lats, lons, time)
 
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:

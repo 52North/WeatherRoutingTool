@@ -100,7 +100,7 @@ class RoutingProblem(ElementwiseProblem):
 
         # logger.debug(f"RoutingProblem._evaluate: type(x)={type(x)}, x.shape={x.shape}, x={x}")
         obj_dict = self.get_power(x[0])
-        constraints = utils.get_constraints(x[0], self.constraint_list)
+        constraints = utils.get_constraints(x[0], self.constraint_list, obj_dict["start_times"])
         out['F'] = self.get_objectives(obj_dict)
         out['G'] = np.column_stack([constraints])
 
@@ -184,4 +184,5 @@ class RoutingProblem(ElementwiseProblem):
                 print('time_diff: ', time_diff)
                 print('time obj.: ', time_obj)
 
-        return {"fuel_sum": fuel_obj, "shipparams": shipparams, "time_obj": time_obj}
+        return {"fuel_sum": fuel_obj, "shipparams": shipparams, "time_obj": time_obj,
+                "start_times": route_dict["start_times"]}
