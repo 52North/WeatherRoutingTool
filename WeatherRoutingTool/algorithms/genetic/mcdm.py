@@ -248,7 +248,7 @@ class PymoosASF(MCDM):
         Find the index of the best compromise solution from a set of candidates.
 
         This method normalises the objective values for each solution and calls the ASF method by pymoo to find the
-        best compromise.
+        best compromise. The pymoo implementation of ASF accepts the inverse of weights that add up to one
 
         :param solutions: 2D array of objective values where rows are alternative solutions and columns are
           objective values.
@@ -256,25 +256,36 @@ class PymoosASF(MCDM):
         :return: The index of the optimal solution in the provided array.
         :rtype: int
         """
+        debug = False
 
         if self.n_objs == 1:
             return solutions.argmin()
 
-        weights = np.array([self.objectives["fuel_consumption"], self.objectives["arrival_time"]])
+        weight_norm = 1./(self.objectives["arrival_time"] + self.objectives["fuel_consumption"])
+        weights = np.array([self.objectives["arrival_time"], self.objectives["fuel_consumption"]]) * weight_norm
         decomp = ASF()
 
         i_obj = 0
         norm = 1.
+        if debug:
+            print(f'ASF Weights: {weights}')
+
         for obj_str in self.objectives:
             objective_values = solutions[:, i_obj]
+            if debug:
+                print('obj_str: ', obj_str)
+                print('objective values: ', objective_values)
             max_value = np.max(objective_values)
             if i_obj == 0:
                 norm = max_value
             else:
                 objective_values = objective_values * norm * 1. / max_value
             solutions[:, i_obj] = objective_values
+
+            if debug:
+                print('normalised solution: ', solutions[:, i_obj])
             i_obj += 1
 
-        best_ind = decomp(solutions, weights).argmin()
+        best_ind = decomp.do(solutions, 1./weights).argmin()
 
         return best_ind
