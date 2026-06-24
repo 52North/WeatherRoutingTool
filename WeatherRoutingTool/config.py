@@ -8,6 +8,7 @@ from typing import Annotated, List, Literal, Optional, Self, Union, Dict
 
 import pandas as pd
 import xarray as xr
+from geovectorslib import geod
 from pydantic import BaseModel, Field, field_validator, model_validator, PrivateAttr, ValidationError, ValidationInfo
 
 logger = logging.getLogger('WRT.Config')
@@ -363,6 +364,43 @@ class Config(BaseModel):
         for lat, lon, name in [(lat_start, lon_start, "start"), (lat_end, lon_end, "end")]:
             if not (lat_min <= lat <= lat_max and lon_min <= lon <= lon_max):
                 raise ValueError(f"{name} point ({lat}, {lon}) is outside the defined map bounds")
+        return self
+
+    @model_validator(mode='after')
+    def check_travel_time_feasibility(self) -> Self:
+        """
+        Crosscheck the configured time window against the great circle route.
+
+        The great circle distance between the start and the destination of 'DEFAULT_ROUTE' is
+        calculated with geovectorslib. Assuming a boat speed of 6 m/s the minimum travel time is
+        derived and compared to the time difference between 'ARRIVAL_TIME' and 'DEPARTURE_TIME'. If
+        the travel time exceeds the available time window, the configured arrival time can never be
+        reached and an error is raised.
+
+        :raises ValueError: Travel time on the great circle route exceeds the configured time window
+        :return: Config object with validated time window
+        :rtype: WeatherRoutingTool.config.Config
+        """
+
+        # ARRIVAL_TIME is optional; without it there is no time window to crosscheck.
+        if self.ARRIVAL_TIME is None:
+            return self
+
+        assumed_boat_speed = 6.0  # [m/s]
+
+        lat_start, lon_start, lat_end, lon_end = self.DEFAULT_ROUTE
+        gcr = geod.inverse([lat_start], [lon_start], [lat_end], [lon_end])
+        gcr_distance = float(gcr['s12'][0])  # great circle distance [m]
+
+        travel_time = timedelta(seconds=gcr_distance / assumed_boat_speed)
+        available_time = self.ARRIVAL_TIME - self.DEPARTURE_TIME
+
+        if travel_time > available_time:
+            raise ValueError(
+                f"The great circle route ({gcr_distance / 1000:.1f} km) cannot be travelled within the "
+                f"configured time window ({available_time}) assuming a boat speed of "
+                f"{assumed_boat_speed} m/s. Minimum required travel time: {travel_time}."
+            )
         return self
 
     @model_validator(mode='after')

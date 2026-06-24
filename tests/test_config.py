@@ -1,6 +1,10 @@
 import json
 import pytest
+from datetime import datetime, timedelta
 from pathlib import Path
+
+from geovectorslib import geod
+
 from WeatherRoutingTool.config import Config
 
 
@@ -208,3 +212,34 @@ def test_boat_speed_arrival_time_speed_optimisation_success(boat_speed, arrival_
     config_data["ALGORITHM_TYPE"] = "genetic"
 
     Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+
+def _gcr_travel_time(config_data, boat_speed=6.0):
+    """Travel time on the great circle route of DEFAULT_ROUTE at the given boat speed [m/s]."""
+    lat_start, lon_start, lat_end, lon_end = config_data["DEFAULT_ROUTE"]
+    gcr_distance = float(geod.inverse([lat_start], [lon_start], [lat_end], [lon_end])['s12'][0])
+    return timedelta(seconds=gcr_distance / boat_speed)
+
+
+def test_travel_time_feasibility_success():
+    """A time window that exactly matches the great circle travel time must validate."""
+    config_data, _ = load_example_config()
+    departure = datetime.strptime(config_data["DEPARTURE_TIME"], '%Y-%m-%dT%H:%MZ')
+    # Available time equals the minimum required travel time -> still feasible.
+    config_data["ARRIVAL_TIME"] = departure + _gcr_travel_time(config_data)
+
+    config = Config.assign_config(init_mode="from_dict", config_dict=config_data)
+    assert isinstance(config, Config)
+
+
+def test_travel_time_feasibility_failure():
+    """A time window shorter than the great circle travel time must raise an error."""
+    config_data, _ = load_example_config()
+    departure = datetime.strptime(config_data["DEPARTURE_TIME"], '%Y-%m-%dT%H:%MZ')
+    # Only half of the required travel time is available -> infeasible.
+    config_data["ARRIVAL_TIME"] = departure + _gcr_travel_time(config_data) / 2
+
+    with pytest.raises(ValueError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert "cannot be travelled within the configured time window" in str(excinfo.value)
