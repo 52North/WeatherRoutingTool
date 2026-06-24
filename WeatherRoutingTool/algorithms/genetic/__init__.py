@@ -55,6 +55,13 @@ class Genetic(RoutingAlg):
         self.objectives = config.GENETIC_OBJECTIVES
         self.n_objs = len(config.GENETIC_OBJECTIVES)
 
+        # check ordering of objective keys (needs to be 'arrival_time', 'fuel_consumption'
+        first_key = next(iter(self.objectives))
+        if first_key == 'fuel_consumption' and self.n_objs == 2:
+            self.objectives = dict(reversed(self.objectives.items()))
+
+        logger.debug(f'objectives: {self.objectives}')
+
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
@@ -198,8 +205,8 @@ class Genetic(RoutingAlg):
         super().terminate()
         self.consistency_check(res, problem)
 
-        mcdm = MCDM.RMethod(self.objectives)
-        # mcdm = MCDM.PymoosASF(self.objectives)
+        # mcdm = MCDM.RMethod(self.objectives)
+        mcdm = MCDM.PymoosASF(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
