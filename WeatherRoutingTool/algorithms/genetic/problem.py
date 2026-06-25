@@ -62,27 +62,27 @@ class RoutingProblem(ElementwiseProblem):
         if boat_speed is None:
             self.boat_speed_from_arrival_time = True
 
-    def get_objectives(self, obj_dict: dict) -> np.array:
+    def get_objectives(self, obj_dict: dict) -> list:
         """
-        Convert dictionary of objective values into a numpy array for pymoo.
+        Convert dictionary of objective values into a flat list of objective values for pymoo.
+
+        The order of the returned values is fixed (arrival_time before fuel_consumption) and must match the
+        column order expected by the MCDM selection step.
 
         :param obj_dict: Dictionary containing calculated metrics like 'time_obj' and 'fuel_sum'.
         :type obj_dict: dict
-        :return: A column-stacked array of objective values.
-        :rtype: np.ndarray
+        :return: A list of objective values, one entry per active objective.
+        :rtype: list
         :raises ValueError: If no valid objectives are specified or found in the dictionary.
         """
         objective_keys = list(self.objectives.keys())
-        objs = None
+        objs = []
         if "arrival_time" in objective_keys:
-            objs = np.column_stack([obj_dict["time_obj"]])
+            objs.append(obj_dict["time_obj"])
         if "fuel_consumption" in objective_keys:
-            if objs is None:
-                objs = np.column_stack([obj_dict["fuel_sum"].value])
-            else:
-                objs = np.column_stack((objs, [obj_dict["fuel_sum"].value]))
+            objs.append(obj_dict["fuel_sum"].value)
 
-        if objs is None:
+        if not objs:
             raise ValueError('Please specify an objective for the genetic algorithm.')
 
         return objs
@@ -151,14 +151,16 @@ class RoutingProblem(ElementwiseProblem):
             fuel = shipparams.get_fuel_rate()
             fuel = fuel * route_dict['travel_times']
             fuel_spread = np.max(fuel) - np.min(fuel)
+            fuel_obj = np.sum(fuel)
+
             if debug:
                 print('max fuel: ', np.max(fuel))
                 print('min fuel: ', np.min(fuel))
                 print('fuel max spread: ', fuel_spread)
+                print('fuel obj: ', fuel_obj)
 
                 print('last start_time: ', route_dict['start_times'][-1])
                 print('last travel time: ', route_dict['travel_times'][-1].value)
-            fuel_obj = np.sum(fuel)
 
         if "arrival_time" in self.objectives.keys():
             real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
