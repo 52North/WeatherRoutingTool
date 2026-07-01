@@ -256,21 +256,24 @@ class PymoosASF(MCDM):
         :return: The index of the optimal solution in the provided array.
         :rtype: int
         """
-        debug = False
+        debug = True
 
         if self.n_objs == 1:
             return solutions.argmin()
 
-        weight_norm = 1./(self.objectives["arrival_time"] + self.objectives["fuel_consumption"])
+        weight_norm = 1. / (self.objectives["arrival_time"] + self.objectives["fuel_consumption"])
         weights = np.array([self.objectives["arrival_time"], self.objectives["fuel_consumption"]]) * weight_norm
         decomp = ASF()
 
-        i_obj = 0
-        norm = 1.
+        approx_ideal = solutions.min(axis=0)
+        approx_nadir = solutions.max(axis=0)
+
+        solutions = (solutions - approx_ideal) / (approx_nadir - approx_ideal)
         if debug:
             print(f'ASF Weights: {weights}')
+            print(f'ASF Norm Solutions: {solutions}')
 
-        for obj_str in self.objectives:
+        '''for obj_str in self.objectives:
             objective_values = solutions[:, i_obj]
             if debug:
                 print('obj_str: ', obj_str)
@@ -285,7 +288,8 @@ class PymoosASF(MCDM):
             if debug:
                 print('normalised solution: ', solutions[:, i_obj])
             i_obj += 1
+        '''
 
-        best_ind = decomp.do(solutions, 1./weights).argmin()
+        best_ind = decomp.do(solutions, 1. / weights).argmin()
 
         return best_ind

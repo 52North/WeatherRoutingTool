@@ -377,19 +377,19 @@ class CrossoverFactory:
                         patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="TP crossover"),
                     SinglePointCrossover(
                         config=config,
                         patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="SP crossover"),
                     TwoPointCrossoverSpeed(
                         config=config,
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="TP Crossover speed")
                 ])

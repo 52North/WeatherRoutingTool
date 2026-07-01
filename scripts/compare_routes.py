@@ -219,7 +219,7 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (30, 10, 40, 35)
+    lat1, lon1, lat2, lon2 = (50, -2, 60, 14.257)
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')

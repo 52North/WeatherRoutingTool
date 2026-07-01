@@ -275,8 +275,8 @@ class Genetic(RoutingAlg):
             return
 
         ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
-        ax.set_xlabel('f1', labelpad=10)
-        ax.set_ylabel('f2', labelpad=10)
+        ax.set_xlabel('arrival time', labelpad=10)
+        ax.set_ylabel('fuel consumption', labelpad=10)
         ax.grid(True, linestyle='--', alpha=0.7)
         plt.title("Objective Space")
 
