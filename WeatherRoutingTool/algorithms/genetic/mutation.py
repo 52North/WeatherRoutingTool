@@ -219,6 +219,13 @@ class RandomPlateauMutation(MutationConstraintRejection):
                                                 application="Route plateau mutation")
         self.route_count = 0
 
+        # Fix random seed depending on configuration
+        self.rndm_gen = None
+        if self.config.GENETIC_FIX_RANDOM_SEED:
+            self.rndm_gen = np.random.default_rng(1)
+        else:
+            self.rndm_gen = np.random.default_rng()
+
     def random_walk(
             self,
             point: tuple[float, float, float],
@@ -286,7 +293,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
         for _ in range(0, self.n_updates):
             # obtain indices for plateau generation
-            rindex = np.random.randint(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
+            rindex = self.rndm_gen.integers(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
             i_slope_start = int(i_plateau_start - self.plateau_slope) + 1
@@ -303,7 +310,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
             p2_orig = rt[i_plateau_end]
-            bearing = np.random.randint(0, 360)
+            bearing = self.rndm_gen.integers(0, 360)
             rt_new[i_plateau_start] = self.random_walk(
                 point=p1_orig,
                 dist=self.dist,
@@ -413,6 +420,13 @@ class RouteBlendMutation(MutationConstraintRejection):
             **kw
         )
 
+        # Fix random seed depending on configuration
+        self.rndm_gen = None
+        if self.config.GENETIC_FIX_RANDOM_SEED:
+            self.rndm_gen = np.random.default_rng(1)
+        else:
+            self.rndm_gen = np.random.default_rng()
+
     @staticmethod
     def bezier_curve(control_points, n_points=100):
         """Generate a Bezier curve given control points.
@@ -447,8 +461,8 @@ class RouteBlendMutation(MutationConstraintRejection):
         if route_length <= self.min_length:
             return rt_new
 
-        start = np.random.randint(0, route_length - self.min_length)
-        length = np.random.randint(self.min_length, min(self.max_length, route_length - start))
+        start = self.rndm_gen.integers(0, route_length - self.min_length)
+        length = self.rndm_gen.integers(self.min_length, min(self.max_length, route_length - start))
         end = start + length
         n_points = length
 
@@ -599,7 +613,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         rt_new = copy.deepcopy(rt)
         all_inds = np.linspace(start=0, stop=rt.shape[0] - 1, num=rt.shape[0], dtype=int)
         try:
-            indices = np.random.choice(all_inds, self.n_updates)
+            indices = self.rndm_gen.choice(all_inds, self.n_updates)
         except ValueError:
             indices = all_inds
         for i in indices:
