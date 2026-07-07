@@ -82,8 +82,10 @@ class Genetic(RoutingAlg):
         seed = None
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
-            np.random.seed(1)
+            utils.set_random_generator(1)
             seed = 1
+        else:
+            utils.set_random_generator()
 
         # inputs
         problem = RoutingProblem(

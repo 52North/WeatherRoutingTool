@@ -13,6 +13,25 @@ from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger("WRT.genetic")
 
+RNG = np.random.default_rng()
+
+
+def set_random_generator(seed: int | None = None) -> np.random.Generator:
+    """Random generator for reproducibility of results
+
+    :param seed: Seed for the random generator. If None, a random seed is used.
+    :type seed: int | None
+    :return: Random generator
+    :rtype: np.random.Generator"""
+
+    global RNG
+    RNG = np.random.default_rng(seed)
+    return RNG
+
+
+def get_random_generator() -> np.random.Generator:
+    return RNG
+
 
 def gcr_distance(src, dst) -> float:
     """Return the Great Circle distance between src and dst

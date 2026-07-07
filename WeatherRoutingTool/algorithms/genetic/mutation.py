@@ -2,7 +2,6 @@ import copy
 import logging
 import math
 import os
-import random
 from operator import add, sub
 
 import cartopy.crs as ccrs
@@ -219,13 +218,6 @@ class RandomPlateauMutation(MutationConstraintRejection):
                                                 application="Route plateau mutation")
         self.route_count = 0
 
-        # Fix random seed depending on configuration
-        self.rndm_gen = None
-        if self.config.GENETIC_FIX_RANDOM_SEED:
-            self.rndm_gen = np.random.default_rng(1)
-        else:
-            self.rndm_gen = np.random.default_rng()
-
     def random_walk(
             self,
             point: tuple[float, float, float],
@@ -293,7 +285,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
         for _ in range(0, self.n_updates):
             # obtain indices for plateau generation
-            rindex = self.rndm_gen.integers(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
+            rindex = utils.RNG.integers(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
             i_slope_start = int(i_plateau_start - self.plateau_slope) + 1
@@ -310,7 +302,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
             p2_orig = rt[i_plateau_end]
-            bearing = self.rndm_gen.integers(0, 360)
+            bearing = utils.RNG.integers(0, 360)
             rt_new[i_plateau_start] = self.random_walk(
                 point=p1_orig,
                 dist=self.dist,
@@ -420,13 +412,6 @@ class RouteBlendMutation(MutationConstraintRejection):
             **kw
         )
 
-        # Fix random seed depending on configuration
-        self.rndm_gen = None
-        if self.config.GENETIC_FIX_RANDOM_SEED:
-            self.rndm_gen = np.random.default_rng(1)
-        else:
-            self.rndm_gen = np.random.default_rng()
-
     @staticmethod
     def bezier_curve(control_points, n_points=100):
         """Generate a Bezier curve given control points.
@@ -461,8 +446,8 @@ class RouteBlendMutation(MutationConstraintRejection):
         if route_length <= self.min_length:
             return rt_new
 
-        start = self.rndm_gen.integers(0, route_length - self.min_length)
-        length = self.rndm_gen.integers(self.min_length, min(self.max_length, route_length - start))
+        start = utils.RNG.integers(0, route_length - self.min_length)
+        length = utils.RNG.integers(self.min_length, min(self.max_length, route_length - start))
         end = start + length
         n_points = length
 
@@ -536,13 +521,13 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
-            rindex = np.random.randint(1, rt.shape[0] - 1)
+            rindex = utils.RNG.integers(1, rt.shape[0] - 1)
             p1 = rt[rindex]
 
             p2 = self.random_walk(
                 point=p1,
                 dist=self.dist,
-                bearing=np.random.choice([45, 135, 225, 315]), )
+                bearing=utils.RNG.choice([45, 135, 225, 315]), )
             rt[rindex] = p2
         return rt
 
@@ -566,13 +551,13 @@ class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
 
     def mutate(self, problem, rt, **kw):
         try:
-            indices = random.sample(range(0, rt.shape[0] - 1), self.n_updates)
+            indices = utils.RNG.choice(rt.shape[0] - 1, size=self.n_updates, replace=False)
         except ValueError:
             indices = range(0, rt.shape[0] - 1)
         ops = (add, sub)
         for i in indices:
-            op = random.choice(ops)
-            change_percent = random.uniform(0.0, self.change_percent_max)
+            op = ops[utils.RNG.integers(0, len(ops))]
+            change_percent = utils.RNG.uniform(0.0, self.change_percent_max)
             new = op(rt[i][2], change_percent * rt[i][2])
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
                 new = self.config.BOAT_SPEED_BOUNDARIES[0]
@@ -602,23 +587,16 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
         self.sigma = 1.
 
-        # Fix random seed depending on configuration
-        self.rndm_gen = None
-        if self.config.GENETIC_FIX_RANDOM_SEED:
-            self.rndm_gen = np.random.default_rng(1)
-        else:
-            self.rndm_gen = np.random.default_rng()
-
     def mutate(self, problem, rt, **kw):
         rt_new = copy.deepcopy(rt)
         all_inds = np.linspace(start=0, stop=rt.shape[0] - 1, num=rt.shape[0], dtype=int)
         try:
-            indices = self.rndm_gen.choice(all_inds, self.n_updates)
+            indices = utils.RNG.choice(all_inds, self.n_updates)
         except ValueError:
             indices = all_inds
         for i in indices:
             old_speed = rt[i][2]
-            new = self.rndm_gen.normal(loc=old_speed, scale=self.sigma)
+            new = utils.RNG.normal(loc=old_speed, scale=self.sigma)
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
                 new = old_speed
             elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
@@ -647,10 +625,10 @@ class RandomMutationsOrchestrator(MutationBase):
 
     def _do(self, problem, X, **kw):
         if self.speed_opts:
-            speed_opt = self.speed_opts[np.random.randint(0, len(self.speed_opts))]
+            speed_opt = self.speed_opts[utils.RNG.integers(0, len(self.speed_opts))]
             X = speed_opt._do(problem, X, **kw)
         if self.waypoint_opts:
-            waypoint_opt = self.waypoint_opts[np.random.randint(0, len(self.waypoint_opts))]
+            waypoint_opt = self.waypoint_opts[utils.RNG.integers(0, len(self.waypoint_opts))]
             X = waypoint_opt._do(problem, X, **kw)
         return X
 

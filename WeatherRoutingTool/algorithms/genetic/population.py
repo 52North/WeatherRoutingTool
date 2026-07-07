@@ -134,7 +134,7 @@ class Population(Sampling):
         :rtype: np.ndarray
         """
         std_dev = (max_boat_speed - min_boat_speed) / 4
-        gaussian_sample = np.random.normal(boat_speed, std_dev, 1000)
+        gaussian_sample = utils.RNG.normal(boat_speed, std_dev, 1000)
         gaussian_sample[gaussian_sample < min_boat_speed] = np.nan
         gaussian_sample[gaussian_sample > max_boat_speed] = np.nan
         gaussian_sample = gaussian_sample[~np.isnan(gaussian_sample)]
