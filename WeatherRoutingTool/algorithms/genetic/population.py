@@ -33,6 +33,7 @@ class Population(Sampling):
         self.constraints_list = constraints_list
         self.n_constrained_routes = 0
         self.pop_size = pop_size
+        self.rng = utils.get_rng(config)
 
         self.src: tuple[float, float] = tuple(default_route[:-2])
         self.dst: tuple[float, float] = tuple(default_route[-2:])
@@ -110,8 +111,8 @@ class Population(Sampling):
         rt[:, 2] = np.full(rt[:, 1].shape, bs)
         return rt
 
-    @staticmethod
-    def spread_velocity(min_boat_speed: float, max_boat_speed: float, boat_speed: float, pop_size: float) -> np.ndarray:
+    def spread_velocity(self, min_boat_speed: float, max_boat_speed: float,
+                        boat_speed: float, pop_size: float) -> np.ndarray:
         """
         Calculate velocity spread for individuals in case of pure speed optimisation.
 
@@ -134,7 +135,7 @@ class Population(Sampling):
         :rtype: np.ndarray
         """
         std_dev = (max_boat_speed - min_boat_speed) / 4
-        gaussian_sample = np.random.normal(boat_speed, std_dev, 1000)
+        gaussian_sample = self.rng.normal(boat_speed, std_dev, 1000)
         gaussian_sample[gaussian_sample < min_boat_speed] = np.nan
         gaussian_sample[gaussian_sample > max_boat_speed] = np.nan
         gaussian_sample = gaussian_sample[~np.isnan(gaussian_sample)]

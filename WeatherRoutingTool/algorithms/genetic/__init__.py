@@ -43,6 +43,7 @@ class Genetic(RoutingAlg):
         super().__init__(config)
 
         self.config = config
+        self.rng = utils.get_rng(config)
 
         # running
         self.figure_path = graphics.get_figure_path()
@@ -82,7 +83,6 @@ class Genetic(RoutingAlg):
         seed = None
         if self.config.GENETIC_FIX_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
-            np.random.seed(1)
             seed = 1
 
         # inputs

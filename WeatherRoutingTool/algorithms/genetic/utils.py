@@ -11,8 +11,17 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.config import Config
+
 
 logger = logging.getLogger("WRT.genetic")
+
+
+def get_rng(config: Config, seed=1):
+    if config.GENETIC_FIX_RANDOM_SEED:
+        return np.random.default_rng(seed)
+    else:
+        return np.random.default_rng()
 
 
 def gcr_distance(src, dst) -> float:
