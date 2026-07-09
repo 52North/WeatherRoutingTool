@@ -66,8 +66,6 @@ class Config(BaseModel):
         'land_crossing_global_land_mask', 'land_crossing_polygons', 'seamarks',
         'water_depth', 'on_map', 'in_time', 'via_waypoints', 'status_error'
     ]]
-    # options: 'land_crossing_global_land_mask', 'land_crossing_polygons',
-    # 'seamarks','water_depth', 'on_map', 'in_time', 'via_waypoints', 'status_error'
 
     _DATA_MODE_DEPTH: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc', 'skip'
     _DATA_MODE_WEATHER: str = PrivateAttr('from_file')  # options: 'automatic', 'from_file', 'odc', 'skip'

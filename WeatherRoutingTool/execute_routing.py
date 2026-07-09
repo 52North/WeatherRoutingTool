@@ -1,4 +1,5 @@
 # import cProfile
+import logging
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
@@ -7,6 +8,8 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, W
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.algorithms.routingalg_factory import RoutingAlgFactory
 from WeatherRoutingTool.utils.maps import Map
+
+logger = logging.getLogger('WRT.execute_routing')
 
 
 def merge_figures_to_gif(path, nof_figures):
@@ -42,7 +45,12 @@ def execute_routing(config, ship_config):
     # initialise weather
     wt = WeatherFactory.get_weather(config._DATA_MODE_WEATHER, windfile, departure_time, time_forecast, time_resolution,
                                     default_map)
-    time_frame = (wt.time_start, wt.time_end)
+    if config._DATA_MODE_WEATHER == "skip":
+        time_frame = None
+        if "in_time" in config.CONSTRAINTS_LIST:
+            logger.warning("No weather data used. Ignoring constraint 'in_time'.")
+    else:
+        time_frame = (wt.time_start, wt.time_end)
 
     # *******************************************
     # initialise boat

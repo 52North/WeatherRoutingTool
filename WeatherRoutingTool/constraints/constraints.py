@@ -839,7 +839,7 @@ class StayOnMap(NegativeContraint):
 
     def __init__(self):
         NegativeContraint.__init__(self, "StayOnMap")
-        self.message += "leaving wheather map!"  # self.resource_type = 0
+        self.message += "leaving weather map!"  # self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
@@ -847,7 +847,7 @@ class StayOnMap(NegativeContraint):
         return is_on_map
 
     def print_info(self):
-        logger.info(form.get_log_step("stay on wheather map", 1))
+        logger.info(form.get_log_step("stay on weather map", 1))
 
     def set_map(self, lat1, lon1, lat2, lon2):
         self.lat1 = lat1
@@ -866,7 +866,7 @@ class StayInTime(NegativeContraint):
 
     def __init__(self):
         NegativeContraint.__init__(self, "StayInTime")
-        self.message += "leaving wheather time frame!"  # self.resource_type = 0
+        self.message += "leaving weather time frame!"  # self.resource_type = 0
 
     def check_crossing(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray, lon_end: np.ndarray,
                        time_start: np.ndarray = None):
@@ -899,7 +899,7 @@ class StayInTime(NegativeContraint):
         return is_out_of_time
 
     def print_info(self):
-        logger.info(form.get_log_step("stay in wheather time frame", 1))
+        logger.info(form.get_log_step("stay in weather time frame", 1))
 
     def set_time(self, time_start, time_end):
         self.time_start = time_start

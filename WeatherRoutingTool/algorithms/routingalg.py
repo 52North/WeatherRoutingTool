@@ -1,11 +1,12 @@
+import logging
 from datetime import datetime
 
-import matplotlib
 from astropy import units as u
 from geovectorslib import geod
-from matplotlib.figure import Figure
+from matplotlib import figure, pyplot
 
-from WeatherRoutingTool.constraints.constraints import *
+import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.utils.graphics import get_figure_path
@@ -27,7 +28,7 @@ class RoutingAlg:
     gcr_course: float  # azimuthal angle of great circle route (0 - 360°)
     gcr_dist: float  # distance of great circle route
 
-    fig: matplotlib.figure
+    fig: figure.Figure
     route_ensemble: list
     figure_path: str
     map_ext: Map
@@ -48,7 +49,7 @@ class RoutingAlg:
         self.gcr_course = self.gcr_course * u.degree
 
         self.figure_path = get_figure_path()
-        plt.switch_backend("Agg")
+        pyplot.switch_backend("Agg")
 
         self.boat_speed = config.BOAT_SPEED
         if self.boat_speed is not None:
