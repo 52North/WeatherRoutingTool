@@ -1,4 +1,4 @@
-# import cProfile
+import cProfile
 
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.ship.ship_factory import ShipFactory
@@ -24,8 +24,8 @@ def execute_routing(config, ship_config):
     :type ship_config: WeatherRoutingTool.ship.ship_config.ShipConfig
     :return: None
     """
-    # prof = cProfile.Profile()
-    # prof.enable()
+    prof = cProfile.Profile()
+    prof.enable()
 
     # *******************************************
     # basic settings
@@ -74,5 +74,5 @@ def execute_routing(config, ship_config):
         min_fuel_route_postprocessed.write_to_geojson(
             routepath / f"{min_fuel_route_postprocessed.route_type}_postprocessed.geojson")
     print(boat.counter)
-    # prof.disable()
-    # prof.dump_stats('wrt_run.prof')
+    prof.disable()
+    prof.dump_stats('wrt_run.prof')
