@@ -15,9 +15,10 @@ from WeatherRoutingTool.config import Config
 
 
 logger = logging.getLogger("WRT.genetic")
+DEFAULT_RANDOM_SEED = 1
 
 
-def get_rng(config: Config, seed: int = 1) -> np.random.Generator:
+def get_rng(config: Config, seed: int = DEFAULT_RANDOM_SEED) -> np.random.Generator:
     """Return a NumPy random generator for genetic operations.
 
     :param config: Application configuration that controls reproducibility.

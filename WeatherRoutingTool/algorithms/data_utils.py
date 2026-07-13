@@ -131,8 +131,8 @@ class GridMixin:
         shuffled_cost[nan_mask] = np.nanmean(cost)
 
         # shuffle first along South-North (latitude), then along West-East (longitude) axis
-        shuffled_cost = genetic_utils.RNG.permutation(shuffled_cost, axis=0)
-        shuffled_cost = genetic_utils.RNG.permutation(shuffled_cost, axis=1)
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=0)
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=1)
 
         # assign very high weights to nan values (land pixels)
         shuffled_cost[nan_mask] = 1e20

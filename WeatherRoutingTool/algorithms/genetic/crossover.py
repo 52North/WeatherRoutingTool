@@ -75,7 +75,6 @@ class OffspringRejectionCrossover(CrossoverBase):
             constraints_list: ConstraintsList,
             prob=.5,
             crossover_type="unnamed"
-
     ):
         super().__init__(prob=prob)
 

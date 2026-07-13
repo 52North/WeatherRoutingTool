@@ -26,7 +26,6 @@ class Boat:
         self.time_min_max = [None, None]
         self.lat_min_max = [None, None]
         self.lon_min_max = [None, None]
-        self.counter = 0
 
     def get_required_water_depth(self):
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
@@ -132,7 +131,6 @@ class Boat:
         if depth:
             ship_var = ship_var.sel(depth=depth, method='nearest', drop=False)
         ship_var = ship_var.fillna(0).to_numpy()
-        self.counter += 1
 
         return ship_var
 

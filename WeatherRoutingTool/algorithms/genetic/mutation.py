@@ -586,7 +586,8 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
         self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
-        self.sigma = 1.
+        self.sigma = 1.54
+        self.max_acceleration = 1
         self.config = config
         self.rng = utils.get_rng(config)
 
