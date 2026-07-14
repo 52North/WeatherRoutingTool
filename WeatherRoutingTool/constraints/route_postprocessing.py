@@ -505,7 +505,11 @@ class RoutePostprocessing:
         gcd = geod.inverse([lat[previous_step_index]], [lon[previous_step_index]],
                            [lat[node_index]], [lon[node_index]])
         dist = gcd['s12']
-        time_taken_for_current_step = dist[0] / speed[previous_step_index].value
+        if speed.isscalar:
+            speed_value = speed.value
+        else:
+            speed_value = speed[previous_step_index].value
+        time_taken_for_current_step = dist[0] / speed_value
         current_timestamp = previous_timestamp + timedelta(seconds=int(time_taken_for_current_step))
         return current_timestamp
 
