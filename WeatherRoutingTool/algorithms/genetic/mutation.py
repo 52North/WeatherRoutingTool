@@ -588,8 +588,6 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
         self.sigma = 1.54
         self.max_acceleration = 1
-        self.config = config
-        self.rng = utils.get_rng(config)
 
     def mutate(self, problem, rt, **kw):
         rt_new = copy.deepcopy(rt)
@@ -607,7 +605,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
                 new = old_speed
             rt_new[i][2] = new
 
-        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], 1)
+        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], self.max_acceleration)
         return rt_new
 
 
@@ -676,6 +674,7 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "speed":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
             return RandomMutationsOrchestrator(
+                config,
                 waypoint_opts=None,
                 speed_opts=[
                     # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
@@ -685,6 +684,7 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "waypoints":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_waypoints".')
             return RandomMutationsOrchestrator(
+                config,
                 waypoint_opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
                     RouteBlendMutation(config=config, constraints_list=constraints_list),

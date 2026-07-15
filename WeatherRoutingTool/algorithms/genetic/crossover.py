@@ -357,6 +357,7 @@ class CrossoverFactory:
         if config.GENETIC_CROSSOVER_TYPE == "waypoints":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
             return RandomizedCrossoversOrchestrator(
+                config=config,
                 opts=[
                     TwoPointCrossover(
                         config=config,
