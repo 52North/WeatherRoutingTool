@@ -15,24 +15,18 @@ from WeatherRoutingTool.config import Config
 
 
 logger = logging.getLogger("WRT.genetic")
-DEFAULT_RANDOM_SEED = 1
 
 
-def get_rng(config: Config, seed: int = DEFAULT_RANDOM_SEED) -> np.random.Generator:
+def get_rng(config: Config) -> np.random.Generator:
     """Return a NumPy random generator for genetic operations.
 
     :param config: Application configuration that controls reproducibility.
     :type config: Config
-    :param seed: Seed to use when deterministic randomness is enabled.
-    :type seed: int
     :return: A NumPy ``Generator`` instance.
     :rtype: np.random.Generator
     """
 
-    if config.GENETIC_FIX_RANDOM_SEED:
-        return np.random.default_rng(seed)
-    else:
-        return np.random.default_rng()
+    return np.random.default_rng(config.GENETIC_RANDOM_SEED)
 
 
 def gcr_distance(src, dst) -> float:

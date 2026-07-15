@@ -80,9 +80,9 @@ class Genetic(RoutingAlg):
 
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         seed = None
-        if self.config.GENETIC_FIX_RANDOM_SEED:
+        if self.config.GENETIC_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
-            seed = utils.DEFAULT_RANDOM_SEED
+            seed = self.config.GENETIC_RANDOM_SEED
 
         # inputs
         problem = RoutingProblem(
