@@ -1,0 +1,8 @@
+{
+  "source": "defined in config",
+  "destination": "defined in config",
+  "algorithm": "genetic",
+  "boat_type": "direct_power",
+  "status": "route successfully generated using WRT",
+  "note": "route computed based on weather data and optimization constraints"
+}
