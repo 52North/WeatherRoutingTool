@@ -124,6 +124,7 @@ def test_random_plateau_mutation(plt):
         show_depth=False,
         show_gcr=False
     )
+
     old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
     old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
     new_route_one_lc = graphics.get_route_lc(new_route[0, 0])

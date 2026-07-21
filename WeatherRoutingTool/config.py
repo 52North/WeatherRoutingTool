@@ -113,6 +113,7 @@ class Config(BaseModel):
     GENETIC_CROSSOVER_PATCHER: Literal['gcr', 'isofuel'] = 'isofuel'
     GENETIC_FIX_RANDOM_SEED: bool = False
     GENETIC_OBJECTIVES: Dict[str, float] = {"arrival_time": 1.5, "fuel_consumption": 1.5}  # dictionary for configuring
+    GENETIC_SYMMETRIC_TIME_OBJECTIVE: bool = True
     # the objectives and objective weights
 
     INTERMEDIATE_WAYPOINTS: Annotated[

@@ -99,7 +99,8 @@ class Genetic(RoutingAlg):
             boat_speed=self.boat_speed,
             boat=boat,
             constraint_list=constraints_list,
-            objectives=self.objectives
+            objectives=self.objectives,
+            symmetric_time_objective=self.config.GENETIC_SYMMETRIC_TIME_OBJECTIVE
         )
 
         initial_population = PopulationFactory.get_population(
@@ -208,6 +209,12 @@ class Genetic(RoutingAlg):
         # mcdm = MCDM.RMethod(self.objectives)
         mcdm = MCDM.PymoosASF(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
+        filtered_solutions = mcdm.get_filtered_solutions()
+
+        # solutions are only filtered for PymoosASF
+        if filtered_solutions is None:
+            filtered_solutions = res.F
+
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel_dict = problem.get_power(best_route)
@@ -223,7 +230,7 @@ class Genetic(RoutingAlg):
             self.plot_speed_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
-            self.plot_objective_space(res, best_index)
+            self.plot_objective_space(filtered_solutions, best_index)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -265,8 +272,7 @@ class Genetic(RoutingAlg):
         self.check_positive_power()
         return route
 
-    def plot_objective_space(self, res, best_index):
-        F = res.F
+    def plot_objective_space(self, F, best_index):
         fig, ax = plt.subplots(figsize=(7, 5))
 
         if self.n_objs == 2:
@@ -275,8 +281,8 @@ class Genetic(RoutingAlg):
             return
 
         ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
-        ax.set_xlabel('f1', labelpad=10)
-        ax.set_ylabel('f2', labelpad=10)
+        ax.set_xlabel('arrival time', labelpad=10)
+        ax.set_ylabel('fuel consumption', labelpad=10)
         ax.grid(True, linestyle='--', alpha=0.7)
         plt.title("Objective Space")
 
