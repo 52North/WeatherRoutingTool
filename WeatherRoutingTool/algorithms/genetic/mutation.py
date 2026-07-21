@@ -243,7 +243,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
         lon2 = result["lon2"]
         return lat2, lon2, speed
 
-    def variable_plateau_size(self, route_length):
+    def variable_plateau_size(self, route_length) -> bool:
+        if route_length < 9:
+            return False
+
         plateau_length = np.random.randint(7, np.floor(0.9 * route_length))
         if plateau_length % 2 != 1:
             plateau_length = plateau_length - 1
@@ -261,6 +264,8 @@ class RandomPlateauMutation(MutationConstraintRejection):
         print('plateau_size: ', self.plateau_size)
         print('plateau_slope: ', self.plateau_slope)
         print('plateau_length:', plateau_length)
+
+        return True
 
     def mutate(self, problem, rt, **kw):
         """
@@ -293,13 +298,12 @@ class RandomPlateauMutation(MutationConstraintRejection):
         assert len(rt.shape) == 2
         assert rt.shape[1] == 3
         route_length = rt.shape[0]
-        self.variable_plateau_size(route_length)
+        long_enough = self.variable_plateau_size(route_length)
+        if not long_enough:
+            return rt
 
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
-
-        if route_length <= plateau_length + 1:  # only mutate routes that are long enough
-            return rt
 
         if debug:
             print('################################')
