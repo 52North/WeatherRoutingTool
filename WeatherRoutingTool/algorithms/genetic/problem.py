@@ -44,11 +44,10 @@ class RoutingProblem(ElementwiseProblem):
                  boat: Boat,
                  boat_speed: float,
                  constraint_list: ConstraintsList,
-                 objectives: dict
+                 objectives: dict,
+                 symmetric_time_objective: bool
                  ):
         n_constr = 1
-        # if "arrival_time" in objectives:
-        #    n_constr += 1
 
         super().__init__(
             n_var=1,
@@ -62,6 +61,7 @@ class RoutingProblem(ElementwiseProblem):
         self.arrival_time = arrival_time
         self.boat_speed_from_arrival_time = False
         self.objectives = objectives
+        self.symmetric_time_objective = symmetric_time_objective
         # maximum allowed delay (minutes) when 'arrival_time' is an objective
         self.max_delay_minutes = 60
 
@@ -177,20 +177,24 @@ class RoutingProblem(ElementwiseProblem):
         if "arrival_time" in self.objectives.keys():
             real_arrival_time = route_dict['start_times'][-1] + datetime.timedelta(
                 seconds=route_dict['travel_times'][-1].value)
-            # signed delay in minutes: positive means the boat arrives later than planned (i.e. is late)
-            delay = (real_arrival_time - self.arrival_time).total_seconds() / 60
-            time_diff = np.abs(self.arrival_time - real_arrival_time).total_seconds() / 60
+            # signed time difference in minutes: positive means the boat arrives earlier than planned
+            time_diff = (self.arrival_time - real_arrival_time).total_seconds() / 60
 
-            # being early
-            if time_diff > 0:
+            # penalising delay
+            if time_diff > -1 and time_diff < 0:
+                time_diff = -1
+            time_obj = 1. / (120 ** 4) * time_diff * time_diff * time_diff * time_diff
+
+            # penalising being early
+            if time_diff > 0 and not self.symmetric_time_objective:
                 if time_diff < 1:
                     time_diff = 1
-                time_obj = time_diff * time_diff
-            # delay
-            else:
-                if time_diff > -1:
-                    time_diff = -1
-                time_obj = 0.01 * time_diff * time_diff * time_diff * time_diff
+                time_obj = 100. / (120 ** 4) * time_diff * time_diff
+
+            # penalise deviations by more than 120 min
+            abs_time_diff = np.abs(time_diff)
+            if abs_time_diff > 120:
+                time_obj = 1000
 
             if debug:
                 print('departure time: ', self.departure_time)

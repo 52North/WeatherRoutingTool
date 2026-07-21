@@ -22,6 +22,11 @@ class MCDM:
     def get_best_compromise(self, solutions):
         pass
 
+    def get_filtered_solutions(self) -> np.ndarray:
+        """If solutions are filtered before deciding on best compromise, return the filtered solutions otherwise
+        None."""
+        pass
+
 
 class RMethod(MCDM):
     """
@@ -173,6 +178,9 @@ class RMethod(MCDM):
             print('best index: ', rmethod_table.iloc[best_ind])
         return best_ind
 
+    def get_filtered_solutions(self) -> None:
+        return None
+
     def get_rank_sum(self, rank_max: int) -> float:
         """
         Calculate the reciprocal of the harmonic sum for a given rank.
@@ -237,18 +245,24 @@ class RMethod(MCDM):
 
 class PymoosASF(MCDM):
 
+    filtered_solutions: np.ndarray
+
     def __init__(self, objectives: dict[str, int]):
         """
         Calls the ASF method for MCDM as implemented by pymoo.
         """
         super().__init__(objectives)
 
-    def get_best_compromise(self, solutions):
+        self.filtered_solutions = None
+
+    def get_best_compromise(self, solutions) -> int:
         """
         Find the index of the best compromise solution from a set of candidates.
 
         This method normalises the objective values for each solution and calls the ASF method by pymoo to find the
-        best compromise. The pymoo implementation of ASF accepts the inverse of weights that add up to one
+        best compromise. The pymoo implementation of ASF accepts the inverse of weights that add up to one. Solutions
+        are filtered before deciding on the best-compromise solution: solutions with an objective value of 1000 of the
+        time function are omitted (see RoutingProblem.get_power for further information).
 
         :param solutions: 2D array of objective values where rows are alternative solutions and columns are
           objective values.
@@ -256,40 +270,34 @@ class PymoosASF(MCDM):
         :return: The index of the optimal solution in the provided array.
         :rtype: int
         """
-        debug = True
+        debug = False
 
         if self.n_objs == 1:
             return solutions.argmin()
 
+        if debug:
+            print(f'Original solutions: {solutions}')
+
+        self.filtered_solutions = solutions[~np.isclose(solutions[:, 0], 1000.0)]
+
+        if debug:
+            print(f'Solutions after filtering: {self.filtered_solutions}')
+
         weight_norm = 1. / (self.objectives["arrival_time"] + self.objectives["fuel_consumption"])
         weights = np.array([self.objectives["arrival_time"], self.objectives["fuel_consumption"]]) * weight_norm
+
         decomp = ASF()
 
-        approx_ideal = solutions.min(axis=0)
-        approx_nadir = solutions.max(axis=0)
+        approx_ideal = self.filtered_solutions.min(axis=0)
+        approx_nadir = self.filtered_solutions.max(axis=0)
+        self.filtered_solutions = (self.filtered_solutions - approx_ideal) / (approx_nadir - approx_ideal)
 
-        solutions = (solutions - approx_ideal) / (approx_nadir - approx_ideal)
         if debug:
             print(f'ASF Weights: {weights}')
-            print(f'ASF Norm Solutions: {solutions}')
-
-        '''for obj_str in self.objectives:
-            objective_values = solutions[:, i_obj]
-            if debug:
-                print('obj_str: ', obj_str)
-                print('objective values: ', objective_values)
-            max_value = np.max(objective_values)
-            if i_obj == 0:
-                norm = max_value
-            else:
-                objective_values = objective_values * norm * 1. / max_value
-            solutions[:, i_obj] = objective_values
-
-            if debug:
-                print('normalised solution: ', solutions[:, i_obj])
-            i_obj += 1
-        '''
-
-        best_ind = decomp.do(solutions, 1. / weights).argmin()
+            print(f'ASF Norm Solutions: {self.filtered_solutions}')
+        best_ind = decomp.do(self.filtered_solutions, 1. / weights).argmin()
 
         return best_ind
+
+    def get_filtered_solutions(self) -> np.ndarray:
+        return self.filtered_solutions
