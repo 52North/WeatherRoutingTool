@@ -623,7 +623,6 @@ class RandomMutationsOrchestrator(MutationBase):
 
         self.speed_opts = speed_opts
         self.waypoint_opts = waypoint_opts
-        self.config = config
         self.rng = utils.get_rng(config)
 
     def _do(self, problem, X, **kw):

@@ -112,7 +112,6 @@ class GridMixin:
     def __init__(self, config: Config, grid, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.grid = grid
-        self.config
         self.rng = genetic_utils.get_rng(config)
 
     def index_to_coords(self, points_as_indices):
