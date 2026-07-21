@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import numpy as np
 import xarray as xr
@@ -8,7 +9,7 @@ import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
                                                         RunTestContinuousChecks, WaterDepth, WaveHeight,
-                                                        StatusCodeError)
+                                                        StatusCodeError, StayInTime)
 from WeatherRoutingTool.utils.maps import Map
 
 set_up_logging()
@@ -194,18 +195,32 @@ def test_check_constraints_land_crossing():
 
 def test_safe_crossing_continuous():
     test_case1 = [False, False, True, True, False, False, True, False, False, False]
-    test_case2 = [False, True, True, False, False, False, False, False, True, False]
-    is_constrained_test = [False, True, True, True, False]
+    test_case2 = [False, False, True, False, False, False, False, False, True, False]
+    is_constrained_test = [True, False, True, True, True]
+    is_constrained_input = [False, False, False, False, False]
+
+    weather_time_start = datetime(2023, 1, 1, 0, 0)
+    weather_time_end = datetime(2023, 1, 2, 0, 0)
+
+    # first start time is before the weather data, last one is after it, the middle one is within the timeframe
+    time_start = np.array([datetime(2022, 12, 31, 23, 0),
+                           datetime(2023, 1, 1, 12, 0),
+                           datetime(2023, 1, 1, 12, 0),
+                           datetime(2023, 1, 2, 12, 0),
+                           datetime(2023, 1, 3, 0, 0)])
 
     test_mod1 = RunTestContinuousChecks(test_case1)
     test_mod2 = RunTestContinuousChecks(test_case2)
+    stay_in_time = StayInTime()
+    stay_in_time.set_time(weather_time_start, weather_time_end)
     dummy_lats = [0, 0, 0, 0, 0]
 
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(test_mod1, "continuous")
     constraint_list.add_neg_constraint(test_mod2, "continuous")
+    constraint_list.add_neg_constraint(stay_in_time, "continuous")
     is_constrained = constraint_list.safe_crossing_continuous(dummy_lats, dummy_lats, dummy_lats, dummy_lats,
-                                                              dummy_lats)
+                                                              time_start, is_constrained_input)
 
     assert np.array_equal(is_constrained_test, is_constrained)
 
@@ -229,5 +244,61 @@ def test_check_crossing_status_errror():
     constraint_list.add_neg_constraint(statusCodeError, 'continuous')
 
     is_constrained = constraint_list.negative_constraints_continuous[0].check_crossing(ref_lat, ref_lon)
+
+    assert np.array_equal(ref_is_constrained, is_constrained)
+
+
+'''
+    test StayInTime.check_crossing for the case that the start times of all route segments lie within the
+    timeframe of the weather data -> no segment shall be constrained
+'''
+
+
+def test_check_crossing_stay_in_time_within_range():
+    weather_time_start = datetime(2023, 1, 1, 0, 0)
+    weather_time_end = datetime(2023, 1, 2, 0, 0)
+
+    stay_in_time = StayInTime()
+    stay_in_time.set_time(weather_time_start, weather_time_end)
+
+    # start times of all route segments are within [weather_time_start, weather_time_end]
+    time_start = np.array([datetime(2023, 1, 1, 3, 0),
+                           datetime(2023, 1, 1, 12, 0),
+                           datetime(2023, 1, 1, 23, 0)])
+    lat_start = np.array([10., 11., 12.])
+    lon_start = np.array([4., 5., 6.])
+    lat_end = np.array([11., 12., 13.])
+    lon_end = np.array([5., 6., 7.])
+
+    ref_is_constrained = np.array([False, False, False])
+    is_constrained = stay_in_time.check_crossing(lat_start, lon_start, lat_end, lon_end, time_start)
+
+    assert np.array_equal(ref_is_constrained, is_constrained)
+
+
+'''
+    test StayInTime.check_crossing for the case that the start times of the route segments lie partly outside the
+    timeframe of the weather data -> only the segments outside the timeframe shall be constrained
+'''
+
+
+def test_check_crossing_stay_in_time_partly_out_of_range():
+    weather_time_start = datetime(2023, 1, 1, 0, 0)
+    weather_time_end = datetime(2023, 1, 2, 0, 0)
+
+    stay_in_time = StayInTime()
+    stay_in_time.set_time(weather_time_start, weather_time_end)
+
+    # first start time is before the weather data, last one is after it, the middle one is within the timeframe
+    time_start = np.array([datetime(2022, 12, 31, 23, 0),
+                           datetime(2023, 1, 1, 12, 0),
+                           datetime(2023, 1, 3, 0, 0)])
+    lat_start = np.array([10., 11., 12.])
+    lon_start = np.array([4., 5., 6.])
+    lat_end = np.array([11., 12., 13.])
+    lon_end = np.array([5., 6., 7.])
+
+    ref_is_constrained = np.array([True, False, True])
+    is_constrained = stay_in_time.check_crossing(lat_start, lon_start, lat_end, lon_end, time_start)
 
     assert np.array_equal(ref_is_constrained, is_constrained)

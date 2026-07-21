@@ -107,17 +107,9 @@ class Boat:
 
         return ship_params
 
-    def check_value_in_range(self, lats, lons, time):
-        if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
-            raise ValueError(f'Latitude {lats} is out of weather range.')
-        if (lons > self.lon_min_max[1] or lons < self.lon_min_max[0]).any():
-            raise ValueError(f'Longitude {lons} is out of weather range.')
-        if (np.datetime64(time) > self.time_min_max[1] or np.datetime64(time) < self.time_min_max[0]).any():
-            raise ValueError(f'Time {time} is out of weather range.')
-
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
 
-        self.check_value_in_range(lats, lons, time)
+        # self.check_value_in_range(lats, lons, time)
 
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:

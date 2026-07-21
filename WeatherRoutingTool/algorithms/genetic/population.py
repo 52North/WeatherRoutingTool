@@ -48,16 +48,20 @@ class Population(Sampling):
             self.boat_speed = self.boat_speed * u.meter / u.second
             self.boat_speed_from_arrival_time = False
 
+        if "arrival_time" in config.GENETIC_OBJECTIVES:
+            self.boat_speed_from_arrival_time = True
+
         self.speed_optimisation = (config.GENETIC_MUTATION_TYPE != "waypoints") and (
                     config.GENETIC_CROSSOVER_TYPE != "waypoints")
 
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
 
-        # mutate velocity in case of speed optimisation
+        # mutate velocity in case of speed optimisation if no arrival-time optimisation is requested
+        # if arrival-time optimisation is active, speed is determined from arrival-time
         quantiles = None
 
-        if self.speed_optimisation:
+        if self.speed_optimisation and not self.boat_speed_from_arrival_time:
             quantiles = self.spread_velocity(self.min_boat_speed, self.max_boat_speed, self.boat_speed.value,
                                              self.pop_size)
             for i, (rt,) in enumerate(X):

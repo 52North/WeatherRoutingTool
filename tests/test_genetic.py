@@ -116,7 +116,7 @@ def test_random_plateau_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.937, 27.859),
@@ -124,6 +124,7 @@ def test_random_plateau_mutation(plt):
         show_depth=False,
         show_gcr=False
     )
+
     old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
     old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
     new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
@@ -190,7 +191,7 @@ def test_bezier_curve_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -285,7 +286,7 @@ def test_constraint_violation_repair(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -360,7 +361,7 @@ def test_single_point_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -391,7 +392,7 @@ def test_speed_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -474,7 +475,7 @@ def test_check_speed_dif(speed_arr, viol_list):
     assert viol_list_test == viol_list
 
 
-@pytest.mark.parametrize("speed_arr,", [
+@pytest.mark.parametrize("speed_arr", [
     (np.array([1., 2., 100000., 4., 5., 6., 1000., -99])),
 ])
 def test_smoothen_speed_rec_error(speed_arr):
@@ -520,7 +521,7 @@ def test_twopoint_crossover_speed(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),

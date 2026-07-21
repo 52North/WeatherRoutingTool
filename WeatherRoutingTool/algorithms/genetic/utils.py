@@ -9,6 +9,7 @@ from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
 import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 
 logger = logging.getLogger("WRT.genetic")
@@ -84,13 +85,22 @@ def geojson_from_route(
     return geojson
 
 
-def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
-    """Return constraint violation per waypoint in route
+def get_constraints_array(route: np.ndarray, constraint_list: ConstraintsList,
+                          start_times: np.ndarray = None) -> np.ndarray:
+    """Return constraint violation per waypoint in a route.
+
+    This function calls the constraint evaluation method of the constraint module for every waypoint of a route.
 
     :param route: Candidate array of waypoints
     :type route: np.ndarray
+    :param constraint_list: List of constraints that need to be evaluated
+    :type constraint_list: ConstraintsList
+    :param start_times: array of start times from every waypoint
+    :type start_times: np.ndarray
     :return: Array of constraint violations
+    :rtype: np.ndarray
     """
+
     lat = route[:, 0]
     lon = route[:, 1]
     is_constrained = [False for i in range(0, lat.shape[0] - 1)]
@@ -100,21 +110,40 @@ def get_constraints_array(route: np.ndarray, constraint_list) -> np.ndarray:
     lon_start = lon[:-1]
     lon_end = lon[1:]
 
-    is_constrained = constraint_list.safe_crossing(lat_start, lon_start, lat_end, lon_end, None, is_constrained)
+    is_constrained = constraint_list.safe_crossing(
+        lat_start=lat_start,
+        lon_start=lon_start,
+        lat_end=lat_end,
+        lon_end=lon_end,
+        start_times=start_times,
+        is_constrained=is_constrained
+    )
     return is_constrained
 
 
-def get_constraints(route, constraint_list):
-    """Get sum of constraint violations of all waypoints of the provided route
+def get_constraints(route: np.ndarray, constraint_list: ConstraintsList, start_times: np.ndarray = None) -> np.ndarray:
+    """Get sum of constraint violations of all waypoints of the provided route.
+
+    Currently, the start times from a waypoint are only passed by RoutingProblem._evaluate. This means that restrictions
+    with respect to arrival time are only enforced in the evaluation process and not in the Mutation, Crossover or
+    Population classes.
+    # TODO enable support of constraints with a time dependence also in Mutation, Crossover and Population classes
 
     :param route: List of waypoints
     :type route: np.ndarray
-    :param constraints_list: List of constraints configured by the config
-    :type constraints_list: ConstraintsList
+    :param constraint_list: List of constraints that need to be evaluated
+    :type constraint_list: ConstraintsList
+    :param start_times: array of start times from every waypoint
+    :type start_times: np.ndarray
+    :return: Array of constraint violations
+    :rtype: np.ndarray
     """
 
-    # ToDo: what about time?
-    constraints = np.sum(get_constraints_array(route, constraint_list))
+    constraints = np.sum(get_constraints_array(
+        route=route,
+        constraint_list=constraint_list,
+        start_times=start_times)
+    )
     return constraints
 
 

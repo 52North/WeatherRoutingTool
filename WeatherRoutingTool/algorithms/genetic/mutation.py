@@ -243,6 +243,30 @@ class RandomPlateauMutation(MutationConstraintRejection):
         lon2 = result["lon2"]
         return lat2, lon2, speed
 
+    def variable_plateau_size(self, route_length) -> bool:
+        if route_length < 9:
+            return False
+
+        plateau_length = np.random.randint(7, np.floor(0.9 * route_length))
+        if plateau_length % 2 != 1:
+            plateau_length = plateau_length - 1
+        self.plateau_size = np.random.randint(2, plateau_length - 4)
+        if self.plateau_size % 2 != 1:
+            self.plateau_size += 1
+        self.plateau_slope = (plateau_length + 2 - self.plateau_size) / 2
+        assert self.plateau_slope % 1 == 0
+        if plateau_length < 10:
+            self.dist = 0.5 * 1e4
+        else:
+            self.dist = 1e4
+
+        self.plateau_slope = int(self.plateau_slope)
+        print('plateau_size: ', self.plateau_size)
+        print('plateau_slope: ', self.plateau_slope)
+        print('plateau_length:', plateau_length)
+
+        return True
+
     def mutate(self, problem, rt, **kw):
         """
         Function vor RandomPlateauMutation.
@@ -274,11 +298,12 @@ class RandomPlateauMutation(MutationConstraintRejection):
         assert len(rt.shape) == 2
         assert rt.shape[1] == 3
         route_length = rt.shape[0]
+        long_enough = self.variable_plateau_size(route_length)
+        if not long_enough:
+            return rt
+
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
-
-        if route_length <= plateau_length + 1:  # only mutate routes that are long enough
-            return rt
 
         if debug:
             print('################################')
@@ -585,8 +610,9 @@ class GaussianSpeedMutation(MutationConstraintRejection):
         self.n_updates = n_updates
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
-        self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
-        self.sigma = 1.
+        # self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
+        self.sigma = 1.54
+        self.max_acceleration = 1
 
         # Fix random seed depending on configuration
         self.rndm_gen = None
@@ -611,7 +637,7 @@ class GaussianSpeedMutation(MutationConstraintRejection):
                 new = old_speed
             rt_new[i][2] = new
 
-        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], 1)
+        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], self.max_acceleration)
         return rt_new
 
 
