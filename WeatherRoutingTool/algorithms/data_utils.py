@@ -1,10 +1,7 @@
 import numpy as np
-import xarray as xr
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
-from WeatherRoutingTool.algorithms.genetic import utils as genetic_utils
-from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 
 
@@ -100,42 +97,3 @@ def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time) -> u.Q
     time_diff = arrival_time - departure_time
     bs = full_travel_distance / (time_diff.total_seconds() * u.second)
     return bs
-
-
-class GridMixin:
-    """TODO: add class description
-    _summary_
-
-    """
-    grid: xr.Dataset
-
-    def __init__(self, config: Config, grid, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.grid = grid
-        self.rng = genetic_utils.get_rng(config)
-
-    def index_to_coords(self, points_as_indices):
-        lats = self.grid.coords['latitude'][[lat_index for lat_index, lon_index in points_as_indices]].values.tolist()
-        lons = self.grid.coords['longitude'][[lon_index for lat_index, lon_index in points_as_indices]].values.tolist()
-        route = [[x, y] for x, y in zip(lats, lons)]
-        return lats, lons, route
-
-    def coords_to_index(self, points_as_coords):
-        lats = [get_closest(self.grid.latitude.data, lat) for lat, lon in points_as_coords]
-        lons = [get_closest(self.grid.longitude.data, lon) for lat, lon in points_as_coords]
-        route = [[x, y] for x, y in zip(lats, lons)]
-        return lats, lons, route
-
-    def get_shuffled_cost(self):
-        cost = self.grid.data
-        shuffled_cost = cost.copy()
-        nan_mask = np.isnan(shuffled_cost)  # corresponds, e.g., to land pixels
-        shuffled_cost[nan_mask] = np.nanmean(cost)
-
-        # shuffle first along South-North (latitude), then along West-East (longitude) axis
-        shuffled_cost = self.rng.permutation(shuffled_cost, axis=0)
-        shuffled_cost = self.rng.permutation(shuffled_cost, axis=1)
-
-        # assign very high weights to nan values (land pixels)
-        shuffled_cost[nan_mask] = 1e20
-        return shuffled_cost

@@ -5,6 +5,7 @@ from pathlib import Path
 from re import match
 
 import numpy as np
+import xarray as xr
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 from pymoo.core.sampling import Sampling
@@ -14,7 +15,7 @@ from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time, GridMixin
+from WeatherRoutingTool.algorithms.data_utils import get_closest, get_speed_from_arrival_time
 from WeatherRoutingTool.algorithms.genetic import utils
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
@@ -155,26 +156,24 @@ class Population(Sampling):
         return quantiles
 
 
-class GridBasedPopulation(GridMixin, Population):
-    """Make initial population for genetic algorithm based on a grid and associated cost values
-
-    Notes on the inheritance:
-     - GridMixin has to be inherited first because Sampling isn't designed for multiple inheritance
-     - implemented approach: https://stackoverflow.com/a/50465583, scenario 2
-     - call `print(GridBasedPopulation.mro())` to see the method resolution order
+class GridBasedPopulation(Population):
     """
+    Make initial population for genetic algorithm based on a grid and associated cost values
+    """
+
+    grid: xr.Dataset
 
     def __init__(self, config: Config, default_route, grid, constraints_list, pop_size):
         super().__init__(
             config=config,
             default_route=default_route,
-            grid=grid,
             constraints_list=constraints_list,
             pop_size=pop_size
         )
+        self.grid = grid
+        self.rng = utils.get_rng(config)
 
         # update nan_mask with constraints_list
-        # ----------
         nan_mask = np.isnan(self.grid)
 
         xs, ys = np.where(~nan_mask)
@@ -186,12 +185,35 @@ class GridBasedPopulation(GridMixin, Population):
         for lat, lon in rf:
             (latindex,), = np.where(lat == grid.latitude.values)
             (lonindex,), = np.where(lon == grid.longitude.values)
-
             nan_mask[latindex, lonindex] = True
         self.grid.data[nan_mask] = np.nan
-
         # ----------
-        self.var_type = np.float64
+
+    def index_to_coords(self, points_as_indices):
+        lats = self.grid.coords['latitude'][[lat_index for lat_index, lon_index in points_as_indices]].values.tolist()
+        lons = self.grid.coords['longitude'][[lon_index for lat_index, lon_index in points_as_indices]].values.tolist()
+        route = [[x, y] for x, y in zip(lats, lons)]
+        return lats, lons, route
+
+    def coords_to_index(self, points_as_coords):
+        lats = [get_closest(self.grid.latitude.data, lat) for lat, lon in points_as_coords]
+        lons = [get_closest(self.grid.longitude.data, lon) for lat, lon in points_as_coords]
+        route = [[x, y] for x, y in zip(lats, lons)]
+        return lats, lons, route
+
+    def get_shuffled_cost(self):
+        cost = self.grid.data
+        shuffled_cost = cost.copy()
+        nan_mask = np.isnan(shuffled_cost)  # corresponds, e.g., to land pixels
+        shuffled_cost[nan_mask] = np.nanmean(cost)
+
+        # shuffle first along South-North (latitude), then along West-East (longitude) axis
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=0)
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=1)
+
+        # assign very high weights to nan values (land pixels)
+        shuffled_cost[nan_mask] = 1e20
+        return shuffled_cost
 
     def generate(self, problem, n_samples, **kw):
         X = np.full((n_samples, 1), None, dtype=object)
