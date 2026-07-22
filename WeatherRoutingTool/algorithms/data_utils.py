@@ -3,6 +3,8 @@ import xarray as xr
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
+from WeatherRoutingTool.algorithms.genetic import utils as genetic_utils
+from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.routeparams import RouteParams
 
 
@@ -107,9 +109,10 @@ class GridMixin:
     """
     grid: xr.Dataset
 
-    def __init__(self, grid, *args, **kwargs):
+    def __init__(self, config: Config, grid, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.grid = grid
+        self.rng = genetic_utils.get_rng(config)
 
     def index_to_coords(self, points_as_indices):
         lats = self.grid.coords['latitude'][[lat_index for lat_index, lon_index in points_as_indices]].values.tolist()
@@ -130,9 +133,8 @@ class GridMixin:
         shuffled_cost[nan_mask] = np.nanmean(cost)
 
         # shuffle first along South-North (latitude), then along West-East (longitude) axis
-        rng = np.random.default_rng()
-        shuffled_cost = rng.permutation(shuffled_cost, axis=0)
-        shuffled_cost = rng.permutation(shuffled_cost, axis=1)
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=0)
+        shuffled_cost = self.rng.permutation(shuffled_cost, axis=1)
 
         # assign very high weights to nan values (land pixels)
         shuffled_cost[nan_mask] = 1e20
