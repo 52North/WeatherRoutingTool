@@ -57,6 +57,7 @@ class WeatherFactory:
             wt_download.set_map_size(default_map)
             wt_download.read_dataset()
             wt_download.write_data(file_path)
+            wt_download.write_reduced_data(file_path)
 
             wt = WeatherCondFromFile(departure_time, time_forecast, time_resolution)
             wt.set_map_size(default_map)
