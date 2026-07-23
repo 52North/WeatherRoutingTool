@@ -849,6 +849,15 @@ class FakeWeather(WeatherCond):
                 n_time_values,
                 n_height_above_ground
             )
+            VHM0 = self.add_gauss_to_wave(
+                VHM0,
+                lon_start,
+                lat_start,
+                n_lon_values,
+                n_lat_values,
+                n_time_values,
+                n_height_above_ground
+            )
 
         Pressure_reduced_to_MSL_msl = np.full((n_lat_values, n_lon_values, n_time_values),
                                               self.var_dict['Pressure_reduced_to_MSL_msl'])
@@ -1000,7 +1009,8 @@ class FakeWeather(WeatherCond):
                              n_lon_values: int,
                              n_lat_values: int,
                              lon_start: float,
-                             lat_start: float):
+                             lat_start: float,
+                             target_width: float):
         """Generate a 2D spatial Gaussian matrix centered on target geographical coordinates.
 
             Maps target lat/lon coordinates to grid indices, computes 2D Gaussian spatial values
@@ -1019,7 +1029,7 @@ class FakeWeather(WeatherCond):
         """
         # coordinate transformation
         ind_gauss_x, ind_gauss_y = self.get_index(self.gauss_dict["lat"], self.gauss_dict["lon"], lon_start, lat_start)
-        del_target_width = np.rint(self.gauss_dict["target_width"] / self.coord_res)
+        del_target_width = np.rint(target_width / self.coord_res)
 
         x, y = np.meshgrid(np.linspace(0, n_lon_values - 1, n_lon_values),
                            np.linspace(0, n_lat_values - 1, n_lat_values))
@@ -1073,7 +1083,7 @@ class FakeWeather(WeatherCond):
         debug = False
         wind_speed_orig = np.sqrt(uwind ** 2 + vwind ** 2)
         wind_speed_orig_mean = wind_speed_orig.mean()
-        wind_speed_max_target_orig = self.gauss_dict["target_height"] - wind_speed_orig_mean
+        wind_speed_max_target_orig = self.gauss_dict["target_height_wind"] - wind_speed_orig_mean
         if wind_speed_max_target_orig < 0:
             raise ValueError('Target wind speed is smaller than mean of wind data.')
 
@@ -1083,6 +1093,7 @@ class FakeWeather(WeatherCond):
             n_lat_values=n_lat_values,
             lon_start=lon_start,
             lat_start=lat_start,
+            target_width=self.gauss_dict["target_height_wind"],
         )
 
         # obtain 1D gauss over time
@@ -1110,6 +1121,66 @@ class FakeWeather(WeatherCond):
         u_updated = uwind + self.get_u(theta_orig, gauss_da)
 
         return u_updated, v_updated
+
+    def add_gauss_to_wave(self,
+                          vhm0_orig,
+                          lon_start,
+                          lat_start,
+                          n_lon_values,
+                          n_lat_values,
+                          n_time_values,
+                          n_height_above_ground
+                          ):
+        """Superimpose a 3D spatio-temporal Gaussian disturbance field onto existing wave fields.
+
+            Combines 2D spatial and 1D temporal Gaussian profiles, scales the disturbance to reach
+            the target peak wave height, and adds the baseline wave field.
+
+            :param vhm0_orig: 3D array of wave height
+            :type vhm0_orig: numpy.ndarray
+            :param lon_start: Starting longitude coordinate.
+            :type lon_start: float
+            :param lat_start: Starting latitude coordinate.
+            :type lat_start: float
+            :param n_lon_values: Number of longitude grid points.
+            :type n_lon_values: int
+            :param n_lat_values: Number of latitude grid points.
+            :type n_lat_values: int
+            :param n_time_values: Number of time steps.
+            :type n_time_values: int
+            :param n_height_above_ground: Number of vertical height levels above ground.
+            :type n_height_above_ground: int
+            :raises ValueError: If configured `target_height` is smaller than mean baseline wind speed.
+            :return: Updated 3D array `vhm0_distorted` containing modified wave field vectors.
+            :rtype: tuple[numpy.ndarray, numpy.ndarray]
+        """
+        vhm0_orig_mean = vhm0_orig.mean()
+        vhm0_max_target = self.gauss_dict["target_height_wave"] - vhm0_orig_mean
+        if vhm0_max_target < 0:
+            raise ValueError('Target wave height is smaller than mean of wind data.')
+
+        # obtain 2D gauss over space
+        gauss_space = self.get_gauss_over_space(
+            n_lon_values=n_lon_values,
+            n_lat_values=n_lat_values,
+            lon_start=lon_start,
+            lat_start=lat_start,
+            target_width=self.gauss_dict["target_height_wave"]
+        )
+
+        # obtain 1D gauss over time
+        gauss_time = self.get_gauss_over_time(
+            n_time_values=n_time_values,
+            norm=1
+        )
+
+        # combine time and space gauss and adapt dimensionality
+        gauss_3D = gauss_space[:, :, None] * gauss_time[None, None, :] * vhm0_max_target
+
+        # calculate distorted vhm0 component
+        vhm0_distorted = vhm0_orig + gauss_3D
+
+        return vhm0_distorted
 
     def get_index(self, lat, lon, start_lon, start_lat):
         del_coord = self.coord_res
