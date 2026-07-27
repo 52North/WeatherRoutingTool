@@ -24,15 +24,14 @@ def time_str_convertert(time_str, days):
 
 def compare_time_obj(figure_dir: str):
     # Sample data
-    labels = ['fuel opt.', 'time opt.', 'fuel:time opt. 1:1']
+    labels = ['early1', 'just-in-time']
     values = [
-        time_str_convertert(time_str="8:36:36", days=1),
-        time_str_convertert(time_str="10:12:00", days=1),
-        time_str_convertert(time_str="8:58:25", days=1),
+        time_str_convertert(time_str="16:56:48", days=2),
+        time_str_convertert(time_str="16:14:55", days=2)
     ]  # Time in minutes
 
     departure_time = datetime.strptime("2025-12-05T13:48Z", '%Y-%m-%dT%H:%MZ')
-    arrival_time = datetime.strptime("2025-12-07T00:00Z", '%Y-%m-%dT%H:%MZ')
+    arrival_time = datetime.strptime("2025-12-07T11:00Z", '%Y-%m-%dT%H:%MZ')
     optimal_travel_time = (arrival_time - departure_time).total_seconds() * 1. / 60
 
     arrival_time = 140  # Arrival time in minutes
@@ -62,7 +61,7 @@ def compare_time_obj(figure_dir: str):
 
     # Set tick frequency to every 30 minutes for clarity
     ax.yaxis.set_major_locator(ticker.MultipleLocator(30))
-    ax.set_ylim(25 * 60, 35 * 60)
+    ax.set_ylim(40 * 60, 60 * 60)
 
     # General formatting
     ax.set_ylabel('Time (HH:MM)')
@@ -77,11 +76,10 @@ def compare_time_obj(figure_dir: str):
 
 def compare_fuel_obj(figure_dir: str):
     # Sample data
-    labels = ['fuel opt.', 'time opt.', 'fuel:time opt. 1:1']
+    labels = ['early1', 'just-in-time']
     values = [
-        26567.46247030554,
-        27755.58059942486,
-        26742.834078860997,
+        7161.776711717517,
+        7269.682315599543
     ]  # Time in minutes
 
     # Create the plot

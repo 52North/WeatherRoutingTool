@@ -55,6 +55,13 @@ class Genetic(RoutingAlg):
         self.objectives = config.GENETIC_OBJECTIVES
         self.n_objs = len(config.GENETIC_OBJECTIVES)
 
+        # check ordering of objective keys (needs to be 'arrival_time', 'fuel_consumption'
+        first_key = next(iter(self.objectives))
+        if first_key == 'fuel_consumption' and self.n_objs == 2:
+            self.objectives = dict(reversed(self.objectives.items()))
+
+        logger.debug(f'objectives: {self.objectives}')
+
         # population
         self.pop_type = config.GENETIC_POPULATION_TYPE
         self.pop_size = config.GENETIC_POPULATION_SIZE
@@ -80,12 +87,9 @@ class Genetic(RoutingAlg):
 
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         seed = None
-        if self.config.GENETIC_FIX_RANDOM_SEED:
+        if self.config.GENETIC_RANDOM_SEED:
             logger.info('Fixing random seed for genetic algorithm.')
-            utils.set_random_generator(1)
-            seed = 1
-        else:
-            utils.set_random_generator()
+            seed = self.config.GENETIC_RANDOM_SEED
 
         # inputs
         problem = RoutingProblem(
@@ -94,7 +98,8 @@ class Genetic(RoutingAlg):
             boat_speed=self.boat_speed,
             boat=boat,
             constraint_list=constraints_list,
-            objectives=self.objectives
+            objectives=self.objectives,
+            symmetric_time_objective=self.config.GENETIC_SYMMETRIC_TIME_OBJECTIVE
         )
 
         initial_population = PopulationFactory.get_population(
@@ -200,9 +205,15 @@ class Genetic(RoutingAlg):
         super().terminate()
         self.consistency_check(res, problem)
 
-        mcdm = MCDM.RMethod(self.objectives)
-        # mcdm = MCDM.PymoosASF(self.objectives)
+        # mcdm = MCDM.RMethod(self.objectives)
+        mcdm = MCDM.PymoosASF(self.objectives)
         best_index = mcdm.get_best_compromise(res.F)
+        filtered_solutions = mcdm.get_filtered_solutions()
+
+        # solutions are only filtered for PymoosASF
+        if filtered_solutions is None:
+            filtered_solutions = res.F
+
         best_route = np.atleast_2d(res.X)[best_index, 0]
 
         fuel_dict = problem.get_power(best_route)
@@ -218,7 +229,7 @@ class Genetic(RoutingAlg):
             self.plot_speed_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
-            self.plot_objective_space(res, best_index)
+            self.plot_objective_space(filtered_solutions, best_index)
 
         lats = best_route[:, 0]
         lons = best_route[:, 1]
@@ -260,8 +271,7 @@ class Genetic(RoutingAlg):
         self.check_positive_power()
         return route
 
-    def plot_objective_space(self, res, best_index):
-        F = res.F
+    def plot_objective_space(self, F, best_index):
         fig, ax = plt.subplots(figsize=(7, 5))
 
         if self.n_objs == 2:
@@ -270,8 +280,8 @@ class Genetic(RoutingAlg):
             return
 
         ax.plot(F[best_index, 0], F[best_index, 1], color='red', marker='o')
-        ax.set_xlabel('f1', labelpad=10)
-        ax.set_ylabel('f2', labelpad=10)
+        ax.set_xlabel('arrival time', labelpad=10)
+        ax.set_ylabel('fuel consumption', labelpad=10)
         ax.grid(True, linestyle='--', alpha=0.7)
         plt.title("Objective Space")
 
@@ -385,24 +395,30 @@ class Genetic(RoutingAlg):
             for iroute in range(0, last_pop.shape[0]):
                 hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
 
-                new_line = ax.plot(
-                    hist_values["bin_centres"].to(u.km).value,
-                    hist_values["bin_contents"].to(u.m / u.second).value,
+                lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+                new_line = plt.step(
+                    lower_bin_boundaries,
+                    hist_values["bin_contents"],
+                    where='mid',
+                    linewidth=2,
                     color="blue",
                     alpha=0.3,
-                    linestyle='-',
-                    zorder=2
                 )
+
                 objs.append(new_line)
 
             if igen == (self.n_generations - 1):
                 hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
-                ax.plot(
-                    hist_values_best_route["bin_centres"].to(u.km).value,
-                    hist_values_best_route["bin_contents"].to(u.m / u.second).value,
-                    color="firebrick",
-                    linewidth=3
+                lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
+                    "bin_widths"]) / 1000
+                plt.step(
+                    lower_bin_boundaries,
+                    hist_values_best_route["bin_contents"],
+                    where='mid',
+                    linewidth=2,
+                    color="red",
                 )
+
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
             ax.set_ylim(0, 10)
@@ -437,7 +453,7 @@ class Genetic(RoutingAlg):
             ax.remove()
 
             fig, ax = graphics.generate_basemap(
-                map=self.default_map.get_var_tuple(),
+                map_coords=self.default_map.get_var_tuple(),
                 depth=None,
                 start=self.start,
                 finish=self.finish,
@@ -498,7 +514,7 @@ class Genetic(RoutingAlg):
 
         # Create an empty plot
         fig, ax = graphics.generate_basemap(
-            map=self.default_map.get_var_tuple(),
+            map_coords=self.default_map.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,

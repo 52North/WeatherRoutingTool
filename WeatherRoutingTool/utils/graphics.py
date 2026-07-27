@@ -234,6 +234,8 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised, power_type):
         contents = contents * u.kg / u.meter
     elif power_type == 'speed':
         contents = contents * u.meter / u.second
+    elif power_type == 'relative_power':
+        contents = contents
     else:
         contents = contents * u.Watt
     cent_temp = 0 * u.meter
@@ -285,7 +287,7 @@ def set_graphics_standards(ax):
 
 
 def generate_basemap(
-        map,
+        map_coords,
         depth,
         start=None,
         finish=None,
@@ -294,7 +296,7 @@ def generate_basemap(
         show_gcr=False
 ):
     plt.rcParams['font.size'] = get_standard('font_size')
-    (min_lat, max_lat, min_lon, max_lon) = map
+    (min_lat, max_lat, min_lon, max_lon) = map_coords
 
     fig = plt.figure(figsize=get_standard('fig_size'))
     fig_width, fig_height = get_standard('fig_size')

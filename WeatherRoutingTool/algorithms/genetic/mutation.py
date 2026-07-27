@@ -72,8 +72,8 @@ class MutationConstraintRejection(Mutation):
 
     def __init__(
             self,
-            mutation_type: str,
             config: Config,
+            mutation_type: str,
             constraints_list: ConstraintsList,
             prob: float = 1.0,
             prob_var: float = None
@@ -100,6 +100,7 @@ class MutationConstraintRejection(Mutation):
         self.nof_mutation_success = 0
         self.constraints_rejection = True
         self.config = config
+        self.rng = utils.get_rng(config)
 
         if not (config.GENETIC_REPAIR_TYPE == ["no_repair"]):
             self.constraints_rejection = False
@@ -171,7 +172,6 @@ class RandomPlateauMutation(MutationConstraintRejection):
     :type patchnf: PatcherBase
     """
 
-    config: Config
     dist: float
     n_updates: int
     plateau_size: int
@@ -201,6 +201,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
             :param plateau_slope: Number of waypoints that form the side of the plateau.
             :type plateau_slope: int
         """
+
         super().__init__(
             mutation_type="RandomPlateauMutation",
             **kw
@@ -242,6 +243,30 @@ class RandomPlateauMutation(MutationConstraintRejection):
         lon2 = result["lon2"]
         return lat2, lon2, speed
 
+    def variable_plateau_size(self, route_length) -> bool:
+        if route_length < 9:
+            return False
+
+        plateau_length = np.random.randint(7, np.floor(0.9 * route_length))
+        if plateau_length % 2 != 1:
+            plateau_length = plateau_length - 1
+        self.plateau_size = np.random.randint(2, plateau_length - 4)
+        if self.plateau_size % 2 != 1:
+            self.plateau_size += 1
+        self.plateau_slope = (plateau_length + 2 - self.plateau_size) / 2
+        assert self.plateau_slope % 1 == 0
+        if plateau_length < 10:
+            self.dist = 0.5 * 1e4
+        else:
+            self.dist = 1e4
+
+        self.plateau_slope = int(self.plateau_slope)
+        print('plateau_size: ', self.plateau_size)
+        print('plateau_slope: ', self.plateau_slope)
+        print('plateau_length:', plateau_length)
+
+        return True
+
     def mutate(self, problem, rt, **kw):
         """
         Function vor RandomPlateauMutation.
@@ -273,11 +298,12 @@ class RandomPlateauMutation(MutationConstraintRejection):
         assert len(rt.shape) == 2
         assert rt.shape[1] == 3
         route_length = rt.shape[0]
+        long_enough = self.variable_plateau_size(route_length)
+        if not long_enough:
+            return rt
+
         plateau_length = 2 * self.plateau_slope + self.plateau_size - 2
         rt_new = np.full(rt.shape, -99.)
-
-        if route_length <= plateau_length + 1:  # only mutate routes that are long enough
-            return rt
 
         if debug:
             print('################################')
@@ -285,7 +311,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
 
         for _ in range(0, self.n_updates):
             # obtain indices for plateau generation
-            rindex = utils.RNG.integers(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
+            rindex = self.rng.integers(np.ceil(plateau_length / 2), route_length - np.ceil(plateau_length / 2))
             i_plateau_start = int(rindex - np.ceil((self.plateau_size - 1) / 2))
             i_plateau_end = int(rindex + np.ceil((self.plateau_size - 1) / 2))
             i_slope_start = int(i_plateau_start - self.plateau_slope) + 1
@@ -302,7 +328,7 @@ class RandomPlateauMutation(MutationConstraintRejection):
             # mutate plateau edges by random walk in same direction
             p1_orig = rt[i_plateau_start]
             p2_orig = rt[i_plateau_end]
-            bearing = utils.RNG.integers(0, 360)
+            bearing = self.rng.integers(0, 360)
             rt_new[i_plateau_start] = self.random_walk(
                 point=p1_orig,
                 dist=self.dist,
@@ -446,8 +472,8 @@ class RouteBlendMutation(MutationConstraintRejection):
         if route_length <= self.min_length:
             return rt_new
 
-        start = utils.RNG.integers(0, route_length - self.min_length)
-        length = utils.RNG.integers(self.min_length, min(self.max_length, route_length - start))
+        start = self.rng.integers(0, route_length - self.min_length)
+        length = self.rng.integers(self.min_length, min(self.max_length, route_length - start))
         end = start + length
         n_points = length
 
@@ -521,13 +547,13 @@ class RandomWalkMutation(MutationConstraintRejection):
 
     def mutate(self, problem, rt, **kw):
         for _ in range(self.n_updates):
-            rindex = utils.RNG.integers(1, rt.shape[0] - 1)
+            rindex = self.rng.integers(1, rt.shape[0] - 1)
             p1 = rt[rindex]
 
             p2 = self.random_walk(
                 point=p1,
                 dist=self.dist,
-                bearing=utils.RNG.choice([45, 135, 225, 315]), )
+                bearing=self.rng.choice([45, 135, 225, 315]), )
             rt[rindex] = p2
         return rt
 
@@ -551,13 +577,13 @@ class RandomPercentageChangeSpeedMutation(MutationConstraintRejection):
 
     def mutate(self, problem, rt, **kw):
         try:
-            indices = utils.RNG.choice(rt.shape[0] - 1, size=self.n_updates, replace=False)
+            indices = self.rng.choice(rt.shape[0] - 1, size=self.n_updates, replace=False)
         except ValueError:
             indices = range(0, rt.shape[0] - 1)
         ops = (add, sub)
         for i in indices:
-            op = ops[utils.RNG.integers(0, len(ops))]
-            change_percent = utils.RNG.uniform(0.0, self.change_percent_max)
+            op = ops[self.rng.integers(0, len(ops))]
+            change_percent = self.rng.uniform(0.0, self.change_percent_max)
             new = op(rt[i][2], change_percent * rt[i][2])
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
                 new = self.config.BOAT_SPEED_BOUNDARIES[0]
@@ -574,36 +600,37 @@ class GaussianSpeedMutation(MutationConstraintRejection):
     is half of the maximum boat speed. The standard deviation is 1/6 of the maximum boat speed.
     """
     n_updates: int
-    config: Config
 
-    def __init__(self, n_updates: int = 5, **kw):
+    def __init__(self, config: Config, n_updates: int = 5, **kw):
         super().__init__(
+            config,
             mutation_type="GaussianSpeedMutation",
             **kw
         )
         self.n_updates = n_updates
         # FIXME: these numbers should be carefully evaluated
         # ~99.7 % in interval (0, BOAT_SPEED_MAX)
-        self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
-        self.sigma = 1.
+        # self.mu = 0.5 * self.config.BOAT_SPEED_BOUNDARIES[1]
+        self.sigma = 1.54
+        self.max_acceleration = 1
 
     def mutate(self, problem, rt, **kw):
         rt_new = copy.deepcopy(rt)
         all_inds = np.linspace(start=0, stop=rt.shape[0] - 1, num=rt.shape[0], dtype=int)
         try:
-            indices = utils.RNG.choice(all_inds, self.n_updates)
+            indices = self.rng.choice(all_inds, self.n_updates)
         except ValueError:
             indices = all_inds
         for i in indices:
             old_speed = rt[i][2]
-            new = utils.RNG.normal(loc=old_speed, scale=self.sigma)
+            new = self.rng.normal(loc=old_speed, scale=self.sigma)
             if new < self.config.BOAT_SPEED_BOUNDARIES[0]:
                 new = old_speed
             elif new > self.config.BOAT_SPEED_BOUNDARIES[1]:
                 new = old_speed
             rt_new[i][2] = new
 
-        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], 1)
+        rt_new[:, 2] = utils.smoothen_speed(rt_new[:, 2], self.max_acceleration)
         return rt_new
 
 
@@ -616,19 +643,19 @@ class RandomMutationsOrchestrator(MutationBase):
     :param waypoint_opts: List of Mutation classes for mutating waypoints.
     :type waypoint_optsgit s: list[Mutation]
     """
-
-    def __init__(self, speed_opts, waypoint_opts, **kw):
+    def __init__(self, config: Config, speed_opts, waypoint_opts, **kw):
         super().__init__(**kw)
 
         self.speed_opts = speed_opts
         self.waypoint_opts = waypoint_opts
+        self.rng = utils.get_rng(config)
 
     def _do(self, problem, X, **kw):
         if self.speed_opts:
-            speed_opt = self.speed_opts[utils.RNG.integers(0, len(self.speed_opts))]
+            speed_opt = self.speed_opts[self.rng.integers(0, len(self.speed_opts))]
             X = speed_opt._do(problem, X, **kw)
         if self.waypoint_opts:
-            waypoint_opt = self.waypoint_opts[utils.RNG.integers(0, len(self.waypoint_opts))]
+            waypoint_opt = self.waypoint_opts[self.rng.integers(0, len(self.waypoint_opts))]
             X = waypoint_opt._do(problem, X, **kw)
         return X
 
@@ -658,6 +685,7 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "random":
             logger.debug('Setting mutation type of genetic algorithm to "random".')
             return RandomMutationsOrchestrator(
+                config,
                 waypoint_opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
                     RouteBlendMutation(config=config, constraints_list=constraints_list),
@@ -670,6 +698,7 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "speed":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_speed".')
             return RandomMutationsOrchestrator(
+                config,
                 waypoint_opts=None,
                 speed_opts=[
                     # RandomPercentageChangeSpeedMutation(config=config, constraints_list=constraints_list),
@@ -679,6 +708,7 @@ class MutationFactory:
         if config.GENETIC_MUTATION_TYPE == "waypoints":
             logger.debug('Setting mutation type of genetic algorithm to "rndm_waypoints".')
             return RandomMutationsOrchestrator(
+                config,
                 waypoint_opts=[
                     RandomPlateauMutation(config=config, constraints_list=constraints_list),
                     RouteBlendMutation(config=config, constraints_list=constraints_list),
