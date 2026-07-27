@@ -75,11 +75,7 @@ class Boat:
         return ship_params
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
-        points = 'points'
-        lat_da = xr.DataArray(np.asarray(lats, dtype='float64'), dims=points)
-        lon_da = xr.DataArray(np.asarray(lons, dtype='float64'), dims=points)
-        time_da = xr.DataArray(np.asarray(time, dtype='datetime64[ns]'), dims=points)
-        ship_var = var.sel(latitude=lat_da, longitude=lon_da, time=time_da, method='nearest', drop=False)
+        ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height is not None:
             ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)
         if depth is not None:
