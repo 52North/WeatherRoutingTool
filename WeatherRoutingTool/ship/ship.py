@@ -120,10 +120,10 @@ class Boat:
         salinity = []
         water_temperature = []
 
-	if self.time_min_max == [None, None]:
-	    self.time_min_max = [weather_data['time'].min(), weather_data['time'].max()]
-	    self.lat_min_max = [weather_data['latitude'].min(), weather_data['latitude'].max()]
-	    self.lon_min_max = [weather_data['longitude'].min(), weather_data['longitude'].max()]
+        if self.time_min_max == [None, None]:
+            self.time_min_max = [weather_data['time'].min(), weather_data['time'].max()]
+            self.lat_min_max = [weather_data['latitude'].min(), weather_data['latitude'].max()]
+            self.lon_min_max = [weather_data['longitude'].min(), weather_data['longitude'].max()]
 
 	    # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 	    # print('Coverage of weather data: ')
