@@ -101,7 +101,6 @@ class MariPowerTanker(Boat):
         # self.hydro_model.Relaxation = 0.7  # mariPower default: 0.3
 
     def load_data(self):
-        self.use_depth_data = False
         if self.use_depth_data:
             self.depth_data = mariPower.environment.EnvironmentalData_Depth(self.depth_path)
 
@@ -153,7 +152,6 @@ class MariPowerTanker(Boat):
         setattr(self.hydro_model, variable, value)
 
     def print_init(self):
-        logger.info(form.get_log_step('boat speed' + str(self.speed), 1))
         logger.info(form.get_log_step('path to weather data' + str(self.weather_path), 1))
         logger.info(form.get_log_step('path to courses data' + str(self.courses_path), 1))
         logger.info(form.get_log_step('path to depth data' + str(self.depth_path), 1))
@@ -318,7 +316,6 @@ class MariPowerTanker(Boat):
 
     def write_netCDF_courses(self, courses, lats, lons, time, speed, unique_coords=False):
         debug = False
-        courses = units.degree_to_pmpi(courses)
 
         # ToDo: use logger.debug and args.debug
         if (debug):
@@ -397,6 +394,11 @@ class MariPowerTanker(Boat):
         if (debug):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
+        # maripower_path="/home/kdemmich/1_Projekte/TwinShip/5_Results/260520_MariDataEpilog/CoursesRoute_output.nc"
+        maripower_path = ("/home/kdemmich/1_Projekte/TwinShip/5_Results/260527_synthetic_weather_route67/"
+                          "CoursesRoute_output.nc")
+        ds = xr.open_dataset(maripower_path)
+
         power = ds['Power_brake'].to_numpy().flatten() * u.Watt
         rpm = ds['RotationRate'].to_numpy().flatten() * 1 / u.minute
         fuel = ds['Fuel_consumption_rate'].to_numpy().flatten() * u.tonne / u.hour
@@ -408,7 +410,7 @@ class MariPowerTanker(Boat):
         r_roughness = ds['Hull_roughness_resistance'].to_numpy().flatten() * u.newton
         status = ds['Status'].to_numpy().flatten()
         message = ds['Message'].to_numpy().flatten()
-        speed = ds['speed'].to_numpy().flatten() * u.meter/u.second
+        speed = ds['speed'].to_numpy().flatten() * u.meter / u.second
 
         ship_params = ShipParams(
             fuel_rate=fuel,
@@ -441,6 +443,7 @@ class MariPowerTanker(Boat):
             form.print_step('flattened shape power' + str(ship_params.get_power().shape), 1)
             form.print_step('power result' + str(ship_params.get_power()))
 
+        ds.close()
         return ship_params
 
     ##
@@ -472,10 +475,10 @@ class MariPowerTanker(Boat):
     def get_fuel_netCDF(self):
         mariPower_ship = copy.deepcopy(self.hydro_model)
         if self.use_depth_data:
-            status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
+            status, message, envDataRoute = mariPower.helper_functions.PredictPowerOrSpeedRoute(
                 mariPower_ship, self.courses_path, self.weather_path_maripower, self.depth_data)
         else:
-            status, message, envDataRoute = mariPower.__main__.PredictPowerOrSpeedRoute(
+            status, message, envDataRoute = mariPower.helper_functions.PredictPowerOrSpeedRoute(
                 mariPower_ship, self.courses_path, self.weather_path_maripower)
         # form.print_current_time('time for mariPower request:', start_time)
         # ToDo: read messages from netCDF and store them in ship_params (changes in mariPower necessary)

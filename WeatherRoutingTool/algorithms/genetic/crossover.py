@@ -85,6 +85,7 @@ class OffspringRejectionCrossover(CrossoverBase):
         self.crossover_type = crossover_type
         self.constraints_rejection = True
         self.config = config
+        self.rng = utils.get_rng(config)
 
         if not (config.GENETIC_REPAIR_TYPE == ["no_repair"]):
             self.constraints_rejection = False
@@ -163,8 +164,8 @@ class SinglePointCrossover(OffspringRejectionCrossover):
         # setup patching
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="SP crossover")
 
-        p1x = utils.RNG.integers(1, p1.shape[0] - 1)
-        p2x = utils.RNG.integers(1, p2.shape[0] - 1)
+        p1x = self.rng.integers(1, p1.shape[0] - 1)
+        p2x = self.rng.integers(1, p2.shape[0] - 1)
 
         r1 = np.concatenate([
             p1[:p1x],
@@ -194,11 +195,11 @@ class TwoPointCrossover(OffspringRejectionCrossover):
     def crossover(self, p1, p2):
         patchfn = PatchFactory.get_patcher(patch_type=self.patch_type, config=self.config, application="TP crossover")
 
-        p1x1 = utils.RNG.integers(1, p1.shape[0] - 4)
-        p1x2 = p1x1 + utils.RNG.integers(3, p1.shape[0] - p1x1 - 1)
+        p1x1 = self.rng.integers(1, p1.shape[0] - 4)
+        p1x2 = p1x1 + self.rng.integers(3, p1.shape[0] - p1x1 - 1)
 
-        p2x1 = utils.RNG.integers(1, p2.shape[0] - 4)
-        p2x2 = p2x1 + utils.RNG.integers(3, p2.shape[0] - p2x1 - 1)
+        p2x1 = self.rng.integers(1, p2.shape[0] - 4)
+        p2x2 = p2x1 + self.rng.integers(3, p2.shape[0] - p2x1 - 1)
 
         r1 = np.concatenate([
             p1[:p1x1],
@@ -226,13 +227,15 @@ class RandomizedCrossoversOrchestrator(CrossoverBase):
     :type opts: list[Crossover]
     """
 
-    def __init__(self, opts, **kw):
+    def __init__(self, config: Config, opts, **kw):
         super().__init__(**kw)
 
         self.opts = opts
+        self.config = config
+        self.rng = utils.get_rng(config)
 
     def _do(self, problem, X, **kw):
-        opt = self.opts[utils.RNG.integers(0, len(self.opts))]
+        opt = self.opts[self.rng.integers(0, len(self.opts))]
         return opt._do(problem, X, **kw)
 
     def print_crossover_statistics(self):
@@ -271,7 +274,7 @@ class SpeedCrossover(OffspringRejectionCrossover):
                 if d < self.threshold:
                     crossover_candidates.append((m, n))
         # Swap speed values for a subset of candidate points
-        indices = utils.RNG.choice(
+        indices = self.rng.choice(
             len(crossover_candidates),
             size=ceil(self.percentage * len(crossover_candidates)),
             replace=False,
@@ -307,11 +310,11 @@ class TwoPointCrossoverSpeed(OffspringRejectionCrossover):
         r1 = deepcopy(p1)
         r2 = deepcopy(p2)
 
-        p1x1 = utils.RNG.integers(1, p1.shape[0] - 4)
-        p1x2 = p1x1 + utils.RNG.integers(3, p1.shape[0] - p1x1 - 1)
+        p1x1 = self.rng.integers(1, p1.shape[0] - 4)
+        p1x2 = p1x1 + self.rng.integers(3, p1.shape[0] - p1x1 - 1)
 
-        p2x1 = utils.RNG.integers(1, p2.shape[0] - 4)
-        p2x2 = p2x1 + utils.RNG.integers(3, p2.shape[0] - p2x1 - 1)
+        p2x1 = self.rng.integers(1, p2.shape[0] - 4)
+        p2x2 = p2x1 + self.rng.integers(3, p2.shape[0] - p2x1 - 1)
 
         speed1 = p1[:, -1]
         speed2 = p2[:, -1]
@@ -354,6 +357,7 @@ class CrossoverFactory:
         if config.GENETIC_CROSSOVER_TYPE == "waypoints":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
             return RandomizedCrossoversOrchestrator(
+                config=config,
                 opts=[
                     TwoPointCrossover(
                         config=config,
@@ -374,25 +378,26 @@ class CrossoverFactory:
         if config.GENETIC_CROSSOVER_TYPE == "random":
             logger.debug('Setting crossover type of genetic algorithm to "random".')
             return RandomizedCrossoversOrchestrator(
+                config=config,
                 opts=[
                     TwoPointCrossover(
                         config=config,
                         patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="TP crossover"),
                     SinglePointCrossover(
                         config=config,
                         patch_type=config.GENETIC_CROSSOVER_PATCHER + "_singleton",
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="SP crossover"),
                     TwoPointCrossoverSpeed(
                         config=config,
                         departure_time=departure_time,
                         constraints_list=constraints_list,
-                        prob=.5,
+                        prob=.8,
                         crossover_type="TP Crossover speed")
                 ])

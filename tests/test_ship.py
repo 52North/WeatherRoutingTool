@@ -154,13 +154,16 @@ class TestShip:
         # dummy weather file
         dirname = os.path.dirname(__file__)
         weather_data = xr.open_dataset(os.path.join(dirname, 'data/tests_weather_data.nc'))
+        # git print(f'time: {weather_data["time"].min()} - {weather_data["time"].max()}')
+        # print(f'lat: {weather_data["latitude"].min().to_numpy()} - {weather_data["latitude"].max().to_numpy()}')
+        # print(f'lon: {weather_data["longitude"].min().to_numpy()} - {weather_data["longitude"].max().to_numpy()}')
 
-        time_single = datetime.strptime('2023-07-20', '%Y-%m-%d')
+        time_single = datetime.strptime('2025-04-01T09:00:00', '%Y-%m-%dT%H:%M:%S')
 
         # courses test file
         courses_test = np.array([0, 180, 0, 180, 180, 0]) * u.degree
-        lat_test = np.array([54.3, 54.3, 54.6, 55.6, 55.9, 55.9])
-        lon_test = np.array([13.3, 13.3, 13.6, 16., 16.9, 13.9])
+        lat_test = np.array([38.3, 38.3, 38.6, 39.6, 39.9, 39.9])
+        lon_test = np.array([13.3, 13.3, 13.6, 14., 14.9, 13.9])
         time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
         speed = np.full(6, 6) * u.meter / u.second
 

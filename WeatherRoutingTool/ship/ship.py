@@ -65,6 +65,10 @@ class Boat:
         self._weather_access_dims = ("time", "latitude", "longitude")
         self._weather_cache = Cache(max_entries=10000)
 
+        self.time_min_max = [None, None]
+        self.lat_min_max = [None, None]
+        self.lon_min_max = [None, None]
+
     def _get_weather_data(self):
         if self._weather_data is not None:
             return self._weather_data
@@ -115,6 +119,19 @@ class Boat:
         air_temperature = []
         salinity = []
         water_temperature = []
+
+	if self.time_min_max == [None, None]:
+	    self.time_min_max = [weather_data['time'].min(), weather_data['time'].max()]
+	    self.lat_min_max = [weather_data['latitude'].min(), weather_data['latitude'].max()]
+	    self.lon_min_max = [weather_data['longitude'].min(), weather_data['longitude'].max()]
+
+	    # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+	    # print('Coverage of weather data: ')
+	    # print(f'time range: {self.time_min_max[0]} - {self.time_min_max[1]}')
+	    # print(f'latitude range: {self.lat_min_max[0]} - {self.lat_min_max[1]}')
+	    # print(f'longitude range: {self.lon_min_max[0]} - {self.lon_min_max[1]}')
+	    # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+
 
         def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
             ilat = self._nearest_index(lat_values, lat)
@@ -172,7 +189,24 @@ class Boat:
 
         return ship_params
 
+    def check_value_in_range(self, lats, lons, time):
+        if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'lat: {weather_data["latitude"].min().to_numpy()} - {weather_data["latitude"].max().to_numpy()}')
+            raise ValueError(f'Latitude {lats} is out of weather range.')
+        if (lons > self.lon_min_max[1] or lons < self.lon_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'lon: {weather_data["longitude"].min().to_numpy()} - {weather_data["longitude"].max().to_numpy()}')
+            raise ValueError(f'Longitude {lons} is out of weather range.')
+        if (np.datetime64(time) > self.time_min_max[1] or np.datetime64(time) < self.time_min_max[0]).any():
+            weather_data = xr.open_dataset(self.weather_path)
+            print(f'time: {weather_data["time"].min()} - {weather_data["time"].max()}')
+            raise ValueError(f'Time {time} is out of weather range.')
+
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
+
+        # self.check_value_in_range(lats, lons, time)
+
         ship_var = var.sel(latitude=lats, longitude=lons, time=time, method='nearest', drop=False)
         if height:
             ship_var = ship_var.sel(height_above_ground=height, method='nearest', drop=False)

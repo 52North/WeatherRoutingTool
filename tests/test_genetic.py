@@ -104,9 +104,9 @@ def test_random_plateau_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
     mt.dist = 1e5
@@ -116,7 +116,7 @@ def test_random_plateau_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.937, 27.859),
@@ -124,6 +124,7 @@ def test_random_plateau_mutation(plt):
         show_depth=False,
         show_gcr=False
     )
+
     old_route_one_lc = graphics.get_route_lc(old_route[0, 0])
     old_route_two_lc = graphics.get_route_lc(old_route[1, 0])
     new_route_one_lc = graphics.get_route_lc(new_route[0, 0])
@@ -155,9 +156,8 @@ def test_random_plateau_mutation_refusal():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-
-    np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
     X = get_dummy_route_input(length="short")
@@ -179,9 +179,9 @@ def test_bezier_curve_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(2)
 
     mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
     X = get_dummy_route_input()
@@ -190,7 +190,7 @@ def test_bezier_curve_mutation(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -230,9 +230,8 @@ def test_bezier_mutation_refusal():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-
-    np.random.seed(1)
 
     mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
     mt.min_length = 9
@@ -268,9 +267,9 @@ def test_constraint_violation_repair(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(2)
 
     patchfn = PatchFactory.get_patcher(
         patch_type="isofuel_singleton",
@@ -285,7 +284,7 @@ def test_constraint_violation_repair(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -340,12 +339,11 @@ def test_single_point_crossover(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     departure_time = datetime(2025, 4, 1, 11, 11)
-
-    np.random.seed(2)
 
     X = get_dummy_route_input()
     old_route = copy.deepcopy(X)
@@ -360,7 +358,7 @@ def test_single_point_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -391,7 +389,7 @@ def test_speed_crossover(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
@@ -474,7 +472,7 @@ def test_check_speed_dif(speed_arr, viol_list):
     assert viol_list_test == viol_list
 
 
-@pytest.mark.parametrize("speed_arr,", [
+@pytest.mark.parametrize("speed_arr", [
     (np.array([1., 2., 100000., 4., 5., 6., 1000., -99])),
 ])
 def test_smoothen_speed_rec_error(speed_arr):
@@ -520,7 +518,7 @@ def test_twopoint_crossover_speed(plt):
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
-        map=default_map.get_var_tuple(),
+        map_coords=default_map.get_var_tuple(),
         depth=None,
         start=(35.199, 15.490),
         finish=(32.737, 28.859),
