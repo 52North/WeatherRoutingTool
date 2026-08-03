@@ -125,13 +125,12 @@ class Boat:
             self.lat_min_max = [weather_data['latitude'].min(), weather_data['latitude'].max()]
             self.lon_min_max = [weather_data['longitude'].min(), weather_data['longitude'].max()]
 
-	    # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-	    # print('Coverage of weather data: ')
-	    # print(f'time range: {self.time_min_max[0]} - {self.time_min_max[1]}')
-	    # print(f'latitude range: {self.lat_min_max[0]} - {self.lat_min_max[1]}')
-	    # print(f'longitude range: {self.lon_min_max[0]} - {self.lon_min_max[1]}')
-	    # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-
+        # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+        # print('Coverage of weather data: ')
+        # print(f'time range: {self.time_min_max[0]} - {self.time_min_max[1]}')
+        # print(f'latitude range: {self.lat_min_max[0]} - {self.lat_min_max[1]}')
+        # print(f'longitude range: {self.lon_min_max[0]} - {self.lon_min_max[1]}')
+        # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
         def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
             ilat = self._nearest_index(lat_values, lat)
