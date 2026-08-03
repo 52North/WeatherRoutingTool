@@ -104,9 +104,9 @@ def test_random_plateau_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
     mt.dist = 1e5
@@ -156,9 +156,8 @@ def test_random_plateau_mutation_refusal():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-
-    np.random.seed(1)
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
     X = get_dummy_route_input(length="short")
@@ -180,9 +179,9 @@ def test_bezier_curve_mutation(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(2)
 
     mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
     X = get_dummy_route_input()
@@ -231,9 +230,8 @@ def test_bezier_mutation_refusal():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-
-    np.random.seed(1)
 
     mt = RouteBlendMutation(config=config, constraints_list=constraint_list)
     mt.min_length = 9
@@ -269,9 +267,9 @@ def test_constraint_violation_repair(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
-    np.random.seed(2)
 
     patchfn = PatchFactory.get_patcher(
         patch_type="isofuel_singleton",
@@ -341,12 +339,11 @@ def test_single_point_crossover(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
     input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     departure_time = datetime(2025, 4, 1, 11, 11)
-
-    np.random.seed(2)
 
     X = get_dummy_route_input()
     old_route = copy.deepcopy(X)

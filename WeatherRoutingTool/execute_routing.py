@@ -82,5 +82,6 @@ def execute_routing(config, ship_config):
         min_fuel_route_postprocessed = postprocessed_route.post_process_route()
         min_fuel_route_postprocessed.write_to_geojson(
             routepath / f"{min_fuel_route_postprocessed.route_type}_postprocessed.geojson")
+
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')
