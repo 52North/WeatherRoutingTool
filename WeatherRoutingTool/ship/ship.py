@@ -58,12 +58,16 @@ class Boat:
         ship_params.wave_direction = self.approx_weather(weather_data['VMDR'], lat_da, lon_da, time_da) * u.radian
         ship_params.wave_period = self.approx_weather(weather_data['VTPK'], lat_da, lon_da, time_da) * u.second
         ship_params.wave_height = self.approx_weather(weather_data['VHM0'], lat_da, lon_da, time_da) * u.meter
-        ship_params.u_currents = self.approx_weather(weather_data['utotal'], lat_da, lon_da, time_da, None, 0.5) * u.meter / u.second
-        ship_params.v_currents = self.approx_weather(weather_data['vtotal'], lat_da, lon_da, time_da, None, 0.5) * u.meter / u.second
+        ship_params.u_currents = self.approx_weather(
+            weather_data['utotal'], lat_da, lon_da, time_da, None, 0.5) * u.meter / u.second
+        ship_params.v_currents = self.approx_weather(
+            weather_data['vtotal'], lat_da, lon_da, time_da, None, 0.5) * u.meter / u.second
         ship_params.pressure = self.approx_weather(
             weather_data['Pressure_reduced_to_MSL_msl'], lat_da, lon_da, time_da) * u.kg / (u.meter * u.second ** 2)
-        ship_params.water_temperature = self.approx_weather(weather_data['thetao'], lat_da, lon_da, time_da, None, 0.5) * u.deg_C
-        ship_params.salinity = self.approx_weather(weather_data['so'], lat_da, lon_da, time_da, None, 0.5) * 0.001 * u.dimensionless_unscaled
+        ship_params.water_temperature = self.approx_weather(
+            weather_data['thetao'], lat_da, lon_da, time_da, None, 0.5) * u.deg_C
+        ship_params.salinity = self.approx_weather(
+            weather_data['so'], lat_da, lon_da, time_da, None, 0.5) * 0.001 * u.dimensionless_unscaled
         ship_params.air_temperature = self.approx_weather(
             weather_data['Temperature_surface'], lat_da, lon_da, time_da) * u.Kelvin
         ship_params.u_wind_speed = self.approx_weather(
