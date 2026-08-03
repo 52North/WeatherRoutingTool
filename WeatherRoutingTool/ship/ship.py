@@ -16,6 +16,35 @@ logger = logging.getLogger('WRT.ship')
 # Tanker: implements interface to mariPower package which is used for power estimation.
 
 class Boat:
+    """
+    Base class representing a vessel used by the Weather Routing Tool.
+
+    - Sub-classes (for example `MariPowerTanker`, `DirectPowerBoat` or `SailingBoat`) implement
+        vessel-specific power and fuel estimation methods. This class provides shared
+        functionality used by all boat types such as keeping basic ship parameters
+        (draught, under-keel clearance), handling weather data access and helper
+        methods for extracting weather fields from a NetCDF file.
+    - Sub-classes should implement vessel-specific behaviour by overriding
+        ``get_ship_parameters``. Individual methods are documented on the method
+        itself.
+
+    :param weather_path: Path to the NetCDF file that contains
+        weather/oceanographic variables.
+    :type weather_path: str
+    :param under_keel_clearance: Minimum clearance below the hull as defined in
+        the ship configuration.
+    :type under_keel_clearance: astropy.units.Quantity
+    :param draught_aft: Aft draught read from the ship configuration.
+    :type draught_aft: astropy.units.Quantity
+    :param draught_fore: Fore draught read from the ship configuration.
+    :type draught_fore: astropy.units.Quantity
+    :param time_min_max: Cached min/max time values available in the weather file.
+    :type time_min_max: list
+    :param lat_min_max: Cached min/max latitude values available in the weather file.
+    :type lat_min_max: list
+    :param lon_min_max: Cached min/max longitude values available in the weather file.
+    :type lon_min_max: list
+    """
     weather_path: str  # path to netCDF containing weather data
 
     def __init__(self, ship_config: ShipConfig):
@@ -28,16 +57,70 @@ class Boat:
         self.lon_min_max = [None, None]
 
     def get_required_water_depth(self):
+        """Return required water depth in metres.
+
+        The required water depth is computed as the maximum of fore and aft
+        draught plus the under-keel clearance.
+
+        :return: required water depth in metres (float)
+        :rtype: float
+        """
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
         return needs_water_depth.value
 
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
-        pass
+        """Return `ShipParams` for the requested positions and times.
+
+        Sub-classes must override this method to provide vessel-specific power,
+        RPM and fuel estimations.
+
+        :param courses: course angles for each routing segment (radians or degrees
+            depending on caller conventions).
+        :type courses: array-like
+        :param lats: latitudes of start points for each routing segment.
+        :type lats: array-like
+        :param lons: longitudes of start points for each routing segment.
+        :type lons: array-like
+        :param time: start times for each routing segment (array of datetimes).
+        :type time: array-like
+        :param speed: speeds to evaluate at (one per segment).
+        :type speed: array-like
+        :param unique_coords: if True, the implementation may assume coordinates
+            are unique and optimise lookups accordingly.
+        :type unique_coords: bool
+        :return: a `ShipParams` instance populated for each requested segment.
+        :rtype: ShipParams
+        """
+        raise NotImplementedError()
 
     def print_init(self):
-        pass
+        """Log basic boat initialisation information.
+
+        Implementations should use the project's logging/formatting helpers to
+        print relevant initialisation values (e.g. fuel rate or geometry).
+        """
+        return None
 
     def evaluate_weather(self, ship_params, lats, lons, time):
+        """Populate weather-related fields of a `ShipParams` object.
+
+        This method reads the NetCDF file referenced by ``self.weather_path`` and
+        interpolates (nearest) the required variables to the provided
+        coordinates and times. The populated fields on ``ship_params`` include
+        wave height, wave period, wave direction, wind and current components,
+        pressure, temperatures and salinity.
+
+        :param ship_params: `ShipParams` instance to populate.
+        :type ship_params: ShipParams
+        :param lats: latitudes for the lookups.
+        :type lats: array-like
+        :param lons: longitudes for the lookups.
+        :type lons: array-like
+        :param time: times for the lookups (array-like, datetime-like objects).
+        :type time: array-like
+        :return: the same ``ship_params`` instance populated with weather fields.
+        :rtype: ShipParams
+        """
         weather_data = xr.open_dataset(self.weather_path)
         n_coords = len(lats)
 
@@ -108,6 +191,22 @@ class Boat:
         return ship_params
 
     def check_value_in_range(self, lats, lons, time):
+        """Raise `ValueError` if any requested coordinate or time is outside
+        the cached weather data ranges.
+
+        The method uses the cached ``lat_min_max``, ``lon_min_max`` and
+        ``time_min_max`` values populated when ``evaluate_weather`` was first
+        called. If a value is out of range, the corresponding available range is
+        printed and a ``ValueError`` is raised.
+
+        :param lats: latitudes to check.
+        :type lats: array-like
+        :param lons: longitudes to check.
+        :type lons: array-like
+        :param time: times to check.
+        :type time: array-like
+        :raises ValueError: if any coordinate/time lies outside the available data.
+        """
         if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
             weather_data = xr.open_dataset(self.weather_path)
             print(f'lat: {weather_data["latitude"].min().to_numpy()} - {weather_data["latitude"].max().to_numpy()}')
@@ -122,6 +221,27 @@ class Boat:
             raise ValueError(f'Time {time} is out of weather range.')
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
+        """Select nearest values from an xarray Variable and return as NumPy.
+
+        Uses ``xarray.DataArray.sel`` with ``method='nearest'`` and fills
+        missing values with zero. Optionally selects by ``height_above_ground``
+        or ``depth`` where available.
+
+        :param var: xarray variable (DataArray) to sample from.
+        :type var: xarray.DataArray
+        :param lats: latitude values for the lookup.
+        :type lats: array-like
+        :param lons: longitude values for the lookup.
+        :type lons: array-like
+        :param time: time values for the lookup.
+        :type time: array-like
+        :param height: optional height above ground to select (e.g. wind levels).
+        :type height: float or None
+        :param depth: optional depth to select (e.g. ocean fields).
+        :type depth: float or None
+        :return: sampled values as a NumPy array with NaNs replaced by 0.
+        :rtype: numpy.ndarray
+        """
 
         # self.check_value_in_range(lats, lons, time)
 
@@ -135,7 +255,12 @@ class Boat:
         return ship_var
 
     def load_data(self):
-        pass
+        """Optional hook to (re)load vessel-specific data.
+
+        Child classes may implement this to load auxiliary data (e.g. lookup
+        tables) required for power/fuel computations.
+        """
+        return None
 
     def check_data_meaningful(self):
         """
