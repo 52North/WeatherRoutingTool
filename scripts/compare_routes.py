@@ -168,6 +168,12 @@ if __name__ == "__main__":
     optional_args.add_argument('--plot-relative',
                                help="Plot the relative (True) power consumption scaled by the SMCR power.",
                                required=False, default=False, action='store_true')
+    optional_args.add_argument('--add-weather',
+                               help="Plot weather data on route-related graphs.",
+                               required=False, default=False, action='store_true')
+    optional_args.add_argument('--weather-timestamp',
+                               help="Time stamp for which weather is to be plotted.",
+                               required=False, default=None, type=str)
     optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
     optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
@@ -182,6 +188,8 @@ if __name__ == "__main__":
     depth_path = args.depth_file
     norm = args.norm
     plot_relative = args.plot_relative
+    add_weather = args.add_weather
+    weather_timestamp = args.weather_timestamp
 
     rp_list = []
     for path in filelist:
@@ -228,15 +236,9 @@ if __name__ == "__main__":
     plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    if hist_dict['weather']:
+    wt = None
+    if add_weather:
         wt = WeatherFactory.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
-
-        fig, ax = plt.subplots(figsize=(12, 7))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_list[0].start, rp_list[0].finish, '', False)
-        wt.plot_weather_map(fig, ax, plot_time, "wind")
-        plt.show()
 
     ##
     # init Constraints
@@ -250,12 +252,15 @@ if __name__ == "__main__":
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
-            default_map.get_var_tuple(),
-            None,
-            rp_list[0].start,
-            rp_list[0].finish,
-            '',
-            False
+            map_coords=default_map.get_var_tuple(),
+            depth=None,
+            start=rp_list[0].start,
+            finish=rp_list[0].finish,
+            title='',
+            show_depth=False,
+            show_gcr=False,
+            wt=wt,
+            wt_timestamp=weather_timestamp
         )
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)

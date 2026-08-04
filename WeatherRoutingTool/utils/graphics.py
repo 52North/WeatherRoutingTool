@@ -1,4 +1,5 @@
 import csv
+import datetime
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -293,7 +294,9 @@ def generate_basemap(
         finish=None,
         title='',
         show_depth=True,
-        show_gcr=False
+        show_gcr=False,
+        wt=None,
+        wt_timestamp=None
 ):
     plt.rcParams['font.size'] = get_standard('font_size')
     (min_lat, max_lat, min_lon, max_lon) = map_coords
@@ -338,6 +341,53 @@ def generate_basemap(
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
 
+    if wt is not None:
+        time = datetime.datetime.strptime(wt_timestamp, '%Y-%m-%dT%H:%MZ')
+
+        # plot windspeed
+        u = wt.ds['u-component_of_wind_height_above_ground'].sel(
+            height_above_ground=10,
+            latitude=slice(min_lat, max_lat),
+            longitude=slice(min_lon, max_lon),
+        )
+        u = u.sel(time=time, method='nearest')
+        v = wt.ds['v-component_of_wind_height_above_ground'].sel(
+            height_above_ground=10,
+            latitude=slice(min_lat, max_lat),
+            longitude=slice(min_lon, max_lon),
+        )
+        v = v.sel(time=time, method='nearest')
+        windspeed = np.sqrt(u ** 2 + v ** 2)
+
+        level_diff = 0.1
+        cfplot = windspeed.plot.contourf(
+            ax=ax,
+            levels=np.arange(2, 7, level_diff),
+            transform=ccrs.PlateCarree(),
+            zorder=0,
+            alpha=0.7
+        )
+        cbar = cfplot.colorbar
+        cbar.set_label('wind speed (m/s)', fontsize=20, labelpad=10)
+
+        # plot wind barbs
+        stride = 10
+        lons = wt.ds["longitude"].sel(longitude=slice(min_lon, max_lon)).values[::stride]
+        lats = wt.ds["latitude"].sel(latitude=slice(min_lat, max_lat)).values[::stride]
+        u_wind = u.values[::stride, ::stride]
+        v_wind = v.values[::stride, ::stride]
+        lon_2d, lat_2d = np.meshgrid(lons, lats)
+
+        ax.barbs(
+            lon_2d, lat_2d,
+            u_wind, v_wind,
+            transform=ccrs.PlateCarree(),
+            length=5,
+            linewidth=0.8,
+            color='black',
+            zorder=0.5
+        )
+
     if start is not None:
         ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10,
                 transform=input_crs)
@@ -350,9 +400,10 @@ def generate_basemap(
         lons_gcr = [x[1] for x in gcr]
         ax.plot(lons_gcr, lats_gcr, color="orange")
 
-    ax.add_feature(cf.LAND)
+    ax.add_feature(cf.LAND, zorder=1)
     ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl = ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl.right_labels = False
     ax.set_extent([x_min_new, x_max_new, y_min_new, y_max_new], crs=output_crs)
 
     fig.tight_layout()
