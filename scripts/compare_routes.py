@@ -33,7 +33,7 @@ def plot_power_vs_dist(
 
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(
-            color=graphics.get_colour(irp),
+            icolor=irp,
             label=rp_str_list[irp],
             power_type=power_type,
             ax=ax,
@@ -63,9 +63,14 @@ def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_typ
 
 def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0, 10)
+    # ax.set_ylim(4, 8) # route 47
+    ax.set_ylim(4, 6)  # route 67
     for irp in range(0, len(rp_list)):
-        rp_list[irp].plot_speed_vs_dist(graphics.get_colour(irp), rp_str_list[irp], ax)
+        rp_list[irp].plot_speed_vs_dist(
+            icolor=irp,
+            label=rp_str_list[irp],
+            ax=ax
+        )
 
     ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)

@@ -273,7 +273,7 @@ class RouteParams:
             salinity[ipoint] = property['salinity']['value']
             water_temperature[ipoint] = property['water_temperature']['value']
             status[ipoint] = property['status']['value']
-            message[ipoint] = property['message']['value']
+        #    message[ipoint] = property['message']['value']
 
         speed = speed[:-1] * u.meter / u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
@@ -373,7 +373,7 @@ class RouteParams:
             return {"value": power, "label": "fuel consumption", "unit": u.kg}
         raise NotImplementedError(f'The power type "{power_type}" is not implemented.')
 
-    def plot_power_vs_dist(self, color, label, power_type, ax, norm=1.):
+    def plot_power_vs_dist(self, icolor, label, power_type, ax, norm=1.):
         power = self.get_power_type(power_type, norm)
         dist = self.dists_per_step
 
@@ -384,8 +384,15 @@ class RouteParams:
             plt.ylabel(power["label"])
 
             lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
-            plt.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid', linewidth=2, color=color,
-                     label=label)
+            plt.step(
+                lower_bin_boundaries,
+                hist_values["bin_contents"],
+                where='mid',
+                linewidth=2,
+                color=graphics.get_colour(icolor),
+                linestyle=graphics.get_linestyle(icolor),
+                label=label
+            )
 
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
@@ -396,7 +403,11 @@ class RouteParams:
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne / u.kilometer).value,
                 hist_values["bin_widths"].to(u.km).value,
-                fill=False, color=color, edgecolor=color, label=label
+                fill=False,
+                color=graphics.get_colour(icolor),
+                edgecolor=graphics.get_colour(icolor),
+                linestyle=graphics.get_linestyle(icolor),
+                label=label
             )
             ax.set_ylim(0, 0.05)
         plt.xlabel('travel distance (km)')
@@ -452,19 +463,23 @@ class RouteParams:
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
-    def plot_speed_vs_dist(self, color, label, ax):
+    def plot_speed_vs_dist(self, icolor, label, ax):
         speed = self.ship_params_per_step.get_speed()
         dist = self.dists_per_step
 
         hist_values = graphics.get_hist_values_from_widths(dist, speed, "speed")
-
-        # only for power: also plot bin showing weighted mean. This does not make sense for fuel.
         plt.ylabel("speed (m/s)")
-        plt.bar(
-            hist_values["bin_centres"].to(u.km).value,
+        lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+
+        plt.step(
+            lower_bin_boundaries,
             hist_values["bin_contents"].to(u.m / u.second).value,
-            hist_values["bin_widths"].to(u.km).value,
-            alpha=0.5, color=color, edgecolor=color, label=label, linewidth=2)
+            where='mid',
+            linewidth=2,
+            color=graphics.get_colour(icolor),
+            linestyle=graphics.get_linestyle(icolor),
+            label=label
+        )
 
         left, right = plt.xlim()
         ax.set_xlim(-100, right)
