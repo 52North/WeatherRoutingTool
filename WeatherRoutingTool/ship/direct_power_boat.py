@@ -4,7 +4,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import xarray as xr
 from astropy import units as u
 
 import WeatherRoutingTool.utils.formatting as form
@@ -55,6 +54,7 @@ class DirectPowerBoat(Boat):
 
         # mandatory parameters for direct power method
         # determine power at the service propulsion point i.e. 'subtract' 15% sea and 10% engine margin
+        self.weather_path = str(ship_config.WEATHER_DATA)
         self.power_at_sp = ship_config.BOAT_SMCR_POWER * u.kiloWatt
         self.power_at_sp = self.power_at_sp.to(u.Watt) * 0.75
         self.speed_at_sp = ship_config.BOAT_SMCR_SPEED * u.meter / u.second
