@@ -323,7 +323,7 @@ class NNBoat(Boat):
         return mean.flatten(), std.flatten()
 
     def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
-        debug = True
+        debug = False
         n_requests = len(courses)
 
         # initialise clean ship params object
