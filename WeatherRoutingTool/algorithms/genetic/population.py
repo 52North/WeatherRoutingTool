@@ -73,6 +73,7 @@ class Population(Sampling):
                     mean_boat_speed,
                     self.pop_size
                 )
+                self.rng.shuffle(quantiles)
 
                 for i, rt_arr in enumerate(X[:, 0]):
                     rt_arr[:, -1] = quantiles[i]
