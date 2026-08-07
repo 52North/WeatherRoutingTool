@@ -22,7 +22,6 @@ class Boat:
     weather_path: str  # path to netCDF containing weather data
 
     def __init__(self, ship_config: ShipConfig):
-        self.counter = 0
         self.under_keel_clearance = ship_config.BOAT_UNDER_KEEL_CLEARANCE * u.meter
         self.draught_aft = ship_config.BOAT_DRAUGHT_AFT * u.meter
         self.draught_fore = ship_config.BOAT_DRAUGHT_FORE * u.meter
@@ -85,7 +84,6 @@ class Boat:
         if depth is not None:
             ship_var = ship_var.sel(depth=depth, method='nearest', drop=False)
         ship_var = ship_var.fillna(0).to_numpy()
-        self.counter += 1
 
         return ship_var
 
