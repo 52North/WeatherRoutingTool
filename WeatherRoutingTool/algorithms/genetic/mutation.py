@@ -247,10 +247,10 @@ class RandomPlateauMutation(MutationConstraintRejection):
         if route_length < 9:
             return False
 
-        plateau_length = np.random.randint(7, np.floor(0.9 * route_length))
+        plateau_length = int(self.rng.integers(7, np.floor(0.9 * route_length)))
         if plateau_length % 2 != 1:
             plateau_length = plateau_length - 1
-        self.plateau_size = np.random.randint(2, plateau_length - 4)
+        self.plateau_size = int(self.rng.integers(2, plateau_length - 4))
         if self.plateau_size % 2 != 1:
             self.plateau_size += 1
         self.plateau_slope = (plateau_length + 2 - self.plateau_size) / 2

@@ -23,11 +23,11 @@ def test_variable_plateau_size(route_length):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 1
     constraint_list = basic_test_func.generate_dummy_constraint_list()
 
     mt = RandomPlateauMutation(config=config, constraints_list=constraint_list)
 
-    np.random.seed(1)
     for _ in range(100):
         mt.variable_plateau_size(route_length)
 
