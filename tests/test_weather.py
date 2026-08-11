@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from WeatherRoutingTool.weather import WeatherCond
@@ -10,15 +11,19 @@ def test_theta_from_uv(u, v, theta_res):
     assert theta_test == pytest.approx(theta_res)
 
 
-@pytest.mark.parametrize("theta,windspeed,u_res", [(45, 1, -1), (315, 1, 1), (225, 1, 1), (135, 1, -1)])
-def get_u(theta, windspeed):
+@pytest.mark.parametrize("theta,windspeed,u_res",
+                         [(45, np.sqrt(2), -1), (315, np.sqrt(2), 1),
+                          (225, np.sqrt(2), 1), (135, np.sqrt(2), -1)])
+def test_get_u(theta, windspeed, u_res):
     u_test = WeatherCond.get_u(theta, windspeed)
 
-    assert u_test == pytest.approx(u_test)
+    assert u_test == pytest.approx(u_res)
 
 
-@pytest.mark.parametrize("theta,windspeed,u_res", [(45, 1, -1), (315, 1, -1), (225, 1, 1), (135, 1, 1)])
-def get_v(theta, windspeed):
+@pytest.mark.parametrize("theta,windspeed,v_res",
+                         [(45, np.sqrt(2), -1), (315, np.sqrt(2), -1),
+                          (225, np.sqrt(2), 1), (135, np.sqrt(2), 1)])
+def test_get_v(theta, windspeed, v_res):
     v_test = WeatherCond.get_v(theta, windspeed)
 
-    assert v_test == pytest.approx(v_test)
+    assert v_test == pytest.approx(v_res)
