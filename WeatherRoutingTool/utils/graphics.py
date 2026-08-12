@@ -145,6 +145,13 @@ def get_colour(i):
     return colours[i]
 
 
+def get_str_color(i):
+    # colors optimised for visibility on map with weather
+    colours = ['#0072B2', '#D55E00', '#009E73', '#FFBC79']
+
+    return colours[i]
+
+
 def get_marker(i):
     markers = ['o', 's', 'd', 'P', 'D', 'x', 'p']
     if i > 6:
@@ -155,7 +162,7 @@ def get_marker(i):
 
 
 def get_linestyle(i):
-    linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
+    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
 
     if i > 3:
         i = i - 4

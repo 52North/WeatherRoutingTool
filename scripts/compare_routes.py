@@ -63,8 +63,8 @@ def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_typ
 
 def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    # ax.set_ylim(4, 8) # route 47
-    ax.set_ylim(4, 6)  # route 67
+    ax.set_ylim(3, 7)  # route 47
+    # ax.set_ylim(4, 6)  # route 67
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_speed_vs_dist(
             icolor=irp,
@@ -232,7 +232,8 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (30.742, 21.183, 38.224, 36.770)
+    # lat1, lon1, lat2, lon2 = (30.742, 21.183, 38.224, 36.770) # route47
+    lat1, lon1, lat2, lon2 = (30.7, 12.7170, 42.2, 39.4044)  # route67
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -270,7 +271,7 @@ if __name__ == "__main__":
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):
-            ax = rp_list[irp].plot_route(ax, graphics.get_colour(irp), rp_str_list[irp], graphics.get_linestyle(irp))
+            ax = rp_list[irp].plot_route(ax, graphics.get_str_color(irp), rp_str_list[irp], graphics.get_linestyle(irp))
         ax.legend()
         plt.savefig(figurefile + '/route_waterdepth.png')
 
