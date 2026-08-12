@@ -20,9 +20,17 @@ logger = logging.getLogger('WRT.ship')
 
 class Cache:
     """
-    keys are arbitrary hashable objects
-    stores arbitrary values
-    evicts oldest entries when max_entries exceeded
+    Size-limited cache for storing arbitrary values by key.
+
+    - Keys may be any hashable object.
+    - Values may be any Python object.
+    - The cache evicts the oldest entries when the number of stored items exceeds
+      ``max_entries``.
+    - The implementation preserves insertion order using ``OrderedDict`` so the
+      eviction policy is deterministic and efficient.
+
+    :param max_entries: Maximum number of entries retained in the cache.
+    :type max_entries: int
     """
 
     def __init__(self, max_entries: int = 10_000):
