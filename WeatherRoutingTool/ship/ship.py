@@ -20,16 +20,17 @@ logger = logging.getLogger('WRT.ship')
 
 class Cache:
     """
-    Size-limited cache for storing arbitrary values by key.
+    Size-limited cache for weather lookups keyed by the weather-data indices.
 
-    - Keys may be any hashable object.
-    - Values may be any Python object.
+    - The cache key is a tuple of the weather variable name and the nearest
+      dataset indices ``(var_key, ilat, ilon, itime, height, depth)``.
+    - The cached value is the sampled weather field for that grid/time slice.
     - The cache evicts the oldest entries when the number of stored items exceeds
       ``max_entries``.
     - The implementation preserves insertion order using ``OrderedDict`` so the
       eviction policy is deterministic and efficient.
 
-    :param max_entries: Maximum number of entries retained in the cache.
+    :param max_entries: Maximum number of weather lookup entries retained in the cache.
     :type max_entries: int
     """
 
@@ -222,16 +223,44 @@ class Boat:
         # print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
         def cached_lookup(var_key, da, lat, lon, t, height=None, depth=None):
+            """Return a weather sample using the nearest weather-data indices.
+
+            The cached lookup is indexed by the nearest weather-data indices
+            ``ilat``, ``ilon`` and ``itime`` together with the optional
+            ``height``/``depth`` selection. This reuses previously computed weather
+            samples for nearby coordinates and times. If no cached sample exists,
+            the function evaluates ``self.approx_weather`` and stores the result
+            in the cache.
+
+            :param var_key: weather variable name used in the cache key, e.g.
+                ``'VMDR'`` or ``'VHM0'``.
+            :type var_key: str
+            :param da: xarray DataArray for the weather variable being sampled.
+            :type da: xarray.DataArray
+            :param lat: latitude coordinate for the lookup.
+            :type lat: float
+            :param lon: longitude coordinate for the lookup.
+            :type lon: float
+            :param t: time coordinate for the lookup (datetime-like).
+            :type t: datetime-like
+            :param height: optional ``height_above_ground`` index used in the lookup.
+            :type height: float or None
+            :param depth: optional ``depth`` index used in the lookup.
+            :type depth: float or None
+            :return: weather sample for the nearest grid/time location as a NumPy
+                array with missing data replaced by 0.
+            :rtype: numpy.ndarray
+            """
             ilat = self._nearest_index(lat_values, lat)
             ilon = self._nearest_index(lon_values, lon)
             itime = self._nearest_index(time_values, t)
-            key = (var_key, ilat, ilon, itime, height, depth)
-            val = self._weather_cache.get(key)
-            if val is not None:
-                return val
-            v = self.approx_weather(da, lat, lon, t, height, depth)
-            self._weather_cache.set(key, v)
-            return v
+            cache_key = (var_key, ilat, ilon, itime, height, depth)
+            cached_value = self._weather_cache.get(cache_key)
+            if cached_value is not None:
+                return cached_value
+            sampled_value = self.approx_weather(da, lat, lon, t, height, depth)
+            self._weather_cache.set(cache_key, sampled_value)
+            return sampled_value
 
         for i_coord in range(0, n_coords):
 
