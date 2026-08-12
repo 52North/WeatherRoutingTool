@@ -51,10 +51,25 @@ class Boat:
         self.under_keel_clearance = ship_config.BOAT_UNDER_KEEL_CLEARANCE * u.meter
         self.draught_aft = ship_config.BOAT_DRAUGHT_AFT * u.meter
         self.draught_fore = ship_config.BOAT_DRAUGHT_FORE * u.meter
+        self.weather_data = None
 
         self.time_min_max = [None, None]
         self.lat_min_max = [None, None]
         self.lon_min_max = [None, None]
+
+    def get_weather_data(self):
+        """Return the lazily opened weather dataset.
+
+        The NetCDF data file referenced by ``self.weather_path`` is opened once
+        and then reused across subsequent weather lookups to avoid repeatedly
+        reopening the same dataset.
+
+        :return: xarray dataset containing the weather fields used by the vessel.
+        :rtype: xarray.Dataset
+        """
+        if self.weather_data == None:
+            self.weather_data = xr.open_dataset(self.weather_path)
+        return self.weather_data
 
     def get_required_water_depth(self):
         """Return required water depth in metres.
@@ -121,7 +136,7 @@ class Boat:
         :return: the same ``ship_params`` instance populated with weather fields.
         :rtype: ShipParams
         """
-        weather_data = xr.open_dataset(self.weather_path)
+        weather_data = self.get_weather_data()
         n_coords = len(lats)
 
         wave_height = []
