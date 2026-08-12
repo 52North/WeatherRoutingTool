@@ -351,9 +351,9 @@ class RouteParams:
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle=linestyle, transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=4, linestyle=linestyle, transform=input_crs)
         else:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=4, transform=input_crs)
 
         ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour, markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
@@ -389,7 +389,7 @@ class RouteParams:
                 hist_values["bin_contents"],
                 where='mid',
                 linewidth=2,
-                color=graphics.get_colour(icolor),
+                color=graphics.get_str_color(icolor),
                 linestyle=graphics.get_linestyle(icolor),
                 label=label
             )
@@ -476,7 +476,7 @@ class RouteParams:
             hist_values["bin_contents"].to(u.m / u.second).value,
             where='mid',
             linewidth=2,
-            color=graphics.get_colour(icolor),
+            color=graphics.get_str_color(icolor),
             linestyle=graphics.get_linestyle(icolor),
             label=label
         )
@@ -775,14 +775,14 @@ class RouteParams:
         lat = df['Latitude'].values
         lon = df['Longitude'].values
 
-        time = df.iloc[:, 0].values
+        time = df.iloc[:, 0]
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
 
         logger.info('Reading route from file: ' + filename)
         logger.info('start: (' + str(lat[0]) + ',' + str(lon[0]) + ')')
         logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
-        logger.info('start time: ' + str(time[0]))
-        logger.info('end time: ' + str(time[-1]))
+        logger.info('start time: ' + str(time_converted[0]))
+        logger.info('end time: ' + str(time_converted[-1]))
         logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
         logger.info('ME load (percentage): ' + str(mean_engine_load))
         logger.info('fore draught: ' + str(fore_draught))
