@@ -56,7 +56,7 @@ class Config(BaseModel):
     # Other configuration
     ALGORITHM_TYPE: Literal[
         'dijkstra', 'gcr_slider', 'genetic', 'genetic_shortest_route', 'isofuel', 'speedy_isobased'
-    ] = 'isofuel'
+    ] = 'genetic'
     ARRIVAL_TIME: datetime | None = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
     BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
