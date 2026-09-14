@@ -38,7 +38,7 @@ Some variables have to be set using environment variables (see below).
 Config file
 -----------
 
-The following lists contain information on each variable which can be set. The categorisation into required, recommended and optional variables has been chosen such that the requirements of the default settings for the algorithm type (Isofuel algorithm) and the fuel consumption model (Direct Power Method) are met. 
+The following lists contain information on each variable which can be set. The categorisation into required, recommended and optional variables has been chosen such that the requirements of the default settings for the algorithm type (Genetic algorithm) and the fuel consumption model (Direct Power Method) are met. 
 
 **Required variables**:
 
