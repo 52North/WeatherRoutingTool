@@ -113,7 +113,13 @@ class Population(Sampling):
             departure_time=self.departure_time,
             arrival_time=self.arrival_time,
         )
-        rt[:, 2] = np.full(rt[:, 1].shape, bs)
+        min_speed = self.min_boat_speed * u.meter / u.second
+        max_speed = self.max_boat_speed * u.meter / u.second
+        if bs < min_speed:
+            bs = min_speed
+        elif bs > max_speed:
+            bs = max_speed
+        rt[:, 2] = np.full(rt[:, 1].shape, bs.value)
         return rt
 
     def spread_velocity(self, min_boat_speed: float, max_boat_speed: float,
