@@ -312,6 +312,7 @@ def test_recalculate_speed_for_route():
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
+    config.BOAT_SPEED_BOUNDARIES = [6, 7]
     config.ARRIVAL_TIME = datetime(2025, 4, 2, 11, 11)
     config.DEPARTURE_TIME = datetime(2025, 4, 1, 11, 11)
     constraint_list = basic_test_func.generate_dummy_constraint_list()
@@ -327,11 +328,9 @@ def test_recalculate_speed_for_route():
     new_route = copy.deepcopy(rt)
     new_route = pop.recalculate_speed_for_route(new_route)
 
-    dist_to_dest = 1262000 * u.meter
-    time_difference = config.ARRIVAL_TIME - config.DEPARTURE_TIME
-    bs_approx = dist_to_dest / (time_difference.total_seconds() * u.second)
-
-    assert np.all((new_route[:, 2] - bs_approx.value) < 0.3)
+    assert np.all(new_route[:, 2] <= config.BOAT_SPEED_BOUNDARIES[1])
+    assert np.all(new_route[:, 2] >= config.BOAT_SPEED_BOUNDARIES[0])
+    assert np.allclose(new_route[:, 2], config.BOAT_SPEED_BOUNDARIES[1])
 
 
 @pytest.mark.skip(reason="Test needs modified route array.")
