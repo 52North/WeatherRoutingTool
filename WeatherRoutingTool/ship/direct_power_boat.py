@@ -230,12 +230,16 @@ class DirectPowerBoat(Boat):
             arg_arcsin = true_wind_speed[iang] * np.sin(np.radians(true_wind_angle[iang])) / apparent_wind_speed[
                 iang] * u.radian
 
-            # catch it if argument of arcsin is > 1 due to rounding issues but make sure to apply this only for
-            # rounding issues
+            # clamp arcsin argument to [-1, 1] to handle floating-point rounding
             diff_to_one = arg_arcsin - 1 * u.radian
             if diff_to_one > 0:
                 assert diff_to_one < 0.000001 * u.radian
                 arg_arcsin = 1 * u.radian
+
+            diff_to_neg_one = arg_arcsin + 1 * u.radian
+            if diff_to_neg_one < 0:
+                assert diff_to_neg_one > -0.000001 * u.radian
+                arg_arcsin = -1 * u.radian
 
             if apparent_wind_speed[iang] > 0:
                 apparent_wind_angle[iang] = np.arcsin(arg_arcsin.value) * u.radian
