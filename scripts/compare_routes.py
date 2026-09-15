@@ -33,7 +33,7 @@ def plot_power_vs_dist(
 
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_power_vs_dist(
-            color=graphics.get_colour(irp),
+            icolor=irp,
             label=rp_str_list[irp],
             power_type=power_type,
             ax=ax,
@@ -63,9 +63,14 @@ def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_typ
 
 def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0, 10)
+    ax.set_ylim(3, 7)  # route 47
+    # ax.set_ylim(4, 6)  # route 67
     for irp in range(0, len(rp_list)):
-        rp_list[irp].plot_speed_vs_dist(graphics.get_colour(irp), rp_str_list[irp], ax)
+        rp_list[irp].plot_speed_vs_dist(
+            icolor=irp,
+            label=rp_str_list[irp],
+            ax=ax
+        )
 
     ax.legend(loc='upper left', frameon=False)
     ax.tick_params(top=True, right=True)
@@ -96,7 +101,7 @@ def plot_power_vs_coord(rp_list, rp_str_list, coordstring, power_type='fuel'):
 
 def plot_power_vs_dist_ratios(rp_list, rp_str_list, scenario_str, power_type='fuel'):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(0.9, 1.1)
+    ax.set_ylim(0.8, 1.2)
     colour = 0
 
     rp_bruch = copy.deepcopy(rp_list[0])
@@ -168,6 +173,12 @@ if __name__ == "__main__":
     optional_args.add_argument('--plot-relative',
                                help="Plot the relative (True) power consumption scaled by the SMCR power.",
                                required=False, default=False, action='store_true')
+    optional_args.add_argument('--add-weather',
+                               help="Plot weather data on route-related graphs.",
+                               required=False, default=False, action='store_true')
+    optional_args.add_argument('--weather-timestamp',
+                               help="Time stamp for which weather is to be plotted.",
+                               required=False, default=None, type=str)
     optional_args.add_argument('--wind-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
     optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
@@ -182,6 +193,8 @@ if __name__ == "__main__":
     depth_path = args.depth_file
     norm = args.norm
     plot_relative = args.plot_relative
+    add_weather = args.add_weather
+    weather_timestamp = args.weather_timestamp
 
     rp_list = []
     for path in filelist:
@@ -219,7 +232,8 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    lat1, lon1, lat2, lon2 = (50, -2, 60, 14.257)
+    # lat1, lon1, lat2, lon2 = (30.742, 21.183, 38.224, 36.770) # route47
+    lat1, lon1, lat2, lon2 = (30.7, 12.7170, 42.2, 39.4044)  # route67
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -228,15 +242,9 @@ if __name__ == "__main__":
     plot_time = dt.datetime.strptime(time_for_plotting, '%Y-%m-%dT%H:%MZ')
     default_map = Map(lat1, lon1, lat2, lon2)
 
-    if hist_dict['weather']:
+    wt = None
+    if add_weather:
         wt = WeatherFactory.get_weather("from_file", windfile, departure_time_dt, time_forecast, 3, default_map)
-
-        fig, ax = plt.subplots(figsize=(12, 7))
-        ax.axis('off')
-        ax.xaxis.set_tick_params(labelsize='large')
-        fig, ax = graphics.generate_basemap(fig, None, rp_list[0].start, rp_list[0].finish, '', False)
-        wt.plot_weather_map(fig, ax, plot_time, "wind")
-        plt.show()
 
     ##
     # init Constraints
@@ -250,17 +258,20 @@ if __name__ == "__main__":
         ax.axis('off')
         ax.xaxis.set_tick_params(labelsize='large')
         fig, ax = graphics.generate_basemap(
-            default_map.get_var_tuple(),
-            None,
-            rp_list[0].start,
-            rp_list[0].finish,
-            '',
-            False
+            map_coords=default_map.get_var_tuple(),
+            depth=None,
+            start=rp_list[0].start,
+            finish=rp_list[0].finish,
+            title='',
+            show_depth=False,
+            show_gcr=False,
+            wt=wt,
+            wt_timestamp=weather_timestamp
         )
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
         for irp in range(0, len(rp_list)):
-            ax = rp_list[irp].plot_route(ax, graphics.get_colour(irp), rp_str_list[irp], graphics.get_linestyle(irp))
+            ax = rp_list[irp].plot_route(ax, graphics.get_str_color(irp), rp_str_list[irp], graphics.get_linestyle(irp))
         ax.legend()
         plt.savefig(figurefile + '/route_waterdepth.png')
 

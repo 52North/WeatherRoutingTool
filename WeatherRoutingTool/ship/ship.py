@@ -205,58 +205,7 @@ class Boat:
 
         return ship_params
 
-    def check_value_in_range(self, lats, lons, time):
-        """Raise `ValueError` if any requested coordinate or time is outside
-        the cached weather data ranges.
-
-        The method uses the cached ``lat_min_max``, ``lon_min_max`` and
-        ``time_min_max`` values populated when ``evaluate_weather`` was first
-        called. If a value is out of range, the corresponding available range is
-        printed and a ``ValueError`` is raised.
-
-        :param lats: latitudes to check.
-        :type lats: array-like
-        :param lons: longitudes to check.
-        :type lons: array-like
-        :param time: times to check.
-        :type time: array-like
-        :raises ValueError: if any coordinate/time lies outside the available data.
-        """
-        if (lats > self.lat_min_max[1] or lats < self.lat_min_max[0]).any():
-            weather_data = xr.open_dataset(self.weather_path)
-            print(f'lat: {weather_data["latitude"].min().to_numpy()} - {weather_data["latitude"].max().to_numpy()}')
-            raise ValueError(f'Latitude {lats} is out of weather range.')
-        if (lons > self.lon_min_max[1] or lons < self.lon_min_max[0]).any():
-            weather_data = xr.open_dataset(self.weather_path)
-            print(f'lon: {weather_data["longitude"].min().to_numpy()} - {weather_data["longitude"].max().to_numpy()}')
-            raise ValueError(f'Longitude {lons} is out of weather range.')
-        if (np.datetime64(time) > self.time_min_max[1] or np.datetime64(time) < self.time_min_max[0]).any():
-            weather_data = xr.open_dataset(self.weather_path)
-            print(f'time: {weather_data["time"].min()} - {weather_data["time"].max()}')
-            raise ValueError(f'Time {time} is out of weather range.')
-
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
-        """Select nearest values from an xarray Variable and return as NumPy.
-
-        Uses ``xarray.DataArray.sel`` with ``method='nearest'`` and fills
-        missing values with zero. Optionally selects by ``height_above_ground``
-        or ``depth`` where available.
-
-        :param var: xarray variable (DataArray) to sample from.
-        :type var: xarray.DataArray
-        :param lats: latitude values for the lookup.
-        :type lats: array-like
-        :param lons: longitude values for the lookup.
-        :type lons: array-like
-        :param time: time values for the lookup.
-        :type time: array-like
-        :param height: optional height above ground to select (e.g. wind levels).
-        :type height: float or None
-        :param depth: optional depth to select (e.g. ocean fields).
-        :type depth: float or None
-        :return: sampled values as a NumPy array with NaNs replaced by 0.
-        :rtype: numpy.ndarray
-        """
 
         # self.check_value_in_range(lats, lons, time)
 

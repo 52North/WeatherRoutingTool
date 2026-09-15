@@ -116,7 +116,7 @@ class WeatherCond:
     def plot_wind_weather(self, time, rebinx=5, rebiny=5):
         input_crs = ccrs.PlateCarree()
         fig, ax = graphics.generate_basemap(
-            map=self.map_size.get_var_tuple(),
+            map_coords=self.map_size.get_var_tuple(),
             depth=None,
             show_depth=False
         )
@@ -769,7 +769,7 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
-    def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None, gauß_dict=None):
+    def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None, gauss_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
         var_list_zero = {
@@ -782,7 +782,7 @@ class FakeWeather(WeatherCond):
             'Pressure_reduced_to_MSL_msl': 0
         }
         self.coord_res = coord_res
-        self.gauß_dict = gauß_dict
+        self.gauss_dict = gauss_dict
 
         self.combine_var_dicts(var_dict_manual=var_dict, var_dict_zero=var_list_zero)
 
@@ -838,10 +838,19 @@ class FakeWeather(WeatherCond):
         vwind = np.full((n_lat_values, n_lon_values, n_time_values, n_height_above_ground),
                         self.var_dict['v-component_of_wind_height_above_ground'])
 
-        if self.gauß_dict:
-            uwind, vwind = self.add_gauß_to_wind(
+        if self.gauss_dict:
+            uwind, vwind = self.add_gauss_to_wind(
                 uwind,
                 vwind,
+                lon_start,
+                lat_start,
+                n_lon_values,
+                n_lat_values,
+                n_time_values,
+                n_height_above_ground
+            )
+            VHM0 = self.add_gauss_to_wave(
+                VHM0,
                 lon_start,
                 lat_start,
                 n_lon_values,
@@ -898,51 +907,280 @@ class FakeWeather(WeatherCond):
                         'vwind': 'v-component_of_wind_height_above_ground'})
 
         self.ds = ds
+        self.follow_conventions()
         self.plot_wind_weather(self.time_start)
 
-    def add_gauß_to_wind(self, uwind, vwind, lon_start, lat_start, n_lon_values, n_lat_values, n_time_values,
-                         n_height_above_ground):
-        wind_speed_orig = np.sqrt(uwind ** 2 + vwind ** 2)
-        wind_speed_orig_mean = wind_speed_orig.mean()
-        vwind_orig = vwind.mean()
-        wind_speed_max_target = self.gauß_dict["target_height"] - wind_speed_orig_mean
+    def follow_conventions(self):
+        self.ds.latitude.attrs = {
+            "standard_name": "latitude",
+            "units": "degrees_north",
+            "axis": "Y",
+        }
 
-        if wind_speed_max_target < 0:
-            raise ValueError('Target wind speed is smaller than mean of wind data.')
+        self.ds.longitude.attrs = {
+            "standard_name": "longitude",
+            "units": "degrees_east",
+            "axis": "X",
+        }
 
+        self.ds["u-component_of_wind_height_above_ground"].attrs = {
+            "long_name": "u-velocity component",
+            "standard_name": "eastward_wind",
+            "units": "m s-1",
+        }
+
+        self.ds["v-component_of_wind_height_above_ground"].attrs = {
+            "long_name": "v-velocity component",
+            "standard_name": "northward_wind",
+            "units": "m s-1",
+        }
+        self.ds = self.ds.transpose("time", "latitude", "longitude", "depth", "height_above_ground")
+
+    def gaussian_1D(self, x, mean, sigma, norm):
+        """Calculate a 1D normalised Gaussian curve over input domain values.
+
+            :param x: value(s) at which to evaluate the Gaussian function.
+            :type x: float or numpy.ndarray
+            :param mean: Mean / center location of the Gaussian peak.
+            :type mean: float
+            :param sigma: Standard deviation controlling the width of the Gaussian peak.
+            :type sigma: float
+            :param norm: normalisation factor determining the peak amplitude.
+            :type norm: float
+            :return: 1D Gaussian distribution evaluated at `x`.
+            :rtype: float or numpy.ndarray
+        """
+        gauss_temp = np.exp(-((x - mean) ** 2) / (2 * sigma)) * norm
+        return gauss_temp
+
+    def gaussian_2d(self, x, y, ind_gauss_x, ind_gauss_y, sigma):
+        """Calculate a 2D unnormalized Gaussian distribution on a 2D spatial grid.
+
+            Note: In this implementation, `x` is evaluated relative to `ind_gauss_y` and
+            `y` relative to `ind_gauss_x`.
+
+            :param x: 2D meshgrid array of x-coordinates (longitude direction).
+            :type x: numpy.ndarray
+            :param y: 2D meshgrid array of y-coordinates (latitude direction).
+            :type y: numpy.ndarray
+            :param ind_gauss_x: Center index position along the grid's latitude axis.
+            :type ind_gauss_x: float or int
+            :param ind_gauss_y: Center index position along the grid's longitude axis.
+            :type ind_gauss_y: float or int
+            :param sigma: Variance factor controlling the spatial spread of the 2D Gaussian peak.
+            :type sigma: float
+            :return: 2D Gaussian array corresponding to the meshgrid dimensions.
+            :rtype: numpy.ndarray
+        """
+        gauss_temp = np.exp(
+            -((x - ind_gauss_y) ** 2 + (y - ind_gauss_x) ** 2) / (2 * sigma))
+        return gauss_temp
+
+    def get_gauss_over_time(self, n_time_values, norm):
+        """Generate a 1D Gaussian temporal perturbation profile across given time steps.
+
+            Evaluates a 1D Gaussian centered at relative time index 0.6 over the interval [0, 1].
+            Values below 1e-5 are truncated to zero.
+
+            :param n_time_values: Number of discrete time steps.
+            :type n_time_values: int
+            :param norm: Scaling factor applied to the temporal Gaussian peak.
+            :type norm: float
+            :return: 1D array of length `n_time_values` containing Gaussian weights over time.
+            :rtype: numpy.ndarray
+        """
+        sigma = 0.08
+        x = np.linspace(0, 1, n_time_values)
+
+        gauss = []
+        for itime in range(0, n_time_values):
+            gauss_temp = self.gaussian_1D(
+                x=x[itime],
+                mean=0.6,
+                sigma=sigma,
+                norm=norm
+            )
+            gauss.append(gauss_temp)
+        gauss = np.array(gauss)
+        gauss[gauss < 0.00001] = 0
+        return gauss
+
+    def get_gauss_over_space(self,
+                             n_lon_values: int,
+                             n_lat_values: int,
+                             lon_start: float,
+                             lat_start: float,
+                             target_width: float):
+        """Generate a 2D spatial Gaussian matrix centered on target geographical coordinates.
+
+            Maps target lat/lon coordinates to grid indices, computes 2D Gaussian spatial values
+            across the bounding box, and truncates values below 1e-5 to zero.
+
+            :param n_lon_values: Total number of longitude grid points.
+            :type n_lon_values: int
+            :param n_lat_values: Total number of latitude grid points.
+            :type n_lat_values: int
+            :param lon_start: Starting longitude coordinate of the domain.
+            :type lon_start: float
+            :param lat_start: Starting latitude coordinate of the domain.
+            :type lat_start: float
+            :return: 2D array of shape `(n_lat_values, n_lon_values)` with spatial Gaussian weights.
+            :rtype: numpy.ndarray
+        """
         # coordinate transformation
-        ind_gauß_x, ind_gauß_y = self.get_index(self.gauß_dict["lat"], self.gauß_dict["lon"], lon_start, lat_start)
-        del_target_width = np.rint(self.gauß_dict["target_width"] / self.coord_res)
+        ind_gauss_x, ind_gauss_y = self.get_index(self.gauss_dict["lat"], self.gauss_dict["lon"], lon_start, lat_start)
+        del_target_width = np.rint(target_width / self.coord_res)
 
-        # obtain gauß and add to baseline
         x, y = np.meshgrid(np.linspace(0, n_lon_values - 1, n_lon_values),
                            np.linspace(0, n_lat_values - 1, n_lat_values))
-        gauß_temp = np.exp(
-            -((x - ind_gauß_y) ** 2 + (y - ind_gauß_x) ** 2) / (2 * del_target_width)) * wind_speed_max_target
-        gauß_temp[gauß_temp < 0.00001] = 0
-        gauß = gauß_temp + wind_speed_orig_mean
+        gauss_space_temp = self.gaussian_2d(
+            x=x,
+            y=y,
+            ind_gauss_x=ind_gauss_x,
+            ind_gauss_y=ind_gauss_y,
+            sigma=del_target_width
+        )
+        gauss_space_temp[gauss_space_temp < 0.00001] = 0
+        gauss_space = gauss_space_temp
+        return gauss_space
 
-        # calculate u and v components for original and modified wind angle
-        theta_orig = self.get_theta_from_uv(uwind[0, 0, 0, 0], vwind[0, 0, 0, 0])
-        v_updated_newtheta = self.get_v(self.gauß_dict["theta"], gauß)
-        u_updated_newtheta = self.get_u(self.gauß_dict["theta"], gauß)
-        v_updated = self.get_v(theta_orig, gauß)
-        u_updated = self.get_u(theta_orig, gauß)
-        v_updated = np.where(v_updated == vwind_orig, v_updated, v_updated_newtheta)
-        u_updated = np.where(v_updated == vwind_orig, u_updated, u_updated_newtheta)
+    def add_gauss_to_wind(self,
+                          uwind,
+                          vwind,
+                          lon_start,
+                          lat_start,
+                          n_lon_values,
+                          n_lat_values,
+                          n_time_values,
+                          n_height_above_ground
+                          ):
+        """Superimpose a 3D spatio-temporal Gaussian disturbance field onto existing wind fields.
+
+            Combines 2D spatial and 1D temporal Gaussian profiles, scales the disturbance to reach
+            the target peak wind speed, replicates it across vertical height levels, and adds the
+            resulting u and v vector components to the baseline wind field.
+
+            :param uwind: 4D array of baseline eastward wind speed components ($u$).
+            :type uwind: numpy.ndarray
+            :param vwind: 4D array of baseline northward wind speed components ($v$).
+            :type vwind: numpy.ndarray
+            :param lon_start: Starting longitude coordinate.
+            :type lon_start: float
+            :param lat_start: Starting latitude coordinate.
+            :type lat_start: float
+            :param n_lon_values: Number of longitude grid points.
+            :type n_lon_values: int
+            :param n_lat_values: Number of latitude grid points.
+            :type n_lat_values: int
+            :param n_time_values: Number of time steps.
+            :type n_time_values: int
+            :param n_height_above_ground: Number of vertical height levels above ground.
+            :type n_height_above_ground: int
+            :raises ValueError: If configured `target_height` is smaller than mean baseline wind speed.
+            :return: Updated 4D arrays `(u_updated, v_updated)` containing modified wind field vectors.
+            :rtype: tuple[numpy.ndarray, numpy.ndarray]
+        """
+        debug = False
+        wind_speed_orig = np.sqrt(uwind ** 2 + vwind ** 2)
+        wind_speed_orig_mean = wind_speed_orig.mean()
+        wind_speed_max_target_orig = self.gauss_dict["target_height_wind"] - wind_speed_orig_mean
+        if wind_speed_max_target_orig < 0:
+            raise ValueError('Target wind speed is smaller than mean of wind data.')
+
+        # obtain 2D gauss over space
+        gauss_space = self.get_gauss_over_space(
+            n_lon_values=n_lon_values,
+            n_lat_values=n_lat_values,
+            lon_start=lon_start,
+            lat_start=lat_start,
+            target_width=self.gauss_dict["target_height_wind"],
+        )
+
+        # obtain 1D gauss over time
+        gauss_time = self.get_gauss_over_time(
+            n_time_values=n_time_values,
+            norm=1
+        )
+
+        # combine time and space gauss and adapt dimensionality
+        gauss_3D = gauss_space[:, :, None] * gauss_time[None, None, :] * wind_speed_max_target_orig
 
         # correct dimensionality
-        v_updated = np.tile(v_updated, (n_time_values, n_height_above_ground, 1, 1))
-        v_updated = np.moveaxis(v_updated, 2, 0)
-        v_updated = np.moveaxis(v_updated, 3, 1)
-        vwind = v_updated
+        gauss_da = np.tile(gauss_3D, (n_height_above_ground, 1, 1, 1))
+        if debug:
+            np.set_printoptions(threshold=sys.maxsize)
+            print('gauss_3D shape: ', gauss_3D.shape)
+            print('shape of original uwind:', uwind.shape)
+        gauss_da = np.moveaxis(gauss_da, 0, 3)
+        if debug:
+            print('shape after moving axis', gauss_da.shape)
 
-        u_updated = np.tile(u_updated, (n_time_values, n_height_above_ground, 1, 1))
-        u_updated = np.moveaxis(u_updated, 2, 0)
-        u_updated = np.moveaxis(u_updated, 3, 1)
-        uwind = u_updated
+        # calculate theta and u- and v-components
+        theta_orig = self.get_theta_from_uv(uwind[0, 0, 0, 0], vwind[0, 0, 0, 0])
+        v_updated = vwind + self.get_v(theta_orig, gauss_da)
+        u_updated = uwind + self.get_u(theta_orig, gauss_da)
 
-        return uwind, vwind
+        return u_updated, v_updated
+
+    def add_gauss_to_wave(self,
+                          vhm0_orig,
+                          lon_start,
+                          lat_start,
+                          n_lon_values,
+                          n_lat_values,
+                          n_time_values,
+                          n_height_above_ground
+                          ):
+        """Superimpose a 3D spatio-temporal Gaussian disturbance field onto existing wave fields.
+
+            Combines 2D spatial and 1D temporal Gaussian profiles, scales the disturbance to reach
+            the target peak wave height, and adds the baseline wave field.
+
+            :param vhm0_orig: 3D array of wave height
+            :type vhm0_orig: numpy.ndarray
+            :param lon_start: Starting longitude coordinate.
+            :type lon_start: float
+            :param lat_start: Starting latitude coordinate.
+            :type lat_start: float
+            :param n_lon_values: Number of longitude grid points.
+            :type n_lon_values: int
+            :param n_lat_values: Number of latitude grid points.
+            :type n_lat_values: int
+            :param n_time_values: Number of time steps.
+            :type n_time_values: int
+            :param n_height_above_ground: Number of vertical height levels above ground.
+            :type n_height_above_ground: int
+            :raises ValueError: If configured `target_height` is smaller than mean baseline wind speed.
+            :return: Updated 3D array `vhm0_distorted` containing modified wave field vectors.
+            :rtype: tuple[numpy.ndarray, numpy.ndarray]
+        """
+        vhm0_orig_mean = vhm0_orig.mean()
+        vhm0_max_target = self.gauss_dict["target_height_wave"] - vhm0_orig_mean
+        if vhm0_max_target < 0:
+            raise ValueError('Target wave height is smaller than mean of wind data.')
+
+        # obtain 2D gauss over space
+        gauss_space = self.get_gauss_over_space(
+            n_lon_values=n_lon_values,
+            n_lat_values=n_lat_values,
+            lon_start=lon_start,
+            lat_start=lat_start,
+            target_width=self.gauss_dict["target_height_wave"]
+        )
+
+        # obtain 1D gauss over time
+        gauss_time = self.get_gauss_over_time(
+            n_time_values=n_time_values,
+            norm=1
+        )
+
+        # combine time and space gauss and adapt dimensionality
+        gauss_3D = gauss_space[:, :, None] * gauss_time[None, None, :] * vhm0_max_target
+
+        # calculate distorted vhm0 component
+        vhm0_distorted = vhm0_orig + gauss_3D
+
+        return vhm0_distorted
 
     def get_index(self, lat, lon, start_lon, start_lat):
         del_coord = self.coord_res
@@ -956,3 +1194,26 @@ class FakeWeather(WeatherCond):
         self.ds.to_netcdf(filepath)
         self.ds.close()
         return filepath
+
+    def write_reduced_data(self, filepath):
+        """
+        Write reduced fake weather to file for easy analysis with QGIS.
+
+        :param filepath:
+        :return:
+        """
+        reduced_path = str(filepath).rstrip('.nc') + '_reduced.nc'
+        ds_red_depth = self.ds.isel(depth=0)
+        ds_red = ds_red_depth.isel(height_above_ground=0)
+        ds_red = ds_red.rename(
+            {
+                "u-component_of_wind_height_above_ground": "uwind",
+                "v-component_of_wind_height_above_ground": "vwind",
+            }
+        )
+
+        ds_red = ds_red.drop_vars('depth')
+        ds_red = ds_red.drop_vars('height_above_ground')
+
+        logger.info('Writing reduced weather data fo file')
+        ds_red.to_netcdf(reduced_path)

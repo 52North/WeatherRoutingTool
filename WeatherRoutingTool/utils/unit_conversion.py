@@ -81,12 +81,8 @@ def convert_npdt64_to_datetime(time):
 
 
 def convert_pandatime_to_datetime(time):
-    time_dt = pd.to_datetime(time)
-    time_converted = np.full(time.shape[0], datetime.today())
-    for i in range(0, time.shape[0]):
-        dt_object = convert_npdt64_to_datetime(time_dt[i])
-        timestamp = dt_object.timestamp()
-        time_converted[i] = datetime.fromtimestamp(timestamp=timestamp)
+    time_new = pd.to_datetime(time)
+    time_converted = time_new.dt.to_pydatetime().to_list()
     return time_converted
 
 
