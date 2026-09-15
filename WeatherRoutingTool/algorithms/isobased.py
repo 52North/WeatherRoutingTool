@@ -985,7 +985,7 @@ class IsoBased(RoutingAlg):
         """
 
         fig, ax = graphics.generate_basemap(
-            map=map_size.get_var_tuple(),
+            map_coords=self.map_ext.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
@@ -1769,7 +1769,7 @@ class IsoBased(RoutingAlg):
                 (ds_depth_coarsened.z < 0), drop=True)
 
         self.fig_coverage, self.ax_coverage = graphics.generate_basemap(
-            map=map_size.get_var_tuple(),
+            map_coords=map_size.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
@@ -1777,7 +1777,7 @@ class IsoBased(RoutingAlg):
         )
 
         self.fig_coverage_pruning, self.ax_coverage_pruning = graphics.generate_basemap(
-            map=map_size.get_var_tuple(),
+            map_coords=map_size.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
@@ -1786,7 +1786,7 @@ class IsoBased(RoutingAlg):
 
         # plot routes that are currently used for the routing ('survivors')
         self.fig_survivors, self.ax_survivors = graphics.generate_basemap(
-            map=map_size.get_var_tuple(),
+            map_coords=map_size.get_var_tuple(),
             depth=ds_depth_coarsened,
             start=self.start,
             finish=self.finish
