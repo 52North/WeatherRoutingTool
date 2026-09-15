@@ -62,6 +62,7 @@ class MariPowerTanker(Boat):
     depth_path: str  # path to netCDF for depth data
     # FIXME: make separate weather path obsolete
     weather_path_maripower: str  # path to weather data which is converted to maripower requirements
+    courses_path_maripower: str
 
     use_depth_data: bool
     correct_by_nnmodel: bool
@@ -81,6 +82,7 @@ class MariPowerTanker(Boat):
 
         self.courses_path = str(ship_config.COURSES_FILE)
         self.weather_path = str(ship_config.WEATHER_DATA)
+        self.courses_path_maripower = self.courses_path.removesuffix(".nc") + "_output.nc"
 
         self.correct_by_nnmodel = False
         if ship_config.BOAT_CORRECT_BY_NNMODEL is True:
@@ -402,10 +404,7 @@ class MariPowerTanker(Boat):
         if (debug):
             form.print_step('Dataset with ship parameters:' + str(ds), 1)
 
-        # maripower_path="/home/kdemmich/1_Projekte/TwinShip/5_Results/260520_MariDataEpilog/CoursesRoute_output.nc"
-        maripower_path = ("/home/kdemmich/1_Projekte/TwinShip/5_Results/260527_synthetic_weather_route67/"
-                          "CoursesRoute_output.nc")
-        ds = xr.open_dataset(maripower_path)
+        ds = xr.open_dataset(self.courses_path_maripower)
 
         power = ds['Power_brake'].to_numpy().flatten() * u.Watt
         rpm = ds['RotationRate'].to_numpy().flatten() * 1 / u.minute
