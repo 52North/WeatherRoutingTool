@@ -201,8 +201,6 @@ class Boat:
         ship_params.salinity = np.array(salinity, dtype='float32') * 0.001 * u.dimensionless_unscaled
         ship_params.water_temperature = np.array(water_temperature, dtype='float32') * u.deg_C
 
-        weather_data.close()
-
         return ship_params
 
     def approx_weather(self, var, lats, lons, time, height=None, depth=None):
