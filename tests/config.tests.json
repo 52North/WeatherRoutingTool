@@ -11,6 +11,9 @@
   "DELTA_TIME_FORECAST": 3,
   "DELTA_FUEL": 3000,
 
+  "ALGORITHM_TYPE": "genetic",
+  "ARRIVAL_TIME": "2025-12-07T21:00Z",
+
   "COURSES_FILE": "tests",
   "DEPTH_DATA": "tests/data/tests_depth_data.nc",
   "WEATHER_DATA": "tests/data/tests_weather_data.nc",
@@ -30,6 +33,13 @@
   "GENETIC_NUMBER_OFFSPRINGS": 2,
   "GENETIC_POPULATION_SIZE": 20,
   "GENETIC_POPULATION_TYPE": "grid_based",
+  "GENETIC_POPULATION_PATH": "",
+  "GENETIC_REPAIR_TYPE": ["waypoints_infill", "constraint_violation"],
+  "GENETIC_MUTATION_TYPE": "random",
+  "GENETIC_CROSSOVER_TYPE": "random",
+  "GENETIC_CROSSOVER_PATCHER": "gcr",
+  "GENETIC_RANDOM_SEED": 1,
+  "GENETIC_OBJECTIVES": {"fuel_consumption": 1.5, "arrival_time": 1.5},
 
   "BOAT_TYPE": "direct_power_method",
   "BOAT_BREADTH": 32,
