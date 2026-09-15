@@ -38,7 +38,7 @@ def test_plot_power_vs_dist():
                         starttime_per_step=time_per_step,
                         ship_params_per_step=sp, gcr=dummy_list)
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    route.plot_power_vs_dist("orange", "Route X", "fuel", ax)
+    route.plot_power_vs_dist(0, "Route X", "fuel", ax)
 
 
 def test_get_accumulated_dist():
