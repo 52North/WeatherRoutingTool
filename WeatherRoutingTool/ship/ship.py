@@ -62,13 +62,16 @@ class Boat:
 
         The NetCDF data file referenced by ``self.weather_path`` is opened once
         and then reused across subsequent weather lookups to avoid repeatedly
-        reopening the same dataset.
+        reopening the same dataset. The data is loaded into memory on first
+        access so repeated selections do not keep hitting disk.
 
         :return: xarray dataset containing the weather fields used by the vessel.
         :rtype: xarray.Dataset
         """
         if self.weather_data == None:
-            self.weather_data = xr.open_dataset(self.weather_path)
+            weather_data = xr.open_dataset(self.weather_path)
+            self.weather_data = weather_data.load()
+            weather_data.close()
         return self.weather_data
 
     def get_required_water_depth(self):
