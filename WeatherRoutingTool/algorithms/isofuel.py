@@ -113,11 +113,13 @@ class IsoFuel(IsoBased):
         return delta_time, delta_fuel, dist['s12']
 
     def determine_timespread(self, delta_time):
-        """TODO: add description
-        _summary_
+        """Log the mean and standard deviation of per-course time steps.
 
-        :param delta_time: _description_
-        :type delta_time: _type_
+        Computes basic statistics over *delta_time* and writes them to the
+        log at INFO level for diagnostic purposes.
+
+        :param delta_time: Array of time increments for each candidate course
+        :type delta_time: astropy.units.Quantity
         """
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
@@ -134,10 +136,13 @@ class IsoFuel(IsoBased):
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
 
     def final_pruning(self):
-        """TODO: add description
-        _summary_
+        """Select the single lowest-fuel-consumption route from remaining candidates.
 
-        :raises Exception: _description_
+        Sums the fuel consumed across all routing steps for each candidate
+        route, picks the one with the minimum total, and trims all
+        per-step arrays down to that single route.
+
+        :raises Exception: If no valid candidate remains after pruning
         """
         # ToDo: use logger.debug and args.debug
         debug = False

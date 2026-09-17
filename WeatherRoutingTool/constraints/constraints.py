@@ -402,8 +402,12 @@ class ConstraintsList:
 
     def safe_crossing_continuous(self, lat_start: np.ndarray, lon_start: np.ndarray, lat_end: np.ndarray,
                                  lon_end: np.ndarray, time_start: np.ndarray, is_constrained: list[bool]):
-        """TODO: add description
-        _summary_
+        """Check continuous constraints on a route section.
+
+Iterates over all registered continuous constraints and ORs their results into
+*is_constrained*, preserving entries that were already ``True``. Thus an entry
+is ``True`` if it was previously constrained or if at least one continuous
+constraint blocks the corresponding section.
 
         :param lat_start: Latitude of start point of section to check
         :type lat_start: ndarray or float
@@ -1019,15 +1023,22 @@ class SeamarkCrossing(ContinuousCheck):
             self.concat_tree = self.set_STRTree(db_engine=self.engine, query=seamark_query)
 
     def build_seamark_query(self, is_stay_on_map=None, map_size=None):
-        """TODO: add description
-        _summary_
+        """Build the SQL query used to fetch restricted-area seamark geometries.
 
-        :param is_stay_on_map: _description_, defaults to None
-        :type is_stay_on_map: _type_, optional
-        :param map_size: _description_, defaults to None
-        :type map_size: _type_, optional
-        :return: _description_
-        :rtype: _type_
+        Constructs a tag-based query against the OpenStreetMap database to
+        retrieve polygons tagged with ``seamark:type=restricted_area`` and
+        matching category values (e.g. military, nature_reserve, minefield).
+        When *is_stay_on_map* is ``True``, the query is spatially bounded
+        using :meth:`set_map_bbox` with *map_size*.
+
+        :param is_stay_on_map: Whether to restrict the query to the map extent,
+            defaults to None
+        :type is_stay_on_map: bool or None, optional
+        :param map_size: Bounding-box specification passed to
+            :meth:`set_map_bbox`, defaults to None
+        :type map_size: tuple or None, optional
+        :return: A two-element list of SQL query strings ``[nodes_query, ways_query]``
+        :rtype: list[str]
         """
 
         tags = "'seamark:type'='restricted_area'"

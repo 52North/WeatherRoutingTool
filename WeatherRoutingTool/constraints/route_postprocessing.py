@@ -53,8 +53,12 @@ class RoutePostprocessing:
         self.ship_speed = route.ship_params_per_step.speed
 
     def post_process_route(self):
-        """TODO: add class description
-        _summary_
+        """Post-process a fuel-optimal route to comply with Traffic Separation Schemes.
+
+        Detects intersections between the computed route and seamark separation
+        zones, then reroutes affected segments when possible. If the start or finish
+        lies in a separation zone, the original route is returned unchanged; otherwise
+        the rerouted route preserves the original start/end points.
         """
         route_bbx = self.get_route_bbox()
         route_segments_gdf = self.create_route_segments()
