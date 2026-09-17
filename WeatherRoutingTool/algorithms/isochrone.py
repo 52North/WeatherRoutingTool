@@ -58,9 +58,9 @@ class IsoChrone(IsoBased):
 
     def get_dist(self, bs):
         dist = self.delta_time * bs
-        logger.info('dist=', dist)
-        logger.info('delta_time=', self.delta_time)
-        logger.info('bs=', bs)
+        logger.info('dist=%s', dist)
+        logger.info('delta_time=%s', self.delta_time)
+        logger.info('bs=%s', bs)
         return dist
 
     def get_delta_variables(self, boat, wind, bs):
