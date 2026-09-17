@@ -121,7 +121,7 @@ class IsoFuel(IsoBased):
         """
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
-        logger.info('delta_time', delta_time.to('hour'))
+        logger.info('delta_time: %s', delta_time.to('hour'))
         logger.info('spread of time: ' + str(mean.to('hour')) + '+-' + str(stddev.to('hour')))
 
     def update_time(self):
