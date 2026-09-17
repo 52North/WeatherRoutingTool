@@ -404,11 +404,10 @@ class ConstraintsList:
                                  lon_end: np.ndarray, time_start: np.ndarray, is_constrained: list[bool]):
         """Check continuous constraints on a route section.
 
-        Iterates over all registered continuous constraints and checks whether
-        the route section from (lat_start, lon_start) to (lat_end, lon_end)
-        violates any of them. Updates the *is_constrained* boolean list so that
-        an entry is ``True`` if the corresponding section is blocked by at
-        least one continuous constraint.
+Iterates over all registered continuous constraints and ORs their results into
+*is_constrained*, preserving entries that were already ``True``. Thus an entry
+is ``True`` if it was previously constrained or if at least one continuous
+constraint blocks the corresponding section.
 
         :param lat_start: Latitude of start point of section to check
         :type lat_start: ndarray or float
