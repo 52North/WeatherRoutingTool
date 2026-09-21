@@ -1,0 +1,79 @@
+ - WRT.weather : INFO     Initialising weather
+ - WRT.weather : INFO         Reading weather data from file:  tests/data/tests_weather_data.nc
+ - WRT.weather : INFO             time resolution: 3:00:00 hours
+ - WRT.weather : INFO             forecast from 2025-04-01 09:00:00 to 2025-04-05 06:00:00
+ - WRT.weather : INFO             nof time steps 31
+ - WRT         : INFO     Initialising ship
+ - WRT         : INFO     Use direct power method for modeling fuel consumption.
+ - WRT.ship    : INFO         The boat speed provided is assumed to be the speed that corresponds to 75% SMCR power.
+ - WRT.ship    : INFO             SMCR power: 4500.0 kW
+ - WRT.ship    : INFO             SMCR speed: 7.0 m / s
+ - WRT.ship    : INFO             fuel rate: 0.16 kg / (h kW)
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO     Constraints activated: 
+ - WRT.Constraints: INFO             no land crossing
+ - WRT.Constraints: INFO             minimum water depth=30.0m
+ - WRT.Constraints: INFO             stay on weather map
+ - WRT         : INFO     Initialising and starting routing procedure. For log output check the files 'info.log' and 'performance.log'.
+ - WRT.genetic : INFO     Initializing Routing......
+ - WRT.genetic : INFO     route from (38.1884, 2.388) to (39.5539, 10.6186)
+ - WRT.genetic : INFO             route from (38.1884, 2.388) to (39.5539, 10.6186)
+ - WRT.genetic : INFO     Fixing random seed for genetic algorithm.
+ - WRT.Config  : WARNING  Your 'BOAT_SPEED' is higher than 10 m/s. Have you considered that this program works with m/s?
+ - WRT.Config  : INFO     arrival time: None
+ - WRT.Config  : INFO     speed: 600.0
+ - WRT.weather : INFO     Initialising weather
+ - WRT.weather : INFO         Reading weather data from file:  tests/data/tests_weather_data.nc
+ - WRT.weather : INFO             time resolution: 3:00:00 hours
+ - WRT.weather : INFO             forecast from 2025-04-01 09:00:00 to 2025-04-05 06:00:00
+ - WRT.weather : INFO             nof time steps 31
+ - WRT         : INFO     Initialising ship
+ - WRT         : INFO     Use speedy isobased model for modeling fuel consumption.
+ - WRT.ship    : INFO             boat fuel rate167.0 kg / s
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO     Constraints activated: 
+ - WRT.Constraints: INFO             no land crossing
+ - WRT.Constraints: INFO             minimum water depth=30.0m
+ - WRT.Constraints: INFO             stay on weather map
+ - WRT.Config  : WARNING  Your 'BOAT_SPEED' is higher than 10 m/s. Have you considered that this program works with m/s?
+ - WRT.Config  : INFO     arrival time: None
+ - WRT.Config  : INFO     speed: 600.0
+ - WRT.weather : INFO     Initialising weather
+ - WRT.weather : INFO         Reading weather data from file:  tests/data/tests_weather_data.nc
+ - WRT.weather : INFO             time resolution: 3:00:00 hours
+ - WRT.weather : INFO             forecast from 2025-04-01 09:00:00 to 2025-04-05 06:00:00
+ - WRT.weather : INFO             nof time steps 31
+ - WRT         : INFO     Initialising ship
+ - WRT         : INFO     Use speedy isobased model for modeling fuel consumption.
+ - WRT.ship    : INFO             boat fuel rate167.0 kg / s
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO         Downloading depth data from file: tests/data/tests_depth_data.nc
+ - WRT.Constraints: INFO     Constraints activated: 
+ - WRT.Constraints: INFO             no land crossing
+ - WRT.Constraints: INFO             minimum water depth=30.0m
+ - WRT.Constraints: INFO             stay on weather map
+ - WRT.genetic.crossover: INFO     TP crossover statistics:
+ - WRT.genetic.crossover: INFO     nof_crossover_tries: 10
+ - WRT.genetic.crossover: INFO     nof_crossover_success: 10
+ - WRT.genetic.crossover: INFO     SP crossover statistics:
+ - WRT.genetic.crossover: INFO     nof_crossover_tries: 10
+ - WRT.genetic.crossover: INFO     nof_crossover_success: 10
+ - WRT.genetic.crossover: INFO     TP Crossover speed statistics:
+ - WRT.genetic.crossover: INFO     nof_crossover_tries: 20
+ - WRT.genetic.crossover: INFO     nof_crossover_success: 20
+ - WRT.genetic.mutation: INFO     GaussianSpeedMutation statistics:
+ - WRT.genetic.mutation: INFO     nof_mutation_tries: 90
+ - WRT.genetic.mutation: INFO     nof_mutation_success: 90
+ - WRT.genetic.mutation: INFO     RandomPlateauMutation statistics:
+ - WRT.genetic.mutation: INFO     nof_mutation_tries: 40
+ - WRT.genetic.mutation: INFO     nof_mutation_success: 40
+ - WRT.genetic.mutation: INFO     RouteBlendMutation statistics:
+ - WRT.genetic.mutation: INFO     nof_mutation_tries: 50
+ - WRT.genetic.mutation: INFO     nof_mutation_success: 50
+ - WRT.genetic : INFO     Time after minimisation: <duration>
+ - WRT.routingalg: INFO     ---------------------------------------------------
+ - WRT.routingalg: INFO     Terminating...
+ - WRT.genetic : INFO     Best fuel: 20394.498106117888 kg
+ - WRT.Routeparams: INFO     Write route parameters to <ROUTE_PATH>/min_fuel_route.json

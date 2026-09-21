@@ -1,0 +1,39 @@
+{
+  "DEFAULT_ROUTE": [38.1884, 2.388, 39.5539, 10.6186],
+  "DEFAULT_MAP": [37.0364, 1.1137, 41.76, 12.7474],
+  "DEPARTURE_TIME": "2025-04-01T11:13Z",
+  "ARRIVAL_TIME": "2025-04-02T22:00Z",
+  "ROUTE_PATH": "tests",
+
+  "ALGORITHM_TYPE": "genetic",
+  "GENETIC_POPULATION_TYPE": "isofuel",
+  "GENETIC_POPULATION_SIZE": 20,
+  "GENETIC_NUMBER_GENERATIONS": 10,
+  "GENETIC_NUMBER_OFFSPRINGS": 10,
+  "GENETIC_MUTATION_TYPE": "random",
+  "GENETIC_CROSSOVER_TYPE": "random",
+  "GENETIC_CROSSOVER_PATCHER": "isofuel",
+  "GENETIC_REPAIR_TYPE": ["waypoints_infill", "constraint_violation"],
+  "GENETIC_OBJECTIVES": {"fuel_consumption": 1.5, "arrival_time": 1.5},
+  "GENETIC_RANDOM_SEED": 1,
+
+  "BOAT_TYPE": "direct_power_method",
+  "BOAT_SPEED": 6,
+  "BOAT_SPEED_BOUNDARIES": [1.0, 10.0],
+  "BOAT_LENGTH": 180,
+  "BOAT_BREADTH": 32,
+  "BOAT_HBR": 30,
+  "BOAT_SMCR_POWER": 6000,
+  "BOAT_SMCR_SPEED": 7,
+  "BOAT_FUEL_RATE": 160,
+  "BOAT_DRAUGHT_AFT": 10,
+  "BOAT_DRAUGHT_FORE": 10,
+
+  "WEATHER_DATA": "tests/data/tests_weather_data.nc",
+  "DEPTH_DATA": "tests/data/tests_depth_data.nc",
+  "COURSES_FILE": "tests",
+  "TIME_FORECAST": 90,
+  "DELTA_TIME_FORECAST": 3,
+
+  "CONSTRAINTS_LIST": ["land_crossing_global_land_mask", "water_depth", "on_map"]
+}
