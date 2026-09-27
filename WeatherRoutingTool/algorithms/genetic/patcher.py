@@ -18,6 +18,46 @@ from WeatherRoutingTool.ship.ship_factory import ShipFactory
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 from WeatherRoutingTool.weather_factory import WeatherFactory
+import threading  
+import os         # already present above
+
+class SingletonBase(type):
+    """
+    Thread-safe, fork-safe Singleton metaclass.
+
+    - Per-class locks to serialize first construction only.
+    - Double-checked to avoid taking the lock on fast path.
+    - Fork-safe: if PID changes (after fork), instance is rebuilt in the child.
+    """
+    _instances: dict = {}
+    _locks: dict = {}
+    _pids: dict = {}
+
+    def __call__(cls, *args, **kwargs):
+        pid = os.getpid()
+        inst = cls._instances.get(cls)
+        if inst is not None and cls._pids.get(cls) == pid:
+            return inst
+
+        # Ensure a dedicated lock per singleton class
+        lock = cls._locks.setdefault(cls, threading.Lock())
+        with lock:
+            # Re-check after acquiring the lock
+            inst = cls._instances.get(cls)
+            if inst is None or cls._pids.get(cls) != pid:
+                inst = super().__call__(*args, **kwargs)
+                cls._instances[cls] = inst
+                cls._pids[cls] = pid
+        return inst
+
+    # Optional convenience for tests or controlled re-initialization
+    def clear_instance(cls):
+        """Clear the stored singleton instance (e.g., in tests)."""
+        lock = cls._locks.setdefault(cls, threading.Lock())
+        with lock:
+            cls._instances.pop(cls, None)
+            cls._pids.pop(cls, None)
+
 
 logger = logging.getLogger("WRT.genetic.patcher")
 
