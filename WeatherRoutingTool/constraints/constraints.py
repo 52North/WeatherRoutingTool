@@ -12,12 +12,12 @@ import pandas as pd
 import sqlalchemy
 import xarray as xr
 from global_land_mask import globe
+from maridatadownloader import BoxSubset, get_downloader
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
 
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
-from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
@@ -688,18 +688,17 @@ class WaterDepth(NegativeContraint):
         :return: Depth data loaded from NCEI
         :rtype: xarray.Dataset
         """
-
         logger.info(form.get_log_step('Automatic download of depth data', 0))
 
-        downloader = DownloaderFactory.get_downloader(downloader_type='xarray', platform='etoponcei')
-        depth_data = downloader.download()
-        depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
         boundary_map = self.map_size.get_widened_map(1)
-        depth_data_chunked = depth_data_chunked.sel(latitude=slice(boundary_map.lat1, boundary_map.lat2),
-                                                    longitude=slice(boundary_map.lon1, boundary_map.lon2))
+        subset = BoxSubset(
+            latitude=slice(boundary_map.lat1, boundary_map.lat2),
+            longitude=slice(boundary_map.lon1, boundary_map.lon2),
+        )
+
         # Note: if depth_path already exists, the file will be overwritten!
-        self._to_netcdf(depth_data_chunked, depth_path)
-        return depth_data_chunked
+        downloader = get_downloader("etopo", chunks={"latitude": "100MB", "longitude": "100MB"})
+        return downloader.save_to_file(depth_path, subset=subset)
 
     def load_data_from_file(self, depth_path):
         """
