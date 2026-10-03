@@ -6,7 +6,7 @@ from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 
-if __name__ == "__main__":
+def main(args_list=None):
     parser = argparse.ArgumentParser(description='Weather Routing Tool')
     parser.add_argument('-f', '--file', help="Config file name (absolute path)", required=True, type=str)
     parser.add_argument('--warnings-log-file',
@@ -17,7 +17,7 @@ if __name__ == "__main__":
                         required=False, type=str, default='False')
     parser.add_argument('--filter-warnings', help="Filter action. <default|error|ignore|always|module|once>."
                         "Defaults to 'default'.", required=False, type=str, default='default')
-    args = parser.parse_args()
+    args = parser.parse_args(args_list)
     if not args.file:
         raise RuntimeError("No config file name provided!")
     debug_str = str(args.debug).lower()
@@ -30,6 +30,9 @@ if __name__ == "__main__":
     if args.filter_warnings not in ['default', 'error', 'ignore', 'always', 'module', 'once']:
         raise ValueError("--filter-warnings has to be one of <default|error|ignore|always|module|once>")
 
+    # set warning filter action (https://docs.python.org/3/library/warnings.html)
+    warnings.filterwarnings(args.filter_warnings)
+
     ##
     # initialise logging
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
@@ -39,5 +42,6 @@ if __name__ == "__main__":
     ship_config = ShipConfig.assign_config(args.file)
     execute_routing(config, ship_config)
 
-    # set warning filter action (https://docs.python.org/3/library/warnings.html)
-    warnings.filterwarnings(args.filter_warnings)
+
+if __name__ == "__main__":
+    main()
