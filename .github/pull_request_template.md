@@ -31,6 +31,6 @@ In the context of this PR, I:
 - [ ] have filled the [52North Contributor License Agreement](https://52north.org/software/licensing/cla-guidelines/) and am waiting for feedback
 - [ ] provide unit tests embedded in the WRT test framework (WeatherRoutingTool/tests) that allow the simple testing of the new/modified functionalities. All (previous and new) unit tests execute without new error messages.
 - [ ] ensure that the [code formatter](https://github.com/52North/WeatherRoutingTool/blob/main/flake8.sh) runs without errors/warnings
-- [ ] ensure that my changes follow the [WRT’s guidelines for contributing](https://52north.github.io/WeatherRoutingTool/source/contributing.html) at the time of the contribution
+- [ ] ensure that my changes follow the [WRT’s guidelines for contributing](https://52north.github.io/WeatherRoutingTool/source/guidelines/contribution_guidelines.html) at the time of the contribution
 
 Please consider that PRs which do not meet the requirements specified in the checklist will not be evaluated. Also, PRs with no activities will be closed after a reasonable amount of time.
