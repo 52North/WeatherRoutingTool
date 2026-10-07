@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.execute_routing import execute_routing
@@ -52,6 +53,7 @@ def _assert_routes_match(actual: RouteParams, expected: RouteParams):
         actual_sp.get_speed().value, expected_sp.get_speed().value, rtol=1e-4, atol=1e-3)
 
 
+@pytest.mark.regression
 def test_genetic_algorithm_regression(tmp_path):
     """
     End-to-end regression test for the genetic routing algorithm.
