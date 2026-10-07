@@ -1,0 +1,9 @@
+
+# <type> (<scope>): <short summary, max ~50 chars>
+#
+# Types: feature, fix, refactor, style, docs, test, chore, graphics
+# Scope: module affected, e.g. genetic, ship, routeparams, mutation, ...
+#
+# Body: explain *what* and *why* (wrap at 72 chars)
+#
+# Footer: references, e.g. "Closes #123"
