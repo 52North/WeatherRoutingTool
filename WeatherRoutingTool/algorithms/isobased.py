@@ -1538,16 +1538,6 @@ class IsoBased(RoutingAlg):
     def get_current_speed(self):
         return self.speed_per_step[0]
 
-    def get_wind_functions(self, wt):
-        debug = False
-        winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
-        # ToDo: use logger.debug and args.debug
-        if debug:
-            print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
-            print('time', self.time[0])
-            print('winds', winds)
-        return winds
-
     def check_settings(self):
         if (self.course_segments / 2 * self.course_increments_deg >= self.prune_sector_deg_half):
             raise ValueError(
@@ -1746,9 +1736,6 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.set_fuel_rate(np.vstack((fuel_rate, self.shipparams_per_step.get_fuel_rate())))
         self.absolutefuel_per_step = np.vstack((self.routing_step.delta_fuel, self.absolutefuel_per_step))
 
-    def get_delta_variables(self, boat, wind, bs):
-        pass
-
     def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
         pass
 
@@ -1855,9 +1842,6 @@ class IsoBased(RoutingAlg):
         self.shipparams_per_step.expand_axis_for_intermediate()
 
     def final_pruning(self):
-        pass
-
-    def update_dist(self, delta_time, bs):
         pass
 
     def check_for_positive_constraints(self, constraint_list):

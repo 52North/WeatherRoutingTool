@@ -13,7 +13,6 @@ from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.config import Config
 
-
 logger = logging.getLogger("WRT.genetic")
 
 
@@ -60,43 +59,6 @@ def great_circle_distance(src, dst) -> float:
     geod: Geodesic = Geodesic.WGS84
     dist = geod.Inverse(*src, *dst)
     return dist["s12"]
-
-
-def geojson_from_route(
-        route: list[tuple[float, float]],
-        save_to: Optional[str] = None
-) -> dict:
-    """Generate geojson from list of waypoints
-
-    :param route: List of waypoints
-    :type route: list[tuple[float, float]]
-    :param save_to: Specify path to save the geojson to
-    :type save_to: str
-    :return: Geojson dictionary
-    :rtype: dict
-    """
-
-    geojson = {
-        "type": "FeatureCollection",
-        "features": []
-    }
-
-    for i, rt in enumerate(route):
-        geojson["features"].append({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [float(x) for x in rt[::-1]],
-            },
-            "properties": {"id": i},
-            # for compatibility
-            "id": i,
-        })
-
-    if save_to is not None:
-        with open(save_to, 'w') as fp:
-            json.dump(geojson, fp)
-    return geojson
 
 
 def get_constraints_array(route: np.ndarray, constraint_list: ConstraintsList,

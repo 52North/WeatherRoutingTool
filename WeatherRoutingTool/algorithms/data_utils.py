@@ -48,28 +48,6 @@ def distance(route):
     return dists
 
 
-def time_diffs(speed, route):
-    # TODO: Where is this function used?
-    geod = Geodesic.WGS84
-    # speed = speed * 1.852
-
-    lat1 = route[0, 0]
-    lon1 = route[0, 1]
-    diffs = []
-    d = 0
-    for coord in route:
-        lat2 = coord[0]
-        lon2 = coord[1]
-        d = d + geod.Inverse(lat1, lon1, lat2, lon2)['s12']
-        diffs.append(d)
-        lat1 = lat2
-        lon1 = lon2
-
-    diffs = np.array(diffs) / speed
-    # print(diffs)
-    return diffs
-
-
 def get_speed_from_arrival_time(lons, lats, departure_time, arrival_time) -> u.Quantity:
     """
     Calculate boat speed based on coordinates, departure and arrival time for a route array.
