@@ -68,8 +68,8 @@ class Population(Sampling):
                 mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
 
                 quantiles = self.spread_velocity(
-                    mean_boat_speed - 2,
-                    mean_boat_speed + 2,
+                    max(mean_boat_speed - 2, self.min_boat_speed),
+                    min(mean_boat_speed + 2, self.max_boat_speed),
                     mean_boat_speed,
                     self.pop_size
                 )
