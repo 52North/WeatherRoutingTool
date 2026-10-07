@@ -68,8 +68,8 @@ class Population(Sampling):
                 mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
 
                 quantiles = self.spread_velocity(
-                    mean_boat_speed - 2,
-                    mean_boat_speed + 2,
+                    max(mean_boat_speed - 2, self.min_boat_speed),
+                    min(mean_boat_speed + 2, self.max_boat_speed),
                     mean_boat_speed,
                     self.pop_size
                 )
@@ -311,8 +311,16 @@ class FromGeojsonPopulation(Population):
             if not os.path.exists(path):
                 raise ValueError(f"Couldn't read route {path} for the initial population.")
             else:
-                route = utils.route_from_geojson_file(path)
-                X[i, 0] = np.array(route)
+                route = np.array(utils.route_from_geojson_file(path))
+
+                speeds = route[:-1, 2]
+                if np.any((speeds < self.min_boat_speed) | (speeds > self.max_boat_speed)):
+                    logger.warning(
+                        f"Route {path} contains speed values outside of 'BOAT_SPEED_BOUNDARIES' "
+                        f"[{self.min_boat_speed}, {self.max_boat_speed}] m/s "
+                        f"(min: {speeds.min()} m/s, max: {speeds.max()} m/s).")
+
+                X[i, 0] = route
 
         added_routes = len(files)
         while added_routes < n_samples:

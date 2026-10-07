@@ -1,6 +1,6 @@
 import logging
-import sys
 import os
+import sys
 import time
 from datetime import datetime, timedelta
 from math import ceil
@@ -11,11 +11,11 @@ import datacube
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from maridatadownloader import BoxSubset, get_downloader
 from scipy.interpolate import RegularGridInterpolator
 
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
-from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.utils.unit_conversion import (check_dataset_spacetime_consistency, convert_nptd64_to_ints,
                                                       round_time)
@@ -223,8 +223,6 @@ class WeatherCond:
 
 class WeatherCondEnvAutomatic(WeatherCond):
 
-    # FIXME: add currents?
-
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
 
@@ -292,63 +290,67 @@ class WeatherCondEnvAutomatic(WeatherCond):
         time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
         time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
 
-        time_min_CMEMS_phys = (self.time_start - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
-        time_max_CMEMS_phys = (self.time_end + timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_min_buffered = (self.time_start - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
+        time_max_buffered = (self.time_end + timedelta(minutes=180)).strftime("%Y-%m-%dT%H:%M:%S")
 
         boundary_map = self.map_size.get_widened_map(1)
         lon_min = boundary_map.lon1
         lon_max = boundary_map.lon2
         lat_min = boundary_map.lat1
         lat_max = boundary_map.lat2
-        height_min = 10
-        height_max = 20
+        height = 10
 
         cmems_username = os.getenv('CMEMS_USERNAME')
         cmems_password = os.getenv('CMEMS_PASSWORD')
 
+        subset = BoxSubset(
+            time=slice(time_min, time_max),
+            latitude=slice(lat_min, lat_max),
+            longitude=slice(lon_min, lon_max),
+            extra={"height_above_ground": height},
+        )
+
+        subset_buffered = BoxSubset(
+            time=slice(time_min_buffered, time_max_buffered, 3),
+            latitude=slice(lat_min, lat_max),
+            longitude=slice(lon_min, lon_max),
+        )
+
         # download GFS data
         par_GFS = ["Temperature_surface", "u-component_of_wind_height_above_ground",
                    "v-component_of_wind_height_above_ground", "Pressure_reduced_to_MSL_msl"]
-        sel_dict_GFS = {'time': slice(time_min, time_max), 'time1': slice(time_min, time_max),
-                        'height_above_ground2': slice(height_min, height_max), 'longitude': slice(lon_min, lon_max),
-                        'latitude': slice(lat_min, lat_max)}
-
-        downloader_gfs = DownloaderFactory.get_downloader('xarray', 'gfs')
-        ds_GFS = downloader_gfs.download(par_GFS, sel_dict_GFS)
+        downloader_gfs = get_downloader("gfs")
+        ds_GFS = downloader_gfs.get_xarray_dataset(parameters=par_GFS, subset=subset)
 
         # download CMEMS wave data
         par_CMEMS_wave = ["VMDR", "VHM0", "VTPK"]
-        sel_dict_CMEMS_wave = {'time': slice(time_min, time_max), 'latitude': slice(lat_min, lat_max),
-                               'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_wave = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
-                                                                 product='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
-                                                                 product_type='nrt', username=cmems_username,
-                                                                 password=cmems_password)
-        ds_CMEMS_wave = downloader_cmems_wave.download(parameters=par_CMEMS_wave, sel_dict=sel_dict_CMEMS_wave)
+        downloader_cmems_wave = get_downloader(
+            "cmems",
+            dataset_id='cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
+            username=cmems_username,
+            password=cmems_password,
+        )
+        ds_CMEMS_wave = downloader_cmems_wave.get_xarray_dataset(parameters=par_CMEMS_wave, subset=subset)
 
         # download CMEMS physics data
         par_CMEMS_phys = ["thetao", "so"]
-        sel_dict_CMEMS_phys = {'time': slice(time_min_CMEMS_phys, time_max_CMEMS_phys, 3),
-                               'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_phys = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
-                                                                 product='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
-                                                                 product_type='nrt', username=cmems_username,
-                                                                 password=cmems_password)
-        ds_CMEMS_phys = downloader_cmems_phys.download(parameters=par_CMEMS_phys, sel_dict=sel_dict_CMEMS_phys)
+        downloader_cmems_phys = get_downloader(
+            "cmems",
+            dataset_id='cmems_mod_glo_phy_anfc_0.083deg_PT1H-m',
+            username=cmems_username,
+            password=cmems_password,
+        )
+        ds_CMEMS_phys = downloader_cmems_phys.get_xarray_dataset(parameters=par_CMEMS_phys, subset=subset_buffered)
 
         # download CMEMS current data
         par_CMEMS_curr = ["vtotal", "utotal"]
-        sel_dict_CMEMS_curr = {'time': slice(time_min_CMEMS_phys, time_max_CMEMS_phys, 3),
-                               'latitude': slice(lat_min, lat_max), 'longitude': slice(lon_min, lon_max)}
-        downloader_cmems_curr = DownloaderFactory.get_downloader(downloader_type='cmtapi', platform='cmems',
-                                                                 product='cmems_mod_glo_phy_anfc_merged-uv_PT1H-i',
-                                                                 product_type='nrt', username=cmems_username,
-                                                                 password=cmems_password)
-        ds_CMEMS_curr = downloader_cmems_curr.download(parameters=par_CMEMS_curr, sel_dict=sel_dict_CMEMS_curr)
-
-        # convert latitudes of GFS data
-        GFS_lat = ds_GFS['latitude'].to_numpy()
-        GFS_lat[GFS_lat < 0] = GFS_lat[GFS_lat < 0] + 180
+        downloader_cmems_curr = get_downloader(
+            "cmems",
+            dataset_id='cmems_mod_glo_phy_anfc_merged-uv_PT1H-i',
+            username=cmems_username,
+            password=cmems_password,
+        )
+        ds_CMEMS_curr = downloader_cmems_curr.get_xarray_dataset(parameters=par_CMEMS_curr, subset=subset_buffered)
 
         form.print_current_time('weather request:', time.time())
         self.check_data_consistency(ds_CMEMS_phys, ds_CMEMS_wave, ds_CMEMS_curr, ds_GFS)

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from matplotlib.ticker import ScalarFormatter
+from matplotlib.lines import Line2D
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -229,6 +230,7 @@ class Genetic(RoutingAlg):
             self.plot_speed_per_generation(res, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
+            self.plot_speed_coverage(res, best_route)
             self.plot_objective_space(filtered_solutions, best_index)
 
         lats = best_route[:, 0]
@@ -526,14 +528,65 @@ class Genetic(RoutingAlg):
             for iroute in range(0, last_pop.shape[0]):
                 lats = last_pop[iroute, 0][:, 0]
                 lons = last_pop[iroute, 0][:, 1]
-                ax.plot(lons, lats, color="blue", linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
+                ax.plot(lons, lats, color=graphics.get_str_color(0), linestyle='-', linewidth=1, transform=input_crs,
+                        alpha=0.2)
 
-        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", transform=input_crs)
-        legend = plt.legend(title="routes", loc="upper left")
+        ax.plot(best_route[:, 1], best_route[:, 0], color=graphics.get_str_color(1), linewidth=3, linestyle="dashed",
+                label="final route", transform=input_crs)
+
+        population_handle = Line2D([], [], color=graphics.get_str_color(0), linewidth=1,
+                                   label="population (all generations)")
+        handles, labels = ax.get_legend_handles_labels()
+        legend = plt.legend(handles=[population_handle] + handles, loc="upper left")
         legend.get_frame().set_alpha(1)
 
         figname = "spatial_coverage.png"
         plt.savefig(os.path.join(self.figure_path, figname))
+
+    def plot_speed_coverage(self, res, best_route):
+        """Plot speed vs. travel distance for all individuals of all generations in one diagram.
+
+        :param res: Result of GA minimization
+        :type res: pymoo.core.result.Result
+        :param best_route: Optimum route
+        :type best_route: np.ndarray
+        """
+        history = res.history
+
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+
+        for igen in range(len(history)):
+            last_pop = history[igen].pop.get('X')
+
+            for iroute in range(0, last_pop.shape[0]):
+                hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
+                lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+                ax.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid',
+                        color=graphics.get_str_color(0), linewidth=1, alpha=0.2)
+
+        hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
+        lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
+            "bin_widths"]) / 1000
+        ax.step(lower_bin_boundaries, hist_values_best_route["bin_contents"], where='mid',
+                color=graphics.get_str_color(1), linewidth=3, linestyle="dashed", label="final route")
+
+        left, right = ax.get_xlim()
+        ax.set_xlim(-100, right)
+        ax.set_ylim(0, 10)
+
+        ax.set_ylabel("speed (m/s)")
+        ax.set_xlabel('travel distance (km)')
+
+        population_handle = Line2D([], [], color=graphics.get_str_color(0), linewidth=1,
+                                   label="population (all generations)")
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles=[population_handle] + handles, loc="upper left", frameon=False)
+        plt.tight_layout()
+
+        figname = "speed_coverage.png"
+        plt.savefig(os.path.join(self.figure_path, figname))
+        plt.close(fig)
 
     def plot_convergence(self, res):
         """Plot the convergence curve (best objective value per generation)."""
