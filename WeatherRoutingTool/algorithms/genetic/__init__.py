@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from matplotlib.ticker import ScalarFormatter
+from matplotlib.lines import Line2D
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -526,10 +527,16 @@ class Genetic(RoutingAlg):
             for iroute in range(0, last_pop.shape[0]):
                 lats = last_pop[iroute, 0][:, 0]
                 lons = last_pop[iroute, 0][:, 1]
-                ax.plot(lons, lats, color="blue", linestyle='-', linewidth=1, transform=input_crs, alpha=0.2)
+                ax.plot(lons, lats, color=graphics.get_str_color(0), linestyle='-', linewidth=1, transform=input_crs,
+                        alpha=0.2)
 
-        ax.plot(best_route[:, 1], best_route[:, 0], color="red", label="best route", transform=input_crs)
-        legend = plt.legend(title="routes", loc="upper left")
+        ax.plot(best_route[:, 1], best_route[:, 0], color=graphics.get_str_color(1), linewidth=3, linestyle="dashed",
+                label="final route", transform=input_crs)
+
+        population_handle = Line2D([], [], color=graphics.get_str_color(0), linewidth=1,
+                                   label="population (all generations)")
+        handles, labels = ax.get_legend_handles_labels()
+        legend = plt.legend(handles=[population_handle] + handles, loc="upper left")
         legend.get_frame().set_alpha(1)
 
         figname = "spatial_coverage.png"
