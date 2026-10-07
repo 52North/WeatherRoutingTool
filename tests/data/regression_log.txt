@@ -54,6 +54,7 @@
  - WRT.Constraints: INFO             no land crossing
  - WRT.Constraints: INFO             minimum water depth=30.0m
  - WRT.Constraints: INFO             stay on weather map
+ - WRT.Isobased: ERROR    Did not arrive at destination! Need further routing steps or lower resolution.
  - WRT.genetic.crossover: INFO     TP crossover statistics:
  - WRT.genetic.crossover: INFO     nof_crossover_tries: 10
  - WRT.genetic.crossover: INFO     nof_crossover_success: 10
@@ -75,5 +76,5 @@
  - WRT.genetic : INFO     Time after minimisation: <duration>
  - WRT.routingalg: INFO     ---------------------------------------------------
  - WRT.routingalg: INFO     Terminating...
- - WRT.genetic : INFO     Best fuel: 20394.498106117888 kg
+ - WRT.genetic : INFO     Best fuel: 17342.1002048888 kg
  - WRT.Routeparams: INFO     Write route parameters to <ROUTE_PATH>/min_fuel_route.json
