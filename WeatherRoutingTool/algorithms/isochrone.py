@@ -10,8 +10,16 @@ logger = logging.getLogger('WRT.Isochrone')
 
 
 class IsoChrone(IsoBased):
-    """TODO: add description (Is this algorithm in use? It is not possible to choose it in the config.)
-    _summary_
+    """Isochrone-based (equal-time-step) routing algorithm.
+
+    Subclasses :class:`IsoBased` and advances the wavefront by a fixed
+    ``delta_time`` at each step, computing the distance each candidate
+    course covers in that interval.
+
+    .. note::
+        This class is **currently unused**. No configuration option selects
+        it, and nothing in the codebase instantiates it. It is retained for
+        potential future use or reference.
     """
 
     delta_time: int

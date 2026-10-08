@@ -1566,7 +1566,14 @@ class IsoBased(RoutingAlg):
         return idx
 
     def terminate(self, **kwargs):
-        """TODO: add description
+        """Finalize the routing result and package it as a :class:`RouteParams`.
+
+        Handles error and incomplete states (destination not reached, pruning
+        errors), then extracts per-step arrays (lats, lons, fuel, speed, time,
+        ship parameters, etc.) from the accumulated routing data.  The arrays
+        are reversed because the search builds them back-to-front, and the
+        result is wrapped in a :class:`RouteParams` object ready to be
+        returned to the caller.
 
         :return: Calculated route as a RouteParams object ready to be returned to the user
         :rtype: RouteParams
@@ -1637,8 +1644,14 @@ class IsoBased(RoutingAlg):
 
     def check_bearing(self):
         """
-        TODO: add description
-        :return:
+        Check whether any candidate course would overshoot the destination.
+
+        Compares the remaining distance-to-destination for each candidate
+        against the step distance.  If a candidate would pass the
+        destination, it is clipped to point directly at the finish via
+        :meth:`routing_step.update_end_step`.
+
+        :return: None
         """
 
         debug = False
