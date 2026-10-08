@@ -140,7 +140,6 @@ if __name__ == "__main__":
         'fuel_vs_lon': False,
         'power_vs_lat': False,
         'fuel_vs_lat': False,
-        'power_vs_dist_showing_weather': False,
         'power_vs_dist_ratios': False,
         'fuel_vs_dist_ratios': False,
         'speed_vs_dist': False,
@@ -311,14 +310,6 @@ if __name__ == "__main__":
 
     if hist_dict['fuel_vs_lon']:
         plot_power_vs_coord(rp_list, rp_str_list, 'lon', 'fuel')
-
-    ##
-    # plotting power vs dist vs weather
-    if hist_dict["power_vs_dist_showing_weather"]:
-        fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-        for irp in range(0, len(rp_list)):
-            rp_list[irp].plot_power_vs_dist_with_weather(rp_list, rp_str_list, len(rp_list))
-        plt.savefig(figurefile + '/route_power_vs_dist_weather.png')
 
     ##
     # plotting power vs dist ratios
