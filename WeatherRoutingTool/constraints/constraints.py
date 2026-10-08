@@ -57,16 +57,8 @@ class Constraint:
     def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         pass
 
-    def print_debug(self, message):
-        logger.debug(self.name + str(": ") + str(message))
-
     def print_info(self):
         pass
-
-    def plot_route_in_constraint(self, route: RouteParams, colour, fig, ax):
-        fig, ax = self.plot_constraint(fig, ax)
-        route.plot_route(ax, graphics.get_colour(0), "")
-        return ax
 
     def plot_constraint(self):
         pass
@@ -317,19 +309,6 @@ class ConstraintsList:
         start_lat = self.positive_point_dict["lat"][self.current_positive]
         start_lon = self.positive_point_dict["lon"][self.current_positive]
         return start_lat, start_lon
-
-    def shall_I_pass(self, lat, lon, time):
-        is_constrained = [False for i in range(0, lat.shape[1])]
-
-        if self.pars.bCheckCrossing:
-            is_constrained = self.safe_crossing(lat, lon, time)
-        elif self.pars.bCheckEndPoints:
-            is_constrained = self.safe_endpoint(lat, lon, time, is_constrained)
-        if is_constrained.any():
-            self.print_constraints_crossed()
-
-    def split_route(self):
-        pass
 
     def safe_endpoint(self, lat, lon, current_time, is_constrained):
         """
