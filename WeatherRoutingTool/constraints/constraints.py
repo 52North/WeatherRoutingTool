@@ -114,9 +114,6 @@ class NegativeConstraintFromWeather(NegativeContraint):
         NegativeContraint.__init__(self, name)
         self.wt = weather
 
-    def check_weather(self, lat, lon, time):
-        pass
-
 
 class ConstraintPars:
     """
@@ -249,11 +246,6 @@ class ConstraintsList:
         self.neg_dis_size = 0
         self.neg_cont_size = 0
         self.pos_size = 0
-
-    def print_constraints_crossed(self):
-        logger.info("Discarding point as:")
-        for iConst in range(0, len(self.constraints_crossed)):
-            form.print_step(str(self.constraints_crossed[iConst]), 1)
 
     def print_settings(self):
         form.print_line()
@@ -504,9 +496,6 @@ class ConstraintsList:
             'You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and '
                                                                              '-continuous- are implemented ')
 
-    def check_weather(self):
-        pass
-
 
 class LandCrossing(NegativeContraint):
     """
@@ -555,31 +544,6 @@ class StatusCodeError(NegativeContraint):
         # status error = 3, warning = 2, OK = 1
         is_status_error = (status == 3)
         return is_status_error
-
-
-class WaveHeight(NegativeConstraintFromWeather):
-    """
-    Constraint such that the boat can't cross a certain wave hight
-    """
-
-    current_wave_height: np.ndarray
-    max_wave_height: float
-
-    def __init__(self):
-        NegativeContraint.__init__(self, "WaveHeight")
-        self.message += "waves are to high!"
-        # self.resource_type = 0
-        self.current_wave_height = np.array([-99])
-        self.max_wave_height = 10
-
-    def constraint_on_point(self, lat, lon, time):
-        # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
-        self.check_weather(lat, lon, time)
-        # logger.info('current_wave_height:', self.current_wave_height)
-        return self.current_wave_height > self.max_wave_height
-
-    def print_info(self):
-        logger.info(form.get_log_step("maximum wave height=" + str(self.max_wave_height) + "m", 1))
 
 
 class WaterDepth(NegativeContraint):
@@ -1035,8 +999,8 @@ class SeamarkCrossing(ContinuousCheck):
         else:
             query = ["SELECT * FROM " + self.schema + ".nodes "
                                                       f"WHERE ({category_clause} OR tags -> " + tags + ")",
-                     "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
-                     f"WHERE ({category_clause} OR tags -> " + tags + ")"]
+                     "SELECT *, linestring AS geom FROM "
+                     + self.schema + ".ways "f"WHERE ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
         return query
 

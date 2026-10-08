@@ -10,7 +10,7 @@ import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isobased import RoutingStep
 from WeatherRoutingTool.config import set_up_logging
-from WeatherRoutingTool.constraints.constraints import LandCrossing, WaveHeight
+from WeatherRoutingTool.constraints.constraints import LandCrossing
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
 set_up_logging()
@@ -46,13 +46,10 @@ def test_update_position_fail():
     ra.current_course = np.array([az, az, az, az]) * u.degree
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 5, 5, 5])
 
     # is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
     ra.check_bearing()
     ra.check_constraints(constraint_list)
     ra.update_position()
@@ -102,13 +99,10 @@ def test_update_position_success():
     ra.routing_step.delta_dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel]) * u.meter
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 5, 5, 5])
 
     # is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
 
     ra.check_bearing()
     ra.check_constraints(constraint_list)

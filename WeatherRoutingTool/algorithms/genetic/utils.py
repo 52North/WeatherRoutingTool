@@ -45,22 +45,6 @@ def gcr_distance(src, dst) -> float:
     return rs["s12"]
 
 
-def great_circle_distance(src, dst) -> float:
-    """Measure great circle distance between src and dst waypoints
-
-    :param src: Source waypoint as (lat, lon) pair
-    :type src: tuple[float, float]
-    :param dst: Destination waypoint as (lat, lon) pair
-    :type dst: tuple[float, float]
-    :return: Great circle distance between src and dst
-    :rtype: float
-    """
-
-    geod: Geodesic = Geodesic.WGS84
-    dist = geod.Inverse(*src, *dst)
-    return dist["s12"]
-
-
 def get_constraints_array(route: np.ndarray, constraint_list: ConstraintsList,
                           start_times: np.ndarray = None) -> np.ndarray:
     """Return constraint violation per waypoint in a route.

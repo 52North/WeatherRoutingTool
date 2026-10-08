@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import os
-import pandas as pd
 from astropy import units as u
 from geovectorslib import geod
 from matplotlib.collections import LineCollection
@@ -96,25 +95,6 @@ def get_linestyle(i):
               'Linestyle=' + str(i))
     print('using linestyle: ', linestyles[i])
     return linestyles[i]
-
-
-def rebin(a, rebinx, rebiny):
-    modx = a.shape[0] % rebinx
-    mody = a.shape[1] % rebiny
-
-    if not (modx == 0):
-        for imod in range(0, modx):
-            a = np.delete(a, 0, 0)
-
-    if not (mody == 0):
-        for imod in range(0, mody):
-            a = np.delete(a, 0, 1)
-
-    newshape_x = int(a.shape[0] / rebinx)
-    newshape_y = int(a.shape[1] / rebiny)
-
-    sh = newshape_x, rebinx, newshape_y, rebiny
-    return a.reshape(sh).mean(-1).mean(1)
 
 
 def merge_figs(path, ncounts):

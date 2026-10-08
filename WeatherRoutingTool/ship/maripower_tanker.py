@@ -165,26 +165,6 @@ class MariPowerTanker(Boat):
         self.courses_path = path
 
     ##
-    # initiate estimation of power consumption in mariPower for one particular course and
-    # wind direction and speed as well as boat speed
-    def get_fuel_per_course(self, course, wind_dir, wind_speed, boat_speed):
-        # boat_speed = np.array([boat_speed])
-        self.hydro_model.WindDirection = math.radians(wind_dir)
-        self.hydro_model.WindSpeed = wind_speed
-        form.print_step('course [degrees]= ' + str(course), 1)
-        course = units.degree_to_pmpi(course)
-        form.print_step('course [rad]= ' + str(course), 1)
-        form.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
-        form.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
-        form.print_step('boat_speed = ' + str(boat_speed), 1)
-        # Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotionSerial(course, boat_speed, aUseHeading=True,
-        #                                                                 aUpdateCalmwaterResistanceEveryIteration=False)
-        Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
-                                                                         aUpdateCalmwaterResistanceEveryIteration=False)
-
-        return ptemp
-
-    ##
     # Writes netCDF which stores courses in dependence on latitude, longitude and time for further processing by
     # mariPower.
     # Several courses can be provided per space point. In this case, the arrays lats and lons need to be filled
