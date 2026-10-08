@@ -1,3 +1,8 @@
+"""
+Prepare and provide weather and ocean data for the weather routing.
+
+The classes in this module load environmental data into an ``xarray.Dataset`` that is stored in the attribute ``ds``.
+"""
 import logging
 import os
 import sys
@@ -36,6 +41,21 @@ UNITS_DICT = {
 
 
 class WeatherCond:
+    """
+    Base class for weather conditions.
+
+    Stores the time range and the time resolution of the weather data and provides helper functions for calculating wind
+    components. Subclasses implement ``read_dataset`` to fill the dataset ``ds``.
+
+    :param time: start time of the weather data; it is rounded down to the time resolution (see ``time_start``). If
+        None, no attributes are set.
+    :type time: datetime.datetime or None
+    :param hours: length of the time range in hours, counted from ``time``
+    :type hours: float
+    :param time_res: time resolution of the weather data in hours; must be at least 3
+    :type time_res: float
+    :raises ValueError: if ``time_res`` is smaller than 3 hours
+    """
     time_steps: int
     time_res: timedelta
     time_start: datetime
@@ -90,6 +110,13 @@ class WeatherCond:
         self._time_end = rounded_time
 
     def check_units(self):
+        """
+        Check the units of the data variables in ``ds`` against ``UNITS_DICT``.
+
+        Logs a warning for variables without ``units`` attribute, for variables with a unit that is not listed in
+        ``UNITS_DICT`` and for variables that are not expected at all. No exception is raised and the data is not
+        modified.
+        """
         for var_name, data_array in self.ds.data_vars.items():
             if var_name in UNITS_DICT:
                 if 'units' not in data_array.attrs:
@@ -113,17 +140,56 @@ class WeatherCond:
 
     @staticmethod
     def get_theta_from_uv(u, v):
+        """
+        Calculate the wind direction from the wind components.
+
+        Uses the meteorological convention: the direction from which the wind is blowing, measured clockwise from
+        north (e.g. 0° for wind from the north, 90° for wind from the east).
+
+        :param u: eastward wind component
+        :type u: float or numpy.ndarray
+        :param v: northward wind component, in the same unit as ``u``
+        :type v: float or numpy.ndarray
+        :return: wind direction in degrees in the range [0, 360)
+        :rtype: float or numpy.ndarray
+        """
         theta = 180 + 180 / np.pi * np.arctan2(u, v)
         theta = theta % 360
         return theta
 
     @staticmethod
     def get_u(theta, windspeed):
+        """
+        Calculate the eastward wind component from wind direction and wind speed.
+
+        Inverse of ``get_theta_from_uv`` together with ``get_v``.
+
+        :param theta: wind direction in degrees, meteorological convention (direction from which the wind is blowing,
+            clockwise from north)
+        :type theta: float or numpy.ndarray
+        :param windspeed: wind speed; only the absolute value is used
+        :type windspeed: float or numpy.ndarray
+        :return: eastward wind component in the unit of ``windspeed``
+        :rtype: float or numpy.ndarray
+        """
         theta = theta * np.pi / 180
         return -np.abs(windspeed) * np.sin(theta)
 
     @staticmethod
     def get_v(theta, windspeed):
+        """
+        Calculate the northward wind component from wind direction and wind speed.
+
+        Inverse of ``get_theta_from_uv`` together with ``get_u``.
+
+        :param theta: wind direction in degrees, meteorological convention (direction from which the wind is blowing,
+            clockwise from north)
+        :type theta: float or numpy.ndarray
+        :param windspeed: wind speed; only the absolute value is used
+        :type windspeed: float or numpy.ndarray
+        :return: northward wind component in the unit of ``windspeed``
+        :rtype: float or numpy.ndarray
+        """
         theta = theta * np.pi / 180
         return -np.abs(windspeed) * np.cos(theta)
 
@@ -131,11 +197,12 @@ class WeatherCond:
         '''
         Function to visualise a selection of variables from a netCDF file for the first timestamp on a map.
 
-        The user provides a list of variables that is displayed on a 3x3 panel. If the number of variables is > 9, a
-        ValueError is raised. Only data for the 1st timestamp is visualised on separate maps in a single panel.
+        The user provides a list of variables that is displayed on a 3x3 panel. Only data for the 1st timestamp is
+        visualised. The figure is saved to ``weather_variables_first_timestamp.png`` in the current working directory.
 
-        :params variables: list of variables to visualise
+        :param variables: names of the variables in ``ds`` to visualise; every variable needs a ``units`` attribute
         :type variables: list
+        :raises ValueError: if more than 9 variables are given
         '''
 
         if len(variables) > 9:
@@ -185,11 +252,36 @@ class WeatherCond:
 
 
 class WeatherCondEnvAutomatic(WeatherCond):
+    """
+    Weather conditions downloaded from GFS (atmosphere) and CMEMS (waves, physics, currents).
+
+    The CMEMS credentials are read from the environment variables ``CMEMS_USERNAME`` and ``CMEMS_PASSWORD``. The map
+    size needs to be set with ``set_map_size`` before calling ``read_dataset``. For the parameters see
+    ``WeatherCond``.
+    """
 
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
 
     def check_data_consistency(self, ds_CMEMS_phys, ds_CMEMS_wave, ds_CMEMS_curr, ds_GFS):
+        """
+        Check the time and space consistency of the downloaded datasets.
+
+        Logs the resolutions and shifts of the coordinates ``time``, ``latitude`` and ``longitude`` of the CMEMS
+        datasets with respect to the GFS dataset. Additionally, the number of time steps of the datasets is checked
+        with assertions.
+
+        :param ds_CMEMS_phys: CMEMS physics data (sea water temperature and salinity)
+        :type ds_CMEMS_phys: xarray.Dataset
+        :param ds_CMEMS_wave: CMEMS wave data
+        :type ds_CMEMS_wave: xarray.Dataset
+        :param ds_CMEMS_curr: CMEMS current data
+        :type ds_CMEMS_curr: xarray.Dataset
+        :param ds_GFS: GFS atmospheric data
+        :type ds_GFS: xarray.Dataset
+        :raises AssertionError: if the CMEMS physics or current data do not contain exactly one time step more than
+            the wave data or if the wave and GFS data have a different number of time steps
+        """
         ############################################
         # check time consistency
 
@@ -245,6 +337,17 @@ class WeatherCondEnvAutomatic(WeatherCond):
         check_dataset_spacetime_consistency(ds_GFS, ds_CMEMS_curr, 'longitude', 'GFS', 'CMEMS currents')
 
     def read_dataset(self, filepath=None):
+        """
+        Download the weather data from GFS and CMEMS and merge them into ``ds``.
+
+        The data is requested for the time range of the object and for the map size widened by 1° in every
+        direction. GFS wind is requested at 10 m above ground. The CMEMS physics and current data are interpolated
+        to the time steps of the CMEMS wave data, and the GFS data is interpolated to the grid of the merged CMEMS
+        data.
+
+        :param filepath: not used
+        :type filepath: str or None
+        """
         CMEMS_product_wave = 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i'
         CMEMS_product_wind = 'cmems_mod_glo_phy_anfc_0.083deg_PT1H-m'
         logger.info(form.get_log_step(
@@ -348,6 +451,9 @@ class WeatherCondEnvAutomatic(WeatherCond):
 
 
 class WeatherCondFromFile(WeatherCond):
+    """
+    Weather conditions read from a netCDF file.
+    """
     wind_functions: None
     wind_vectors: None
 
@@ -355,6 +461,16 @@ class WeatherCondFromFile(WeatherCond):
         super().__init__(time, hours, time_res)
 
     def adjust_depth_format(self, depth_path):
+        """
+        Read depth data from a netCDF file and convert the longitudes from [0, 360] to [-180, 180].
+
+        The data is sorted by latitude. The intermediate datasets are printed to stdout.
+
+        :param depth_path: path to a netCDF file with depth data and the coordinates ``latitude`` and ``longitude``
+        :type depth_path: str
+        :return: depth data with longitudes in the range [-180, 180]
+        :rtype: xarray.Dataset
+        """
         debug = True
         ds_depth = xr.open_dataset(depth_path)
         ds_depth = ds_depth.sortby("latitude")
@@ -373,6 +489,20 @@ class WeatherCondFromFile(WeatherCond):
         return ds_depth
 
     def add_depth_to_EnvData(self, depth_path, bWriteEnvData=False):
+        """
+        Add the water depth as variable ``z`` to the dataset ``ds``.
+
+        The depth data is cut to the map size (only points with negative ``z``, i.e. below sea level) and the
+        weather data is linearly interpolated to the grid of the depth data. Missing depth values are set to 0.
+        ``ds`` is replaced by the interpolated dataset.
+
+        :param depth_path: path to a netCDF file with the variable ``z`` and the coordinates ``lat`` and ``lon``
+        :type depth_path: str
+        :param bWriteEnvData: if True, the resulting dataset is written to a hard-coded netCDF path
+        :type bWriteEnvData: bool
+        :raises Exception: if the map size is not initialised or if the depth contains NaN values after the
+            interpolation
+        """
         try:
             lat_start = self.map_size.lat1
             lat_end = self.map_size.lat2
@@ -403,6 +533,15 @@ class WeatherCondFromFile(WeatherCond):
                 '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/Depth_u_EnvData/EnvData_Depth.nc')
 
     def get_time_step_index(self, time):
+        """
+        Determine the index of the time step that is closest to the given time.
+
+        :param time: time for which the index is determined
+        :type time: datetime.datetime
+        :return: dictionary with the time rounded to the time resolution (key ``rounded_time``) and the number of
+            time steps between ``time_start`` and the rounded time (key ``idx``)
+        :rtype: dict
+        """
         rounded_time = round_time(time, int(self.time_res.total_seconds()))
         time_passed = rounded_time - self.time_start
         idx = (time_passed.total_seconds() / self.time_res.total_seconds())
@@ -416,11 +555,39 @@ class WeatherCondFromFile(WeatherCond):
 
 
 class WeatherCondODC(WeatherCond):
+    """
+    Weather conditions loaded from an Open Data Cube (ODC) instance.
+
+    Connects to the ODC instance on initialisation. The map size needs to be set with ``set_map_size`` before
+    calling ``read_dataset``. For the parameters see ``WeatherCond``.
+    """
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
         self.dc = datacube.Datacube()
 
     def load_odc_product(self, product_name, res_x, res_y, output_crs="EPSG:4326", measurements=None):
+        """
+        Load a product from the Open Data Cube for the time range and map size of the object.
+
+        Scale factors and offsets of the data variables are applied if present.
+
+        :param product_name: name of the ODC product, e.g. ``'waves'``
+        :type product_name: str
+        :param res_x: resolution of the output grid in x direction, in units of ``output_crs`` (degrees for
+            EPSG:4326)
+        :type res_x: float
+        :param res_y: resolution of the output grid in y direction, in units of ``output_crs``
+        :type res_y: float
+        :param output_crs: coordinate reference system of the output grid
+        :type output_crs: str
+        :param measurements: names or aliases of the measurements to load; if None, all measurements of the product
+            are loaded
+        :type measurements: list or None
+        :return: loaded data
+        :rtype: xarray.Dataset
+        :raises ValueError: if the product is not known in the ODC instance
+        :raises KeyError: if a requested measurement is not available for the product
+        """
         try:
             if product_name not in list(self.dc.list_products().index):
                 raise ValueError(f"{product_name} is not known in the Open Data Cube instance")
@@ -459,6 +626,16 @@ class WeatherCondODC(WeatherCond):
             raise e
 
     def read_dataset(self, filepath=None):
+        """
+        Load the weather data from the ODC products ``physics``, ``waves``, ``currents`` and ``weather`` into ``ds``.
+
+        The CMEMS products are loaded with a resolution of 1/12°, the GFS product with 0.25°. The CMEMS physics and
+        current data are interpolated to the time steps of the wave data, and the GFS data is interpolated to the
+        grid of the merged CMEMS data.
+
+        :param filepath: not used
+        :type filepath: str or None
+        """
         # ODC doesn't allow hyphens ("-") in band names. Because we would like to keep the original band
         # names from GFS with hyphen we use band aliases instead.
         measurements_gfs = ['Temperature_surface', 'Pressure_reduced_to_MSL_msl', 'Wind_speed_gust_surface',
@@ -506,6 +683,25 @@ class WeatherCondODC(WeatherCond):
 
 
 class FakeWeather(WeatherCond):
+    """
+    Synthetic weather conditions for testing.
+
+    All variables of ``UNITS_DICT`` are set to constant values on a regular grid that covers the map size. Optionally,
+    a Gaussian disturbance in space and time is added to the wind and wave height. The map size needs to be set with
+    ``set_map_size`` before calling ``read_dataset``.
+
+    For the parameters ``time``, ``hours`` and ``time_res`` see ``WeatherCond``.
+
+    :param coord_res: resolution of the latitude and longitude grid in degrees
+    :type coord_res: float
+    :param var_dict: constant values for the variables, keys are the variable names of ``UNITS_DICT`` and values are
+        in the units of ``UNITS_DICT``; variables that are not given are set to 0
+    :type var_dict: dict or None
+    :param gauss_dict: settings of the Gaussian disturbance with the keys ``lat`` and ``lon`` (centre in degrees),
+        ``target_height_wind`` (peak wind speed in m/s) and ``target_height_wave`` (peak significant wave height in
+        m); if None, no disturbance is added
+    :type gauss_dict: dict or None
+    """
     def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None, gauss_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
@@ -530,6 +726,17 @@ class FakeWeather(WeatherCond):
             self.var_dict = var_dict_zero
 
     def read_dataset(self, filepath=None):
+        """
+        Generate the synthetic dataset and store it in ``ds``.
+
+        The grid covers the map size with the resolution ``coord_res`` (map limits included) and the time range with
+        the resolution ``time_res``. There is one depth level (0.494 m) and three heights above ground (10, 20 and
+        30 m). If ``gauss_dict`` is set, the Gaussian disturbance is added to the wind and to ``VHM0``. The final
+        dimension order is ``(time, latitude, longitude[, depth][, height_above_ground])``.
+
+        :param filepath: not used
+        :type filepath: str or None
+        """
         # initialise coordinates
         # round differences to 10^-5 (~1 m for latitude) to prevent shifts due to floating numbers
         # interpret the configured map size limits inclusive
@@ -647,6 +854,12 @@ class FakeWeather(WeatherCond):
         self.follow_conventions()
 
     def follow_conventions(self):
+        """
+        Set CF-conform attributes for the coordinates and the wind variables and reorder the dimensions of ``ds``.
+
+        The attributes of ``latitude``, ``longitude`` and the wind components are replaced. The dimensions are
+        transposed to ``(time, latitude, longitude, depth, height_above_ground)``.
+        """
         self.ds.latitude.attrs = {
             "standard_name": "latitude",
             "units": "degrees_north",
@@ -760,6 +973,9 @@ class FakeWeather(WeatherCond):
             :type lon_start: float
             :param lat_start: Starting latitude coordinate of the domain.
             :type lat_start: float
+            :param target_width: width of the Gaussian peak in degrees; it is converted to grid points by dividing
+                by ``coord_res`` and passed as ``sigma`` to ``gaussian_2d``
+            :type target_width: float
             :return: 2D array of shape `(n_lat_values, n_lon_values)` with spatial Gaussian weights.
             :rtype: numpy.ndarray
         """
@@ -796,9 +1012,12 @@ class FakeWeather(WeatherCond):
             the target peak wind speed, replicates it across vertical height levels, and adds the
             resulting u and v vector components to the baseline wind field.
 
-            :param uwind: 4D array of baseline eastward wind speed components ($u$).
+            The direction of the disturbance is the wind direction at the first grid point.
+
+            :param uwind: 4D array of baseline eastward wind speed components ($u$) in m/s with the dimensions
+                `(latitude, longitude, time, height_above_ground)`.
             :type uwind: numpy.ndarray
-            :param vwind: 4D array of baseline northward wind speed components ($v$).
+            :param vwind: 4D array of baseline northward wind speed components ($v$) in m/s, same shape as `uwind`.
             :type vwind: numpy.ndarray
             :param lon_start: Starting longitude coordinate.
             :type lon_start: float
@@ -812,7 +1031,7 @@ class FakeWeather(WeatherCond):
             :type n_time_values: int
             :param n_height_above_ground: Number of vertical height levels above ground.
             :type n_height_above_ground: int
-            :raises ValueError: If configured `target_height` is smaller than mean baseline wind speed.
+            :raises ValueError: If configured `target_height_wind` is smaller than mean baseline wind speed.
             :return: Updated 4D arrays `(u_updated, v_updated)` containing modified wind field vectors.
             :rtype: tuple[numpy.ndarray, numpy.ndarray]
         """
@@ -872,7 +1091,8 @@ class FakeWeather(WeatherCond):
             Combines 2D spatial and 1D temporal Gaussian profiles, scales the disturbance to reach
             the target peak wave height, and adds the baseline wave field.
 
-            :param vhm0_orig: 3D array of wave height
+            :param vhm0_orig: 3D array of significant wave height in m with the dimensions
+                `(latitude, longitude, time)`.
             :type vhm0_orig: numpy.ndarray
             :param lon_start: Starting longitude coordinate.
             :type lon_start: float
@@ -884,11 +1104,12 @@ class FakeWeather(WeatherCond):
             :type n_lat_values: int
             :param n_time_values: Number of time steps.
             :type n_time_values: int
-            :param n_height_above_ground: Number of vertical height levels above ground.
+            :param n_height_above_ground: Number of vertical height levels above ground (not used).
             :type n_height_above_ground: int
-            :raises ValueError: If configured `target_height` is smaller than mean baseline wind speed.
-            :return: Updated 3D array `vhm0_distorted` containing modified wave field vectors.
-            :rtype: tuple[numpy.ndarray, numpy.ndarray]
+            :raises ValueError: If configured `target_height_wave` is smaller than mean baseline wave height.
+            :return: Updated 3D array `vhm0_distorted` containing the modified wave height, same shape as
+                `vhm0_orig`.
+            :rtype: numpy.ndarray
         """
         vhm0_orig_mean = vhm0_orig.mean()
         vhm0_max_target = self.gauss_dict["target_height_wave"] - vhm0_orig_mean
@@ -935,8 +1156,12 @@ class FakeWeather(WeatherCond):
         """
         Write reduced fake weather to file for easy analysis with QGIS.
 
-        :param filepath:
-        :return:
+        Only the first depth level and the first height above ground (10 m) are kept, the dimensions ``depth`` and
+        ``height_above_ground`` are removed and the wind components are renamed to ``uwind`` and ``vwind``. The data
+        is written to ``filepath`` with the suffix ``_reduced.nc`` instead of ``.nc``.
+
+        :param filepath: path of the netCDF file written with ``write_data``
+        :type filepath: str or pathlib.Path
         """
         reduced_path = str(filepath).rstrip('.nc') + '_reduced.nc'
         ds_red_depth = self.ds.isel(depth=0)
