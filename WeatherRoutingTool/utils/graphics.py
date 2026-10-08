@@ -46,74 +46,6 @@ def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
     return points
 
 
-def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
-    """Return map figure."""
-    fig = Figure(figsize=(1600 / dpi, 800 * n_maps / dpi), dpi=dpi)
-    fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
-
-    # Add gcrs between provided points to the map figure.
-    path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
-    print(path)
-    for i in range(n_maps):
-        ax = fig.add_subplot(n_maps + 1, 1, i + 1, projection=ccrs.PlateCarree())
-        ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
-        ax.add_feature(cf.LAND)
-        ax.add_feature(cf.OCEAN)
-        ax.add_feature(cf.COASTLINE)
-        ax.gridlines(draw_labels=True)
-
-        hour = i // 3 * 3
-        u, v, lats, lons = winds[int(hour)]
-        ax.barbs(lons, lats, u, v, length=5, sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5), linewidth=0.95)
-
-        lats = [x[0] for x in path]
-        lons = [x[1] for x in path]
-        ax = fig.get_axes()[0]
-        ax.plot(lons, lats, 'r-', transform=ccrs.PlateCarree())
-    return fig
-
-
-def create_map(lat1, lon1, lat2, lon2, dpi):
-    """Return map figure."""
-    fig = Figure(figsize=(1200 / dpi, 420 / dpi), dpi=dpi)
-    fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
-    ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0, top=1, wspace=0, hspace=0)
-    # ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
-    ax.add_feature(cf.LAND)
-    ax.add_feature(cf.OCEAN)
-    ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True)
-    return fig
-
-
-def plot_barbs(fig, winds):
-    """Add barbs to the map figure."""
-    u = winds['u']
-    v = winds['v']
-    lats = winds['lats_u']
-    lons = winds['lons_u']
-
-    # rebinx=5  # CMEMS
-    # rebiny=11
-
-    # rebinx=1   # NCEP
-    # rebiny=1
-
-    rebinx = 10  # depth
-    rebiny = 10
-
-    u = rebin(u, rebinx, rebiny)
-    v = rebin(v, rebinx, rebiny)
-    lats = rebin(lats, rebinx, rebiny)
-    lons = rebin(lons, rebinx, rebiny)
-
-    ax = fig.get_axes()[0]
-    ax.barbs(lons, lats, u, v, length=5, sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5), linewidth=0.95)
-    # ax.quiver(lons, lats, u, v)
-    return fig
-
-
 def plot_gcr(fig, lat1, lon1, lat2, lon2):
     """Add gcrs between provided points to the map figure."""
     path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
@@ -122,12 +54,6 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
 
     ax = fig.get_axes()[0]
     ax.plot(lons, lats, 'g')
-    return fig
-
-
-def plot_legend(fig):
-    ax = fig.get_axes()[0]
-    ax.legend()
     return fig
 
 
@@ -416,19 +342,6 @@ def generate_basemap(
     fig.tight_layout()
     plt.title(title)
     return fig, ax
-
-
-# TODO: faulty
-def plot_genetic_algorithm_initial_population(src, dest, routes):
-    figure_path = get_figure_path()
-    if figure_path is not None:
-        plt.rcParams['font.size'] = get_standard('font_size')
-        fig, ax = plt.subplots(figsize=get_standard('fig_size'))
-        ax.remove()
-        fig, ax = generate_basemap(fig, None, src, dest, '', False)
-        for i in range(0, len(routes)):
-            ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
-        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
 
 
 def write_graph_to_csv(path, x, y):

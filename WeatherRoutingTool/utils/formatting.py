@@ -34,18 +34,6 @@ def get_current_time(start_time: time.time):
     return time_passed
 
 
-def get_point_from_string(point):
-    lat, lon = point.split(',')
-    return float(lat), float(lon)
-
-
-def get_bbox_from_string(bbox):
-    if bbox == '-99':
-        return 0., 0., 0., 0.
-    lat_start, lon_start, lat_end, lon_end = bbox.split(',')
-    return float(lat_start), float(lon_start), float(lat_end), float(lon_end)
-
-
 class NumpyArrayEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, numpy.ndarray):
