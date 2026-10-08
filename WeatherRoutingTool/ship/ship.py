@@ -68,7 +68,7 @@ class Boat:
         :return: xarray dataset containing the weather fields used by the vessel.
         :rtype: xarray.Dataset
         """
-        if self.weather_data == None:
+        if self.weather_data is None:
             weather_data = xr.open_dataset(self.weather_path)
             self.weather_data = weather_data.load()
             weather_data.close()
