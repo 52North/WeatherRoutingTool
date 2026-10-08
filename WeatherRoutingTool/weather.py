@@ -12,9 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from maridatadownloader import BoxSubset, get_downloader
-from scipy.interpolate import RegularGridInterpolator
 
-import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.utils.unit_conversion import (check_dataset_spacetime_consistency, convert_nptd64_to_ints,
@@ -112,41 +110,6 @@ class WeatherCond:
 
     def read_dataset(self, filepath=None):
         pass
-
-    def plot_wind_weather(self, time, rebinx=5, rebiny=5):
-        input_crs = ccrs.PlateCarree()
-        fig, ax = graphics.generate_basemap(
-            map_coords=self.map_size.get_var_tuple(),
-            depth=None,
-            show_depth=False
-        )
-
-        u = self.ds['u-component_of_wind_height_above_ground'].sel(
-            time=time,
-            latitude=slice(self.map_size.lat1, self.map_size.lat2),
-            longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground=10
-        )
-        v = self.ds['v-component_of_wind_height_above_ground'].sel(
-            time=time,
-            latitude=slice(self.map_size.lat1, self.map_size.lat2),
-            longitude=slice(self.map_size.lon1, self.map_size.lon2),
-            height_above_ground=10
-        )
-
-        u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-        v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-
-        windspeed = np.sqrt(u ** 2 + v ** 2)
-
-        for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-            label.set_fontsize(20)
-        x = windspeed.coords['longitude'].values
-        y = windspeed.coords['latitude'].values
-        # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
-        ax.barbs(x, y, u.values, v.values, clim=[0, 20], transform=input_crs)
-
-        plt.show()
 
     @staticmethod
     def get_theta_from_uv(u, v):
@@ -391,176 +354,6 @@ class WeatherCondFromFile(WeatherCond):
     def __init__(self, time=None, hours=None, time_res=None):
         super().__init__(time, hours, time_res)
 
-    def calculate_wind_function(self, time):
-        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
-        # print('Reading time', time_str)
-
-        try:
-            u = self.ds['u-component_of_wind_height_above_ground'].sel(time=time_str, height_above_ground2=10)
-            v = self.ds['v-component_of_wind_height_above_ground'].sel(time=time_str, height_above_ground2=10)
-        except KeyError:
-            time = self.ds['time']
-            logger.error('time: ', time.to_numpy())
-            logger.error('time string: ', time_str)
-            raise Exception(
-                'Please make sure that time stamps of environmental data match full hours: time = ' + time_str)
-
-        twa, tws = self.get_twatws_from_uv(u, v)
-
-        tws = tws.to_numpy()
-        twa = twa.to_numpy()
-
-        return {'twa': twa, 'tws': tws}
-
-    def read_wind_functions(self, iTime):
-        time = self.time_start + self.time_res * iTime
-        # wind = self.nc_to_wind_function_old_format()
-        wind = self.calculate_wind_function(time)
-
-        if not (wind['twa'].shape == wind['tws'].shape):
-            raise ValueError('Shape of twa and tws not matching!')
-
-        lat_shape = wind['twa'].shape[0]
-        lon_shape = wind['twa'].shape[1]
-        lats_grid = np.linspace(self.map_size.lat1, self.map_size.lat2, lat_shape)
-        lons_grid = np.linspace(self.map_size.lon1, self.map_size.lon2, lon_shape)
-
-        f_twa = RegularGridInterpolator((lats_grid, lons_grid), wind['twa'], )
-
-        f_tws = RegularGridInterpolator((lats_grid, lons_grid), wind['tws'], )
-
-        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
-
-    def read_wind_vectors(self, time):
-        """Return u-v components for given rect for visualization."""
-
-        lat1 = self.map_size.lat1
-        lat2 = self.map_size.lat2
-        lon1 = self.map_size.lon1
-        lon2 = self.map_size.lon2
-        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
-
-        ds_time = self.ds.sel(time=time_str)
-
-        u = ds_time['u-component_of_wind_height_above_ground'].where(
-            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
-                    ds_time.longitude <= lon2) & (ds_time.height_above_ground2 == 10), drop=True)
-        v = ds_time['v-component_of_wind_height_above_ground'].where(
-            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
-                    ds_time.longitude <= lon2) & (ds_time.height_above_ground2 == 10), drop=True)
-        lats_u_1D = ds_time['latitude'].where((ds_time.latitude >= lat1) & (ds_time.latitude <= lat2), drop=True)
-        lons_u_1D = ds_time['longitude'].where((ds_time.longitude >= lon1) & (ds_time.longitude <= lon2), drop=True)
-
-        u = u.to_numpy()
-        v = v.to_numpy()
-        lats_u_1D = lats_u_1D.to_numpy()
-        lons_u_1D = lons_u_1D.to_numpy()
-        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
-        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
-
-        return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
-
-    def plot_weather_map(self, fig, ax, time, varname, rebinx=5, rebiny=5, **kwargs):
-
-        if varname == 'wind':
-            u = self.ds['u-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
-                time=time,
-                height_above_ground=10,
-                latitude=slice(self.map_size.lat1, self.map_size.lat2),
-                longitude=slice(self.map_size.lon1, self.map_size.lon2)
-            )
-            v = self.ds['v-component_of_wind_height_above_ground'].where(self.ds.VHM0 > 0).sel(
-                time=time,
-                height_above_ground=10,
-                latitude=slice(self.map_size.lat1, self.map_size.lat2),
-                longitude=slice(self.map_size.lon1, self.map_size.lon2)
-            )
-
-            u = u.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-            v = v.coarsen(latitude=rebinx, longitude=rebiny, boundary="trim").mean()
-
-            windspeed = np.sqrt(u ** 2 + v ** 2)
-            windspeed.plot(alpha=0.5)
-
-            plt.title(f'wind speed and direction at {time}')
-            plt.rcParams['font.size'] = '20'
-            plt.ylabel('latitude (°N)', fontsize=20)
-            plt.xlabel('longitude (°W)', fontsize=20)
-            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-                label.set_fontsize(20)
-            x = windspeed.coords['longitude'].values
-            y = windspeed.coords['latitude'].values
-            # plt.quiver(x, y, u.values, v.values, clim=[0, 20])
-            plt.barbs(x, y, u.values, v.values, clim=[0, 20], **kwargs)
-
-        if varname == 'waveheight':
-            height = self.ds['VHM0'].sel(time=time)
-            h = height.plot()
-            h.set_clim(0, 7)
-            plt.title('wave heigh')
-            plt.rcParams['font.size'] = '20'
-            plt.title('current')
-            plt.ylabel('latitude (°N)', fontsize=20)
-            plt.xlabel('longitude (°W)', fontsize=20)
-            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-                label.set_fontsize(20)
-            plt.show()
-
-        if varname == 'current':
-            u = self.ds['uo'].sel(time=time)
-            v = self.ds['vo'].sel(time=time)
-            u = u.isel(depth=0)
-            v = v.isel(depth=0)
-
-            # u = u[::3, ::6]
-            # v = u[::3, ::6]
-
-            unp = u.to_numpy()
-            vnp = v.to_numpy()
-            unp = graphics.rebin(unp, rebinx, rebiny)
-            vnp = graphics.rebin(vnp, rebinx, rebiny)
-
-            windspeed = np.sqrt(u ** 2 + v ** 2)
-            c = windspeed.plot()
-            c.set_clim(0, 0.6)
-            plt.rcParams['font.size'] = '20'
-            plt.title('current')
-            plt.ylabel('latitude (°N)', fontsize=20)
-            plt.xlabel('longitude (°W)', fontsize=20)
-            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-                label.set_fontsize(20)
-            x = windspeed.coords['longitude'].values
-            y = windspeed.coords['latitude'].values
-
-            # plt.barbs(x, y, u.values, v.values)
-            plt.quiver(x, y, u.values, v.values)
-            plt.show()
-
-        if varname == 'wavedir':
-            wavedir = self.ds['VMDR'].sel(time=time)
-            waveheight = self.ds['VHM0'].sel(time=time)
-
-            u = np.cos(wavedir) * waveheight
-            v = np.sin(wavedir) * waveheight
-
-            h = waveheight.plot()
-            # h.set_clim(0, 0.6)
-            plt.rcParams['font.size'] = '20'
-            plt.title('current')
-            plt.ylabel('latitude (°N)', fontsize=20)
-            plt.xlabel('longitude (°W)', fontsize=20)
-            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-                label.set_fontsize(20)
-            x = waveheight.coords['longitude'].values
-            y = waveheight.coords['latitude'].values
-
-            # plt.barbs(x, y, u.values, v.values)
-            plt.quiver(x, y, u.values, v.values)
-            plt.show()
-
-    def close_env_file(self):
-        self.ds.close()
-
     def adjust_depth_format(self, depth_path):
         debug = True
         ds_depth = xr.open_dataset(depth_path)
@@ -614,64 +407,6 @@ class WeatherCondFromFile(WeatherCond):
         time_passed = rounded_time - self.time_start
         idx = (time_passed.total_seconds() / self.time_res.total_seconds())
         return {'rounded_time': rounded_time, 'idx': idx}
-
-    def manipulate_dataset(self):
-        # condition =  4
-        # lat = 54.608889
-        # lon = 6.179722
-        condition = 8
-        lat = 55.048333
-        lon = 5.130000
-
-        # condition = 4
-        # condition = 8
-
-        dim = 0.25
-        xmin = lon - dim
-        xmax = lon + dim
-        ymin = lat - dim
-        ymax = lat + dim
-        ll = dict(longitude=slice(xmin, xmax), latitude=slice(ymin, ymax))
-        logger.info('before: ', self.ds["VHM0"].loc[ll].to_numpy())
-        self.ds["VHM0"].loc[ll] = condition
-        logger.info('after: ', self.ds["VHM0"].loc[ll].to_numpy())
-        self.ds.to_netcdf('/home/kdemmich/MariData/Simulationsstudie_April23/manipulated_data.nc')
-
-        return self.ds
-
-    def get_twatws_from_uv(self, u, v):
-        tws = np.sqrt(u ** 2 + v ** 2)
-        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0  # angle from 0° to 360°, 0° = N
-        return twa, tws
-
-    def init_wind_vectors(self):
-        """
-        Set wind vectors for given number of hours.
-        """
-        wind_vectors = {'start_time': self.time_start}
-        for i in range(self.time_steps):
-            time = self.time_start + self.time_res * i
-            wind_vectors[i] = self.read_wind_vectors(time)  # print('reading wind vector time', time)
-        self.wind_vectors = wind_vectors
-
-    def get_wind_vector(self, time):
-        time_passed = self.get_time_step_index(time)
-        rounded_time = time_passed['rounded_time']
-        idx = time_passed['idx']
-
-        try:
-            wind_timestamp = self.wind_vectors[idx]['timestamp']
-        except KeyError:
-            logger.error('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(
-                self.time_steps) + ' available')
-            raise
-
-        if not (rounded_time == wind_timestamp):
-            ex = 'Accessing wrong weather forecast. Accessing element ' + str(
-                self.wind_vectors[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
-            raise Exception(ex)
-
-        return self.wind_vectors[idx]
 
     def read_dataset(self, filepath=None):
         if filepath is None:
@@ -910,7 +645,6 @@ class FakeWeather(WeatherCond):
 
         self.ds = ds
         self.follow_conventions()
-        self.plot_wind_weather(self.time_start)
 
     def follow_conventions(self):
         self.ds.latitude.attrs = {
