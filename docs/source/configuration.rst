@@ -3,7 +3,7 @@
 Configuration
 =============
 
-Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.example.json`.
+Configuration of the Weather Routing Tool can be done by providing a json file. An example is given by `config.template.json`.
 
 The configuration file has to be provided when calling the Weather Routing Tool from the command line:
 
