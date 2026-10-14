@@ -1,3 +1,9 @@
+"""
+Provide the container class ``RouteParams`` for a route and its ship parameters.
+
+The module contains functions to write routes to and read them from GeoJSON files, to read measured routes from
+parquet and csv files and to plot route properties like power, fuel consumption and speed.
+"""
 import json
 from datetime import datetime, timedelta
 
@@ -30,6 +36,31 @@ class RouteParams:
         - Type 2: count + 2: lats_per_step, lons_per_step, starttime_per_step
     When the RouteParams object is written to json file, the full arrays of type 2 are written. The corresponding values
     from the arrays of type 1 are set to -99 for the last coordinate pair.
+
+    :param count: number of routing steps minus one, i.e. the number of route segments is ``count + 1``
+    :type count: int
+    :param start: latitude and longitude of the start point in degrees
+    :type start: tuple
+    :param finish: latitude and longitude of the destination in degrees
+    :type finish: tuple
+    :param gcr: distance travelled from start to destination in m; None if not determined
+    :type gcr: astropy.units.Quantity or None
+    :param route_type: name of the route, e.g. ``'min_fuel_route'``
+    :type route_type: str
+    :param time: travel time from start to destination
+    :type time: astropy.units.Quantity or datetime.timedelta
+    :param lats_per_step: latitude at the beginning of each step and of the destination in degrees (type 2)
+    :type lats_per_step: numpy.ndarray
+    :param lons_per_step: longitude at the beginning of each step and of the destination in degrees (type 2)
+    :type lons_per_step: numpy.ndarray
+    :param course_per_step: course of each step in degrees (type 1)
+    :type course_per_step: astropy.units.Quantity
+    :param dists_per_step: distance travelled on the great circle for every step in m (type 1)
+    :type dists_per_step: astropy.units.Quantity
+    :param starttime_per_step: time at the beginning of each step and arrival time at the destination (type 2)
+    :type starttime_per_step: numpy.ndarray
+    :param ship_params_per_step: ship parameters for every step (type 1)
+    :type ship_params_per_step: ShipParams
     """
 
     count: int  # routing step (starting from 0)
@@ -114,12 +145,16 @@ class RouteParams:
                    "dists_per_step": self.dists_per_step, "starttime_per_step": self.starttime_per_step}
         return rp_dict
 
-    def write_to_file(self, filename):
-        rp_dict = self.convert_to_dict()
-        with open(filename, 'w') as file:
-            json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
-
     def write_to_geojson(self, filename):
+        """
+        Write the route as GeoJSON FeatureCollection of points to a file.
+
+        Every coordinate pair (``count + 2`` points) is written as point feature with the coordinates in the order
+        (longitude, latitude). For the destination, all ship parameters are set to -99.
+
+        :param filename: path of the output file
+        :type filename: str
+        """
         rp_dict = {}
         rp_dict['type'] = 'FeatureCollection'
         feature_list = []
@@ -207,6 +242,19 @@ class RouteParams:
 
     @classmethod
     def from_file(cls, filename):
+        """
+        Create a RouteParams object from a GeoJSON file.
+
+        The start times need to have the format ``'%Y-%m-%d %H:%M:%S'``. The values of the ship parameters are
+        converted to SI units (power in W, fuel rate in kg/s) and the values of the last point are dropped. The
+        distances per step are calculated from the coordinates; courses are not read and set to -99. The route type
+        is set to ``'read_from_file'`` and ``gcr`` to -99.
+
+        :param filename: path of the GeoJSON file
+        :type filename: str
+        :return: route read from file
+        :rtype: RouteParams
+        """
         with open(filename) as file:
             rp_dict = json.load(file)
 
@@ -273,7 +321,7 @@ class RouteParams:
             salinity[ipoint] = property['salinity']['value']
             water_temperature[ipoint] = property['water_temperature']['value']
             status[ipoint] = property['status']['value']
-            message[ipoint] = property['message']['value']
+        #    message[ipoint] = property['message']['value']
 
         speed = speed[:-1] * u.meter / u.second
         power = (power[:-1] * u.kiloWatt).to(u.Watt)
@@ -337,6 +385,16 @@ class RouteParams:
                    ship_params_per_step=ship_params_per_step)
 
     def get_dist_from_coords(self, lats, lons):
+        """
+        Calculate the great circle distances between consecutive coordinate pairs.
+
+        :param lats: latitudes in degrees
+        :type lats: numpy.ndarray
+        :param lons: longitudes in degrees, same length as ``lats``
+        :type lons: numpy.ndarray
+        :return: distance from each point to the following one in m, same length as ``lats``; the last value is -99
+        :rtype: astropy.units.Quantity
+        """
         nsteps = len(lats)
         dist = np.full(nsteps, -99.)
 
@@ -346,14 +404,28 @@ class RouteParams:
         return dist * u.meter
 
     def plot_route(self, ax, colour, label, linestyle=False):
+        """
+        Plot the route and markers for start and destination on a map.
+
+        :param ax: axes with a cartopy projection
+        :type ax: cartopy.mpl.geoaxes.GeoAxes
+        :param colour: matplotlib colour of the route and the markers
+        :type colour: str
+        :param label: legend label of the route
+        :type label: str
+        :param linestyle: matplotlib line style; if False, the default line style is used
+        :type linestyle: str or bool
+        :return: axes with the route
+        :rtype: cartopy.mpl.geoaxes.GeoAxes
+        """
         input_crs = ccrs.PlateCarree()
         lats = self.lats_per_step
         lons = self.lons_per_step
 
         if linestyle:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, linestyle=linestyle, transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=4, linestyle=linestyle, transform=input_crs)
         else:
-            ax.plot(lons, lats, color=colour, label=label, linewidth=2, transform=input_crs)
+            ax.plot(lons, lats, color=colour, label=label, linewidth=4, transform=input_crs)
 
         ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour, markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
@@ -373,7 +445,24 @@ class RouteParams:
             return {"value": power, "label": "fuel consumption", "unit": u.kg}
         raise NotImplementedError(f'The power type "{power_type}" is not implemented.')
 
-    def plot_power_vs_dist(self, color, label, power_type, ax, norm=1.):
+    def plot_power_vs_dist(self, icolor, label, power_type, ax, norm=1.):
+        """
+        Plot power or fuel consumption per step against the travel distance.
+
+        Power is plotted as step function, fuel as bar chart in t/km. The x axis shows the travel distance in km.
+        Labels are set on the current pyplot figure.
+
+        :param icolor: index of the colour and line style from ``utils.graphics``
+        :type icolor: int
+        :param label: legend label
+        :type label: str
+        :param power_type: ``'power'``, ``'relative_power'`` or ``'fuel'``, see ``get_power_type``
+        :type power_type: str
+        :param ax: axes to plot on
+        :type ax: matplotlib.axes.Axes
+        :param norm: normalisation of the power, see ``get_power_type``
+        :type norm: float
+        """
         power = self.get_power_type(power_type, norm)
         dist = self.dists_per_step
 
@@ -384,8 +473,15 @@ class RouteParams:
             plt.ylabel(power["label"])
 
             lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
-            plt.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid', linewidth=2, color=color,
-                     label=label)
+            plt.step(
+                lower_bin_boundaries,
+                hist_values["bin_contents"],
+                where='mid',
+                linewidth=2,
+                color=graphics.get_str_color(icolor),
+                linestyle=graphics.get_linestyle(icolor),
+                label=label
+            )
 
             left, right = plt.xlim()
             ax.set_xlim(-100, right)
@@ -396,13 +492,38 @@ class RouteParams:
                 hist_values["bin_centres"].to(u.km).value,
                 hist_values["bin_contents"].to(u.tonne / u.kilometer).value,
                 hist_values["bin_widths"].to(u.km).value,
-                fill=False, color=color, edgecolor=color, label=label
+                fill=False,
+                color=graphics.get_colour(icolor),
+                edgecolor=graphics.get_colour(icolor),
+                linestyle=graphics.get_linestyle(icolor),
+                label=label
             )
             ax.set_ylim(0, 0.05)
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
     def plot_power_vs_dist_resistances(self, color, label, power_type, ax1, ax2, ax3, ax4):
+        """
+        Plot power or fuel consumption and the wind, wave and calm water resistance against the travel distance.
+
+        All quantities are plotted as bar charts with the step lengths as bar widths; the x axis shows the travel
+        distance in km.
+
+        :param color: matplotlib colour
+        :type color: str
+        :param label: legend label
+        :type label: str
+        :param power_type: ``'power'`` (plotted in kW) or ``'fuel'`` (plotted in t/km), see ``get_power_type``
+        :type power_type: str
+        :param ax1: axes for power or fuel consumption
+        :type ax1: matplotlib.axes.Axes
+        :param ax2: axes for the wind resistance in N
+        :type ax2: matplotlib.axes.Axes
+        :param ax3: axes for the wave resistance in N
+        :type ax3: matplotlib.axes.Axes
+        :param ax4: axes for the calm water resistance in N
+        :type ax4: matplotlib.axes.Axes
+        """
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
         r_wind = self.ship_params_per_step.r_wind
@@ -452,19 +573,33 @@ class RouteParams:
         plt.xlabel('travel distance (km)')
         plt.xticks()
 
-    def plot_speed_vs_dist(self, color, label, ax):
+    def plot_speed_vs_dist(self, icolor, label, ax):
+        """
+        Plot the speed per step in m/s as step function against the travel distance in km.
+
+        :param icolor: index of the colour and line style from ``utils.graphics``
+        :type icolor: int
+        :param label: legend label
+        :type label: str
+        :param ax: axes to plot on
+        :type ax: matplotlib.axes.Axes
+        """
         speed = self.ship_params_per_step.get_speed()
         dist = self.dists_per_step
 
         hist_values = graphics.get_hist_values_from_widths(dist, speed, "speed")
-
-        # only for power: also plot bin showing weighted mean. This does not make sense for fuel.
         plt.ylabel("speed (m/s)")
-        plt.bar(
-            hist_values["bin_centres"].to(u.km).value,
+        lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+
+        plt.step(
+            lower_bin_boundaries,
             hist_values["bin_contents"].to(u.m / u.second).value,
-            hist_values["bin_widths"].to(u.km).value,
-            alpha=0.5, color=color, edgecolor=color, label=label, linewidth=2)
+            where='mid',
+            linewidth=2,
+            color=graphics.get_str_color(icolor),
+            linestyle=graphics.get_linestyle(icolor),
+            label=label
+        )
 
         left, right = plt.xlim()
         ax.set_xlim(-100, right)
@@ -474,6 +609,18 @@ class RouteParams:
 
     # TODO check whether correct: Why do we see steps and no smooth curve?
     def plot_acc_power_vs_dist(self, color, label, power_type):
+        """
+        Plot the accumulated power or fuel consumption against the travel distance on the current pyplot figure.
+
+        The values per step are multiplied with the step lengths and summed up along the route. Fuel is plotted in t.
+
+        :param color: matplotlib colour
+        :type color: str
+        :param label: legend label
+        :type label: str
+        :param power_type: ``'power'`` or ``'fuel'``, see ``get_power_type``
+        :type power_type: str
+        """
         power = self.get_power_type(power_type)
         dist = self.dists_per_step
 
@@ -505,6 +652,21 @@ class RouteParams:
         plt.xticks()
 
     def plot_power_vs_dist_ratios(self, denominator, color, label, power_type):
+        """
+        Plot the ratio of power or fuel consumption of this route and another route against the travel distance.
+
+        If the histograms of the two routes have a different binning, the values of ``denominator`` are linearly
+        interpolated to the bin centres of this route. Plotted on the current pyplot figure.
+
+        :param denominator: route whose values are used as denominator
+        :type denominator: RouteParams
+        :param color: matplotlib colour
+        :type color: str
+        :param label: legend label
+        :type label: str
+        :param power_type: ``'power'``, ``'relative_power'`` or ``'fuel'``, see ``get_power_type``
+        :type power_type: str
+        """
         power_nom = self.get_power_type(power_type)
         dist_nom = self.dists_per_step
         hist_values_nom = graphics.get_hist_values_from_widths(dist_nom, power_nom["value"], power_type)
@@ -536,6 +698,20 @@ class RouteParams:
         plt.xticks()
 
     def plot_power_vs_coord(self, ax, color, label, coordstring, power_type):
+        """
+        Plot power or fuel consumption per step against the latitude or longitude at the start of each step.
+
+        :param ax: axes to plot on
+        :type ax: matplotlib.axes.Axes
+        :param color: matplotlib colour
+        :type color: str
+        :param label: not used; the label is replaced by the name of the coordinate
+        :type label: str
+        :param coordstring: ``'lat'`` for latitude, any other value for longitude
+        :type coordstring: str
+        :param power_type: ``'power'`` (plotted in kW) or ``'fuel'``, see ``get_power_type``
+        :type power_type: str
+        """
         power = self.get_power_type(power_type)
         if coordstring == 'lat':
             coord = self.lats_per_step[:-1]
@@ -555,6 +731,15 @@ class RouteParams:
         plt.xticks()
 
     def get_fuel_per_dist(self):
+        """
+        Calculate the fuel consumed in every routing step.
+
+        The fuel rate of each step is multiplied with the time between the start of the step and the start of the
+        following step.
+
+        :return: fuel consumed per step in kg, length ``count``
+        :rtype: astropy.units.Quantity
+        """
         fuel_per_second = self.ship_params_per_step.fuel_rate
         delta_time = np.full(self.count, timedelta(seconds=0))
         fuel = np.array([]) * u.kg
@@ -569,52 +754,6 @@ class RouteParams:
     def set_ship_params(self, ship_params):
         self.ship_params_per_step = ship_params
 
-    def plot_power_vs_dist_with_weather(self, data_array, label_array, n_datasets):
-        if n_datasets < 1:
-            raise ValueError('You should at least provide 1 dataset!')
-
-        fig = plt.figure(figsize=(25, 15))
-        gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
-        ax_power = None
-        ax_rwind = None
-        list_lines = []
-
-        for idata in range(0, n_datasets):
-            color = graphics.get_colour(idata)
-            label = label_array[idata]
-            power = data_array[idata].get_fuel_per_dist()
-            dist = data_array[idata].dists_per_step
-            dist = dist / 1000  # [m] -> [km]
-            normalised_power = graphics.get_hist_values_from_widths(dist, power, 'fuel')
-            r_wind = data_array[idata].ship_params_per_step.get_rwind()
-            if r_wind[-1] == -99:
-                r_wind = r_wind[:-1]
-            r_wind = r_wind / 1000
-
-            if idata == 0:
-                ax_power = plt.subplot(gs[0])
-                ax_power.set_ylabel('Treibstoffverbrauch (t/km)', fontsize=20)
-                ax_rwind = plt.subplot(gs[1], sharex=ax_power)
-                ax_rwind.set_ylabel('Windwiderstand (kN)', fontsize=20)
-                ax_rwind.set_ylim(-40, 40)
-                ax_power = graphics.set_graphics_standards(ax_power)
-                ax_rwind = graphics.set_graphics_standards(ax_rwind)
-
-            line_power = ax_power.bar(normalised_power["bin_centres"], normalised_power["bin_contents"],
-                                      normalised_power["bin_widths"], fill=False, color=color, edgecolor=color,
-                                      label=label, linewidth=2)
-            list_lines.append(line_power)
-
-            ax_rwind.bar(normalised_power["bin_centres"], r_wind, normalised_power["bin_widths"], fill=False,
-                         color=color, edgecolor=color, linewidth=2)
-
-        # ax_power.legend((line_power, line1), ('red line', 'blue line'), loc='lower left')
-        ax_rwind.axhline(y=0., color='gray', linestyle='dashed', linewidth=2)
-        plt.xlabel('Weglänge (km)', fontsize=20)
-        fig.legend(loc='outside upper right')
-
-        plt.xticks()
-
     @staticmethod
     def get_per_waypoint_coords(
             route_lons: np.ndarray,
@@ -622,6 +761,24 @@ class RouteParams:
             start_time: datetime,
             bs: u.Quantity
     ):
+        """
+        Calculate distances, courses and start times of the route segments between consecutive waypoints.
+
+        The start time of each segment is the start time of the previous segment plus its travel time.
+
+        :param route_lons: longitudes of the waypoints in degrees
+        :type route_lons: numpy.ndarray
+        :param route_lats: latitudes of the waypoints in degrees, same length as ``route_lons``
+        :type route_lats: numpy.ndarray
+        :param start_time: departure time at the first waypoint
+        :type start_time: datetime.datetime
+        :param bs: boat speed, either one value or one value per segment
+        :type bs: astropy.units.Quantity
+        :return: dictionary with one entry per segment (length: number of waypoints - 1) for the keys
+            ``start_lats``, ``start_lons`` (degrees), ``dist`` (great circle distance in m), ``courses`` (azimuth at
+            the start of the segment in degrees), ``start_times`` and ``travel_times`` (Quantity)
+        :rtype: dict
+        """
         debug = False
         npoints = route_lons.shape[0]
         start_lats = np.zeros(npoints - 1)
@@ -677,6 +834,13 @@ class RouteParams:
         return self.time
 
     def get_full_fuel(self):
+        """
+        Calculate the total fuel consumed on the route.
+
+        :return: sum of the fuel consumed in every step (fuel rate times time between the start times of the steps)
+            in kg
+        :rtype: astropy.units.Quantity
+        """
         full_fuel = 0 * u.kg
         for ipoint in range(0, self.count):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
@@ -686,6 +850,12 @@ class RouteParams:
         return full_fuel
 
     def get_mean_power(self):
+        """
+        Calculate the mean engine power over the routing steps (not weighted by time or distance).
+
+        :return: mean power in the unit of the ship parameters; ``0 kW h`` if the route has no steps
+        :rtype: astropy.units.Quantity
+        """
         power_sum = 0
         count = 0
         for ipoint in range(0, self.count):
@@ -699,6 +869,19 @@ class RouteParams:
 
     @staticmethod
     def from_gzip_file(filename):
+        """
+        Read a measured route from a gzip file.
+
+        The file needs the columns ``Latitude``, ``Longitude``, ``SOG`` (speed over ground in knots), ``ME_LOAD``,
+        ``ME_FUEL_OIL_CONSUMPTION_CALCULATED`` (kg/h), ``FORE_DRAUGHT_LEVEL``, ``AFTER_DRAUGHT_LEVEL`` and
+        ``POSITION`` and a time index.
+
+        :param filename: path of the parquet file
+        :type filename: str
+        :return: tuple of latitudes and longitudes in degrees, times, speed over ground in m/s (without the last
+            value), fore and aft draught (pandas.Series), main engine load and fuel rate in kg/h
+        :rtype: tuple
+        """
         data = pandas.read_parquet(filename)
         pandas.options.display.max_columns = None
         pandas.options.display.max_rows = None
@@ -743,6 +926,19 @@ class RouteParams:
 
     @staticmethod
     def from_csv_file(filename):
+        """
+        Read a measured route from a csv file.
+
+        The first column needs to contain the time. Further required columns are ``Latitude``, ``Longitude``,
+        ``SOG`` (speed over ground in m/s), ``ME_LOAD``, ``ME_FUEL_OIL_CONSUMPTION_CALCULATED`` (kg/h),
+        ``draft_fp_interpolated_between_low_speeds`` and ``draft_ap_interpolated_between_low_speeds``.
+
+        :param filename: path of the csv file
+        :type filename: str
+        :return: tuple of latitudes and longitudes in degrees, times, speed over ground in m/s (without the last
+            value), mean fore and mean aft draught, main engine load and fuel rate in kg/h
+        :rtype: tuple
+        """
         df = pandas.read_csv(filename)
 
         full_fuel_consumed = df['ME_FUEL_OIL_CONSUMPTION_CALCULATED'].mean() * u.kg / u.h
@@ -760,14 +956,14 @@ class RouteParams:
         lat = df['Latitude'].values
         lon = df['Longitude'].values
 
-        time = df.iloc[:, 0].values
+        time = df.iloc[:, 0]
         time_converted = utils.unit_conversion.convert_pandatime_to_datetime(time)
 
         logger.info('Reading route from file: ' + filename)
         logger.info('start: (' + str(lat[0]) + ',' + str(lon[0]) + ')')
         logger.info('start: (' + str(lat[-1]) + ',' + str(lon[-1]) + ')')
-        logger.info('start time: ' + str(time[0]))
-        logger.info('end time: ' + str(time[-1]))
+        logger.info('start time: ' + str(time_converted[0]))
+        logger.info('end time: ' + str(time_converted[-1]))
         logger.info('mean fuel consumed (kg/h): ' + str(full_fuel_consumed))
         logger.info('ME load (percentage): ' + str(mean_engine_load))
         logger.info('fore draught: ' + str(fore_draught))

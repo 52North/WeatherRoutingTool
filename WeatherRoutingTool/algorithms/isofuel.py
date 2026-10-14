@@ -48,28 +48,6 @@ class IsoFuel(IsoBased):
         time = dist / bs
         return time
 
-    def get_delta_variables(self, boat, wind, bs):
-        """
-        returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
-
-        :param boat: boat object
-        :type boat: Boat
-        :param wind: wind
-        :type wind:
-        :param bs: boat speed
-        :type bs: numeric
-        :return:
-        :rtype: tuple
-        """
-        fuel = boat.get_fuel_per_time(self.get_current_course(), wind)
-        delta_time = self.delta_fuel / fuel
-        dist = self.get_dist(bs, delta_time)
-
-        # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
-        delta_fuel = np.repeat(self.delta_fuel, wind['twa'].shape)
-
-        return delta_time, delta_fuel, dist
-
     def get_delta_variables_netCDF(self, ship_params, bs):
         """
         returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]

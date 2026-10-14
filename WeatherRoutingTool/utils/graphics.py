@@ -1,4 +1,5 @@
 import csv
+import datetime
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -7,7 +8,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import os
-import pandas as pd
 from astropy import units as u
 from geovectorslib import geod
 from matplotlib.collections import LineCollection
@@ -45,74 +45,6 @@ def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
     return points
 
 
-def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
-    """Return map figure."""
-    fig = Figure(figsize=(1600 / dpi, 800 * n_maps / dpi), dpi=dpi)
-    fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
-
-    # Add gcrs between provided points to the map figure.
-    path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
-    print(path)
-    for i in range(n_maps):
-        ax = fig.add_subplot(n_maps + 1, 1, i + 1, projection=ccrs.PlateCarree())
-        ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
-        ax.add_feature(cf.LAND)
-        ax.add_feature(cf.OCEAN)
-        ax.add_feature(cf.COASTLINE)
-        ax.gridlines(draw_labels=True)
-
-        hour = i // 3 * 3
-        u, v, lats, lons = winds[int(hour)]
-        ax.barbs(lons, lats, u, v, length=5, sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5), linewidth=0.95)
-
-        lats = [x[0] for x in path]
-        lons = [x[1] for x in path]
-        ax = fig.get_axes()[0]
-        ax.plot(lons, lats, 'r-', transform=ccrs.PlateCarree())
-    return fig
-
-
-def create_map(lat1, lon1, lat2, lon2, dpi):
-    """Return map figure."""
-    fig = Figure(figsize=(1200 / dpi, 420 / dpi), dpi=dpi)
-    fig.set_constrained_layout_pads(w_pad=4. / dpi, h_pad=4. / dpi)
-    ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0, top=1, wspace=0, hspace=0)
-    # ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
-    ax.add_feature(cf.LAND)
-    ax.add_feature(cf.OCEAN)
-    ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True)
-    return fig
-
-
-def plot_barbs(fig, winds):
-    """Add barbs to the map figure."""
-    u = winds['u']
-    v = winds['v']
-    lats = winds['lats_u']
-    lons = winds['lons_u']
-
-    # rebinx=5  # CMEMS
-    # rebiny=11
-
-    # rebinx=1   # NCEP
-    # rebiny=1
-
-    rebinx = 10  # depth
-    rebiny = 10
-
-    u = rebin(u, rebinx, rebiny)
-    v = rebin(v, rebinx, rebiny)
-    lats = rebin(lats, rebinx, rebiny)
-    lons = rebin(lons, rebinx, rebiny)
-
-    ax = fig.get_axes()[0]
-    ax.barbs(lons, lats, u, v, length=5, sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5), linewidth=0.95)
-    # ax.quiver(lons, lats, u, v)
-    return fig
-
-
 def plot_gcr(fig, lat1, lon1, lat2, lon2):
     """Add gcrs between provided points to the map figure."""
     path = get_gcr_points(lat1, lon1, lat2, lon2, n_points=10)
@@ -124,15 +56,9 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     return fig
 
 
-def plot_legend(fig):
-    ax = fig.get_axes()[0]
-    ax.legend()
-    return fig
-
-
 def get_colour(i):
     # colorblind friendly (mixture of tableau-colorblind10 & seaborn colorblind)
-    colours = ['#0072B2', '#D55E00', '#009E73',  # ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
+    colours = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442',
                '#56B4E9', '#006BA4', '#ABABAB', '#595959', '#FFBC79']
     if i > 18:
         print('Are you sure that you want to have so many curves in one plot?!')
@@ -141,6 +67,13 @@ def get_colour(i):
         i = i - 9
         print('Currently only 11 different colours available. Will use one that has already been used before: '
               'Colour=' + str(i))
+    return colours[i]
+
+
+def get_str_color(i):
+    # colors optimised for visibility on map with weather
+    colours = ['#0072B2', '#D55E00', '#009E73', '#FFBC79']
+
     return colours[i]
 
 
@@ -154,7 +87,7 @@ def get_marker(i):
 
 
 def get_linestyle(i):
-    linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
+    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
 
     if i > 3:
         i = i - 4
@@ -162,25 +95,6 @@ def get_linestyle(i):
               'Linestyle=' + str(i))
     print('using linestyle: ', linestyles[i])
     return linestyles[i]
-
-
-def rebin(a, rebinx, rebiny):
-    modx = a.shape[0] % rebinx
-    mody = a.shape[1] % rebiny
-
-    if not (modx == 0):
-        for imod in range(0, modx):
-            a = np.delete(a, 0, 0)
-
-    if not (mody == 0):
-        for imod in range(0, mody):
-            a = np.delete(a, 0, 1)
-
-    newshape_x = int(a.shape[0] / rebinx)
-    newshape_y = int(a.shape[1] / rebiny)
-
-    sh = newshape_x, rebinx, newshape_y, rebiny
-    return a.reshape(sh).mean(-1).mean(1)
 
 
 def merge_figs(path, ncounts):
@@ -293,7 +207,9 @@ def generate_basemap(
         finish=None,
         title='',
         show_depth=True,
-        show_gcr=False
+        show_gcr=False,
+        wt=None,
+        wt_timestamp=None
 ):
     plt.rcParams['font.size'] = get_standard('font_size')
     (min_lat, max_lat, min_lon, max_lon) = map_coords
@@ -338,6 +254,53 @@ def generate_basemap(
 
         fig.subplots_adjust(left=0.1, right=1.2, bottom=0, top=1, wspace=0, hspace=0)
 
+    if wt is not None:
+        time = datetime.datetime.strptime(wt_timestamp, '%Y-%m-%dT%H:%MZ')
+
+        # plot windspeed
+        u = wt.ds['u-component_of_wind_height_above_ground'].sel(
+            height_above_ground=10,
+            latitude=slice(min_lat, max_lat),
+            longitude=slice(min_lon, max_lon),
+        )
+        u = u.sel(time=time, method='nearest')
+        v = wt.ds['v-component_of_wind_height_above_ground'].sel(
+            height_above_ground=10,
+            latitude=slice(min_lat, max_lat),
+            longitude=slice(min_lon, max_lon),
+        )
+        v = v.sel(time=time, method='nearest')
+        windspeed = np.sqrt(u ** 2 + v ** 2)
+
+        level_diff = 0.1
+        cfplot = windspeed.plot.contourf(
+            ax=ax,
+            levels=np.arange(2, 7, level_diff),
+            transform=ccrs.PlateCarree(),
+            zorder=0,
+            alpha=0.7
+        )
+        cbar = cfplot.colorbar
+        cbar.set_label('wind speed (m/s)', fontsize=20, labelpad=10)
+
+        # plot wind barbs
+        stride = 10
+        lons = wt.ds["longitude"].sel(longitude=slice(min_lon, max_lon)).values[::stride]
+        lats = wt.ds["latitude"].sel(latitude=slice(min_lat, max_lat)).values[::stride]
+        u_wind = u.values[::stride, ::stride]
+        v_wind = v.values[::stride, ::stride]
+        lon_2d, lat_2d = np.meshgrid(lons, lats)
+
+        ax.barbs(
+            lon_2d, lat_2d,
+            u_wind, v_wind,
+            transform=ccrs.PlateCarree(),
+            length=5,
+            linewidth=0.8,
+            color='black',
+            zorder=0.5
+        )
+
     if start is not None:
         ax.plot(start[1], start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange", markersize=10,
                 transform=input_crs)
@@ -350,27 +313,15 @@ def generate_basemap(
         lons_gcr = [x[1] for x in gcr]
         ax.plot(lons_gcr, lats_gcr, color="orange")
 
-    ax.add_feature(cf.LAND)
+    ax.add_feature(cf.LAND, zorder=1)
     ax.add_feature(cf.COASTLINE)
-    ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl = ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl.right_labels = False
     ax.set_extent([x_min_new, x_max_new, y_min_new, y_max_new], crs=output_crs)
 
     fig.tight_layout()
     plt.title(title)
     return fig, ax
-
-
-# TODO: faulty
-def plot_genetic_algorithm_initial_population(src, dest, routes):
-    figure_path = get_figure_path()
-    if figure_path is not None:
-        plt.rcParams['font.size'] = get_standard('font_size')
-        fig, ax = plt.subplots(figsize=get_standard('fig_size'))
-        ax.remove()
-        fig, ax = generate_basemap(fig, None, src, dest, '', False)
-        for i in range(0, len(routes)):
-            ax.plot(routes[i, 0][:, 1], routes[i, 0][:, 0], color="firebrick")
-        plt.savefig(os.path.join(figure_path, 'genetic_algorithm_initial_population.png'))
 
 
 def write_graph_to_csv(path, x, y):

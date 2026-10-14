@@ -531,6 +531,22 @@ class Config(BaseModel):
         return v
 
     @model_validator(mode='after')
+    def check_boat_speed_boundaries(self) -> Self:
+        if self.ALGORITHM_TYPE != "genetic":
+            return self
+
+        min_speed, max_speed = self.BOAT_SPEED_BOUNDARIES
+        if min_speed >= max_speed:
+            logger.warning(
+                f"The minimum of 'BOAT_SPEED_BOUNDARIES' ({min_speed} m/s) is not smaller than the maximum "
+                f"({max_speed} m/s).")
+        if self.BOAT_SPEED is not None and not (min_speed <= self.BOAT_SPEED <= max_speed):
+            logger.warning(
+                f"Your 'BOAT_SPEED' ({self.BOAT_SPEED} m/s) is outside of 'BOAT_SPEED_BOUNDARIES' "
+                f"[{min_speed}, {max_speed}] m/s.")
+        return self
+
+    @model_validator(mode='after')
     def check_speed_determination(self) -> Self:
         logger.info(f'arrival time: {self.ARRIVAL_TIME}')
         logger.info(f'speed: {self.BOAT_SPEED}')

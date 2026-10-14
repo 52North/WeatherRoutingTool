@@ -12,12 +12,12 @@ import pandas as pd
 import sqlalchemy
 import xarray as xr
 from global_land_mask import globe
+from maridatadownloader import BoxSubset, get_downloader
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
 
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
-from maridatadownloader import DownloaderFactory
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
@@ -57,16 +57,8 @@ class Constraint:
     def check_crossing(self, lat_start, lon_start, lat_end, lon_end, time_start=None):
         pass
 
-    def print_debug(self, message):
-        logger.debug(self.name + str(": ") + str(message))
-
     def print_info(self):
         pass
-
-    def plot_route_in_constraint(self, route: RouteParams, colour, fig, ax):
-        fig, ax = self.plot_constraint(fig, ax)
-        route.plot_route(ax, graphics.get_colour(0), "")
-        return ax
 
     def plot_constraint(self):
         pass
@@ -121,9 +113,6 @@ class NegativeConstraintFromWeather(NegativeContraint):
     def __init__(self, name, weather):
         NegativeContraint.__init__(self, name)
         self.wt = weather
-
-    def check_weather(self, lat, lon, time):
-        pass
 
 
 class ConstraintPars:
@@ -258,11 +247,6 @@ class ConstraintsList:
         self.neg_cont_size = 0
         self.pos_size = 0
 
-    def print_constraints_crossed(self):
-        logger.info("Discarding point as:")
-        for iConst in range(0, len(self.constraints_crossed)):
-            form.print_step(str(self.constraints_crossed[iConst]), 1)
-
     def print_settings(self):
         form.print_line()
         self.pars.print()
@@ -317,19 +301,6 @@ class ConstraintsList:
         start_lat = self.positive_point_dict["lat"][self.current_positive]
         start_lon = self.positive_point_dict["lon"][self.current_positive]
         return start_lat, start_lon
-
-    def shall_I_pass(self, lat, lon, time):
-        is_constrained = [False for i in range(0, lat.shape[1])]
-
-        if self.pars.bCheckCrossing:
-            is_constrained = self.safe_crossing(lat, lon, time)
-        elif self.pars.bCheckEndPoints:
-            is_constrained = self.safe_endpoint(lat, lon, time, is_constrained)
-        if is_constrained.any():
-            self.print_constraints_crossed()
-
-    def split_route(self):
-        pass
 
     def safe_endpoint(self, lat, lon, current_time, is_constrained):
         """
@@ -525,9 +496,6 @@ class ConstraintsList:
             'You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and '
                                                                              '-continuous- are implemented ')
 
-    def check_weather(self):
-        pass
-
 
 class LandCrossing(NegativeContraint):
     """
@@ -576,31 +544,6 @@ class StatusCodeError(NegativeContraint):
         # status error = 3, warning = 2, OK = 1
         is_status_error = (status == 3)
         return is_status_error
-
-
-class WaveHeight(NegativeConstraintFromWeather):
-    """
-    Constraint such that the boat can't cross a certain wave hight
-    """
-
-    current_wave_height: np.ndarray
-    max_wave_height: float
-
-    def __init__(self):
-        NegativeContraint.__init__(self, "WaveHeight")
-        self.message += "waves are to high!"
-        # self.resource_type = 0
-        self.current_wave_height = np.array([-99])
-        self.max_wave_height = 10
-
-    def constraint_on_point(self, lat, lon, time):
-        # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
-        self.check_weather(lat, lon, time)
-        # logger.info('current_wave_height:', self.current_wave_height)
-        return self.current_wave_height > self.max_wave_height
-
-    def print_info(self):
-        logger.info(form.get_log_step("maximum wave height=" + str(self.max_wave_height) + "m", 1))
 
 
 class WaterDepth(NegativeContraint):
@@ -688,18 +631,17 @@ class WaterDepth(NegativeContraint):
         :return: Depth data loaded from NCEI
         :rtype: xarray.Dataset
         """
-
         logger.info(form.get_log_step('Automatic download of depth data', 0))
 
-        downloader = DownloaderFactory.get_downloader(downloader_type='xarray', platform='etoponcei')
-        depth_data = downloader.download()
-        depth_data_chunked = depth_data.chunk(chunks={"latitude": "100MB", "longitude": "100MB"})
         boundary_map = self.map_size.get_widened_map(1)
-        depth_data_chunked = depth_data_chunked.sel(latitude=slice(boundary_map.lat1, boundary_map.lat2),
-                                                    longitude=slice(boundary_map.lon1, boundary_map.lon2))
+        subset = BoxSubset(
+            latitude=slice(boundary_map.lat1, boundary_map.lat2),
+            longitude=slice(boundary_map.lon1, boundary_map.lon2),
+        )
+
         # Note: if depth_path already exists, the file will be overwritten!
-        self._to_netcdf(depth_data_chunked, depth_path)
-        return depth_data_chunked
+        downloader = get_downloader("etopo", chunks={"latitude": "100MB", "longitude": "100MB"})
+        return downloader.save_to_file(depth_path, subset=subset)
 
     def load_data_from_file(self, depth_path):
         """
@@ -1057,8 +999,8 @@ class SeamarkCrossing(ContinuousCheck):
         else:
             query = ["SELECT * FROM " + self.schema + ".nodes "
                                                       f"WHERE ({category_clause} OR tags -> " + tags + ")",
-                     "SELECT *, linestring AS geom FROM " + self.schema + ".ways "
-                     f"WHERE ({category_clause} OR tags -> " + tags + ")"]
+                     "SELECT *, linestring AS geom FROM "
+                     + self.schema + ".ways "f"WHERE ({category_clause} OR tags -> " + tags + ")"]
             logger.debug(query)
         return query
 

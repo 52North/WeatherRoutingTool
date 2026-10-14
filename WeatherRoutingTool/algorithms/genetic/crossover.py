@@ -130,22 +130,6 @@ class OffspringRejectionCrossover(CrossoverBase):
         """Subclass' implementation of the crossover function."""
         return p1, p2
 
-    def route_constraint_violations(self, route: np.ndarray) -> np.ndarray:
-        """Check if route breaks any discrete constraints.
-
-        :param route: List of waypoints.
-        :type route: np.ndarray
-        :return: Boolean array of constraint violations per waypoint
-        :rtype: np.ndarray
-        """
-
-        is_constrained = self.constraints_list.safe_crossing_discrete(
-            route[:-1, 0], route[:-1, 1], route[1:, 0], route[1:, 1],
-            current_time=self.departure_time,
-            is_constrained=[False] * (route.shape[0] - 1), )
-
-        return np.array(is_constrained)
-
 
 # crossover implementations
 # ----------

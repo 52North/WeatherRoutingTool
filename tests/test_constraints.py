@@ -8,7 +8,7 @@ from astropy import units as u
 import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
-                                                        RunTestContinuousChecks, WaterDepth, WaveHeight,
+                                                        RunTestContinuousChecks, WaterDepth,
                                                         StatusCodeError, StayInTime)
 from WeatherRoutingTool.utils.maps import Map
 
@@ -39,38 +39,12 @@ def test_safe_endpoint_land_crossing():
     time = 0
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 5])
 
     is_constrained = [False for i in range(0, lat.shape[0])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
     assert is_constrained[0] == 0
-    assert is_constrained[1] == 1
-
-
-'''
-    test elements of is_constrained for single end point and to large wave heights
-'''
-
-
-def test_safe_endpoint_wave_heigth():
-    lat = np.array([52.7, 53.55])
-    lon = np.array([4.04, 5.45])
-    time = 0
-
-    land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([11, 11])
-
-    is_constrained = [False for i in range(0, lat.shape[0])]
-    constraint_list = basic_test_func.generate_dummy_constraint_list()
-    constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_endpoint(lat, lon, time, is_constrained)
-    assert is_constrained[0] == 1
     assert is_constrained[1] == 1
 
 
@@ -85,39 +59,13 @@ def test_safe_crossing_land_crossing():
     time = 0
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 5])
 
     is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
-
-
-'''
-    test elements of is_constrained for investigation of crossing waves
-'''
-
-
-def test_safe_crossing_wave_height():
-    lat = np.array([[54.07, 53.55], [54.11, 53.45], ])
-    lon = np.array([[4.80, 5.45], [7.43, 3.72]])
-    time = 0
-
-    land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 11])
-
-    is_constrained = [False for i in range(0, lat.shape[1])]
-    constraint_list = basic_test_func.generate_dummy_constraint_list()
-    constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
-    is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
-    assert is_constrained[0] == 0
-    assert is_constrained[1] == 1
 
 
 def test_safe_waterdepth():
@@ -149,13 +97,10 @@ def test_safe_crossing_shape_return():
     time = 0
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 11])
 
     is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
     is_constrained = constraint_list.safe_crossing_discrete(lat[1, :], lat[0, :], lon[1, :], lon[0, :], time,
                                                             is_constrained)
 
@@ -181,13 +126,10 @@ def test_check_constraints_land_crossing():
     )
 
     land_crossing = LandCrossing()
-    wave_height = WaveHeight()
-    wave_height.current_wave_height = np.array([5, 5])
 
     # is_constrained = [False for i in range(0, lat.shape[1])]
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(wave_height)
     ra.check_constraints(constraint_list)
     assert ra.routing_step.is_constrained[0] == 1
     assert ra.routing_step.is_constrained[1] == 0

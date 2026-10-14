@@ -58,17 +58,26 @@ class Population(Sampling):
 
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
-
-        # mutate velocity in case of speed optimisation if no arrival-time optimisation is requested
-        # if arrival-time optimisation is active, speed is determined from arrival-time
         quantiles = None
 
-        if self.speed_optimisation and not self.boat_speed_from_arrival_time:
-            quantiles = self.spread_velocity(self.min_boat_speed, self.max_boat_speed, self.boat_speed.value,
-                                             self.pop_size)
-            for i, (rt,) in enumerate(X):
-                rt[:, -1] = quantiles[i]
-                rt[-1, -1] = -99.
+        # mutate velocity in case of speed optimisation
+        if self.speed_optimisation:
+            v_std = np.array([rt_arr[0, -1] for rt_arr in X[:, 0]])
+
+            if np.std(v_std) < 2:
+                mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
+
+                quantiles = self.spread_velocity(
+                    max(mean_boat_speed - 2, self.min_boat_speed),
+                    min(mean_boat_speed + 2, self.max_boat_speed),
+                    mean_boat_speed,
+                    self.pop_size
+                )
+                self.rng.shuffle(quantiles)
+
+                for i, rt_arr in enumerate(X[:, 0]):
+                    rt_arr[:, -1] = quantiles[i]
+                    rt_arr[-1, -1] = -99.0
 
         for rt, in X:
             assert tuple(rt[0, :-1]) == self.src, "Source waypoint not matching"
@@ -302,8 +311,16 @@ class FromGeojsonPopulation(Population):
             if not os.path.exists(path):
                 raise ValueError(f"Couldn't read route {path} for the initial population.")
             else:
-                route = utils.route_from_geojson_file(path)
-                X[i, 0] = np.array(route)
+                route = np.array(utils.route_from_geojson_file(path))
+
+                speeds = route[:-1, 2]
+                if np.any((speeds < self.min_boat_speed) | (speeds > self.max_boat_speed)):
+                    logger.warning(
+                        f"Route {path} contains speed values outside of 'BOAT_SPEED_BOUNDARIES' "
+                        f"[{self.min_boat_speed}, {self.max_boat_speed}] m/s "
+                        f"(min: {speeds.min()} m/s, max: {speeds.max()} m/s).")
+
+                X[i, 0] = route
 
         added_routes = len(files)
         while added_routes < n_samples:

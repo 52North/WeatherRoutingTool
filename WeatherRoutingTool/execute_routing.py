@@ -19,13 +19,17 @@ def merge_figures_to_gif(path, nof_figures):
 def execute_routing(config, ship_config):
     """
     Execute route optimization based on the user-defined configuration.
-    After a successful run the final route is saved into the configured folder.
+
+    Initialises the weather data, the ship, the constraints and the routing algorithm from the configuration and
+    runs the routing. The resulting route is written to ``<ROUTE_PATH>/<route_type>.json`` in GeoJSON format. If
+    ``ROUTE_POSTPROCESSING`` is enabled, the postprocessed route is additionally written to
+    ``<ROUTE_PATH>/<route_type>_postprocessed.json``. If no weather data is used, the constraint ``'in_time'``
+    is ignored.
 
     :param config: validated configuration
     :type config: WeatherRoutingTool.config.Config
     :param ship_config: validated ship configuration
     :type ship_config: WeatherRoutingTool.ship.ship_config.ShipConfig
-    :return: None
     """
     # prof = cProfile.Profile()
     # prof.enable()
@@ -81,7 +85,7 @@ def execute_routing(config, ship_config):
         postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
         min_fuel_route_postprocessed = postprocessed_route.post_process_route()
         min_fuel_route_postprocessed.write_to_geojson(
-            routepath / f"{min_fuel_route_postprocessed.route_type}_postprocessed.geojson")
+            str(routepath) + '/' + str(min_fuel_route_postprocessed.route_type) + "_postprocessed.json")
 
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')
