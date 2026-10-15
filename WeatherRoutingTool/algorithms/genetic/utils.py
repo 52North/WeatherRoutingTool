@@ -142,7 +142,7 @@ def route_from_geojson_file(path: str) -> list[tuple[float, float]]:
     return route_from_geojson(dt)
 
 
-def get_hist_values_from_route(route: np.array, departure_time):
+def get_speed_values_from_route(route: np.array, departure_time):
     lats = route[:, 0]
     lons = route[:, 1]
     speed = route[:, 2]

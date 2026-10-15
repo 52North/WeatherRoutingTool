@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
-from matplotlib.ticker import ScalarFormatter
 from matplotlib.lines import Line2D
+from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -163,6 +163,9 @@ class Genetic(RoutingAlg):
 
         while algorithm.has_next():
             algorithm.next()
+            if self.figure_path is not None:
+                self.plot_population(algorithm.pop.get('X'), algorithm.n_gen - 1)
+                self.plot_speed(algorithm.pop.get('X'), algorithm.n_gen - 1)
 
         # print statistics
         res = algorithm.result()
@@ -226,8 +229,8 @@ class Genetic(RoutingAlg):
             logger.info(f"Writing figures to {self.figure_path}")
 
             self.plot_running_metric(res)
-            self.plot_population_per_generation(res, best_route)
-            self.plot_speed_per_generation(res, best_route)
+            self.plot_population(res.pop.get('X'), self.n_generations - 1, best_route)
+            self.plot_speed(res.pop.get('X'), self.n_generations - 1, best_route)
             self.plot_convergence(res)
             self.plot_coverage(res, best_route)
             self.plot_speed_coverage(res, best_route)
@@ -375,140 +378,115 @@ class Genetic(RoutingAlg):
         plt.cla()
         plt.close()
 
-    def plot_speed_per_generation(self, res, best_route) -> None:
-        """Plot line diagrams of speed vs. travel distance for each individual in one generation.
+    def plot_speed(self, pop_X, igen, best_route=None) -> None:
+        """Plot speed vs. travel distance for each individual of one generation.
 
-        :param res: Result of GA minimization
-        :type res: pymoo.core.result.Result
-        :param best_route: Optimum route
+        :param pop_X: population of one generation
+        :type pop_X: np.ndarray
+        :param igen: Generation index (starting at 0)
+        :type igen: int
+        :param best_route: best route; only plotted if not None
         :type best_route: np.ndarray
         """
-        history = res.history
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
 
-        for igen in range(len(history)):
-            plt.clf()
-            plt.close('all')
+        for iroute in range(0, pop_X.shape[0]):
+            hist_values = utils.get_speed_values_from_route(pop_X[iroute, 0], self.departure_time)
 
-            fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-            plt.rcParams['font.size'] = graphics.get_standard('font_size')
+            lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
+            ax.step(
+                lower_bin_boundaries,
+                hist_values["bin_contents"],
+                where='mid',
+                linewidth=2,
+                color="blue",
+                alpha=0.3,
+            )
 
-            last_pop = history[igen].pop.get('X')
-            objs = []
-            for iroute in range(0, last_pop.shape[0]):
-                hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
+        if best_route is not None:
+            hist_values_best_route = utils.get_speed_values_from_route(best_route, self.departure_time)
+            lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
+                "bin_widths"]) / 1000
+            ax.step(
+                lower_bin_boundaries,
+                hist_values_best_route["bin_contents"],
+                where='mid',
+                linewidth=2,
+                color="red",
+            )
 
-                lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
-                new_line = plt.step(
-                    lower_bin_boundaries,
-                    hist_values["bin_contents"],
-                    where='mid',
-                    linewidth=2,
-                    color="blue",
-                    alpha=0.3,
-                )
+        left, right = ax.get_xlim()
+        ax.set_xlim(-100, right)
+        ax.set_ylim(0, 10)
 
-                objs.append(new_line)
+        ax.set_ylabel("speed (m/s)")
+        ax.set_xlabel('travel distance (km)')
+        plt.tight_layout()
+        ax.legend()
 
-            if igen == (self.n_generations - 1):
-                hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
-                lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
-                    "bin_widths"]) / 1000
-                plt.step(
-                    lower_bin_boundaries,
-                    hist_values_best_route["bin_contents"],
-                    where='mid',
-                    linewidth=2,
-                    color="red",
-                )
+        figname = f"genetic_algorithm_speed {igen:02}.png"
+        plt.savefig(os.path.join(self.figure_path, figname))
+        plt.close(fig)
 
-            left, right = plt.xlim()
-            ax.set_xlim(-100, right)
-            ax.set_ylim(0, 10)
+    def plot_population(self, pop_X, igen, best_route=None):
+        """Plot routes for each individual of one generation on a map.
 
-            plt.ylabel("speed (m/s)")
-            plt.xlabel('travel distance (km)')
-            plt.xticks()
-            plt.tight_layout()
-            ax.legend()
-
-            figname = f"genetic_algorithm_speed {igen:02}.png"
-            plt.savefig(os.path.join(self.figure_path, figname))
-            plt.close(fig)
-
-    def plot_population_per_generation(self, res, best_route):
-        """Plot routes for each individual in one generation on a map.
-
-        :param res: Result of GA minimization
-        :type res: pymoo.core.result.Result
-        :param best_route: Optimum route
+        :param pop_X: population of one generation
+        :type pop_X: np.ndarray
+        :param igen: Generation index (starting at 0)
+        :type igen: int
+        :param best_route: best route; only plotted if not None
         :type best_route: np.ndarray
         """
         input_crs = ccrs.PlateCarree()
-        history = res.history
-        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+        figtitlestr = 'Population of Generation ' + str(igen + 1)
+
+        fig, ax = graphics.generate_basemap(
+            map_coords=self.default_map.get_var_tuple(),
+            depth=None,
+            start=self.start,
+            finish=self.finish,
+            title=figtitlestr,
+            show_depth=False, )
+
+        marker_kw = dict(
+            marker="o",
+            markersize=3,
+            markerfacecolor="gold",
+            markeredgecolor="black", )
+
         route_lc = None
+        for iroute in range(0, pop_X.shape[0]):
+            ax.plot(
+                pop_X[iroute, 0][:, 1],
+                pop_X[iroute, 0][:, 0],
+                color="firebrick",
+                label=f"full population [{pop_X.shape[0]}]" if iroute == 0 else None,
+                linewidth=0,
+                transform=input_crs)
 
-        for igen in range(len(history)):
-            plt.rcParams['font.size'] = graphics.get_standard('font_size')
-            figtitlestr = 'Population of Generation ' + str(igen + 1)
+            route_lc = graphics.get_route_lc(pop_X[iroute, 0])
+            ax.add_collection(route_lc)
 
-            ax.remove()
+        if best_route is not None:
+            ax.plot(
+                best_route[:, 1],
+                best_route[:, 0],
+                **marker_kw,
+                color="blue",
+                label="best route",
+                transform=input_crs
+            )
+        cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+        cbar.set_label('Geschwindigkeit ($m/s$)')
+        plt.tight_layout()
+        ax.legend()
 
-            fig, ax = graphics.generate_basemap(
-                map_coords=self.default_map.get_var_tuple(),
-                depth=None,
-                start=self.start,
-                finish=self.finish,
-                title=figtitlestr,
-                show_depth=False, )
-
-            last_pop = history[igen].pop.get('X')
-
-            marker_kw = dict(
-                marker="o",
-                markersize=3,
-                markerfacecolor="gold",
-                markeredgecolor="black", )
-
-            for iroute in range(0, last_pop.shape[0]):
-                if iroute == 0:
-                    ax.plot(
-                        last_pop[iroute, 0][:, 1],
-                        last_pop[iroute, 0][:, 0],
-                        # **(marker_kw if igen != self.n_generations - 1 else {}),
-                        color="firebrick",
-                        label=f"full population [{last_pop.shape[0]}]",
-                        linewidth=0,
-                        transform=input_crs)
-
-                else:
-                    ax.plot(
-                        last_pop[iroute, 0][:, 1],
-                        last_pop[iroute, 0][:, 0],
-                        # **(marker_kw if igen != self.n_generations - 1 else {}),
-                        color="firebrick",
-                        linewidth=0,
-                        transform=input_crs)
-
-                route_lc = graphics.get_route_lc(last_pop[iroute, 0])
-                ax.add_collection(route_lc)
-
-            if igen == (self.n_generations - 1):
-                ax.plot(
-                    best_route[:, 1],
-                    best_route[:, 0],
-                    **marker_kw,
-                    color="blue",
-                    label="best route",
-                    transform=input_crs
-                )
-            cbar = fig.colorbar(route_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
-            cbar.set_label('Geschwindigkeit ($m/s$)')
-            plt.tight_layout()
-            ax.legend()
-
-            figname = f"genetic_algorithm_generation {igen:02}.png"
-            plt.savefig(os.path.join(self.figure_path, figname))
+        figname = f"genetic_algorithm_generation {igen:02}.png"
+        plt.savefig(os.path.join(self.figure_path, figname))
+        plt.close(fig)
 
     def plot_coverage(self, res, best_route):
         history = res.history
