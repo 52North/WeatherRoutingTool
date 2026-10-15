@@ -13,7 +13,9 @@ import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.algorithms.genetic.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic import Genetic
-from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover, TwoPointCrossoverSpeed
+from WeatherRoutingTool.algorithms.genetic.crossover import (
+    SinglePointCrossover, SpeedCrossover, TwoPointCrossover, TwoPointCrossoverSpeed
+)
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation, FromGeojsonPopulation
@@ -334,27 +336,34 @@ def test_recalculate_speed_for_route():
     assert np.all((new_route[:, 2] - bs_approx.value) < 0.3)
 
 
-@pytest.mark.skip(reason="Test needs modified route array.")
 def test_single_point_crossover(plt):
     dirname = os.path.dirname(__file__)
     configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
     config = Config.assign_config(Path(configpath))
     config.GENETIC_RANDOM_SEED = 2
     default_map = Map(32., 15, 36, 29)
-    input_crs = ccrs.PlateCarree()
     constraint_list = basic_test_func.generate_dummy_constraint_list()
     departure_time = datetime(2025, 4, 1, 11, 11)
 
     X = get_dummy_route_input()
-    old_route = copy.deepcopy(X)
 
     sp = SinglePointCrossover(
         config=config,
         constraints_list=constraint_list,
         departure_time=departure_time
     )
-    # r1, r2 = sp.crossover(X[0,0], X[1,0])
-    X = sp._do(problem=None, X=X)
+    o1, o2 = sp.crossover(X[0, 0], X[1, 0])
+
+    assert o1.shape[1] == 3
+    assert o2.shape[1] == 3
+    assert o1.shape[0] > 0
+    assert o2.shape[0] > 0
+    # Start coordinates match respective parents
+    np.testing.assert_allclose(o1[0], X[0, 0][0])
+    np.testing.assert_allclose(o2[0], X[1, 0][0])
+    # Finish coordinates swapped between parents
+    np.testing.assert_allclose(o1[-1], X[1, 0][-1])
+    np.testing.assert_allclose(o2[-1], X[0, 0][-1])
 
     # plot figure with original and mutated routes
     fig, ax = graphics.generate_basemap(
@@ -367,11 +376,21 @@ def test_single_point_crossover(plt):
         show_gcr=False
     )
 
-    ax.plot(X[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
-    ax.plot(old_route[0, 0][:, 1], old_route[0, 0][:, 0], color="green", transform=input_crs, marker='o')
-    ax.plot(old_route[1, 0][:, 1], old_route[0, 0][:, 0], color="orange", transform=input_crs, marker='o')
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
 
-    plt.saveas = "test_single_point_crossoverr.png"
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_single_point_crossover.png"
 
 
 def test_speed_crossover(plt):
@@ -542,3 +561,63 @@ def test_twopoint_crossover_speed(plt):
 
     pyplot.tight_layout()
     plt.saveas = "test_twopoint_crossover_speed.png"
+
+
+def test_twopoint_crossover(plt):
+    """
+    Test whether TwoPointCrossover provides sensible results via monitoring plot.
+    """
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    config.GENETIC_RANDOM_SEED = 2
+    default_map = Map(32., 15, 36, 29)
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    departure_time = datetime(2025, 4, 1, 11, 11)
+
+    X = get_dummy_route_input()
+
+    tp = TwoPointCrossover(
+        config=config,
+        constraints_list=constraint_list,
+        departure_time=departure_time
+    )
+    o1, o2 = tp.crossover(X[0, 0], X[1, 0])
+
+    assert o1.shape[1] == 3
+    assert o2.shape[1] == 3
+    assert o1.shape[0] > 0
+    assert o2.shape[0] > 0
+    # Start coordinates match respective parents
+    np.testing.assert_allclose(o1[0], X[0, 0][0])
+    np.testing.assert_allclose(o2[0], X[1, 0][0])
+    # Finish coordinates match respective parents in two-point crossover
+    np.testing.assert_allclose(o1[-1], X[0, 0][-1])
+    np.testing.assert_allclose(o2[-1], X[1, 0][-1])
+
+    # plot figure with original and mutated routes
+    fig, ax = graphics.generate_basemap(
+        map_coords=default_map.get_var_tuple(),
+        depth=None,
+        start=(35.199, 15.490),
+        finish=(32.737, 28.859),
+        title='',
+        show_depth=False,
+        show_gcr=False
+    )
+    old_X1_lc = graphics.get_route_lc(X[0, 0])
+    old_X2_lc = graphics.get_route_lc(X[1, 0])
+
+    new_X1_lc = graphics.get_route_lc(o1)
+    new_X2_lc = graphics.get_route_lc(o2)
+
+    ax.add_collection(old_X1_lc)
+    ax.add_collection(old_X2_lc)
+    ax.add_collection(new_X1_lc)
+    ax.add_collection(new_X2_lc)
+
+    cbar = fig.colorbar(old_X2_lc, ax=ax, orientation='vertical', pad=0.15, shrink=0.7)
+    cbar.set_label('Geschwindigkeit ($m/s$)')
+
+    pyplot.tight_layout()
+    plt.saveas = "test_twopoint_crossover.png"
