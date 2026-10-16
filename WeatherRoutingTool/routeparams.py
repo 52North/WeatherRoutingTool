@@ -123,9 +123,10 @@ class RouteParams:
             raise ValueError('Route finsh not matching')
         if not (np.array_equal(self.time, route2.time)):
             raise ValueError('Route time not matching: self=' + str(self.time) + ' other=' + str(route2.time))
-        if not (np.array_equal(self.fuel, route2.fuel)):
-            raise ValueError('Route fuel not matching: self=' + str(self.fuel) + ' other=' + str(route2.fuel))
-        if not (np.array_equal(self.rpm, route2.rpm)):
+        if not (np.array_equal(self.ship_params_per_step.fuel_rate, route2.ship_params_per_step.fuel_rate)):
+            raise ValueError('Route fuel not matching: self=' + str(self.ship_params_per_step.fuel_rate) +
+                             ' other=' + str(route2.ship_params_per_step.fuel_rate))
+        if not (np.array_equal(self.ship_params_per_step.rpm, route2.ship_params_per_step.rpm)):
             raise ValueError('Route rpm not matching')
         if not (np.array_equal(self.lats_per_step, route2.lats_per_step)):
             raise ValueError('Route lats_per_step not matching')
