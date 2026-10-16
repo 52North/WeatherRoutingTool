@@ -76,6 +76,13 @@ def test_get_acc_variables():
     assert np.allclose(test_dist, rp_test.get_full_dist())
     assert test_time == rp_test.get_full_travel_time()
 
+    # regression for Issue #219: round-trip must preserve count and array lengths
+    assert rp_test.count == 2
+    assert len(rp_test.lats_per_step) == 4
+    assert len(rp_test.ship_params_per_step.speed) == 3
+    assert len(rp_test.ship_params_per_step.status) == 3
+    assert len(rp_test.dists_per_step) == 3
+
 
 '''
     Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly.
