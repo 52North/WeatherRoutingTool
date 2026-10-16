@@ -6,6 +6,8 @@ import xarray as xr
 from astropy import units as u
 
 import pytest
+import WeatherRoutingTool.ship.ship as ship_module
+from WeatherRoutingTool.ship.ship import ConstantFuelBoat
 from WeatherRoutingTool.ship.ship_config import ShipConfig
 
 import tests.basic_test_func as basic_test_func
@@ -254,3 +256,27 @@ def test_invalid_propulsion_efficiency_raises_error():
     invalid_config["BOAT_PROPULSION_EFFICIENCY"] = 1.1  # > 1
     with pytest.raises(ValueError, match="'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1"):
         ShipConfig.assign_config(init_mode='from_dict', config_dict=invalid_config)
+
+
+def test_get_weather_data_opens_file_only_once(monkeypatch):
+    """Tests that Boat.get_weather_data() caches the dataset instead of reopening the file on every call."""
+    dirname = os.path.dirname(__file__)
+    shipconfig = ShipConfig.assign_config(init_mode='from_dict', config_dict=VALID_SHIP_CONFIG)
+    boat = ConstantFuelBoat(shipconfig)
+    boat.weather_path = os.path.join(dirname, 'data/reduced_testdata_weather.nc')
+
+    n_open_dataset_calls = {'count': 0}
+    original_open_dataset = ship_module.xr.open_dataset
+
+    def counting_open_dataset(*args, **kwargs):
+        n_open_dataset_calls['count'] += 1
+        return original_open_dataset(*args, **kwargs)
+
+    monkeypatch.setattr(ship_module.xr, 'open_dataset', counting_open_dataset)
+
+    first = boat.get_weather_data()
+    second = boat.get_weather_data()
+
+    assert isinstance(first, xr.Dataset)
+    assert second is first
+    assert n_open_dataset_calls['count'] == 1
