@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
-from matplotlib.lines import Line2D
 from matplotlib.ticker import ScalarFormatter
+from matplotlib.lines import Line2D
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -228,12 +228,12 @@ class Genetic(RoutingAlg):
         if self.figure_path is not None:
             logger.info(f"Writing figures to {self.figure_path}")
 
-            self.plot_running_metric(res)
-            self.plot_population(res.pop.get('X'), self.n_generations - 1, best_route)
-            self.plot_speed(res.pop.get('X'), self.n_generations - 1, best_route)
-            self.plot_convergence(res)
-            self.plot_coverage(res, best_route)
-            self.plot_speed_coverage(res, best_route)
+            # self.plot_running_metric(res)
+            self.plot_population(res.pop.get('X'), self.n_generations, best_route)
+            self.plot_speed(res.pop.get('X'), self.n_generations, best_route)
+            # self.plot_convergence(res)
+            # self.plot_coverage(res, best_route)
+            # self.plot_speed_coverage(res, best_route)
             self.plot_objective_space(filtered_solutions, best_index)
 
         lats = best_route[:, 0]
@@ -441,7 +441,7 @@ class Genetic(RoutingAlg):
         """
         input_crs = ccrs.PlateCarree()
         plt.rcParams['font.size'] = graphics.get_standard('font_size')
-        figtitlestr = 'Population of Generation ' + str(igen + 1)
+        figtitlestr = 'Population of Generation ' + str(igen)
 
         fig, ax = graphics.generate_basemap(
             map_coords=self.default_map.get_var_tuple(),
