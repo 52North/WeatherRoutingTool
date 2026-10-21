@@ -162,7 +162,7 @@ class Genetic(RoutingAlg):
             seed=seed)
 
         if self.figure_path is not None:
-            self.init_coverage_plot()
+            self.init_coverage_plots()
 
         while algorithm.has_next():
             algorithm.next()
@@ -170,6 +170,7 @@ class Genetic(RoutingAlg):
                 self.plot_population(algorithm.pop.get('X'), algorithm.n_gen - 1)
                 self.plot_speed(algorithm.pop.get('X'), algorithm.n_gen - 1)
                 self.plot_coverage(algorithm.pop.get('X'))
+                self.plot_speed_coverage(algorithm.pop.get('X'))
 
         # print statistics
         res = algorithm.result()
@@ -237,7 +238,7 @@ class Genetic(RoutingAlg):
             self.plot_speed(res.pop.get('X'), self.n_generations, best_route)
             # self.plot_convergence(res)
             self.plot_coverage(pop_X=None, best_route=best_route)
-            # self.plot_speed_coverage(res, best_route)
+            self.plot_speed_coverage(pop_X=None, best_route=best_route)
             self.plot_objective_space(filtered_solutions, best_index)
 
         lats = best_route[:, 0]
@@ -492,17 +493,25 @@ class Genetic(RoutingAlg):
         plt.savefig(os.path.join(self.figure_path, figname))
         plt.close(fig)
 
-    def init_coverage_plot(self):
-        """Generate the base map for the spatial coverage plot.
+    def init_coverage_plots(self):
+        """Generate the base maps for the coverage plots.
 
-        The figure is kept open and filled generation by generation via ``plot_coverage``.
+        The figures are kept open and filled generation by generation via ``plot_coverage`` and `plot_speed_coverage``.
         """
+        plt.rcParams['font.size'] = graphics.get_standard('font_size')
+
         self.coverage_fig, self.coverage_ax = graphics.generate_basemap(
             map_coords=self.default_map.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
             show_depth=False, )
+
+        self.speed_coverage_fig, self.speed_coverage_ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
+        ax = self.speed_coverage_ax
+        ax.set_ylim(4.5, 7.5)
+        ax.set_ylabel("speed (m/s)")
+        ax.set_xlabel('travel distance (km)')
 
     def plot_coverage(self, pop_X=None, best_route=None):
         """Overlay routes on the spatial coverage plot and save the current state of the figure on a temporary plot.
@@ -545,50 +554,53 @@ class Genetic(RoutingAlg):
         if best_route is not None:
             plt.close(fig)
 
-    def plot_speed_coverage(self, res, best_route):
-        """Plot speed vs. travel distance for all individuals of all generations in one diagram.
+    def plot_speed_coverage(self, pop_X=None, best_route=None):
+        """Overlay speed vs. travel distance on coverage plot and save current state of the figure on a temporary plot.
 
-        :param res: Result of GA minimization
-        :type res: pymoo.core.result.Result
-        :param best_route: Optimum route
+        Speed profiles of all previously plotted generations remain in the diagram such that the figure shows
+        all routes that have been considered so far. If ``best_route`` is provided, it is added to the
+        diagram, the final figure is written to 'speed_coverage.png' and the figure is closed.
+
+        :param pop_X: population of one generation
+        :type pop_X: np.ndarray
+        :param best_route: best route; only plotted if not None
         :type best_route: np.ndarray
         """
-        history = res.history
+        fig, ax = self.speed_coverage_fig, self.speed_coverage_ax
 
-        fig, ax = plt.subplots(figsize=graphics.get_standard('fig_size'))
-        plt.rcParams['font.size'] = graphics.get_standard('font_size')
-
-        for igen in range(len(history)):
-            last_pop = history[igen].pop.get('X')
-
-            for iroute in range(0, last_pop.shape[0]):
-                hist_values = utils.get_speed_values_from_route(last_pop[iroute, 0], self.departure_time)
+        if pop_X is not None:
+            for iroute in range(0, pop_X.shape[0]):
+                hist_values = utils.get_speed_values_from_route(pop_X[iroute, 0], self.departure_time)
                 lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
                 ax.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid',
                         color=graphics.get_str_color(0), linewidth=1, alpha=0.2)
 
-        hist_values_best_route = utils.get_speed_values_from_route(best_route, self.departure_time)
-        lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
-            "bin_widths"]) / 1000
-        ax.step(lower_bin_boundaries, hist_values_best_route["bin_contents"], where='mid',
-                color=graphics.get_str_color(1), linewidth=3, linestyle="dashed", label="final route")
+        if best_route is not None:
+            hist_values_best_route = utils.get_speed_values_from_route(best_route, self.departure_time)
+            lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
+                "bin_widths"]) / 1000
+            ax.step(lower_bin_boundaries, hist_values_best_route["bin_contents"], where='mid',
+                    color=graphics.get_str_color(1), linewidth=3, linestyle="dashed", label="final route")
 
+        # re-enable autoscaling as set_xlim of the previous call deactivates it
+        ax.autoscale(enable=True, axis='x')
         left, right = ax.get_xlim()
         ax.set_xlim(-100, right)
-        ax.set_ylim(0, 10)
-
-        ax.set_ylabel("speed (m/s)")
-        ax.set_xlabel('travel distance (km)')
 
         population_handle = Line2D([], [], color=graphics.get_str_color(0), linewidth=1,
                                    label="population (all generations)")
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles=[population_handle] + handles, loc="upper left", frameon=False)
-        plt.tight_layout()
+        fig.tight_layout()
 
-        figname = "speed_coverage.png"
-        plt.savefig(os.path.join(self.figure_path, figname))
-        plt.close(fig)
+        if best_route is not None:
+            figname = "speed_coverage.png"
+        else:
+            figname = "speed_coverage_temp.png"
+        fig.savefig(os.path.join(self.figure_path, figname))
+
+        if best_route is not None:
+            plt.close(fig)
 
     def plot_convergence(self, res):
         """Plot the convergence curve (best objective value per generation)."""
