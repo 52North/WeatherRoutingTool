@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
-from matplotlib.ticker import ScalarFormatter
 from matplotlib.lines import Line2D
+from matplotlib.ticker import ScalarFormatter
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
@@ -161,11 +161,15 @@ class Genetic(RoutingAlg):
             verbose=True,
             seed=seed)
 
+        if self.figure_path is not None:
+            self.init_coverage_plot()
+
         while algorithm.has_next():
             algorithm.next()
             if self.figure_path is not None:
                 self.plot_population(algorithm.pop.get('X'), algorithm.n_gen - 1)
                 self.plot_speed(algorithm.pop.get('X'), algorithm.n_gen - 1)
+                self.plot_coverage(algorithm.pop.get('X'))
 
         # print statistics
         res = algorithm.result()
@@ -232,7 +236,7 @@ class Genetic(RoutingAlg):
             self.plot_population(res.pop.get('X'), self.n_generations, best_route)
             self.plot_speed(res.pop.get('X'), self.n_generations, best_route)
             # self.plot_convergence(res)
-            # self.plot_coverage(res, best_route)
+            self.plot_coverage(pop_X=None, best_route=best_route)
             # self.plot_speed_coverage(res, best_route)
             self.plot_objective_space(filtered_solutions, best_index)
 
@@ -488,38 +492,58 @@ class Genetic(RoutingAlg):
         plt.savefig(os.path.join(self.figure_path, figname))
         plt.close(fig)
 
-    def plot_coverage(self, res, best_route):
-        history = res.history
-        input_crs = ccrs.PlateCarree()
+    def init_coverage_plot(self):
+        """Generate the base map for the spatial coverage plot.
 
-        # Create an empty plot
-        fig, ax = graphics.generate_basemap(
+        The figure is kept open and filled generation by generation via ``plot_coverage``.
+        """
+        self.coverage_fig, self.coverage_ax = graphics.generate_basemap(
             map_coords=self.default_map.get_var_tuple(),
             depth=None,
             start=self.start,
             finish=self.finish,
             show_depth=False, )
 
-        for igen in range(len(history)):
-            last_pop = history[igen].pop.get('X')
+    def plot_coverage(self, pop_X=None, best_route=None):
+        """Overlay routes on the spatial coverage plot and save the current state of the figure on a temporary plot.
 
-            for iroute in range(0, last_pop.shape[0]):
-                lats = last_pop[iroute, 0][:, 0]
-                lons = last_pop[iroute, 0][:, 1]
+        Routes of all previously plotted generations remain on the map such that the figure shows
+        all routes that have been considered so far. If ``best_route`` is provided, it is added to the
+        map, the final figure is written to 'spatial_coverage.png' and the figure is closed.
+
+        :param pop_X: population of one generation
+        :type pop_X: np.ndarray
+        :param best_route: best route; only plotted if not None
+        :type best_route: np.ndarray
+        """
+        input_crs = ccrs.PlateCarree()
+        fig, ax = self.coverage_fig, self.coverage_ax
+
+        if pop_X is not None:
+            for iroute in range(0, pop_X.shape[0]):
+                lats = pop_X[iroute, 0][:, 0]
+                lons = pop_X[iroute, 0][:, 1]
                 ax.plot(lons, lats, color=graphics.get_str_color(0), linestyle='-', linewidth=1, transform=input_crs,
                         alpha=0.2)
 
-        ax.plot(best_route[:, 1], best_route[:, 0], color=graphics.get_str_color(1), linewidth=3, linestyle="dashed",
-                label="final route", transform=input_crs)
+        if best_route is not None:
+            ax.plot(best_route[:, 1], best_route[:, 0], color=graphics.get_str_color(1), linewidth=3,
+                    linestyle="dashed", label="final route", transform=input_crs)
 
         population_handle = Line2D([], [], color=graphics.get_str_color(0), linewidth=1,
                                    label="population (all generations)")
         handles, labels = ax.get_legend_handles_labels()
-        legend = plt.legend(handles=[population_handle] + handles, loc="upper left")
+        legend = ax.legend(handles=[population_handle] + handles, loc="upper left")
         legend.get_frame().set_alpha(1)
 
-        figname = "spatial_coverage.png"
-        plt.savefig(os.path.join(self.figure_path, figname))
+        if best_route is not None:
+            figname = "spatial_coverage.png"
+        else:
+            figname = "spatial_coverage_temp.png"
+        fig.savefig(os.path.join(self.figure_path, figname))
+
+        if best_route is not None:
+            plt.close(fig)
 
     def plot_speed_coverage(self, res, best_route):
         """Plot speed vs. travel distance for all individuals of all generations in one diagram.
@@ -538,12 +562,12 @@ class Genetic(RoutingAlg):
             last_pop = history[igen].pop.get('X')
 
             for iroute in range(0, last_pop.shape[0]):
-                hist_values = utils.get_hist_values_from_route(last_pop[iroute, 0], self.departure_time)
+                hist_values = utils.get_speed_values_from_route(last_pop[iroute, 0], self.departure_time)
                 lower_bin_boundaries = (hist_values["bin_centres"] - 0.5 * hist_values["bin_widths"]) / 1000
                 ax.step(lower_bin_boundaries, hist_values["bin_contents"], where='mid',
                         color=graphics.get_str_color(0), linewidth=1, alpha=0.2)
 
-        hist_values_best_route = utils.get_hist_values_from_route(best_route, self.departure_time)
+        hist_values_best_route = utils.get_speed_values_from_route(best_route, self.departure_time)
         lower_bin_boundaries = (hist_values_best_route["bin_centres"] - 0.5 * hist_values_best_route[
             "bin_widths"]) / 1000
         ax.step(lower_bin_boundaries, hist_values_best_route["bin_contents"], where='mid',
@@ -571,6 +595,9 @@ class Genetic(RoutingAlg):
 
         best_f = []
         is_initialised = False
+
+        if self.n_objs < 2:
+            return
 
         for algorithm in res.history:
             F = algorithm.pop.get('F')
