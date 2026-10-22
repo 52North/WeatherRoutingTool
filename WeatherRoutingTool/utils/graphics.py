@@ -209,8 +209,23 @@ def generate_basemap(
         show_depth=True,
         show_gcr=False,
         wt=None,
-        wt_timestamp=None
+        wt_timestamp=None,
+        zlim=None
 ):
+    '''
+    Plotting standard map.
+
+    :param map_coords: define map extend (min_lat, max_lat, min_lon, max_lon)
+    :param depth: depth data
+    :param start: start coordinate
+    :param finish: destination coordinate
+    :param title: optional figure title
+    :param show_depth: show depth on map
+    :param show_gcr: show gcr on map
+    :param wt: show weather data
+    :param wt_timestamp: timestamp of weather data
+    :param zlim: z-axis limit of wind speed when plotting weather data
+    '''
     plt.rcParams['font.size'] = get_standard('font_size')
     (min_lat, max_lat, min_lon, max_lon) = map_coords
 
@@ -272,10 +287,11 @@ def generate_basemap(
         v = v.sel(time=time, method='nearest')
         windspeed = np.sqrt(u ** 2 + v ** 2)
 
+        zmin, zmax = (2, 12) if zlim is None else zlim
         level_diff = 0.1
         cfplot = windspeed.plot.contourf(
             ax=ax,
-            levels=np.arange(2, 7, level_diff),
+            levels=np.arange(zmin, zmax, level_diff),
             transform=ccrs.PlateCarree(),
             zorder=0,
             alpha=0.7

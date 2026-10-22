@@ -233,10 +233,10 @@ class Genetic(RoutingAlg):
         if self.figure_path is not None:
             logger.info(f"Writing figures to {self.figure_path}")
 
-            # self.plot_running_metric(res)
+            self.plot_running_metric(res)
             self.plot_population(res.pop.get('X'), self.n_generations, best_route)
             self.plot_speed(res.pop.get('X'), self.n_generations, best_route)
-            # self.plot_convergence(res)
+            self.plot_convergence(res)
             self.plot_coverage(pop_X=None, best_route=best_route)
             self.plot_speed_coverage(pop_X=None, best_route=best_route)
             self.plot_objective_space(filtered_solutions, best_index)

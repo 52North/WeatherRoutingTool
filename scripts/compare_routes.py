@@ -61,10 +61,10 @@ def plot_power_vs_dist_resistances(rp_list, rp_str_list, scenario_str, power_typ
     plt.savefig(figurefile + '/' + power_type + '_vs_dist_res.png')
 
 
-def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str):
+def plot_speed_vs_dist(rp_list, rp_str_list, scenario_str, speed_ylim=None):
     fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
-    ax.set_ylim(3, 7)  # route 47
-    # ax.set_ylim(4, 6)  # route 67
+    if speed_ylim is not None:
+        ax.set_ylim(speed_ylim[0], speed_ylim[1])
     for irp in range(0, len(rp_list)):
         rp_list[irp].plot_speed_vs_dist(
             icolor=irp,
@@ -182,6 +182,18 @@ if __name__ == "__main__":
                                type=str)
     optional_args.add_argument('--depth-file', help="Absolute path to weather data.", required=False, default=' ',
                                type=str)
+    optional_args.add_argument('--map-size',
+                               help="Map size for route plots: lat1 lon1 lat2 lon2.",
+                               nargs=4, required=False, default=None, type=float,
+                               metavar=('LAT1', 'LON1', 'LAT2', 'LON2'))
+    optional_args.add_argument('--speed-ylim',
+                               help="y-axis range for speed vs. distance plots: miny maxy.",
+                               nargs=2, required=False, default=None, type=float,
+                               metavar=('MINY', 'MAXY'))
+    optional_args.add_argument('--map-zlim',
+                               help="z-axis range (colour scale) for route-on-map plots: zmin zmax.",
+                               nargs=2, required=False, default=None, type=float,
+                               metavar=('ZMIN', 'ZMAX'))
 
     # read arguments
     args = parser.parse_args()
@@ -194,6 +206,9 @@ if __name__ == "__main__":
     plot_relative = args.plot_relative
     add_weather = args.add_weather
     weather_timestamp = args.weather_timestamp
+    map_size = args.map_size
+    speed_ylim = args.speed_ylim
+    map_zlim = args.map_zlim
 
     rp_list = []
     for path in filelist:
@@ -231,8 +246,10 @@ if __name__ == "__main__":
     departure_time = "2023-08-19T10:32Z"
     time_for_plotting = "2023-08-19T12:00Z"
     time_forecast = 60
-    # lat1, lon1, lat2, lon2 = (30.742, 21.183, 38.224, 36.770) # route47
-    lat1, lon1, lat2, lon2 = (30.7, 12.7170, 42.2, 39.4044)  # route67
+    if map_size is not None:
+        lat1, lon1, lat2, lon2 = map_size
+    else:
+        lat1, lon1, lat2, lon2 = (30.7, 12.7170, 42.2, 39.4044)  # route67
 
     #############################################################################
     plt.rcParams['font.size'] = graphics.get_standard('font_size')
@@ -265,7 +282,8 @@ if __name__ == "__main__":
             show_depth=False,
             show_gcr=False,
             wt=wt,
-            wt_timestamp=weather_timestamp
+            wt_timestamp=weather_timestamp,
+            zlim=map_zlim
         )
 
         # ax = water_depth.plot_route_in_constraint(rp_read1, 0, fig, ax)
@@ -283,7 +301,7 @@ if __name__ == "__main__":
         plot_power_vs_dist(rp_list, rp_str_list, scenario_str, power_type_str, norm=norm)
 
     if hist_dict['speed_vs_dist']:
-        plot_speed_vs_dist(rp_list, rp_str_list, scenario_str)
+        plot_speed_vs_dist(rp_list, rp_str_list, scenario_str, speed_ylim=speed_ylim)
 
     if hist_dict['fuel_vs_dist']:
         plot_power_vs_dist(rp_list, rp_str_list, scenario_str, 'fuel', norm=norm)
