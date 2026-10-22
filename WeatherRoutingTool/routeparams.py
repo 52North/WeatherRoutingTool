@@ -343,6 +343,8 @@ class RouteParams:
         air_temperature = air_temperature[:-1] * u.deg_C
         salinity = salinity[:-1] * u.dimensionless_unscaled
         water_temperature = water_temperature[:-1] * u.deg_C
+        status = status[:-1]
+        message = message[:-1]
 
         start = (lats_per_step[0], lons_per_step[0])
         finish = (lats_per_step[count - 1], lons_per_step[count - 1])
@@ -352,7 +354,7 @@ class RouteParams:
         dists_per_step = cls.get_dist_from_coords(cls, lats_per_step, lons_per_step)
         dists_per_step = dists_per_step[:-1]
 
-        count = count - 1
+        count = count - 2
 
         ship_params_per_step = ShipParams(
             fuel_rate=fuel_rate,
@@ -741,10 +743,10 @@ class RouteParams:
         :rtype: astropy.units.Quantity
         """
         fuel_per_second = self.ship_params_per_step.fuel_rate
-        delta_time = np.full(self.count, timedelta(seconds=0))
+        delta_time = np.full(self.count + 1, timedelta(seconds=0))
         fuel = np.array([]) * u.kg
 
-        for i in range(0, self.count):
+        for i in range(0, self.count + 1):
             delta_time[i] = self.starttime_per_step[i + 1] - self.starttime_per_step[i]
             delta_time[i] = delta_time[i].total_seconds() * u.second
             fuel = np.append(fuel, fuel_per_second[i] * delta_time[i])
@@ -842,7 +844,7 @@ class RouteParams:
         :rtype: astropy.units.Quantity
         """
         full_fuel = 0 * u.kg
-        for ipoint in range(0, self.count):
+        for ipoint in range(0, self.count + 1):
             time_passed = (self.starttime_per_step[ipoint + 1] - self.starttime_per_step[ipoint]).total_seconds()
             fuel_per_step = self.ship_params_per_step.fuel_rate[ipoint] * time_passed * u.second
             full_fuel = full_fuel + fuel_per_step
@@ -858,7 +860,7 @@ class RouteParams:
         """
         power_sum = 0
         count = 0
-        for ipoint in range(0, self.count):
+        for ipoint in range(0, self.count + 1):
             power_per_step = self.ship_params_per_step.power[ipoint]
             power_sum = power_sum + power_per_step
             count += 1
