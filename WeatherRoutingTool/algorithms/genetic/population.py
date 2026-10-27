@@ -54,7 +54,7 @@ class Population(Sampling):
             self.boat_speed_from_arrival_time = True
 
         self.speed_optimisation = (config.GENETIC_MUTATION_TYPE != "waypoints") and (
-                    config.GENETIC_CROSSOVER_TYPE != "waypoints")
+                config.GENETIC_CROSSOVER_TYPE != "waypoints")
 
     def _do(self, problem, n_samples, **kw):
         X = self.generate(problem, n_samples, **kw)
@@ -66,6 +66,11 @@ class Population(Sampling):
 
             if np.std(v_std) < 2:
                 mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
+                if mean_boat_speed < self.min_boat_speed or mean_boat_speed > self.max_boat_speed:
+                    raise ValueError("The mean boat speed of the initial popluation which is calculated from "
+                                     "the arrival time is smaller than the minimum or larger than the maximum "
+                                     "specified boat speed. Please adjust either the arrival time or the boat speed "
+                                     "boundaries.")
 
                 quantiles = self.spread_velocity(
                     max(mean_boat_speed - 2, self.min_boat_speed),
