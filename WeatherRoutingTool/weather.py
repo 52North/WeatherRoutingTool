@@ -210,6 +210,7 @@ class WeatherCond:
 
         # recognise variables with additional dimension 'depth'
         vars_with_depth = ['so', 'thetao']
+        vars_with_height = ['u-component_of_wind_height_above_ground', 'v-component_of_wind_height_above_ground']
 
         proj = ccrs.PlateCarree()
         fig, axes = plt.subplots(3, 3, subplot_kw={"projection": proj}, figsize=(18, 18),
@@ -225,6 +226,9 @@ class WeatherCond:
                 data = self.ds[var].isel(time=0, depth=0)
             else:
                 data = self.ds[var].isel(time=0)
+
+            if var in vars_with_height:
+                data = data.isel(height_above_ground=0)
 
             # plot data and map
             im = ax.pcolormesh(lon, lat, data, cmap='viridis', shading='auto')
@@ -561,6 +565,7 @@ class WeatherCondODC(WeatherCond):
     Connects to the ODC instance on initialisation. The map size needs to be set with ``set_map_size`` before
     calling ``read_dataset``. For the parameters see ``WeatherCond``.
     """
+
     def __init__(self, time, hours, time_res):
         super().__init__(time, hours, time_res)
         self.dc = datacube.Datacube()
@@ -702,6 +707,7 @@ class FakeWeather(WeatherCond):
         m); if None, no disturbance is added
     :type gauss_dict: dict or None
     """
+
     def __init__(self, time, hours, time_res, coord_res=1 / 12, var_dict=None, gauss_dict=None):
         super().__init__(time, hours, time_res)
         self.var_dict = {}
