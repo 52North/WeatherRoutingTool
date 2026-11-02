@@ -25,6 +25,7 @@ from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
 from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.algorithms.genetic.errors import *
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
@@ -74,7 +75,7 @@ class Genetic(RoutingAlg):
             constraints_list: ConstraintsList,
             verbose=False
     ):
-        """Main routing execution function
+        """Calls the main routing function. Responsible for error handling.
 
         :param boat: Boat config
         :type boat: Boat
@@ -86,6 +87,42 @@ class Genetic(RoutingAlg):
         :type verbose: Optional[bool]
         """
 
+        res_terminate = None
+
+        try:
+            res_terminate = self._execute_routing(boat, wt, constraints_list, verbose)
+
+        except GeneticInitialPopulationError:
+            return None, GeneticErrorCode.INITIAL_POPULATION_FAILED
+        except GeneticConfigError:
+            return None, GeneticErrorCode.CONFIG_INVALID
+        except GeneticOptimisationError:
+            return None, GeneticErrorCode.OPTIMISATION_FAILED
+        except GeneticMCDMError:
+            return None, GeneticErrorCode.MCDM_FAILED
+        except Exception:
+            return None, GeneticErrorCode.INTERNAL
+
+        return res_terminate, GeneticErrorCode.NO_ERROR
+
+    def _execute_routing(
+            self,
+            boat: Boat,
+            wt: WeatherCond,
+            constraints_list: ConstraintsList,
+            verbose=False
+    ):
+        """Main routing execution function
+
+        :param boat: Boat config
+        :type boat: Boat
+        :param wt: Weather conditions for the waypoints
+        :type wt: WeatherCond
+        :param constraints_list: List of problem constraints
+        :type constraints_list: ConstraintsList
+        :param verbose: Verbosity setting for logs
+        :type verbose: Optional[bool]
+        """
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         seed = None
         if self.config.GENETIC_RANDOM_SEED:
@@ -124,7 +161,7 @@ class Genetic(RoutingAlg):
             res=res_minimize,
             problem=problem, )
 
-        return res_terminate, 9
+        return res_terminate
 
     def optimize(
             self,
@@ -212,7 +249,10 @@ class Genetic(RoutingAlg):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
-        self.consistency_check(res, problem)
+        try:
+            self.consistency_check(res, problem)
+        except AssertionError:
+            raise GeneticOptimisationError("Consistency check failed. Potential memory issue.")
 
         # mcdm = MCDM.RMethod(self.objectives)
         mcdm = MCDM.PymoosASF(self.objectives)

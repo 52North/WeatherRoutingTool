@@ -1,4 +1,5 @@
 import argparse
+import sys
 import warnings
 
 from WeatherRoutingTool.config import Config, set_up_logging
@@ -37,7 +38,9 @@ if __name__ == "__main__":
     # Validate config with pydantic and run route optimization
     config = Config.assign_config(args.file)
     ship_config = ShipConfig.assign_config(args.file)
-    execute_routing(config, ship_config)
+    error_code = execute_routing(config, ship_config)
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
+
+    sys.exit(error_code)

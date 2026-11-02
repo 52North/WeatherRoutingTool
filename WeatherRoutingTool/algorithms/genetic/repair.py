@@ -3,9 +3,10 @@ from pymoo.core.repair import Repair, NoRepair
 import numpy as np
 import logging
 
+import WeatherRoutingTool.algorithms.genetic.utils as utils
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.algorithms.genetic.errors import GeneticOptimisationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.repair")
@@ -109,8 +110,11 @@ class ConstraintViolationRepair(RepairBase):
     def check_validity(self, rt):
         src = tuple(self.config.DEFAULT_ROUTE[:-2])
         dst = tuple(self.config.DEFAULT_ROUTE[-2:])
-        assert tuple(rt[0]) == src, "Source waypoint not matching"
-        assert tuple(rt[-1]) == dst, "Destination waypoint not matching"
+
+        if tuple(rt[0]) != src:
+            raise GeneticOptimisationError("Starting point of repaired route not matching global starting point. ")
+        if tuple(rt[-1]) != dst:
+            raise GeneticOptimisationError("Destination of repaired route not matching global destination.")
 
     def repair_single_route(self, rt, patchfn, constrained):
         """
@@ -136,9 +140,10 @@ class ConstraintViolationRepair(RepairBase):
         :return: Repaired route. Same structure as for ``rt``.
         :rtype: np.array
         """
-        # check for correct input shape of rt
-        assert len(rt.shape) == 2
-        assert rt.shape[1] == 3
+        # test whether input route rt has the correct shape
+        if len(rt.shape) != 2 or rt.shape[1] != 3:
+            raise GeneticOptimisationError(f"Shape {rt.shape} of the route object is not suitable for "
+                                           f"ConstraintViolationRepair.")
         debug = False
 
         prev_seg_end = 0
@@ -181,7 +186,7 @@ class ConstraintViolationRepair(RepairBase):
             else:
                 # currently passing constrained area
                 on_constraint = True
-                if seg_i == len(constrained)-1:
+                if seg_i == len(constrained) - 1:
                     output_route_segs.append([rt[seg_end]])
 
         output_route = np.concatenate(output_route_segs, axis=0)

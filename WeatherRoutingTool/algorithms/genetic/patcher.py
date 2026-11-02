@@ -9,6 +9,7 @@ import numpy as np
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
+from WeatherRoutingTool.algorithms.genetic.errors import GeneticInitialPopulationError
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintsListFactory, WaterDepth
@@ -331,7 +332,7 @@ class IsofuelPatcher(PatcherBase):
 
         # list of routes
         if not alg.route_list:
-            raise RuntimeError("The Isofuel algorithm couldn't find any route")
+            raise GeneticInitialPopulationError("The Isofuel algorithm couldn't find any route.")
 
         routes = []
 

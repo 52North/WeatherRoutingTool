@@ -79,13 +79,15 @@ def execute_routing(config, ship_config):
     # routing
     min_fuel_route, error_code = alg.execute_routing(boat, wt, constraint_list)
     # min_fuel_route.print_route()
-    min_fuel_route.write_to_geojson(str(routepath) + '/' + str(min_fuel_route.route_type) + ".json")
+    if min_fuel_route:
+        min_fuel_route.write_to_geojson(str(routepath) + '/' + str(min_fuel_route.route_type) + ".json")
 
-    if config.ROUTE_POSTPROCESSING:
-        postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
-        min_fuel_route_postprocessed = postprocessed_route.post_process_route()
-        min_fuel_route_postprocessed.write_to_geojson(
-            str(routepath) + '/' + str(min_fuel_route_postprocessed.route_type) + "_postprocessed.json")
+        if config.ROUTE_POSTPROCESSING:
+            postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
+            min_fuel_route_postprocessed = postprocessed_route.post_process_route()
+            min_fuel_route_postprocessed.write_to_geojson(
+                str(routepath) + '/' + str(min_fuel_route_postprocessed.route_type) + "_postprocessed.json")
 
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')
+    return error_code

@@ -6,6 +6,7 @@ from astropy import units as u
 from pymoo.core.problem import ElementwiseProblem
 
 from WeatherRoutingTool.algorithms.data_utils import get_speed_from_arrival_time
+from WeatherRoutingTool.algorithms.genetic.errors import GeneticConfigError
 from WeatherRoutingTool.algorithms.genetic.utils import get_constraints
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
@@ -79,7 +80,7 @@ class RoutingProblem(ElementwiseProblem):
         :type obj_dict: dict
         :return: A list of objective values, one entry per active objective.
         :rtype: list
-        :raises ValueError: If no valid objectives are specified or found in the dictionary.
+        :raises GeneticConfigError: If no valid objectives are specified or found in the dictionary.
         """
         objective_keys = list(self.objectives.keys())
         objs = []
@@ -89,7 +90,7 @@ class RoutingProblem(ElementwiseProblem):
             objs.append(obj_dict["fuel_sum"].value)
 
         if not objs:
-            raise ValueError('Please specify an objective for the genetic algorithm.')
+            raise GeneticConfigError('Please specify an objective for the genetic algorithm.')
 
         return objs
 
