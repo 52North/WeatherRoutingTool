@@ -84,6 +84,15 @@ def test_get_acc_variables():
     assert len(rp_test.dists_per_step) == 3
 
 
+def test_routeparams_eq():
+    # regression for Issue #221: __eq__ must not raise AttributeError
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, 'data/min_fuel_route_test.json')
+    rp1 = RouteParams.from_file(filename)
+    rp2 = RouteParams.from_file(filename)
+    assert rp1 == rp2
+
+
 '''
     Test whether parameters in `RouteParams.get_per_waypoint_coords` are calculated correctly.
 '''
