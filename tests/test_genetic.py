@@ -563,7 +563,7 @@ def test_twopoint_crossover_speed(plt):
     plt.saveas = "test_twopoint_crossover_speed.png"
 
 
-def test_twopoint_crossover(plt):
+def test_two_point_crossover(plt):
     """
     Test whether TwoPointCrossover provides sensible results via monitoring plot.
     """
@@ -620,4 +620,4 @@ def test_twopoint_crossover(plt):
     cbar.set_label('Geschwindigkeit ($m/s$)')
 
     pyplot.tight_layout()
-    plt.saveas = "test_twopoint_crossover.png"
+    plt.saveas = "test_two_point_crossover.png"
