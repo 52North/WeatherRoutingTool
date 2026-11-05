@@ -14,6 +14,7 @@ import WeatherRoutingTool.utils.unit_conversion as units
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTConfigError, WRTFuelConsumptionError
 
 have_maripower = False
 try:
@@ -70,13 +71,13 @@ class MariPowerTanker(Boat):
         super().__init__(ship_config)
 
         if not have_maripower:
-            raise ModuleNotFoundError(
+            raise WRTFuelConsumptionError(
                 'You are trying to use maripower to estimate the fuel consumption but maripower is'
                 ' not installed. Please install the necessary software.')
 
         # mandatory variables for maripower
         if not ship_config.COURSES_FILE:
-            raise Exception('COURSES_FILE is a mandatory parameter for the maripower tanker!')
+            raise WRTConfigError('COURSES_FILE is a mandatory parameter for the maripower tanker!')
 
         self.courses_path = str(ship_config.COURSES_FILE)
         self.weather_path = str(ship_config.WEATHER_DATA)

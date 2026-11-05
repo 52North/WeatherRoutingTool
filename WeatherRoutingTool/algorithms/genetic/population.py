@@ -17,7 +17,7 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import get_closest, get_speed_from_arrival_time
 from WeatherRoutingTool.algorithms.genetic import utils
-from WeatherRoutingTool.algorithms.genetic.errors import GeneticConfigError, GeneticInitialPopulationError
+from WeatherRoutingTool.utils.errors import WRTConfigError, GeneticInitialPopulationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
 
@@ -68,10 +68,10 @@ class Population(Sampling):
             if np.std(v_std) < 2:
                 mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
                 if mean_boat_speed < self.min_boat_speed or mean_boat_speed > self.max_boat_speed:
-                    raise GeneticConfigError("The mean boat speed of the initial popluation which is calculated from "
-                                             "the arrival time is smaller than the minimum or larger than the maximum "
-                                             "specified boat speed. Please adjust either the arrival time or the boat "
-                                             "speed boundaries.")
+                    raise WRTConfigError("The mean boat speed of the initial popluation which is calculated from "
+                                         "the arrival time is smaller than the minimum or larger than the maximum "
+                                         "specified boat speed. Please adjust either the arrival time or the boat "
+                                         "speed boundaries.")
 
                 quantiles = self.spread_velocity(
                     max(mean_boat_speed - 2, self.min_boat_speed),
@@ -478,7 +478,7 @@ class GcrSliderPopulation(Population):
         if lat and lon:
             self.algo.waypoints = [[lat, lon]]
         try:
-            route, _ = self.algo.execute()
+            route = self.algo.execute()
             # import uuid
             # filename = f"{str(uuid.uuid4())}.geojson"
             # route.write_to_geojson(filename)

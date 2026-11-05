@@ -14,7 +14,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
-from WeatherRoutingTool.algorithms.genetic.errors import GeneticOptimisationError
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory, PatcherBase
 from WeatherRoutingTool.utils.maps import Map
 

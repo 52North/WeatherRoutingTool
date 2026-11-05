@@ -19,6 +19,7 @@ from shapely.strtree import STRtree
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.errors import WRTConfigError, WRTInternalError, WRTAPIError
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.weather import WeatherCond
 
@@ -161,7 +162,7 @@ class ConstraintsListFactory:
         if 'water_depth' in constraints_string_list:
             if ('data_mode' not in kwargs) or ('min_depth' not in kwargs) or ('depthfile' not in kwargs) or (
                     'map_size' not in kwargs):
-                raise ValueError(
+                raise WRTAPIError(
                     'To use the depth constraint module, you need to provide the data mode for the download, '
                     'the boat draught, the map size and the path to the depth file.')
             data_mode = kwargs.get('data_mode')
@@ -178,7 +179,7 @@ class ConstraintsListFactory:
 
         if 'on_map' in constraints_string_list:
             if 'map_size' not in kwargs:
-                raise ValueError('To use the on-map constraint module, you need to providethe map size.')
+                raise WRTAPIError('To use the on-map constraint module, you need to provide the map size.')
             map_size = kwargs.get('map_size')
             on_map = StayOnMap()
             on_map.set_map(map_size.lat1, map_size.lon1, map_size.lat2, map_size.lon2)
@@ -187,8 +188,8 @@ class ConstraintsListFactory:
 
         if 'in_time' in constraints_string_list:
             if 'time_frame' not in kwargs:
-                raise ValueError('To use the in-time constraint module, you need to provide the timeframe '
-                                 'of the weather data.')
+                raise WRTAPIError('To use the in-time constraint module, you need to provide the timeframe '
+                                  'of the weather data.')
             time = kwargs.get('time_frame')
             time_start = time[0]
             time_end = time[1]
@@ -205,7 +206,7 @@ class ConstraintsListFactory:
 
         if 'via_waypoints' in constraints_string_list:
             if 'waypoints' not in kwargs:
-                raise ValueError('To use the waypoints constraint module, you need to provide the waypoints.')
+                raise WRTConfigError('To use the waypoints constraint module, you need to provide the waypoints.')
             waypoints = kwargs.get('waypoints')
             for (lat, lon) in waypoints:
                 wp = PositiveConstraintPoint(lat, lon)
@@ -492,7 +493,7 @@ class ConstraintsList:
             self.neg_cont_size += 1
             return
 
-        raise ValueError(
+        raise WRTAPIError(
             'You chose to add a negetive constraint with option ' + option + '. However only options -discrete- and '
                                                                              '-continuous- are implemented ')
 
@@ -574,7 +575,7 @@ class WaterDepth(NegativeContraint):
         elif data_mode == 'from_file':
             self.depth_data = self.load_data_from_file(depth_path)
         else:
-            raise ValueError('Option "' + data_mode + '" not implemented for download of depth data!')
+            raise WRTAPIError('Option "' + data_mode + '" not implemented for download of depth data!')
 
     def load_data_ODC(self, depth_path, product_name, measurements=None):
         """
@@ -596,7 +597,7 @@ class WaterDepth(NegativeContraint):
         dc = datacube.Datacube()
 
         if product_name not in list(dc.list_products().index):
-            raise ValueError(f"{product_name} is not known in the Open Data Cube instance")
+            raise WRTInternalError(f"{product_name} is not known in the Open Data Cube instance")
 
         if measurements is None:
             measurements = list(dc.list_measurements().loc[product_name].index)
@@ -607,7 +608,7 @@ class WaterDepth(NegativeContraint):
                            alias in aliases_per_var]
             for measurement in measurements:
                 if (measurement not in measurements_odc) and (measurement not in aliases_odc):
-                    raise KeyError(f"{measurement} is not a valid measurement for odc product {product_name}")
+                    raise WRTInternalError(f"{measurement} is not a valid measurement for odc product {product_name}")
 
         res_x = 30 / 3600  # 30 arc seconds to degrees
         res_y = 30 / 3600  # 30 arc seconds to degrees

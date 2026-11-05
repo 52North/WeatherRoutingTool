@@ -8,6 +8,7 @@ from geovectorslib import geod
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.algorithms.isobased import IsoBased
 from WeatherRoutingTool.routeparams import RouteParams
+from WeatherRoutingTool.utils.errors import IsobasedInternalError, IsobasedPruningError
 
 logger = logging.getLogger('WRT.routingalg')
 
@@ -93,7 +94,7 @@ class IsoFuel(IsoBased):
     def update_time(self):
         delta_time = self.routing_step.delta_time
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)):
-            raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')
+            raise IsobasedInternalError('shapes of delta_time, time and full_time_traveled not matching!')
         for i in range(0, self.full_time_traveled.shape[0]):
             self.full_time_traveled[i] += delta_time[i]
             self.time[i] += dt.timedelta(seconds=delta_time[i].value)
@@ -131,4 +132,4 @@ class IsoFuel(IsoBased):
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
         except IndexError:
-            raise Exception('Pruned indices running out of bounds.')
+            raise IsobasedInternalError('Pruned indices running out of bounds.')

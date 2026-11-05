@@ -1,10 +1,12 @@
 import argparse
+import logging
 import sys
 import warnings
 
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTErrorCodes, WRTErrors
 
 
 if __name__ == "__main__":
@@ -35,12 +37,21 @@ if __name__ == "__main__":
     # initialise logging
     set_up_logging(args.info_log_file, args.warnings_log_file, args.debug)
 
-    # Validate config with pydantic and run route optimization
-    config = Config.assign_config(args.file)
-    ship_config = ShipConfig.assign_config(args.file)
-    error_code = execute_routing(config, ship_config)
+    logger = logging.getLogger('WRT')
+    try:
+        config = Config.assign_config(args.file)
+        ship_config = ShipConfig.assign_config(args.file)
+        execute_routing(config, ship_config)
+        error_code = WRTErrorCodes.NO_ERROR
+    except WRTErrors as err:
+        logger.error(str(err))
+        logger.debug('Traceback:', exc_info=True)
+        error_code = err.code
+    except Exception:
+        logger.exception('Unexpected error of the Weather Routing Tool.')
+        error_code = WRTErrorCodes.INTERNAL
 
     # set warning filter action (https://docs.python.org/3/library/warnings.html)
     warnings.filterwarnings(args.filter_warnings)
 
-    sys.exit(error_code)
+    sys.exit(int(error_code))

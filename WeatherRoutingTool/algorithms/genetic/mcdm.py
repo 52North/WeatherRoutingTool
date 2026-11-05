@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pymoo.decomposition.asf import ASF
 
-from WeatherRoutingTool.algorithms.genetic.errors import GeneticConfigError
+from WeatherRoutingTool.utils.errors import WRTConfigError
 
 
 class MCDM:
@@ -103,8 +103,8 @@ class RMethod(MCDM):
         product = 1
 
         if len(sol_weight_list) > 2:
-            raise GeneticConfigError('Calculation of the composite weight of the R-method is not implemented for '
-                                     'more than two objectives.')
+            raise WRTConfigError('Calculation of the composite weight of the R-method is not implemented for '
+                                 'more than two objectives.')
 
         for i in range(len(sol_weight_list)):
             denominator = denominator + sign[i] * 1. / obj_weight_list[i] * sol_weight_list[i]

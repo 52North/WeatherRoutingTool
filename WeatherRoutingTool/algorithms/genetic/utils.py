@@ -9,7 +9,7 @@ from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
 import WeatherRoutingTool.utils.graphics as graphics
-from WeatherRoutingTool.algorithms.genetic.errors import GeneticOptimisationError
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.config import Config

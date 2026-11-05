@@ -7,6 +7,7 @@ from astropy import units as u
 
 import pytest
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTConfigError, WRTErrorCodes
 
 import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.ship.shipparams import ShipParams
@@ -248,9 +249,11 @@ def test_valid_ship_config_initialization():
 
 
 def test_invalid_propulsion_efficiency_raises_error():
-    """Tests that an out-of-range BOAT_PROPULSION_EFFICIENCY raises ValueError."""
+    """Tests that an out-of-range BOAT_PROPULSION_EFFICIENCY raises WRTConfigError."""
     invalid_config = VALID_SHIP_CONFIG.copy()
     # This optional variable has a default, so we add it for the test
     invalid_config["BOAT_PROPULSION_EFFICIENCY"] = 1.1  # > 1
-    with pytest.raises(ValueError, match="'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1"):
+    with pytest.raises(WRTConfigError, match="'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1") as excinfo:
         ShipConfig.assign_config(init_mode='from_dict', config_dict=invalid_config)
+
+    assert excinfo.value.code == WRTErrorCodes.CONFIG_INVALID

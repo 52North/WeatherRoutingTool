@@ -6,7 +6,7 @@ import logging
 import WeatherRoutingTool.algorithms.genetic.utils as utils
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
-from WeatherRoutingTool.algorithms.genetic.errors import GeneticOptimisationError
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 
 logger = logging.getLogger("WRT.genetic.repair")
