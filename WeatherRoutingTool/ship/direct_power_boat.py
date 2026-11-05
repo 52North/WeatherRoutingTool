@@ -11,6 +11,7 @@ import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTInternalError, WRTFuelConsumptionError
 
 logger = logging.getLogger('WRT.ship')
 
@@ -151,7 +152,7 @@ class DirectPowerBoat(Boat):
                 logger.warning(f"Parameter {param_name} has dummy value -99")
 
         if invalid_params:
-            raise ValueError(
+            raise WRTInternalError(
                 f"The following parameters still have dummy values (-99) after setting optional parameters: "
                 f"{', '.join(invalid_params)}")
 
@@ -261,7 +262,7 @@ class DirectPowerBoat(Boat):
                 print('angle_rad: ', angle_rad[iang])
                 print('arg_arcsin: ', arg_arcsin)
                 print('arg_arccos: ', arg_arccos)
-                raise ValueError('Apparent wind angle is nan!')
+                raise WRTFuelConsumptionError('Apparent wind angle is nan!')
 
         apparent_wind_angle = apparent_wind_angle.to(u.degree)
 

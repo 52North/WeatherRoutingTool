@@ -7,6 +7,7 @@ from WeatherRoutingTool.weather_factory import WeatherFactory
 from WeatherRoutingTool.constraints.constraints import ConstraintsListFactory, WaterDepth
 from WeatherRoutingTool.constraints.route_postprocessing import RoutePostprocessing
 from WeatherRoutingTool.algorithms.routingalg_factory import RoutingAlgFactory
+from WeatherRoutingTool.utils.errors import IsobasedRoutingError
 from WeatherRoutingTool.utils.maps import Map
 
 logger = logging.getLogger('WRT.execute_routing')
@@ -30,6 +31,10 @@ def execute_routing(config, ship_config):
     :type config: WeatherRoutingTool.config.Config
     :param ship_config: validated ship configuration
     :type ship_config: WeatherRoutingTool.ship.ship_config.ShipConfig
+    :return: resulting route
+    :rtype: WeatherRoutingTool.routeparams.RouteParams
+    :raises WRTErrors: if the routing fails. If an isochrone-based algorithm terminates with an error
+        (``IsobasedRoutingError``), the best route found up to this point is written before the error is raised.
     """
     # prof = cProfile.Profile()
     # prof.enable()
@@ -77,15 +82,40 @@ def execute_routing(config, ship_config):
 
     # *******************************************
     # routing
-    min_fuel_route, error_code = alg.execute_routing(boat, wt, constraint_list)
-    # min_fuel_route.print_route()
-    min_fuel_route.write_to_geojson(str(routepath) + '/' + str(min_fuel_route.route_type) + ".json")
-
-    if config.ROUTE_POSTPROCESSING:
-        postprocessed_route = RoutePostprocessing(min_fuel_route, boat)
-        min_fuel_route_postprocessed = postprocessed_route.post_process_route()
-        min_fuel_route_postprocessed.write_to_geojson(
-            str(routepath) + '/' + str(min_fuel_route_postprocessed.route_type) + "_postprocessed.json")
+    try:
+        min_fuel_route = alg.execute_routing(boat, wt, constraint_list)
+    except IsobasedRoutingError as err:
+        # The routing terminated regularly but with an error. Write the best route that was found before the error
+        # is passed on.
+        write_route(err.route, routepath, boat, config.ROUTE_POSTPROCESSING)
+        raise
+    write_route(min_fuel_route, routepath, boat, config.ROUTE_POSTPROCESSING)
 
     # prof.disable()
     # prof.dump_stats('wrt_run.prof')
+    return min_fuel_route
+
+
+def write_route(route, routepath, boat, postprocessing):
+    """
+    Write a route to ``<routepath>/<route_type>.json`` in GeoJSON format. If ``postprocessing`` is True, the
+    postprocessed route is additionally written to ``<routepath>/<route_type>_postprocessed.json``. Nothing is
+    written if ``route`` is None.
+
+    :param route: route to be written
+    :type route: WeatherRoutingTool.routeparams.RouteParams or None
+    :param routepath: path to the output folder
+    :type routepath: pathlib.Path or str
+    :param boat: ship object, required for the postprocessing
+    :type boat: WeatherRoutingTool.ship.ship.Boat
+    :param postprocessing: whether to postprocess the route
+    :type postprocessing: bool
+    """
+    if not route:
+        return
+    route.write_to_geojson(str(routepath) + '/' + str(route.route_type) + ".json")
+
+    if postprocessing:
+        postprocessed_route = RoutePostprocessing(route, boat).post_process_route()
+        postprocessed_route.write_to_geojson(
+            str(routepath) + '/' + str(postprocessed_route.route_type) + "_postprocessed.json")

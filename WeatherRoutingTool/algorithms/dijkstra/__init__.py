@@ -138,7 +138,7 @@ class DijkstraGlobalLandMask(RoutingAlg):
             starttime_per_step=[0]*len(path_sub),
             ship_params_per_step=ship_params,
         )
-        return route, 0
+        return route
 
     def get_neighbors_to_connect(self) -> Generator[tuple[int, int], None, None]:
         """

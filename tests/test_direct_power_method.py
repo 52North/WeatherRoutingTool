@@ -11,6 +11,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 
 from WeatherRoutingTool.ship.direct_power_boat import DirectPowerBoat
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTConfigError, WRTErrorCodes, WRTInternalError
 
 have_maripower = False
 
@@ -323,9 +324,10 @@ class TestDPM:
         pol.Axv = -99 * u.meter * u.meter
         pol.hs1 = -99 * u.meter
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(WRTInternalError) as excinfo:
             pol.validate_parameters()
 
+        assert excinfo.value.code == WRTErrorCodes.INTERNAL
         assert "dummy values (-99)" in str(excinfo.value)
         assert "Axv" in str(excinfo.value)
 

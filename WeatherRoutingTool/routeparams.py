@@ -20,6 +20,7 @@ import WeatherRoutingTool.utils.unit_conversion as units
 import WeatherRoutingTool.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.utils.errors import WRTAPIError
 from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
 from WeatherRoutingTool.ship.shipparams import ShipParams
 
@@ -443,7 +444,7 @@ class RouteParams:
         if power_type == 'fuel':
             power = self.get_fuel_per_dist()
             return {"value": power, "label": "fuel consumption", "unit": u.kg}
-        raise NotImplementedError(f'The power type "{power_type}" is not implemented.')
+        raise WRTAPIError(f'The power type "{power_type}" is not implemented.')
 
     def plot_power_vs_dist(self, icolor, label, power_type, ax, norm=1.):
         """
