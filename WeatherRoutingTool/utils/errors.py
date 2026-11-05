@@ -26,31 +26,32 @@ class WRTErrorCodes(IntEnum):
     NO_ERROR = 0
 
     # general
-    CONFIG_INVALID = 1
+    CONFIG_INVALID = 1  # errors that can be solved by adjusting variables in the config files
     INPUT_FAILED = 2
     OUTPUT_FAILED = 3
-    API_USAGE = 4
+    API_USAGE = 4  # errors that results from faulty usage of WRT functionality (function calls with wrong
+    # arguments etc.
 
     # isochrone-based algorithms
     ISOBASED_PRUNING_FAILED = 11
     ISOBASED_OUT_OF_ROUTES = 12
     ISOBASED_DESTINATION_NOT_REACHED = 13
-    ISOBASED_INTERNAL = 19
+    ISOBASED_INTERNAL = 19  # internal errors in the isobased module
 
     # genetic algorithm
     GENETIC_INITIAL_POPULATION_FAILED = 21
     GENETIC_OPTIMISATION_FAILED = 22
     GENETIC_MCDM_FAILED = 23
-    GENETIC_INTERNAL = 29
+    GENETIC_INTERNAL = 29  # internal errors in the genetic module
 
     # environmental data
-    ENVIRONMENTAL_DATA_FAILED = 30
+    ENVIRONMENTAL_DATA_FAILED = 30  # errors wrt. handling weather and depth data
 
     # ship model
-    FUEL_CONSUMPTION_INVALID = 40
+    FUEL_CONSUMPTION_INVALID = 40  # errors wrt. fuel-consumption modeling
 
     # unexpected errors
-    INTERNAL = 99
+    INTERNAL = 99  # internal errors (bugs, unexcpected behaviour, ...)
 
 
 ERROR_MESSAGES = {
