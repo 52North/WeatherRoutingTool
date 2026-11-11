@@ -9,6 +9,7 @@ import numpy as np
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
+from WeatherRoutingTool.utils.errors import GeneticInitialPopulationError, WRTError
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintsListFactory, WaterDepth
@@ -310,17 +311,22 @@ class IsofuelPatcher(PatcherBase):
         if original_log_level == logging.DEBUG:
             alg.init_fig(water_depth=self.water_depth, map_size=Map(*self.config.DEFAULT_MAP))
 
-        min_fuel_route, err_code = alg.execute_routing(
-            boat=self.boat,
-            wt=self.wt,
-            constraints_list=self.constraints_list,
-            patch_count=self.patch_count)
+        routing_failed = False
+        try:
+            min_fuel_route = alg.execute_routing(
+                boat=self.boat,
+                wt=self.wt,
+                constraints_list=self.constraints_list,
+                patch_count=self.patch_count)
+        except WRTError as err:
+            logger.debug(f'Isofuel patching failed: {err}')
+            routing_failed = True
 
         # reactivate original logging level
         logging.getLogger().setLevel(original_log_level)
 
         # fall-back to gcr patching if Isofuel algorithm can not provide valid results
-        if (err_code > 0) and (self.n_routes == 'single'):
+        if routing_failed and (self.n_routes == 'single'):
             logger.debug('Falling back to gcr patching!')
             return self.patchfn_gcr.patch(src, dst, departure_time)
 
@@ -331,7 +337,7 @@ class IsofuelPatcher(PatcherBase):
 
         # list of routes
         if not alg.route_list:
-            raise RuntimeError("The Isofuel algorithm couldn't find any route")
+            raise GeneticInitialPopulationError("The Isofuel algorithm couldn't find any route.")
 
         routes = []
 

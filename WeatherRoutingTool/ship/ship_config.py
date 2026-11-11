@@ -3,6 +3,8 @@ from pathlib import Path
 import json
 import logging
 
+from WeatherRoutingTool.utils.errors import WRTConfigError
+
 logger = logging.getLogger('WRT.ShipConfig')
 
 
@@ -50,18 +52,10 @@ class ShipConfig(BaseModel):
     def validate_config(cls, config_data):
         try:
             config = cls(**config_data)
-            logger.debug("ShipConfig is valid!")
-            return config
         except ValidationError as e:
-            for err in e.errors():
-                logger.info("Config-Validation failed:")
-                loc = err['loc']
-                loc_str = f"'{loc[0]}'" if loc else "<model-level>"
-                logger.info(f" Field: {loc_str},  Error: {err['msg']}")
-                raise
-        except Exception as e:
-            logger.info(f"Could not read config file: {e}")
-            raise
+            raise WRTConfigError.from_validation_error(e) from e
+        logger.debug("ShipConfig is valid!")
+        return config
 
     @classmethod
     def assign_config(cls, path: str | Path = None, init_mode='from_file', config_dict=None):
@@ -69,7 +63,7 @@ class ShipConfig(BaseModel):
             if path is None:
                 msg = "You chose init_mode = 'from_file' but no path is given"
                 logger.info(msg)
-                raise ValueError(msg)
+                raise WRTConfigError(msg)
             else:
                 if isinstance(path, str):
                     path = Path(path)
@@ -80,15 +74,15 @@ class ShipConfig(BaseModel):
             else:
                 msg = f"Given path to ship config json file '{path}' doesn't exist"
                 logger.info(msg)
-                raise ValueError(msg)
+                raise WRTConfigError(msg)
         elif init_mode == 'from_dict':
             if config_dict is not None:
                 return cls.validate_config(config_dict)
             else:
-                raise ValueError("You chose init_mode = 'from_dict' but config_dict has no value")
+                raise WRTConfigError("You chose init_mode = 'from_dict' but config_dict has no value")
         else:
             msg = f"Init mode '{init_mode}' for config is invalid. Supported options are 'from_file' and 'from_dict'."
-            raise ValueError(msg)
+            raise WRTConfigError(msg)
 
     @field_validator('BOAT_BREADTH', 'BOAT_LENGTH', 'BOAT_SMCR_POWER', mode='after')
     @classmethod

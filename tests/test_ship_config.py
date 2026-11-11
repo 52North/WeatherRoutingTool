@@ -2,6 +2,7 @@ import json
 import pytest
 from pathlib import Path
 from WeatherRoutingTool.ship.ship_config import ShipConfig
+from WeatherRoutingTool.utils.errors import WRTConfigError, WRTErrorCodes
 
 mandatory_fields = [
     'BOAT_BREADTH',
@@ -36,7 +37,8 @@ def test_assign_config_from_json():
 def test_invalid_propulsion_efficiency_raises_error():
     config_data, _ = load_example_config()
     config_data["BOAT_PROPULSION_EFFICIENCY"] = 1.1  # > 1
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         ShipConfig.assign_config(init_mode="from_dict", config_dict=config_data)
 
+    assert excinfo.value.code == WRTErrorCodes.CONFIG_INVALID
     assert "'BOAT_PROPULSION_EFFICIENCY' must be between 0 and 1" in str(excinfo.value)

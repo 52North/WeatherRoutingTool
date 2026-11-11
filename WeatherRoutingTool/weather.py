@@ -19,6 +19,7 @@ import xarray as xr
 from maridatadownloader import BoxSubset, get_downloader
 
 import WeatherRoutingTool.utils.formatting as form
+from WeatherRoutingTool.utils.errors import WRTAPIError, WRTEnvironmentalDataError
 from WeatherRoutingTool.utils.maps import Map
 from WeatherRoutingTool.utils.unit_conversion import (check_dataset_spacetime_consistency, convert_nptd64_to_ints,
                                                       round_time)
@@ -85,7 +86,7 @@ class WeatherCond:
     @time_res.setter
     def time_res(self, value):
         if (value < 3):
-            raise ValueError('Resolution below 3h not possible')
+            raise WRTAPIError('Resolution below 3h not possible')
         self._time_res = timedelta(hours=value)
         logger.info(form.get_log_step('time resolution: ' + str(self._time_res) + ' hours', 1))
 
@@ -206,7 +207,7 @@ class WeatherCond:
         '''
 
         if len(variables) > 9:
-            raise ValueError("The maximum number of variables to visualise is 9.")
+            raise WRTAPIError("The maximum number of variables to visualise is 9.")
 
         # recognise variables with additional dimension 'depth'
         vars_with_depth = ['so', 'thetao']
@@ -513,7 +514,7 @@ class WeatherCondFromFile(WeatherCond):
             lon_start = self.map_size.lon1
             lon_end = self.map_size.lon2
         except ValueError:
-            raise Exception('Need to initialise weather data bounding box before adding depth data!')
+            raise WRTAPIError('Need to initialise weather data bounding box before adding depth data!')
 
         ds_depth = xr.open_dataset(depth_path)
         ds_depth = ds_depth.where((ds_depth.lat > lat_start) & (ds_depth.lat < lat_end) & (ds_depth.lon > lon_start) & (
@@ -529,7 +530,7 @@ class WeatherCondFromFile(WeatherCond):
         depth_test = weather_int['z'].to_numpy()
         if np.isnan(depth_test).any():
             logger.error('depth_test:', depth_test)
-            raise Exception('element of depth is nan!')
+            raise WRTEnvironmentalDataError('Element of depth data is nan!')
         self.ds = weather_int
 
         if bWriteEnvData:
@@ -551,9 +552,7 @@ class WeatherCondFromFile(WeatherCond):
         idx = (time_passed.total_seconds() / self.time_res.total_seconds())
         return {'rounded_time': rounded_time, 'idx': idx}
 
-    def read_dataset(self, filepath=None):
-        if filepath is None:
-            raise RuntimeError("filepath must not be None for data_mode = 'from_file'")
+    def read_dataset(self, filepath):
         logger.debug(form.get_log_step('Reading dataset from' + str(filepath), 1))
         self.ds = xr.open_dataset(filepath)  # self.ds = self.manipulate_dataset()
 
@@ -595,7 +594,7 @@ class WeatherCondODC(WeatherCond):
         """
         try:
             if product_name not in list(self.dc.list_products().index):
-                raise ValueError(f"{product_name} is not known in the Open Data Cube instance")
+                raise WRTAPIError(f"{product_name} is not known in the Open Data Cube instance")
 
             time_min = self.time_start.strftime("%Y-%m-%dT%H:%M:%S")
             time_max = self.time_end.strftime("%Y-%m-%dT%H:%M:%S")
@@ -615,7 +614,7 @@ class WeatherCondODC(WeatherCond):
                                aliases_per_var]
                 for measurement in measurements:
                     if (measurement not in measurements_odc) and (measurement not in aliases_odc):
-                        raise KeyError(f"{measurement} is not a valid measurement for odc product {product_name}")
+                        raise WRTAPIError(f"{measurement} is not a valid measurement for odc product {product_name}")
             # FIXME: is the order (res_x, res_y) correct in resolution and align?
             # FIXME: do we need a minus sign for res_x?
             query = {'resolution': (res_x, res_y), 'align': (res_x / 2, res_y / 2), 'latitude': (lat_min, lat_max),
@@ -627,8 +626,8 @@ class WeatherCondODC(WeatherCond):
             if self._has_scaling(ds_datacube):
                 ds_datacube = self._scale(ds_datacube)
             return ds_datacube
-        except Exception as e:
-            raise e
+        except WRTAPIError as err:
+            raise WRTEnvironmentalDataError(f"Odc product not loaded. {err}")
 
     def read_dataset(self, filepath=None):
         """
@@ -1046,7 +1045,7 @@ class FakeWeather(WeatherCond):
         wind_speed_orig_mean = wind_speed_orig.mean()
         wind_speed_max_target_orig = self.gauss_dict["target_height_wind"] - wind_speed_orig_mean
         if wind_speed_max_target_orig < 0:
-            raise ValueError('Target wind speed is smaller than mean of wind data.')
+            raise WRTAPIError('Target wind speed is smaller than mean of wind data.')
 
         # obtain 2D gauss over space
         gauss_space = self.get_gauss_over_space(
@@ -1120,7 +1119,7 @@ class FakeWeather(WeatherCond):
         vhm0_orig_mean = vhm0_orig.mean()
         vhm0_max_target = self.gauss_dict["target_height_wave"] - vhm0_orig_mean
         if vhm0_max_target < 0:
-            raise ValueError('Target wave height is smaller than mean of wind data.')
+            raise WRTAPIError('Target wave height is smaller than mean of wind data.')
 
         # obtain 2D gauss over space
         gauss_space = self.get_gauss_over_space(
