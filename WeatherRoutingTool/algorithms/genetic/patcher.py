@@ -9,7 +9,7 @@ import numpy as np
 from astropy import units as u
 from geographiclib.geodesic import Geodesic
 
-from WeatherRoutingTool.utils.errors import GeneticInitialPopulationError, WRTErrors
+from WeatherRoutingTool.utils.errors import GeneticInitialPopulationError, WRTError
 from WeatherRoutingTool.algorithms.isofuel import IsoFuel
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList, ConstraintsListFactory, WaterDepth
@@ -318,7 +318,7 @@ class IsofuelPatcher(PatcherBase):
                 wt=self.wt,
                 constraints_list=self.constraints_list,
                 patch_count=self.patch_count)
-        except WRTErrors as err:
+        except WRTError as err:
             logger.debug(f'Isofuel patching failed: {err}')
             routing_failed = True
 

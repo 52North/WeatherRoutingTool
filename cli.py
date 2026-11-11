@@ -6,7 +6,7 @@ import warnings
 from WeatherRoutingTool.config import Config, set_up_logging
 from WeatherRoutingTool.execute_routing import execute_routing
 from WeatherRoutingTool.ship.ship_config import ShipConfig
-from WeatherRoutingTool.utils.errors import WRTErrorCodes, WRTErrors
+from WeatherRoutingTool.utils.errors import WRTErrorCodes, WRTError
 
 
 if __name__ == "__main__":
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         ship_config = ShipConfig.assign_config(args.file)
         execute_routing(config, ship_config)
         error_code = WRTErrorCodes.NO_ERROR
-    except WRTErrors as err:
+    except WRTError as err:
         logger.error(str(err))
         logger.debug('Traceback:', exc_info=True)
         error_code = err.code

@@ -33,7 +33,7 @@ def execute_routing(config, ship_config):
     :type ship_config: WeatherRoutingTool.ship.ship_config.ShipConfig
     :return: resulting route
     :rtype: WeatherRoutingTool.routeparams.RouteParams
-    :raises WRTErrors: if the routing fails. If an isochrone-based algorithm terminates with an error
+    :raises WRTError: if the routing fails. If an isochrone-based algorithm terminates with an error
         (``IsobasedRoutingError``), the best route found up to this point is written before the error is raised.
     """
     # prof = cProfile.Profile()

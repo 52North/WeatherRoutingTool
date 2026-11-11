@@ -81,7 +81,7 @@ ERROR_MESSAGES = {
 }
 
 
-class WRTErrors(Exception):
+class WRTError(Exception):
     """Base class of all errors of the Weather Routing Tool.
 
     Every subclass is linked to exactly one error code via the class attribute ``code``. The error message is taken
@@ -101,7 +101,7 @@ class WRTErrors(Exception):
 
 
 # general
-class WRTConfigError(WRTErrors):
+class WRTConfigError(WRTError):
     code = WRTErrorCodes.CONFIG_INVALID
 
     @classmethod
@@ -125,24 +125,24 @@ class WRTConfigError(WRTErrors):
         return cls(detail)
 
 
-class WRTInputError(WRTErrors):
+class WRTInputError(WRTError):
     code = WRTErrorCodes.INPUT_FAILED
 
 
-class WRTOutputError(WRTErrors):
+class WRTOutputError(WRTError):
     code = WRTErrorCodes.OUTPUT_FAILED
 
 
-class WRTInternalError(WRTErrors):
+class WRTInternalError(WRTError):
     code = WRTErrorCodes.INTERNAL
 
 
-class WRTAPIError(WRTErrors):
+class WRTAPIError(WRTError):
     code = WRTErrorCodes.API_USAGE
 
 
 # isochrone-based algorithms
-class IsobasedRoutingError(WRTErrors):
+class IsobasedRoutingError(WRTError):
     """Base class of errors that terminate the isochrone-based routing regularly.
 
     For these errors, the routing algorithm still provides the best route at the state at which the error occurred.
@@ -176,19 +176,19 @@ class IsobasedInternalError(WRTInternalError):
 
 
 # genetic algorithm
-class GeneticAlgorithmError(WRTErrors):
+class GeneticAlgorithmError(WRTError):
     code = WRTErrorCodes.GENETIC_INTERNAL
 
 
-class GeneticInitialPopulationError(WRTErrors):
+class GeneticInitialPopulationError(WRTError):
     code = WRTErrorCodes.GENETIC_INITIAL_POPULATION_FAILED
 
 
-class GeneticOptimisationError(WRTErrors):
+class GeneticOptimisationError(WRTError):
     code = WRTErrorCodes.GENETIC_OPTIMISATION_FAILED
 
 
-class GeneticMCDMError(WRTErrors):
+class GeneticMCDMError(WRTError):
     code = WRTErrorCodes.GENETIC_MCDM_FAILED
 
 
@@ -197,10 +197,10 @@ class GeneticInternalError(WRTInternalError):
 
 
 # environmental data
-class WRTEnvironmentalDataError(WRTErrors):
+class WRTEnvironmentalDataError(WRTError):
     code = WRTErrorCodes.ENVIRONMENTAL_DATA_FAILED
 
 
 # ship model
-class WRTFuelConsumptionError(WRTErrors):
+class WRTFuelConsumptionError(WRTError):
     code = WRTErrorCodes.FUEL_CONSUMPTION_INVALID
