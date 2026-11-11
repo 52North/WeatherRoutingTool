@@ -12,15 +12,16 @@ from WeatherRoutingTool.ship.shipparams import ShipParams
 def test_plot_power_vs_dist():
     count = 3
     dummy_scalar = 0
-    dummy_list = np.full(3, -99)
-    dummy_list_coords = np.full(4, -99)
-    fuel_consumed = np.array([1, 2, 1]) * u.kg/u.second
-    dist_per_step = np.array([1, 4, 5])
+    dummy_list = np.full(4, -99)
+    dummy_list_coords = np.full(5, -99)
+    fuel_consumed = np.array([1, 2, 1, 1]) * u.kg / u.second
+    dist_per_step = np.array([1, 4, 5, 1])
     time_per_step = np.array(
         [datetime.datetime(2022, 12, 19),
          datetime.datetime(2022, 12, 19) + datetime.timedelta(days=180),
          datetime.datetime(2022, 12, 19) + datetime.timedelta(days=360),
-         datetime.datetime(2022, 12, 19) + datetime.timedelta(days=400)])
+         datetime.datetime(2022, 12, 19) + datetime.timedelta(days=400),
+         datetime.datetime(2022, 12, 19) + datetime.timedelta(days=450)])
 
     sp = ShipParams(fuel_consumed, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list,
                     dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list, dummy_list,
