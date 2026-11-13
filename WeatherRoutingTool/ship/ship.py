@@ -87,7 +87,7 @@ class Boat(ABC):
         return needs_water_depth.value
 
     @abstractmethod
-    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
+    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False) -> ShipParams:
         """Return `ShipParams` for the requested positions and times.
 
         Sub-classes must override this method to provide vessel-specific power,

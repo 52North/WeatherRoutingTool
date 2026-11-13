@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Annotated, List, Literal, Optional, Self, Union, Dict
 
@@ -14,6 +15,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator, Private
 from WeatherRoutingTool.utils.errors import WRTConfigError
 
 logger = logging.getLogger('WRT.Config')
+
+BUILTIN_SHIPS = ['CBT', 'SAL', 'speedy_isobased', 'direct_power_method']
 
 
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,
@@ -61,7 +64,7 @@ class Config(BaseModel):
     ] = 'genetic'
     ARRIVAL_TIME: datetime | None = None  # arrival time at destination, format: 'yyyy-mm-ddThh:mmZ'
 
-    BOAT_TYPE: Literal['CBT', 'SAL', 'speedy_isobased', 'direct_power_method'] = 'direct_power_method'
+    BOAT_TYPE: str = 'direct_power_method'
     BOAT_SPEED: float | None = None  # boat speed [m/s]
     BOAT_SPEED_BOUNDARIES: Annotated[list[Union[float, float]], Field(min_length=2, max_length=2)] = [1., 10.]
     # minimum and maximum possible boat speed [m/s]
@@ -306,6 +309,15 @@ class Config(BaseModel):
         if not -180 <= lon_end <= 180:
             raise ValueError(f"lon_end must be between -180 and 180, got {lon_end}")
 
+        return v
+
+    @field_validator('BOAT_TYPE', mode='after')
+    @classmethod
+    def check_ship(cls, v):
+        eps = entry_points(group="WeatherRoutingTool.ship.ship.Boat")
+        plugin_ships = [e.name for e in list(eps)]
+        if v not in BUILTIN_SHIPS + plugin_ships:
+            raise ValueError(f"'{v}' is not a valid ship.")
         return v
 
     @field_validator('CONSTRAINTS_LIST', mode='after')
