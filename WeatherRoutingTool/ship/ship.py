@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+from abc import ABC, abstractmethod
 
 import numpy as np
 import xarray as xr
@@ -15,7 +15,7 @@ logger = logging.getLogger('WRT.ship')
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.
 
-class Boat:
+class Boat(ABC):
     """
     Base class representing a vessel used by the Weather Routing Tool.
 
@@ -86,7 +86,8 @@ class Boat:
         needs_water_depth = max(self.draught_aft, self.draught_fore) + self.under_keel_clearance
         return needs_water_depth.value
 
-    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False):
+    @abstractmethod
+    def get_ship_parameters(self, courses, lats, lons, time, speed, unique_coords=False) -> ShipParams:
         """Return `ShipParams` for the requested positions and times.
 
         Sub-classes must override this method to provide vessel-specific power,
