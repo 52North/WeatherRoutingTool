@@ -12,6 +12,8 @@ from WeatherRoutingTool.constraints.constraints import *
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.ship import Boat
 from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.utils.errors import WRTErrorCodes, IsobasedPruningError, WRTConfigError, \
+    IsobasedInternalError, IsobasedOutOfRoutesError, IsobasedDestinationNotReachedError
 from WeatherRoutingTool.weather import WeatherCond
 
 logger = logging.getLogger('WRT.Isobased')
@@ -219,7 +221,7 @@ class RoutingStep:
         elif coord == 'lon':
             return self.lons[position]
         else:
-            raise ValueError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
+            raise WRTAPIError('RoutingSteps.get_point accepts arguments "all", "lat", "lon"')
 
     def get_courses(self) -> np.ndarray:
         """Get courses set at starting point."""
@@ -266,10 +268,10 @@ class IsoBasedStatus():
             "error"
         ]
         self.available_errors = {
-            'no_error': 0,
-            'pruning_error': 1,
-            'out_of_routes': 2,
-            'destination_not_reached': 3
+            'no_error': WRTErrorCodes.NO_ERROR,
+            'pruning_error': WRTErrorCodes.ISOBASED_PRUNING_FAILED,
+            'out_of_routes': WRTErrorCodes.ISOBASED_OUT_OF_ROUTES,
+            'destination_not_reached': WRTErrorCodes.ISOBASED_DESTINATION_NOT_REACHED
         }
         self.state = "routing"
         self.error = "no_error"
@@ -283,7 +285,7 @@ class IsoBasedStatus():
         """
         state_exists = [istate for istate in self.available_states if istate == state_request]
         if not state_exists:
-            raise ValueError('Wrong state requested for Isobased routing: ' + state_request)
+            raise WRTAPIError('Wrong state requested for Isobased routing: ' + state_request)
 
         self.state = state_request
 
@@ -295,7 +297,7 @@ class IsoBasedStatus():
         """
         error_exists = [ierr for ierr in self.available_errors.keys() if ierr == error_str]
         if not error_exists:
-            raise ValueError('Wrong error requested for Isobased routing: ' + error_str)
+            raise WRTAPIError('Wrong error requested for Isobased routing: ' + error_str)
 
         # prevent overwriting with "pruning_error" if state is "out_of_routes"
         if self.error == "out_of_routes":
@@ -303,9 +305,29 @@ class IsoBasedStatus():
         self.error = error_str
         self.update_state("error")
 
-    def get_error_code(self) -> int:
+    def get_error_code(self) -> WRTErrorCodes:
         """Returns error code. """
         return self.available_errors[self.error]
+
+    def raise_for_error(self, route: RouteParams = None) -> None:
+        """
+        Raises the exception that corresponds to the current error state. Does nothing if no error is registered.
+
+        :param route: best route at the state of the routing algorithm at which the error occurred; attached to the
+            exception such that the caller can still use it
+        :type route: RouteParams, optional
+        :raises IsobasedPruningError: if the error state is 'pruning_error'
+        :raises IsobasedOutOfRoutesError: if the error state is 'out_of_routes'
+        :raises IsobasedDestinationNotReachedError: if the error state is 'destination_not_reached'
+        """
+        exceptions = {
+            'pruning_error': IsobasedPruningError,
+            'out_of_routes': IsobasedOutOfRoutesError,
+            'destination_not_reached': IsobasedDestinationNotReachedError,
+        }
+        if self.error == 'no_error':
+            return
+        raise exceptions[self.error](route=route)
 
     def print(self):
         logger.info(form.get_log_step('Routing Status Report: ', 0))
@@ -619,10 +641,10 @@ class IsoBased(RoutingAlg):
         (function: check_for_positive_constraints).
 
         In case of successful algorithm execution, the function returns a RouteParams object. It performs
-        evaluations considering the individual routing states. It catches errors, returns an error code as well as the
-        best route at the state of the routing algorithm, at which the error occurred. In case the algorithm is
-        configured to find multiple routes (ISOCHRONE_NUMBER_OF_ROUTES>1), this function returns the best route while
-        all routes that have been found are written to separate json files.
+        evaluations considering the individual routing states. If an error is registered in the status object, the
+        best route at the state of the routing algorithm, at which the error occurred, is returned. In case the
+        algorithm is configured to find multiple routes (ISOCHRONE_NUMBER_OF_ROUTES>1), this function returns the best
+        route while all routes that have been found are written to separate json files.
 
         :param boat: Ship object
         :type boat: Ship
@@ -674,7 +696,8 @@ class IsoBased(RoutingAlg):
             self.count += 1
 
         route = self.terminate()
-        return route, self.status.get_error_code()
+        self.status.raise_for_error(route)
+        return route
 
     def move_boat(self, bs, ship_params):
         """
@@ -807,7 +830,7 @@ class IsoBased(RoutingAlg):
         else:
             # TODO: delete this if unnessessary
             if self.current_number_of_routes >= self.desired_number_of_routes:
-                raise ValueError("Something very strange happening here! Take a look.")
+                raise IsobasedInternalError("Something very strange happening here! Take a look.")
             self.find_every_route_reaching_destination()
             number_of_possible_routes = self.current_number_of_routes + self.current_step_routes.shape[0]
 
@@ -961,7 +984,7 @@ class IsoBased(RoutingAlg):
             shipparams_per_step.flip()
 
         except IndexError:
-            raise Exception('Pruned indices running out of bounds.')
+            raise IsobasedInternalError('Pruned indices running out of bounds.')
 
         route = RouteParams(count=self.count, start=self.start,
                             finish=self.finish, gcr=self.full_dist_traveled,
@@ -1033,7 +1056,7 @@ class IsoBased(RoutingAlg):
             self.full_time_traveled = self.full_time_traveled[idxs]
             self.time = self.time[idxs]
         except IndexError:
-            raise Exception('Pruned indices running out of bounds.')
+            raise IsobasedInternalError('Pruned indices running out of bounds.')
 
     def revert_to_previous_step(self):
         """
@@ -1060,7 +1083,7 @@ class IsoBased(RoutingAlg):
             self.time = np.full(col_len, -99)
 
         except IndexError:
-            raise Exception('Pruned indices running out of bounds.')
+            raise IsobasedInternalError('Pruned indices running out of bounds.')
 
     def routes_from_previous_step(self):
         """
@@ -1171,13 +1194,13 @@ class IsoBased(RoutingAlg):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and (
                 self.lats_per_step.shape[1] == self.course_per_step.shape[1]) and (
                          self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
-            raise 'define_courses: number of columns not matching!'
+            raise IsobasedInternalError('define_courses: number of columns not matching!')
 
         if (not ((self.lats_per_step.shape[0] == self.lons_per_step.shape[0]) and (
                 self.lats_per_step.shape[0] == self.course_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == self.dist_per_step.shape[0]) and (
                          self.lats_per_step.shape[0] == (self.count + 1)))):
-            raise ValueError(
+            raise IsobasedInternalError(
                 'define_courses: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
@@ -1265,7 +1288,7 @@ class IsoBased(RoutingAlg):
             is_pruned = True
 
         if not is_pruned:
-            raise ValueError('The selected pruning option is not available!')
+            raise WRTConfigError(f'The selected pruning option {prune_concept} is not available!')
 
         # ToDo: use logger.debug and args.debug
         if debug:
@@ -1303,7 +1326,7 @@ class IsoBased(RoutingAlg):
             self.routing_step.departure_time = self.routing_step.departure_time[idxs]
 
         except IndexError:
-            raise Exception('Pruned indices running out of bounds.')
+            raise IsobasedInternalError('Pruned indices running out of bounds.')
 
     def tune_multiple_routes_prunig(self) -> str:
         """
@@ -1540,16 +1563,17 @@ class IsoBased(RoutingAlg):
 
     def check_settings(self):
         if (self.course_segments / 2 * self.course_increments_deg >= self.prune_sector_deg_half):
-            raise ValueError(
+            raise WRTConfigError(
                 'Prune sector does not contain all courses. Please adjust settings. (course_segments=' + str(
                     self.course_segments) + ', course_increments_deg=' + str(
                     self.course_increments_deg) + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
         if ((self.course_segments % 2) != 0):
-            raise ValueError(
+            raise WRTConfigError(
                 'Please provide an even number of course segments, you chose: ' + str(self.course_segments))
 
         if ((self.prune_segments % 2) != 0):
-            raise ValueError('Please provide an even number of prune segments, you chose: ' + str(self.prune_segments))
+            raise WRTConfigError(
+                'Please provide an even number of prune segments, you chose: ' + str(self.prune_segments))
 
     def get_final_index(self):
         idx = np.argmax(self.full_dist_traveled)

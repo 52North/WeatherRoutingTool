@@ -17,6 +17,7 @@ from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.data_utils import get_closest, get_speed_from_arrival_time
 from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.utils.errors import WRTConfigError, GeneticInitialPopulationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory
 from WeatherRoutingTool.algorithms.gcrslider import GcrSliderAlgorithm
 
@@ -67,10 +68,10 @@ class Population(Sampling):
             if np.std(v_std) < 2:
                 mean_boat_speed = np.vstack(X[:, 0])[:, -1].mean()
                 if mean_boat_speed < self.min_boat_speed or mean_boat_speed > self.max_boat_speed:
-                    raise ValueError("The mean boat speed of the initial popluation which is calculated from "
-                                     "the arrival time is smaller than the minimum or larger than the maximum "
-                                     "specified boat speed. Please adjust either the arrival time or the boat speed "
-                                     "boundaries.")
+                    raise WRTConfigError("The mean boat speed of the initial popluation which is calculated from "
+                                         "the arrival time is smaller than the minimum or larger than the maximum "
+                                         "specified boat speed. Please adjust either the arrival time or the boat "
+                                         "speed boundaries.")
 
                 quantiles = self.spread_velocity(
                     max(mean_boat_speed - 2, self.min_boat_speed),
@@ -85,8 +86,10 @@ class Population(Sampling):
                     rt_arr[-1, -1] = -99.0
 
         for rt, in X:
-            assert tuple(rt[0, :-1]) == self.src, "Source waypoint not matching"
-            assert tuple(rt[-1, :-1]) == self.dst, "Destination waypoint not matching"
+            if tuple(rt[0, :-1]) != self.src:
+                raise GeneticInitialPopulationError("Starting point of route not matching global starting point. ")
+            if tuple(rt[-1, :-1]) != self.dst:
+                raise GeneticInitialPopulationError("Destination of route not matching global destination.")
 
         self.X = X
         return self.X
@@ -113,9 +116,9 @@ class Population(Sampling):
 
         percentage_constrained = self.n_constrained_routes / self.pop_size
 
-        assert (percentage_constrained < 0.5), (
-            f"{self.n_constrained_routes} / {self.pop_size} constrained — "
-            "More than 50% of the initial routes are constrained")
+        if percentage_constrained > 0.5:
+            raise GeneticInitialPopulationError(f"{self.n_constrained_routes} / {self.pop_size} constrained — "
+                                                "More than 50% of the initial routes are constrained")
 
     def recalculate_speed_for_route(self, rt):
         """
@@ -288,7 +291,7 @@ class FromGeojsonPopulation(Population):
         )
 
         if not routes_dir.exists() or not routes_dir.is_dir():
-            raise FileNotFoundError("Routes directory not found")
+            raise GeneticInitialPopulationError("Directory for reading initial population from Geojson does not exist.")
         self.routes_dir = routes_dir
 
     def generate(self, problem, n_samples, **kw):
@@ -308,13 +311,15 @@ class FromGeojsonPopulation(Population):
             if match(r"route_[0-9]+\.(json|geojson)$", file.lower()):
                 files.append(file)
         if len(files) == 0:
-            raise ValueError(f"Couldn't find any route in {self.routes_dir} for the initial population.")
+            raise GeneticInitialPopulationError(
+                f"Couldn't find any route in {self.routes_dir} for the initial population.")
 
         # read route(s) from file
         for i, file in enumerate(files):
             path = os.path.join(self.routes_dir, file)
             if not os.path.exists(path):
-                raise ValueError(f"Couldn't read route {path} for the initial population.")
+                raise GeneticInitialPopulationError(
+                    "Directory for reading initial population from Geojson does not exist.")
             else:
                 route = np.array(utils.route_from_geojson_file(path))
 
@@ -473,7 +478,7 @@ class GcrSliderPopulation(Population):
         if lat and lon:
             self.algo.waypoints = [[lat, lon]]
         try:
-            route, _ = self.algo.execute()
+            route = self.algo.execute()
             # import uuid
             # filename = f"{str(uuid.uuid4())}.geojson"
             # route.write_to_geojson(filename)
@@ -483,7 +488,7 @@ class GcrSliderPopulation(Population):
                      range(0, len(route.lats_per_step))]
             route = np.array(route)
         except Exception:
-            pass
+            raise GeneticInitialPopulationError("Error in generating a route using the GCRSlider.")
         return route
 
     @staticmethod
@@ -553,5 +558,4 @@ class PopulationFactory:
                     pop_size=population_size, )
 
             case _:
-                logger.error(f"Population type invalid: {population_type}")
-                raise ValueError(population_type)
+                raise NotImplementedError(f'The population type {population_type} is not implemented.')

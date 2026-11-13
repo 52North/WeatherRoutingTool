@@ -13,6 +13,7 @@ import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.algorithms.genetic.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic import Genetic
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError, WRTErrorCodes
 from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover, TwoPointCrossoverSpeed
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
@@ -479,10 +480,11 @@ def test_smoothen_speed_rec_error(speed_arr):
     """
     Test whether exception is raised if utils.smoothen_speed_rec function is called too often.
     """
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(GeneticOptimisationError) as excinfo:
         utils.smoothen_speed(speed_arr, 2)
 
-    assert "Too many calls to smoothen" in str(excinfo.value)
+    assert excinfo.value.code == WRTErrorCodes.GENETIC_OPTIMISATION_FAILED
+    assert "Too many calls to utils.smoothen_speed_rec" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("speed_arr,smooth_res", [

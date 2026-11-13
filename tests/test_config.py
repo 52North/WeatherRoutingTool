@@ -6,12 +6,23 @@ from pathlib import Path
 from geovectorslib import geod
 
 from WeatherRoutingTool.config import Config
+from WeatherRoutingTool.utils.errors import ERROR_MESSAGES, WRTConfigError, WRTErrorCodes
 
 
 def load_example_config():
     config_path = Path(__file__).parent / "config.tests.json"
     with config_path.open("r") as f:
         return json.load(f), config_path
+
+
+def assert_config_error(excinfo, detail):
+    """Check that a WRTConfigError carries the correct error code, message prefix and detail."""
+    err = excinfo.value
+    prefix = f"[E{WRTErrorCodes.CONFIG_INVALID:03d}] {ERROR_MESSAGES[WRTErrorCodes.CONFIG_INVALID].format(detail='')}"
+
+    assert err.code == WRTErrorCodes.CONFIG_INVALID
+    assert str(err).startswith(prefix.strip())
+    assert detail in str(err)
 
 
 def test_assign_config_from_json():
@@ -36,20 +47,42 @@ def test_assign_config_from_dict():
 def test_invalid_time_raises_error():
     config_data, _ = load_example_config()
     config_data["DEPARTURE_TIME"] = "2023-11-11T1111Z"
-    with pytest.raises(ValueError) as excinfo:
+
+    detail = "'DEPARTURE_TIME/ARRIVAL_TIME' must be in format YYYY-MM-DDTHH:MMZ"
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "'DEPARTURE_TIME/ARRIVAL_TIME' must be in format YYYY-MM-DDTHH:MMZ" in str(excinfo.value)
+    assert_config_error(excinfo, detail)
+    # the full message is fixed: error code + generic message + list of validation errors
+    full_detail = f"1 validation error(s):\n  DEPARTURE_TIME: {detail}"
+    expected = (f"[E{WRTErrorCodes.CONFIG_INVALID:03d}] "
+                f"{ERROR_MESSAGES[WRTErrorCodes.CONFIG_INVALID].format(detail=full_detail)}")
+    assert str(excinfo.value) == expected
+
+
+def test_multiple_validation_errors_are_collected():
+    config_data, _ = load_example_config()
+    config_data["DEPARTURE_TIME"] = "2023-11-11T1111Z"
+    config_data["ROUTER_HDGS_SEGMENTS"] = 3
+    config_data["DELTA_FUEL"] = -1
+
+    with pytest.raises(WRTConfigError) as excinfo:
+        Config.assign_config(init_mode="from_dict", config_dict=config_data)
+
+    assert_config_error(excinfo, "3 validation error(s)")
+    assert "DEPARTURE_TIME:" in str(excinfo.value)
+    assert "ROUTER_HDGS_SEGMENTS:" in str(excinfo.value)
+    assert "DELTA_FUEL:" in str(excinfo.value)
 
 
 def test_invalid_path_raises_error(tmp_path):
     config_data, _ = load_example_config()
     config_data["ROUTE_PATH"] = str(tmp_path / "nonexistent.nc")
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "Path doesn't exist" in str(excinfo.value)
+    assert_config_error(excinfo, "Path doesn't exist")
 
 
 def test_speedy_alg_validation_fails():
@@ -58,10 +91,10 @@ def test_speedy_alg_validation_fails():
     # Set inconsistent values
     config_data["ALGORITHM_TYPE"] = "speedy_isobased"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "If 'ALGORITHM_TYPE' is 'speedy_isobased', 'BOAT_TYPE' has to be 'speedy_isobased'." in str(excinfo.value)
+    assert_config_error(excinfo, "If 'ALGORITHM_TYPE' is 'speedy_isobased', 'BOAT_TYPE' has to be 'speedy_isobased'.")
 
 
 def test_genetic_shortest_route_boat_validation_fails():
@@ -70,11 +103,11 @@ def test_genetic_shortest_route_boat_validation_fails():
     # Set inconsistent values
     config_data["ALGORITHM_TYPE"] = "genetic_shortest_route"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "If 'ALGORITHM_TYPE' is 'genetic_shortest_route', 'BOAT_TYPE' has to be 'speedy_isobased'." in str(
-        excinfo.value)
+    assert_config_error(
+        excinfo, "If 'ALGORITHM_TYPE' is 'genetic_shortest_route', 'BOAT_TYPE' has to be 'speedy_isobased'.")
 
 
 def test_speedy_boat_validation_fails():
@@ -84,57 +117,57 @@ def test_speedy_boat_validation_fails():
     config_data["BOAT_TYPE"] = "speedy_isobased"
     config_data["ALGORITHM_TYPE"] = "isofuel"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "'BOAT_TYPE'='speedy_isobased' can only be used together with "
-    "'ALGORITHM_TYPE'='genetic_shortest_route' and 'ALGORITHM_TYPE'='speedy_isobased'." in str(excinfo.value)
+    assert_config_error(excinfo, "'BOAT_TYPE'='speedy_isobased' can only be used together with "
+                                 "'ALGORITHM_TYPE'='genetic_shortest_route' and 'ALGORITHM_TYPE'='speedy_isobased'.")
 
 
 def test_invalid_route_raises_error():
     config_data, _ = load_example_config()
     config_data["DEFAULT_ROUTE"] = [54.15, 13.15, 54.56, 200]
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "lon_end must be between -180 and 180" in str(excinfo.value)
+    assert_config_error(excinfo, "lon_end must be between -180 and 180")
 
 
 def test_negative_delta_fuel_raises_error():
     config_data, _ = load_example_config()
     config_data["DELTA_FUEL"] = -100
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "'DELTA_FUEL' must be greater than zero" in str(excinfo.value)
+    assert_config_error(excinfo, "'DELTA_FUEL' must be greater than zero")
 
 
 def test_non_even_router_hdgs_segments_raises_error():
     config_data, _ = load_example_config()
     config_data["ROUTER_HDGS_SEGMENTS"] = 31
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "'ROUTER_HDGS_SEGMENTS' must be a positive even integer" in str(excinfo.value)
+    assert_config_error(excinfo, "'ROUTER_HDGS_SEGMENTS' must be a positive even integer")
 
 
 def test_route_map_compatibility():
     config_data, _ = load_example_config()
     config_data["DEFAULT_ROUTE"] = [36.192, 13.392, 41.349, 17.188]
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "is outside the defined map bounds" in str(excinfo.value)
+    assert_config_error(excinfo, "is outside the defined map bounds")
 
 
 def test_weather_start_time_compatibility():
     config_data, _ = load_example_config()
     config_data["DEPARTURE_TIME"] = "2022-04-01T11:11Z"
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "Weather data does not cover the full routing time range." in str(excinfo.value)
+    assert_config_error(excinfo, "Weather data does not cover the full routing time range.")
 
 
 @pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type,ierr", [
@@ -156,10 +189,10 @@ def test_boat_speed_arrival_time_waypoint_optimisation_failure(boat_speed, arriv
         "Optimisation for arrival-time accuracy is meaningless for pure waypoint optimisation."
     ]
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert error_str_list[ierr] in str(excinfo.value)
+    assert_config_error(excinfo, error_str_list[ierr])
 
 
 @pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type", [
@@ -192,10 +225,10 @@ def test_boat_speed_arrival_time_speed_optimisation_failure(boat_speed, arrival_
     config_data["GENETIC_CROSSOVER_TYPE"] = cross_type
     config_data["ALGORITHM_TYPE"] = "genetic"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "Please provide a valid arrival time and boat speed." in str(excinfo.value)
+    assert_config_error(excinfo, "Please provide a valid arrival time and boat speed.")
 
 
 @pytest.mark.parametrize("boat_speed,arrival_time,mut_type,cross_type", [
@@ -239,7 +272,7 @@ def test_travel_time_feasibility_failure():
     # Only half of the required travel time is available -> infeasible.
     config_data["ARRIVAL_TIME"] = departure + _gcr_travel_time(config_data) / 2
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(WRTConfigError) as excinfo:
         Config.assign_config(init_mode="from_dict", config_dict=config_data)
 
-    assert "cannot be travelled within the configured time window" in str(excinfo.value)
+    assert_config_error(excinfo, "cannot be travelled within the configured time window")

@@ -14,6 +14,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError
 from WeatherRoutingTool.algorithms.genetic.patcher import PatchFactory, PatcherBase
 from WeatherRoutingTool.utils.maps import Map
 
@@ -206,9 +207,8 @@ class RandomPlateauMutation(MutationConstraintRejection):
             mutation_type="RandomPlateauMutation",
             **kw
         )
-
         if plateau_size % 2 != 1:
-            raise ValueError('The plateau_size of RandomPlateauMutation needs to be an uneven number!')
+            raise GeneticOptimisationError('The plateau_size of RandomPlateauMutation needs to be an uneven number!')
 
         self.n_updates = n_updates
         self.plateau_size = plateau_size  # uneven
@@ -254,16 +254,14 @@ class RandomPlateauMutation(MutationConstraintRejection):
         if self.plateau_size % 2 != 1:
             self.plateau_size += 1
         self.plateau_slope = (plateau_length + 2 - self.plateau_size) / 2
-        assert self.plateau_slope % 1 == 0
+        if self.plateau_slope % 1 != 0:
+            raise GeneticOptimisationError(f"plateau_slope {self.plateau_size} needs to be an integer!")
         if plateau_length < 10:
             self.dist = 0.5 * 1e4
         else:
             self.dist = 1e4
 
         self.plateau_slope = int(self.plateau_slope)
-        print('plateau_size: ', self.plateau_size)
-        print('plateau_slope: ', self.plateau_slope)
-        print('plateau_length:', plateau_length)
 
         return True
 
@@ -295,8 +293,9 @@ class RandomPlateauMutation(MutationConstraintRejection):
         debug = False
 
         # test whether input route rt has the correct shape
-        assert len(rt.shape) == 2
-        assert rt.shape[1] == 3
+        if len(rt.shape) != 2 or rt.shape[1] != 3:
+            raise GeneticOptimisationError(f"Shape {rt.shape} of the route object is not suitable for "
+                                           f"RandomPlateauMutation.")
         route_length = rt.shape[0]
         long_enough = self.variable_plateau_size(route_length)
         if not long_enough:
@@ -461,9 +460,10 @@ class RouteBlendMutation(MutationConstraintRejection):
         return curve
 
     def mutate(self, problem, rt, **kw):
-        # test shape of input route
-        assert len(rt.shape) == 2
-        assert rt.shape[1] == 3
+        # test whether input route rt has the correct shape
+        if len(rt.shape) != 2 or rt.shape[1] != 3:
+            raise GeneticOptimisationError(f"Shape {rt.shape} of the route object is not suitable for "
+                                           f"RouteBlendMutation.")
         rt_new = copy.deepcopy(rt)
 
         route_length = rt_new.shape[0]
@@ -643,6 +643,7 @@ class RandomMutationsOrchestrator(MutationBase):
     :param waypoint_opts: List of Mutation classes for mutating waypoints.
     :type waypoint_optsgit s: list[Mutation]
     """
+
     def __init__(self, config: Config, speed_opts, waypoint_opts, **kw):
         super().__init__(**kw)
 

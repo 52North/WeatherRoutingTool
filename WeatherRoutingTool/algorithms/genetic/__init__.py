@@ -25,6 +25,12 @@ from WeatherRoutingTool.algorithms.genetic.mutation import MutationFactory
 from WeatherRoutingTool.algorithms.genetic.repair import RepairFactory
 from WeatherRoutingTool.algorithms.genetic.problem import RoutingProblem
 from WeatherRoutingTool.algorithms.genetic import utils
+from WeatherRoutingTool.utils.errors import (
+    WRTConfigError,
+    GeneticInitialPopulationError,
+    GeneticMCDMError,
+    GeneticOptimisationError,
+)
 
 from WeatherRoutingTool.algorithms.routingalg import RoutingAlg
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
@@ -73,8 +79,8 @@ class Genetic(RoutingAlg):
             wt: WeatherCond,
             constraints_list: ConstraintsList,
             verbose=False
-    ):
-        """Main routing execution function
+    ) -> RouteParams:
+        """Main routing execution function. Errors are raised as exceptions.
 
         :param boat: Boat config
         :type boat: Boat
@@ -84,8 +90,9 @@ class Genetic(RoutingAlg):
         :type constraints_list: ConstraintsList
         :param verbose: Verbosity setting for logs
         :type verbose: Optional[bool]
+        :return: best-compromise route
+        :rtype: RouteParams
         """
-
         plt.set_loglevel(level='warning')  # deactivate matplotlib debug messages if debug mode activated
         seed = None
         if self.config.GENETIC_RANDOM_SEED:
@@ -124,7 +131,7 @@ class Genetic(RoutingAlg):
             res=res_minimize,
             problem=problem, )
 
-        return res_terminate, 9
+        return res_terminate
 
     def optimize(
             self,
@@ -212,7 +219,10 @@ class Genetic(RoutingAlg):
         """Genetic Algorithm termination procedures"""
 
         super().terminate()
-        self.consistency_check(res, problem)
+        try:
+            self.consistency_check(res, problem)
+        except AssertionError:
+            raise GeneticOptimisationError("Consistency check failed. Potential memory issue.")
 
         # mcdm = MCDM.RMethod(self.objectives)
         mcdm = MCDM.PymoosASF(self.objectives)

@@ -9,6 +9,7 @@ from geographiclib.geodesic import Geodesic
 from pymoo.core.duplicate import ElementwiseDuplicateElimination
 
 import WeatherRoutingTool.utils.graphics as graphics
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError
 from WeatherRoutingTool.constraints.constraints import ConstraintsList
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.config import Config
@@ -218,7 +219,7 @@ def smoothen_speed_rec(speed_arr: np.ndarray, viol_list: list[int], n_calls: int
         print('Call: ', n_calls)
 
     if n_calls > max_calls:
-        raise Exception("Too many calls to smoothen")
+        raise GeneticOptimisationError("Too many calls to utils.smoothen_speed_rec.")
 
     for ispeed in viol_list:
         lower = 0.

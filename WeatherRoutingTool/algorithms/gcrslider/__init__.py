@@ -105,7 +105,7 @@ class GcrSliderAlgorithm(RoutingAlg):
                 del points_copy[list(points_copy.keys())[0]]
         return clusters
 
-    def execute(self) -> tuple[RouteParams, int]:
+    def execute(self) -> RouteParams:
         self.sequence_id = 0
         self.found_id = 0
         self.points = {
@@ -204,10 +204,10 @@ class GcrSliderAlgorithm(RoutingAlg):
             starttime_per_step=start_times,
             ship_params_per_step=ship_params,
         )
-        return route, 0
+        return route
 
     def execute_routing(self, boat: Boat, wt: WeatherCond, constraints_list: ConstraintsList, verbose=False
-                        ) -> tuple[RouteParams, int]:
+                        ) -> RouteParams:
         return self.execute()
 
     def has_point_on_land(
