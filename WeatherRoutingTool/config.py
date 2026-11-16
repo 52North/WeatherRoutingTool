@@ -16,7 +16,7 @@ from WeatherRoutingTool.utils.errors import WRTConfigError
 
 logger = logging.getLogger('WRT.Config')
 
-BUILTIN_SHIPS = ['CBT', 'SAL', 'speedy_isobased', 'direct_power_method']
+BUILTIN_SHIPS = ['CBT', 'speedy_isobased', 'direct_power_method']
 
 
 def set_up_logging(info_log_file=None, warnings_log_file=None, debug=False, stream=sys.stdout,

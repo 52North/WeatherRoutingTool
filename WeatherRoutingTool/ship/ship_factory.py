@@ -26,12 +26,10 @@ class ShipFactory:
             logger.info("Use direct power method for modeling fuel consumption.")
             ship = DirectPowerBoat(ship_config)
         # ---
-        # DEPRECATED: should be removed once the ships are available in the new plugin structure
+        # DEPRECATED: should be removed once the ship is available in the new plugin structure
         elif boat_type == "CBT":
             logger.info("Use maripower for modeling fuel consumption.")
             ship = MariPowerTanker(ship_config)
-        elif boat_type == "SAL":
-            raise WRTConfigError("Ship type SAL is not yet supported!")
         # ---
 
         # Ship models dynamically provided via Entry Points
