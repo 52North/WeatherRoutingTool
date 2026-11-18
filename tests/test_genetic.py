@@ -8,17 +8,19 @@ import numpy as np
 import matplotlib.pyplot as pyplot
 import pytest
 from astropy import units as u
+from pymoo.core.result import Result
 
 import tests.basic_test_func as basic_test_func
 import WeatherRoutingTool.algorithms.genetic.utils as utils
 import WeatherRoutingTool.utils.graphics as graphics
 from WeatherRoutingTool.algorithms.genetic import Genetic
-from WeatherRoutingTool.utils.errors import GeneticOptimisationError, WRTErrorCodes
+from WeatherRoutingTool.utils.errors import GeneticOptimisationError, GeneticMCDMError, WRTErrorCodes
 from WeatherRoutingTool.algorithms.genetic.crossover import SinglePointCrossover, SpeedCrossover, TwoPointCrossoverSpeed
 from WeatherRoutingTool.algorithms.genetic.patcher import PatcherBase, GreatCircleRoutePatcher, IsofuelPatcher, \
     GreatCircleRoutePatcherSingleton, IsofuelPatcherSingleton, PatchFactory
 from WeatherRoutingTool.algorithms.genetic.population import IsoFuelPopulation, FromGeojsonPopulation
 from WeatherRoutingTool.algorithms.genetic.mutation import RandomPlateauMutation, RouteBlendMutation
+from WeatherRoutingTool.algorithms.genetic.mcdm import PymoosASF
 from WeatherRoutingTool.config import Config
 from WeatherRoutingTool.algorithms.genetic.repair import ConstraintViolationRepair
 from WeatherRoutingTool.ship.ship_config import ShipConfig
@@ -544,3 +546,42 @@ def test_twopoint_crossover_speed(plt):
 
     pyplot.tight_layout()
     plt.saveas = "test_twopoint_crossover_speed.png"
+
+
+@pytest.mark.parametrize("F,X", [
+    (None, None),
+    (np.empty((0, 2)), np.empty((0, 1))),
+])
+def test_terminate_no_feasible_solution(F, X):
+    """
+    Test whether Genetic.terminate raises a descriptive error if the optimisation returns no feasible solution.
+    """
+    dirname = os.path.dirname(__file__)
+    configpath = os.path.join(dirname, 'config.isofuel_single_route.json')
+    config = Config.assign_config(Path(configpath))
+    alg = Genetic(config)
+    alg.figure_path = None
+
+    res = Result()
+    res.F = F
+    res.X = X
+
+    with pytest.raises(GeneticOptimisationError) as excinfo:
+        alg.terminate(res=res, problem=None)
+
+    assert excinfo.value.code == WRTErrorCodes.GENETIC_OPTIMISATION_FAILED
+    assert "No feasible solution found" in str(excinfo.value)
+
+
+def test_mcdm_no_solution_after_filtering():
+    """
+    Test whether the MCDM raises a descriptive error if all solutions are filtered out due to their time objective.
+    """
+    mcdm = PymoosASF({"arrival_time": 1.5, "fuel_consumption": 1.5})
+    solutions = np.array([[1000., 100.], [1000., 200.]])
+
+    with pytest.raises(GeneticMCDMError) as excinfo:
+        mcdm.get_best_compromise(solutions)
+
+    assert excinfo.value.code == WRTErrorCodes.GENETIC_MCDM_FAILED
+    assert "No solution is left" in str(excinfo.value)
