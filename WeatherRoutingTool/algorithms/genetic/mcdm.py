@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pymoo.decomposition.asf import ASF
 
-from WeatherRoutingTool.utils.errors import WRTConfigError
+from WeatherRoutingTool.utils.errors import WRTConfigError, GeneticMCDMError
 
 
 class MCDM:
@@ -268,6 +268,7 @@ class PymoosASF(MCDM):
         :param solutions: 2D array of objective values where rows are alternative solutions and columns are
           objective values.
         :type solutions: numpy.ndarray
+        :raises GeneticMCDMError: if all solutions are filtered out before the best compromise is determined
         :return: The index of the optimal solution in the provided array.
         :rtype: int
         """
@@ -280,6 +281,11 @@ class PymoosASF(MCDM):
             print(f'Original solutions: {solutions}')
 
         self.filtered_solutions = solutions[~np.isclose(solutions[:, 0], 1000.0)]
+
+        if self.filtered_solutions.size == 0:
+            raise GeneticMCDMError(
+                "No solution is left after removing routes with an infinite time objective. "
+                "All candidate routes violate the time constraints.")
 
         if debug:
             print(f'Solutions after filtering: {self.filtered_solutions}')

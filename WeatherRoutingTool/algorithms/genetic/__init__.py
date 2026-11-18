@@ -216,9 +216,25 @@ class Genetic(RoutingAlg):
             i_route += 1
 
     def terminate(self, res: Result, problem: RoutingProblem):
-        """Genetic Algorithm termination procedures"""
+        """Genetic Algorithm termination procedures
+
+        :param res: result of the optimisation. If no feasible solution exists, pymoo sets ``res.F`` and ``res.X``
+          to ``None``.
+        :type res: pymoo.core.result.Result
+        :param problem: routing problem that was optimised
+        :type problem: RoutingProblem
+        :raises GeneticOptimisationError: if the optimisation did not provide any feasible solution
+        :return: best-compromise route
+        :rtype: RouteParams
+        """
 
         super().terminate()
+
+        if res is None or res.F is None or res.X is None or len(res.F) == 0:
+            raise GeneticOptimisationError(
+                "No feasible solution found. All candidate routes violate the given constraints. "
+                "Consider relaxing the constraints or adjusting the route boundaries.")
+
         try:
             self.consistency_check(res, problem)
         except AssertionError:
