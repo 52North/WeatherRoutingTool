@@ -244,3 +244,49 @@ def test_check_crossing_stay_in_time_partly_out_of_range():
     is_constrained = stay_in_time.check_crossing(lat_start, lon_start, lat_end, lon_end, time_start)
 
     assert np.array_equal(ref_is_constrained, is_constrained)
+
+
+def test_safe_crossing_antimeridian():
+    """Segments crossing the antimeridian in open water must not be
+    reported as crossing land.  Before the fix, the linear longitude
+    interpolation computed a 359-degree sweep instead of the 1-degree
+    short path, causing false positives."""
+
+    land_crossing = LandCrossing()
+    constraint_list = basic_test_func.generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(land_crossing)
+
+    # 1. South Pacific antimeridian crossing (open water, east -> west)
+    is_const = constraint_list.safe_crossing(
+        np.array([-30.0]), np.array([179.5]),
+        np.array([-30.0]), np.array([-179.5]),
+        np.array([None]), [False])
+    assert is_const == [False], "open-water antimeridian crossing flagged as land"
+
+    # 2. Reverse direction (west -> east)
+    is_const_rev = constraint_list.safe_crossing(
+        np.array([-30.0]), np.array([-179.5]),
+        np.array([-30.0]), np.array([179.5]),
+        np.array([None]), [False])
+    assert is_const_rev == [False], "reverse antimeridian crossing flagged as land"
+
+    # 3. Equator antimeridian crossing (open water)
+    is_const_eq = constraint_list.safe_crossing(
+        np.array([0.0]), np.array([179.0]),
+        np.array([0.0]), np.array([-179.0]),
+        np.array([None]), [False])
+    assert is_const_eq == [False], "equatorial antimeridian crossing flagged as land"
+
+    # 4. Control: genuine land crossing (Chile) must still be detected
+    is_const_land = constraint_list.safe_crossing(
+        np.array([-30.0]), np.array([-70.5]),
+        np.array([-30.0]), np.array([-69.0]),
+        np.array([None]), [False])
+    assert is_const_land == [True], "genuine land crossing not detected"
+
+    # 5. Control: non-antimeridian open water must remain clear
+    is_const_pacific = constraint_list.safe_crossing(
+        np.array([-30.0]), np.array([170.0]),
+        np.array([-30.0]), np.array([175.0]),
+        np.array([None]), [False])
+    assert is_const_pacific == [False], "open Pacific segment flagged as land"
