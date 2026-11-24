@@ -254,13 +254,33 @@ You can define the environment variables in a separate .env file and call the pr
 
     source <path-to-WRT>/load_wrt.sh
 
-Logging and Debugging
----------------------
+Error Handling and Logging
+--------------------------
+The WRT implements dedicated exceptions in ``WeatherRoutingTool/utils/errors.py`` that inherit from the base class ``WRTError``, provide error messages and return ``WRTErrorCodes``.
+The error codes are divided into the following error groups:
+
++----------------------------+---------------------------------------+
+| Range of WRTErrorCodes     | Error Group                           |
++============================+=======================================+
+| 0                          | no error                              |
++----------------------------+---------------------------------------+
+| 1 - 9                      | general (configuration, input/output) |
++----------------------------+---------------------------------------+
+| 10 - 19                    | isochrone-based algorithms            |
++----------------------------+---------------------------------------+
+| 20 - 29                    | genetic algorithm                     |
++----------------------------+---------------------------------------+
+| 30 - 39                    | environmental data                    |
++----------------------------+---------------------------------------+
+| 40 - 49                    | fuel-consumption models               |
++----------------------------+---------------------------------------+
+| 90 - 99                    | unexpected internal errors            |
++----------------------------+---------------------------------------+
+
+Errors are caught in ``cli.py`` and ``WeatherRoutingTool/execute_routing.py`` and the ``WRTErrorCodes`` are returned as exit codes of the program.
 
 All log messages are sent to stdout by default. In addition, info and warning logs can be saved separately to file.
-Debugging mode can be enabled (disabled by default) which sets the stream (stdout) logging level to debug.
-
-The top-level logger is named "WRT". Child loggers are following the scheme "WRT.<child-name>".
+Debugging mode can be enabled (disabled by default) which sets the stream (stdout) logging level to debug. The top-level logger is named "WRT". Child loggers are following the scheme "WRT.<child-name>".
 They inherit the top-level loggers' logging level.
 
 Input data
