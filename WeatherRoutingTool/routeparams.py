@@ -22,7 +22,7 @@ import WeatherRoutingTool.utils.graphics as graphics
 import WeatherRoutingTool.utils.formatting as form
 from WeatherRoutingTool.utils.errors import WRTAPIError
 from WeatherRoutingTool.utils.formatting import NumpyArrayEncoder
-from WeatherRoutingTool.ship.shipparams import ShipParams
+from WeatherRoutingTool.ship.shipparams import ShipParams, values_equal
 
 logger = logging.getLogger('WRT.Routeparams')
 
@@ -78,6 +78,12 @@ class RouteParams:
     dists_per_step: tuple  # distance traveled on great circle for every step (m)
     starttime_per_step: tuple  # start time at beginning of each step + time when destination is reached
 
+    _COMPARED_FIELDS = (
+        'count', 'start', 'finish', 'gcr', 'route_type', 'time',
+        'lats_per_step', 'lons_per_step', 'course_per_step',
+        'dists_per_step', 'starttime_per_step',
+    )
+
     def __init__(self, count, start, finish, gcr, route_type, time, lats_per_step, lons_per_step, course_per_step,
                  dists_per_step, starttime_per_step, ship_params_per_step):
         self.count = count
@@ -114,30 +120,13 @@ class RouteParams:
 
         form.print_line()
 
-    def __eq__(self, route2):
-        bool_equal = True
-        if not (self.count == route2.count):
-            raise ValueError('Route counts not matching')
-        if not (np.array_equal(self.start, route2.start)):
-            raise ValueError('Route start not matching')
-        if not (np.array_equal(self.finish, route2.finish)):
-            raise ValueError('Route finsh not matching')
-        if not (np.array_equal(self.time, route2.time)):
-            raise ValueError('Route time not matching: self=' + str(self.time) + ' other=' + str(route2.time))
-        if not (np.array_equal(self.fuel, route2.fuel)):
-            raise ValueError('Route fuel not matching: self=' + str(self.fuel) + ' other=' + str(route2.fuel))
-        if not (np.array_equal(self.rpm, route2.rpm)):
-            raise ValueError('Route rpm not matching')
-        if not (np.array_equal(self.lats_per_step, route2.lats_per_step)):
-            raise ValueError('Route lats_per_step not matching')
-        if not (np.array_equal(self.lons_per_step, route2.lons_per_step)):
-            raise ValueError('Route lons_per_step not matching')
-        if not (np.array_equal(self.course_per_step, route2.course_per_step)):
-            raise ValueError('Route course_per_step not matching')
-        if not (np.array_equal(self.dists_per_step, route2.dists_per_step)):
-            raise ValueError('Route dists_per_step not matching')
-
-        return bool_equal
+    def __eq__(self, other):
+        if not isinstance(other, RouteParams):
+            return NotImplemented
+        return (
+            all(values_equal(getattr(self, field), getattr(other, field)) for field in self._COMPARED_FIELDS)
+            and self.ship_params_per_step == other.ship_params_per_step
+        )
 
     def convert_to_dict(self):
         rp_dict = {"count": self.count, "start": self.start, "finish": self.finish, "route type": self.route_type,
