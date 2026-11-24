@@ -437,7 +437,11 @@ class ConstraintsList:
         debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
-        delta_lons = (lon_end - lon_start) * self.pars.resolution
+        # Wrap longitude difference to [-180, 180) so segments crossing
+        # the antimeridian interpolate along the short path, not the long
+        # way around the globe (fixes antimeridian land-crossing false positives).
+        diff_lons = ((lon_end - lon_start + 180.0) % 360.0) - 180.0
+        delta_lons = diff_lons * self.pars.resolution
         x0 = lat_start
         y0 = lon_start
 
@@ -449,8 +453,11 @@ class ConstraintsList:
         for iStep in range(0, nSteps):
             x = x0 + delta_lats
             y = y0 + delta_lons
+            # Normalise longitude to [-180, 180] so that the land mask
+            # (global_land_mask) receives valid coordinates.
+            y_norm = ((y + 180.0) % 360.0) - 180.0
 
-            is_constrained = self.safe_endpoint(x, y, current_time, is_constrained)
+            is_constrained = self.safe_endpoint(x, y_norm, current_time, is_constrained)
             x0 = x
             y0 = y
 
@@ -473,7 +480,7 @@ class ConstraintsList:
 
         if not np.allclose(x, lat_end):
             raise Exception("Constraints.land_crossing(): did not reach latitude of destination!")
-        if not np.allclose(y, lon_end):
+        if not np.allclose(((y - lon_end + 180.0) % 360.0) - 180.0, 0.0):
             raise Exception("Constraints.land_crossing(): did not reach longitude of destination!")
 
         return is_constrained
