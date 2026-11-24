@@ -44,6 +44,36 @@ def mock_route_data():
         ],
         "travel_times": np.array([10.0, 20.0]) * u.second,
     }
+@pytest.fixture
+def time_objective_for_difference(mock_route_data, monkeypatch):
+    actual_arrival = (
+        mock_route_data["start_times"][-1]
+        + timedelta(seconds=mock_route_data["travel_times"][-1].value)
+    )
+
+    route = np.array([
+        [10.0, 20.0, 6.0],
+        [11.0, 21.0, 6.0],
+        [12.0, 22.0, 6.0],
+    ])
+
+    monkeypatch.setattr(
+        RouteParams,
+        "get_per_waypoint_coords",
+        MagicMock(return_value=mock_route_data),
+    )
+
+    def calculate(problem, difference_minutes):
+        problem.arrival_time = actual_arrival + timedelta(
+            minutes=difference_minutes
+        )
+        problem.boat.get_ship_parameters.return_value = MagicMock()
+
+        return problem.get_power(route)["time_obj"]
+
+    return calculate
+
+
 
 
 class TestRoutingProblemInit:
@@ -63,6 +93,8 @@ class TestRoutingProblemInit:
         problem = problem_factory(objectives=objectives)
 
         assert problem.objectives == objectives
+
+
 
 
 class TestGetObjectives:
@@ -193,6 +225,7 @@ class TestGetPower:
         expected = (1.0 / (120 ** 4)) * (1.0 ** 4)
         assert result["time_obj"] == pytest.approx(expected)
 
+
     def test_calculates_non_symmetric_time_objective_for_early_arrival(
         self, problem_factory, mock_route_data, monkeypatch
     ):
@@ -222,32 +255,50 @@ class TestGetPower:
         expected = (100.0 / (120 ** 4)) * (1.0 ** 2)
         assert result["time_obj"] == pytest.approx(expected)
 
-    def test_caps_time_objective_when_arrival_difference_exceeds_120_minutes(
-        self, problem_factory, mock_route_data, monkeypatch
+    @pytest.mark.parametrize(
+        ("difference_minutes", "expected"),
+        [
+            (120, 1.0),
+            (-120, 1.0),
+            (120.01, 1000),
+            (-120.01, 1000),
+        ],
+    )
+    def test_time_objective_at_and_beyond_120_minute_boundary(
+        self,
+        problem_factory,
+        time_objective_for_difference,
+        difference_minutes,
+        expected,
     ):
-        departure = datetime(2025, 4, 1, 11, 11)
-        arrival = departure - timedelta(minutes=121)
-
         problem = problem_factory(objectives={"arrival_time": 1.5})
-        problem.arrival_time = arrival
 
-        monkeypatch.setattr(
-            RouteParams,
-            "get_per_waypoint_coords",
-            MagicMock(return_value=mock_route_data),
+        result = time_objective_for_difference(
+            problem, difference_minutes
         )
 
-        problem.boat.get_ship_parameters.return_value = MagicMock()
+        assert result == pytest.approx(expected)
 
-        route = np.array([
-            [10.0, 20.0, 6.0],
-            [11.0, 21.0, 6.0],
-            [12.0, 22.0, 6.0],
-        ])
+    def test_late_arrival_under_one_minute_uses_one_minute_penalty(
+        self, problem_factory, time_objective_for_difference
+    ):
+        problem = problem_factory(objectives={"arrival_time": 1.5})
 
-        result = problem.get_power(route)
+        result = time_objective_for_difference(problem, -0.5)
 
-        assert result["time_obj"] == 1000
+        assert result == pytest.approx(1.0 / (120 ** 4))
+
+    def test_early_arrival_under_one_minute_uses_one_minute_penalty(
+        self, problem_factory, time_objective_for_difference
+    ):
+        problem = problem_factory(objectives={"arrival_time": 1.5})
+        problem.symmetric_time_objective = False
+
+        result = time_objective_for_difference(problem, 0.5)
+
+        assert result == pytest.approx(100.0 / (120 ** 4))
+
+
 
     def test_uses_arrival_time_to_calculate_boat_speed(
         self, problem_factory, mock_route_data, monkeypatch
