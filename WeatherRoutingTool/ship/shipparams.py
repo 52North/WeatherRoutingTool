@@ -6,7 +6,27 @@ from astropy import units as u
 logger = logging.getLogger('WRT.ship')
 
 
+def values_equal(a, b):
+    """Return True if two scalars, arrays, or Astropy Quantities have equal values."""
+    if isinstance(a, u.Quantity) or isinstance(b, u.Quantity):
+        if not (isinstance(a, u.Quantity) and isinstance(b, u.Quantity)):
+            return False
+        if not a.unit.is_equivalent(b.unit):
+            return False
+        return bool(np.array_equal(a.to_value(a.unit), b.to_value(a.unit)))
+    return bool(np.array_equal(a, b))
+
+
 class ShipParams():
+    _COMPARED_FIELDS = (
+        'fuel_rate', 'power', 'rpm', 'speed',
+        'r_calm', 'r_wind', 'r_waves', 'r_shallow', 'r_roughness',
+        'wave_height', 'wave_direction', 'wave_period',
+        'u_currents', 'v_currents', 'u_wind_speed', 'v_wind_speed',
+        'pressure', 'air_temperature', 'salinity', 'water_temperature',
+        'status', 'message', 'fuel_type',
+    )
+
     fuel_rate: u.Quantity  # (kg/s)
     power: u.Quantity  # (W)
     rpm: u.Quantity  # (rpm)
@@ -59,6 +79,14 @@ class ShipParams():
         self.message = message
 
         self.fuel_type = 'HFO'
+
+    def __eq__(self, other):
+        if not isinstance(other, ShipParams):
+            return NotImplemented
+        return all(
+            values_equal(getattr(self, field), getattr(other, field))
+            for field in self._COMPARED_FIELDS
+        )
 
     @classmethod
     def set_default_array(cls):

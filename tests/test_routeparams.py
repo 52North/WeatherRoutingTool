@@ -3,11 +3,88 @@ from datetime import datetime, timedelta
 
 from geovectorslib import geod
 import numpy as np
+import pytest
 from astropy import units as u
 
 import tests.basic_test_func as basic_test_func
 from WeatherRoutingTool.routeparams import RouteParams
 from WeatherRoutingTool.ship.shipparams import ShipParams
+
+
+def _make_test_route():
+    lats = np.array([40.0, 50.0, 60.0, 70.0])
+    lons = np.array([4.0, 5.0, 6.0, 7.0])
+    start_times = np.array([
+        datetime(2022, 12, 19) + timedelta(hours=h) for h in range(4)
+    ])
+    sp = ShipParams.set_default_array_1D(3)
+    sp.fuel_rate = np.array([1.12, 1.13, 1.15]) * u.kg / u.s
+    sp.rpm = np.array([10.0, 11.0, 12.0]) / u.minute
+    sp.speed = np.array([6.0, 6.0, 6.0]) * u.m / u.s
+    sp.power = np.array([1000.0, 2000.0, 4000.0]) * u.Watt
+
+    return RouteParams(
+        count=2,
+        start=(lats[0], lons[0]),
+        finish=(lats[-1], lons[-1]),
+        gcr=None,
+        route_type='test',
+        time=timedelta(hours=3),
+        lats_per_step=lats,
+        lons_per_step=lons,
+        course_per_step=np.array([10.0, 20.0, 30.0]) * u.degree,
+        dists_per_step=np.array([100.0, 200.0, 150.0]) * u.meter,
+        starttime_per_step=start_times,
+        ship_params_per_step=sp,
+    )
+
+
+def test_routeparams_equality(tmp_path):
+    route = _make_test_route()
+    equivalent_route = _make_test_route()
+
+    assert route == equivalent_route
+    assert not (route != equivalent_route)
+
+    # Compatible units should still compare equal (power: W vs kW)
+    equivalent_route.ship_params_per_step.power = (
+        np.array([1.0, 2.0, 4.0]) * u.kW
+    )
+    assert route == equivalent_route
+
+    # Equality of routes loaded from GeoJSON (isolated from shared fixture)
+    route_file = tmp_path / 'route.json'
+    route.write_to_geojson(str(route_file))
+    assert RouteParams.from_file(str(route_file)) == RouteParams.from_file(str(route_file))
+
+
+@pytest.mark.parametrize('mutate', [
+    lambda r: setattr(r.ship_params_per_step, 'fuel_rate', np.array([9.9, 1.13, 1.15]) * u.kg / u.s),
+    lambda r: setattr(r.ship_params_per_step, 'fuel_rate', np.array([1.12, 1.13, 1.15]) * u.meter),
+    lambda r: setattr(r.ship_params_per_step, 'rpm', np.array([99.0, 11.0, 12.0]) / u.minute),
+    lambda r: setattr(r.ship_params_per_step, 'speed', np.array([9.0, 6.0, 6.0]) * u.m / u.s),
+    lambda r: setattr(r.ship_params_per_step, 'fuel_type', 'MDO'),
+    lambda r: setattr(r, 'count', 99),
+    lambda r: setattr(r, 'route_type', 'other'),
+    lambda r: setattr(r, 'lats_per_step', np.array([41.0, 50.0, 60.0, 70.0])),
+    lambda r: setattr(r, 'starttime_per_step', r.starttime_per_step + timedelta(hours=1)),
+])
+def test_routeparams_inequality(mutate):
+    route = _make_test_route()
+    other = _make_test_route()
+    mutate(other)
+
+    assert route != other
+    assert not (route == other)
+
+
+def test_routeparams_equality_non_route_type():
+    route = _make_test_route()
+
+    assert route != None  # noqa: E711
+    assert not (route == None)  # noqa: E711
+    assert route != 'not a route'
+    assert not (route == 'not a route')
 
 
 def test_get_acc_variables():
