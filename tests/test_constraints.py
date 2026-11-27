@@ -1,11 +1,15 @@
 import os
 from datetime import datetime
+from unittest.mock import Mock
 
 import numpy as np
+import pytest
 import xarray as xr
 from astropy import units as u
+from scipy.interpolate import RegularGridInterpolator
 
 import tests.basic_test_func as basic_test_func
+import WeatherRoutingTool.constraints.constraints as constraints
 from WeatherRoutingTool.config import set_up_logging
 from WeatherRoutingTool.constraints.constraints import (ConstraintsList, ConstraintPars, LandCrossing,
                                                         RunTestContinuousChecks, WaterDepth,
@@ -84,6 +88,81 @@ def test_safe_waterdepth():
     is_constrained = constraint_list.safe_crossing(lat[1, :], lon[1, :], lat[0, :], lon[0, :], time, is_constrained)
     assert is_constrained[0] == 1
     assert is_constrained[1] == 0
+
+
+def generate_depth_file(path, is_lat_ascending):
+    """
+    Write depth data from 50N to 56N and from 0E to 8E to a netCDF file
+    """
+    lat = np.linspace(50, 56, 61)
+    lon = np.linspace(0, 8, 81)
+    if not is_lat_ascending:
+        lat = lat[::-1]
+    z = np.random.default_rng(1).uniform(-100, 10, (lat.size, lon.size))
+    ds_depth = xr.Dataset({"z": (("latitude", "longitude"), z)}, coords={"latitude": lat, "longitude": lon})
+    depthfile = os.path.join(path, "depth.nc")
+    ds_depth.to_netcdf(depthfile)
+    return depthfile
+
+
+'''
+    test whether WaterDepth.check_depth returns the same depth as the interpolation of xarray for positions inside
+    and outside of the depth data. The map covers a part of the depth data, all of it or none of it.
+'''
+
+
+@pytest.mark.parametrize("map_coords", [(52, 3, 53, 4), (40, -10, 65, 15), (10, 10, 12, 12)])
+@pytest.mark.parametrize("is_lat_ascending", [True, False])
+def test_check_depth_matches_xarray_interp(tmp_path, map_coords, is_lat_ascending):
+    depthfile = generate_depth_file(tmp_path, is_lat_ascending)
+    waterdepth = WaterDepth("from_file", 20, Map(*map_coords), depthfile)
+
+    lat, lon = np.meshgrid(np.linspace(49, 57, 33), np.linspace(-1, 9, 41))
+    lat = lat.flatten()
+    lon = lon.flatten()
+    is_in_data = (lat >= 50) & (lat <= 56) & (lon >= 0) & (lon <= 8)
+    ref_depth = waterdepth.depth_data["z"].interp(latitude=xr.DataArray(lat, dims="dummy"),
+                                                  longitude=xr.DataArray(lon, dims="dummy"),
+                                                  method="linear").to_numpy()
+
+    depth = waterdepth.get_current_depth(lat, lon)
+
+    assert np.isfinite(depth[is_in_data]).all()
+    assert np.isnan(depth[~is_in_data]).all()
+    np.testing.assert_allclose(depth, ref_depth, rtol=1e-12)
+
+
+'''
+    test whether WaterDepth.check_depth sets up the interpolation only once for the depth data of the map area and
+    doesn't use the interpolation of xarray for positions on the map
+'''
+
+
+@pytest.mark.parametrize("map_coords,lat,lon", [
+    ((52, 3, 53, 4), [52, 52.55, 53], [3, 3.14, 4]),  # map covers a part of the depth data
+    ((40, -10, 65, 15), [52.55, 60], [3.14, 12]),  # map covers all depth data, last position is outside of the data
+])
+@pytest.mark.parametrize("is_lat_ascending", [True, False])
+def test_check_depth_sets_up_interpolation_once(tmp_path, monkeypatch, map_coords, lat, lon, is_lat_ascending):
+    depthfile = generate_depth_file(tmp_path, is_lat_ascending)
+    waterdepth = WaterDepth("from_file", 20, Map(*map_coords), depthfile)
+
+    interpolator = Mock(wraps=RegularGridInterpolator)
+    xarray_interp = Mock()
+    monkeypatch.setattr(constraints, "RegularGridInterpolator", interpolator)
+    monkeypatch.setattr(xr.DataArray, "interp", xarray_interp)
+
+    for _ in range(3):
+        waterdepth.check_depth(np.array(lat), np.array(lon), None)
+
+    assert interpolator.call_count == 1
+    xarray_interp.assert_not_called()
+
+    area = Map(*map_coords).get_widened_map(1)
+    lat_grid, lon_grid = interpolator.call_args.args[0]
+    assert lat_grid.size > 1 and lon_grid.size > 1
+    assert (lat_grid >= area.lat1).all() and (lat_grid <= area.lat2).all()
+    assert (lon_grid >= area.lon1).all() and (lon_grid <= area.lon2).all()
 
 
 '''
