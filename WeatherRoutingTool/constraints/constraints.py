@@ -13,6 +13,7 @@ import sqlalchemy
 import xarray as xr
 from global_land_mask import globe
 from maridatadownloader import BoxSubset, get_downloader
+from scipy.interpolate import RegularGridInterpolator
 from shapely.geometry import Point, LineString, box
 from shapely.strtree import STRtree
 
@@ -565,6 +566,9 @@ class WaterDepth(NegativeContraint):
         self.map_size = map_size
 
         self.depth_data = None
+        # set on the first call of check_depth(), see _get_depth_interpolator()
+        self._depth_interpolator = None
+        self._interpolator_area = None
 
         if data_mode == 'skip':
             return
@@ -674,10 +678,80 @@ class WaterDepth(NegativeContraint):
         return return_value
 
     def check_depth(self, lat, lon, time):
+        """
+        Interpolate the depth data linearly to the given positions and store the result in self.current_depth.
+        Positions outside the depth data get NaN.
+
+        :param lat: Latitudes of the positions
+        :type lat: numpy.ndarray
+        :param lon: Longitudes of the positions
+        :type lon: numpy.ndarray
+        :param time: Not used as the depth data doesn't depend on time
+        :type time: datetime or None
+        """
+        if self._interpolator_area is None:
+            self._depth_interpolator, self._interpolator_area = self._get_depth_interpolator()
+
+        lat = np.asarray(lat, dtype=float)
+        lon = np.asarray(lon, dtype=float)
+        lat_min, lat_max, lon_min, lon_max = self._interpolator_area
+        is_in_area = (lat >= lat_min) & (lat <= lat_max) & (lon >= lon_min) & (lon <= lon_max)
+        if not is_in_area.any():
+            self.current_depth = self._interpolate_with_xarray(lat, lon)
+            return
+
+        depth = self._depth_interpolator(np.stack((lat, lon), axis=-1))
+        if not is_in_area.all():
+            # the depth data can reach beyond the area that is held by the interpolator
+            depth[~is_in_area] = self._interpolate_with_xarray(lat[~is_in_area], lon[~is_in_area])
+        self.current_depth = depth
+
+    def _get_depth_interpolator(self):
+        """
+        Set up the interpolator that check_depth() reuses for every call.
+
+        xarray.DataArray.interp() repeats its setup on every call, which takes longer than the interpolation itself.
+        To limit the memory usage for large depth files, the interpolator only holds the depth data of the map
+        widened by 1 degree (as for the automatic download). Positions outside this area are interpolated with
+        xarray, see check_depth().
+
+        :return: Interpolator (None if it can't be set up) and the area (lat_min, lat_max, lon_min, lon_max) in which
+            it gives the same depth as the depth data
+        :rtype: tuple[scipy.interpolate.RegularGridInterpolator or None, tuple[float, float, float, float]]
+        """
+        empty_area = (np.inf, -np.inf, np.inf, -np.inf)
+
+        depth = self.depth_data["z"]
+        if set(depth.dims) != {"latitude", "longitude"}:
+            return None, empty_area
+
+        area = self.map_size.get_widened_map(1)
+        lat = depth["latitude"].values
+        lon = depth["longitude"].values
+        lat_indices = np.flatnonzero((lat >= area.lat1) & (lat <= area.lat2))
+        lon_indices = np.flatnonzero((lon >= area.lon1) & (lon <= area.lon2))
+        if lat_indices.size < 2 or lon_indices.size < 2:
+            return None, empty_area
+
+        # the coordinates are monotonic, i.e. the grid points in the area are contiguous
+        depth_area = depth.isel(
+            latitude=slice(lat_indices[0], lat_indices[-1] + 1),
+            longitude=slice(lon_indices[0], lon_indices[-1] + 1),
+        ).transpose("latitude", "longitude")
+        lat_area = depth_area["latitude"].values
+        lon_area = depth_area["longitude"].values
+        interpolator = RegularGridInterpolator(
+            (lat_area, lon_area), depth_area.values, method="linear", bounds_error=False, fill_value=np.nan)
+
+        if depth_area.size == depth.size:
+            # the interpolator holds all depth data, i.e. positions outside its area are outside the depth data
+            return interpolator, (-np.inf, np.inf, -np.inf, np.inf)
+        return interpolator, (lat_area.min(), lat_area.max(), lon_area.min(), lon_area.max())
+
+    def _interpolate_with_xarray(self, lat, lon):
         lat_da = xr.DataArray(lat, dims="dummy")
         lon_da = xr.DataArray(lon, dims="dummy")
-        rounded_ds = self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear")
-        self.current_depth = rounded_ds.to_numpy()
+        return self.depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear").to_numpy()
 
     def print_info(self):
         logger.info(form.get_log_step("minimum water depth=" + str(self.min_depth) + "m", 1))
