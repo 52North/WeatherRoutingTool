@@ -566,7 +566,8 @@ class WaterDepth(NegativeContraint):
         self.map_size = map_size
 
         self.depth_data = None
-        # set on the first call of check_depth(), see _get_depth_interpolator()
+        # set on the first call of check_depth() for the depth_data and map_size at that time,
+        # see _get_depth_interpolator()
         self._depth_interpolator = None
         self._interpolator_area = None
 
@@ -682,9 +683,9 @@ class WaterDepth(NegativeContraint):
         Interpolate the depth data linearly to the given positions and store the result in self.current_depth.
         Positions outside the depth data get NaN.
 
-        :param lat: Latitudes of the positions
+        :param lat: Latitudes of the positions (1D)
         :type lat: numpy.ndarray
-        :param lon: Longitudes of the positions
+        :param lon: Longitudes of the positions (1D, same length as lat)
         :type lon: numpy.ndarray
         :param time: Not used as the depth data doesn't depend on time
         :type time: datetime or None
@@ -694,8 +695,15 @@ class WaterDepth(NegativeContraint):
 
         lat = np.asarray(lat, dtype=float)
         lon = np.asarray(lon, dtype=float)
+        if lat.ndim != 1 or lat.shape != lon.shape:
+            # xarray raises an error for such positions
+            self.current_depth = self._interpolate_with_xarray(lat, lon)
+            return
+
+        # Positions on the border of the area are left to xarray. There, the interpolator can combine other grid
+        # points than xarray, which gives a different depth if one of them is NaN.
         lat_min, lat_max, lon_min, lon_max = self._interpolator_area
-        is_in_area = (lat >= lat_min) & (lat <= lat_max) & (lon >= lon_min) & (lon <= lon_max)
+        is_in_area = (lat > lat_min) & (lat < lat_max) & (lon > lon_min) & (lon < lon_max)
         if not is_in_area.any():
             self.current_depth = self._interpolate_with_xarray(lat, lon)
             return
@@ -715,8 +723,12 @@ class WaterDepth(NegativeContraint):
         widened by 1 degree (as for the automatic download). Positions outside this area are interpolated with
         xarray, see check_depth().
 
-        :return: Interpolator (None if it can't be set up) and the area (lat_min, lat_max, lon_min, lon_max) in which
-            it gives the same depth as the depth data
+        The interpolator can't be set up if the depth data isn't a latitude-longitude grid with strictly ascending
+        or descending coordinates or if less than two grid points per dimension are in this area. All positions are
+        interpolated with xarray then.
+
+        :return: Interpolator (None if it can't be set up) and the area (lat_min, lat_max, lon_min, lon_max) inside
+            which it gives the same depth as xarray
         :rtype: tuple[scipy.interpolate.RegularGridInterpolator or None, tuple[float, float, float, float]]
         """
         empty_area = (np.inf, -np.inf, np.inf, -np.inf)
@@ -725,15 +737,20 @@ class WaterDepth(NegativeContraint):
         if set(depth.dims) != {"latitude", "longitude"}:
             return None, empty_area
 
-        area = self.map_size.get_widened_map(1)
         lat = depth["latitude"].values
         lon = depth["longitude"].values
+        for coord in (lat, lon):
+            steps = np.diff(coord)
+            if not ((steps > 0).all() or (steps < 0).all()):
+                return None, empty_area
+
+        area = self.map_size.get_widened_map(1)
         lat_indices = np.flatnonzero((lat >= area.lat1) & (lat <= area.lat2))
         lon_indices = np.flatnonzero((lon >= area.lon1) & (lon <= area.lon2))
         if lat_indices.size < 2 or lon_indices.size < 2:
             return None, empty_area
 
-        # the coordinates are monotonic, i.e. the grid points in the area are contiguous
+        # the coordinates are strictly monotonic, i.e. the grid points in the area are contiguous
         depth_area = depth.isel(
             latitude=slice(lat_indices[0], lat_indices[-1] + 1),
             longitude=slice(lon_indices[0], lon_indices[-1] + 1),

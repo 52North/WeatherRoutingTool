@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 import numpy as np
 import pytest
@@ -105,12 +105,17 @@ def generate_depth_file(path, is_lat_ascending):
     return depthfile
 
 
-'''
-    test whether WaterDepth.check_depth returns the same depth as the interpolation of xarray for positions inside
-    and outside of the depth data. The map covers a part of the depth data, all of it or none of it.
-'''
+def interpolate_with_xarray(depth_data, lat, lon):
+    """
+    Interpolate the depth data like WaterDepth.check_depth did before it reused an interpolator
+    """
+    lat_da = xr.DataArray(lat, dims="dummy")
+    lon_da = xr.DataArray(lon, dims="dummy")
+    return depth_data["z"].interp(latitude=lat_da, longitude=lon_da, method="linear").to_numpy()
 
 
+# test whether WaterDepth.check_depth returns the same depth as the interpolation of xarray for positions inside
+# and outside of the depth data. The map covers a part of the depth data, all of it or none of it.
 @pytest.mark.parametrize("map_coords", [(52, 3, 53, 4), (40, -10, 65, 15), (10, 10, 12, 12)])
 @pytest.mark.parametrize("is_lat_ascending", [True, False])
 def test_check_depth_matches_xarray_interp(tmp_path, map_coords, is_lat_ascending):
@@ -121,9 +126,7 @@ def test_check_depth_matches_xarray_interp(tmp_path, map_coords, is_lat_ascendin
     lat = lat.flatten()
     lon = lon.flatten()
     is_in_data = (lat >= 50) & (lat <= 56) & (lon >= 0) & (lon <= 8)
-    ref_depth = waterdepth.depth_data["z"].interp(latitude=xr.DataArray(lat, dims="dummy"),
-                                                  longitude=xr.DataArray(lon, dims="dummy"),
-                                                  method="linear").to_numpy()
+    ref_depth = interpolate_with_xarray(waterdepth.depth_data, lat, lon)
 
     depth = waterdepth.get_current_depth(lat, lon)
 
@@ -132,12 +135,31 @@ def test_check_depth_matches_xarray_interp(tmp_path, map_coords, is_lat_ascendin
     np.testing.assert_allclose(depth, ref_depth, rtol=1e-12)
 
 
-'''
-    test whether WaterDepth.check_depth sets up the interpolation only once for the depth data of the map area and
-    doesn't use the interpolation of xarray for positions on the map
-'''
+# test whether WaterDepth.check_depth returns the same depth as the interpolation of xarray if the depth data
+# contains NaN. The positions are the grid points, which include the border of the area held by the interpolator.
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("is_lat_ascending", [True, False])
+def test_check_depth_matches_xarray_interp_for_nan(tmp_path, dtype, is_lat_ascending):
+    depthfile = generate_depth_file(tmp_path, is_lat_ascending)
+    waterdepth = WaterDepth("from_file", 20, Map(52, 3, 53, 4), depthfile)
+    z = waterdepth.depth_data["z"]
+    is_nan = np.random.default_rng(2).random(z.shape) < 0.2
+    waterdepth.depth_data = z.where(~is_nan).astype(dtype).to_dataset()
+
+    lat, lon = np.meshgrid(z["latitude"], z["longitude"])
+    lat = lat.flatten()
+    lon = lon.flatten()
+    ref_depth = interpolate_with_xarray(waterdepth.depth_data, lat, lon)
+
+    depth = waterdepth.get_current_depth(lat, lon)
+
+    assert np.isnan(depth).any()
+    assert np.isfinite(depth).any()
+    np.testing.assert_allclose(depth, ref_depth, rtol=1e-12)
 
 
+# test whether WaterDepth.check_depth sets up the interpolation only once for the depth data of the map area and
+# doesn't use the interpolation of xarray for positions on the map
 @pytest.mark.parametrize("map_coords,lat,lon", [
     ((52, 3, 53, 4), [52, 52.55, 53], [3, 3.14, 4]),  # map covers a part of the depth data
     ((40, -10, 65, 15), [52.55, 60], [3.14, 12]),  # map covers all depth data, last position is outside of the data
@@ -163,6 +185,91 @@ def test_check_depth_sets_up_interpolation_once(tmp_path, monkeypatch, map_coord
     assert lat_grid.size > 1 and lon_grid.size > 1
     assert (lat_grid >= area.lat1).all() and (lat_grid <= area.lat2).all()
     assert (lon_grid >= area.lon1).all() and (lon_grid <= area.lon2).all()
+
+
+# test whether WaterDepth.check_depth leaves the interpolation to xarray if the coordinates of the depth data
+# aren't sorted. xarray sorts them on its own.
+@pytest.mark.parametrize("dim", ["latitude", "longitude"])
+def test_check_depth_unsorted_coordinates(tmp_path, monkeypatch, dim):
+    depthfile = generate_depth_file(tmp_path, True)
+    waterdepth = WaterDepth("from_file", 20, Map(52, 3, 53, 4), depthfile)
+    coords = waterdepth.depth_data[dim].values.copy()
+    coords[[30, 31]] = coords[[31, 30]]
+    waterdepth.depth_data = waterdepth.depth_data.assign_coords({dim: coords})
+
+    lat = np.array([52, 52.55, 53, 55, 60])  # the last position is outside of the depth data
+    lon = np.array([3, 3.14, 4, 7, 12])
+    ref_depth = interpolate_with_xarray(waterdepth.depth_data, lat, lon)
+    interpolator = Mock(wraps=RegularGridInterpolator)
+    monkeypatch.setattr(constraints, "RegularGridInterpolator", interpolator)
+
+    depth = waterdepth.get_current_depth(lat, lon)
+
+    interpolator.assert_not_called()
+    assert np.isfinite(depth[:4]).all()
+    np.testing.assert_allclose(depth, ref_depth, rtol=1e-12)
+
+
+# test whether WaterDepth.check_depth leaves the interpolation to xarray if the depth data has duplicate
+# coordinates. xarray raises an error for them.
+@pytest.mark.parametrize("dim", ["latitude", "longitude"])
+def test_check_depth_duplicate_coordinates(tmp_path, monkeypatch, dim):
+    depthfile = generate_depth_file(tmp_path, True)
+    waterdepth = WaterDepth("from_file", 20, Map(52, 3, 53, 4), depthfile)
+    coords = waterdepth.depth_data[dim].values.copy()
+    coords[31] = coords[30]
+    waterdepth.depth_data = waterdepth.depth_data.assign_coords({dim: coords})
+
+    lat = np.array([52, 52.55, 53])
+    lon = np.array([3, 3.14, 4])
+    with pytest.raises(Exception) as ref_error:
+        interpolate_with_xarray(waterdepth.depth_data, lat, lon)
+    interpolator = Mock(wraps=RegularGridInterpolator)
+    monkeypatch.setattr(constraints, "RegularGridInterpolator", interpolator)
+
+    with pytest.raises(ref_error.type):
+        waterdepth.check_depth(lat, lon, None)
+
+    interpolator.assert_not_called()
+
+
+# test whether WaterDepth.check_depth leaves the interpolation to xarray if the depth data has other dimensions
+# than latitude and longitude
+def test_check_depth_unsupported_dimensions(tmp_path, monkeypatch):
+    depthfile = generate_depth_file(tmp_path, True)
+    waterdepth = WaterDepth("from_file", 20, Map(52, 3, 53, 4), depthfile)
+    waterdepth.depth_data = waterdepth.depth_data.expand_dims("time")
+
+    lat = np.array([52, 52.55, 53, 55, 60])  # the last position is outside of the depth data
+    lon = np.array([3, 3.14, 4, 7, 12])
+    ref_depth = interpolate_with_xarray(waterdepth.depth_data, lat, lon)
+    interpolator = Mock(wraps=RegularGridInterpolator)
+    xarray_interp = create_autospec(xr.DataArray.interp, side_effect=xr.DataArray.interp)
+    monkeypatch.setattr(constraints, "RegularGridInterpolator", interpolator)
+    monkeypatch.setattr(xr.DataArray, "interp", xarray_interp)
+
+    depth = waterdepth.get_current_depth(lat, lon)
+
+    interpolator.assert_not_called()
+    xarray_interp.assert_called_once()
+    assert depth.shape == (1, 5)
+    assert np.isfinite(depth[0, :4]).all()
+    np.testing.assert_allclose(depth, ref_depth, rtol=1e-12)
+
+
+# test whether WaterDepth.check_depth raises an error for positions which aren't 1D arrays of the same length, like
+# the interpolation of xarray does
+@pytest.mark.parametrize("lat,lon", [
+    (52.5, 3.5),
+    (np.array([[52.5, 52.6], [52.7, 52.8]]), np.array([[3.5, 3.6], [3.7, 3.8]])),
+    (np.array([52.5, 52.6, 52.7]), np.array([3.5, 3.6])),
+])
+def test_check_depth_invalid_positions(tmp_path, lat, lon):
+    depthfile = generate_depth_file(tmp_path, True)
+    waterdepth = WaterDepth("from_file", 20, Map(52, 3, 53, 4), depthfile)
+
+    with pytest.raises(ValueError):
+        waterdepth.check_depth(lat, lon, None)
 
 
 '''
